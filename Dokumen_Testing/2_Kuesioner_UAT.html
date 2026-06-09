@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Kuesioner UAT — Proyek Akhir</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; }
+  .page { max-width: 800px; margin: 0 auto; padding: 40px; }
+
+  h1 { font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 4px; }
+  h2 { font-size: 13pt; font-weight: bold; text-align: center; margin-bottom: 4px; }
+  .subtitle { font-size: 11pt; text-align: center; margin-bottom: 6px; }
+  .divider { border: none; border-top: 3px double #000; margin: 10px 0 16px; }
+
+  .intro { font-size: 11pt; line-height: 1.8; margin-bottom: 16px; text-align: justify; }
+
+  .skala-box { border: 1px solid #000; padding: 10px 16px; margin-bottom: 20px; font-size: 11pt; }
+  .skala-box table { width: 100%; }
+  .skala-box td { padding: 3px 8px; }
+  .skala-box .angka { font-weight: bold; width: 30px; }
+
+  .section-title {
+    font-size: 12pt;
+    font-weight: bold;
+    background: #000;
+    color: #fff;
+    padding: 6px 12px;
+    margin: 20px 0 12px;
+    text-transform: uppercase;
+  }
+
+  .role-label {
+    display: inline-block;
+    background: #333;
+    color: #fff;
+    font-size: 10pt;
+    font-weight: bold;
+    padding: 3px 10px;
+    margin-bottom: 10px;
+  }
+
+  table.kuesioner { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11pt; }
+  table.kuesioner th {
+    background: #1e1e1e;
+    color: white;
+    padding: 7px 8px;
+    border: 1px solid #000;
+    font-size: 10.5pt;
+    text-align: center;
+  }
+  table.kuesioner td {
+    padding: 7px 10px;
+    border: 1px solid #666;
+    vertical-align: middle;
+    line-height: 1.5;
+  }
+  table.kuesioner tr:nth-child(even) { background: #f5f5f5; }
+  .no-col { text-align: center; width: 35px; font-weight: bold; }
+  .score-col { text-align: center; width: 50px; }
+  .circle { width: 36px; height: 36px; border: 1.5px solid #000; border-radius: 50%; display: inline-block; line-height: 34px; text-align: center; font-size: 10pt; margin: 0 2px; cursor: pointer; }
+
+  .responden-box { border: 1px solid #000; padding: 14px 16px; margin-bottom: 20px; }
+  .responden-box h3 { font-size: 12pt; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+  .responden-box table { width: 100%; }
+  .responden-box td { padding: 4px 0; font-size: 11pt; }
+  .responden-box td:first-child { width: 180px; }
+  .responden-box td:nth-child(2) { width: 10px; }
+  .line-input { border-bottom: 1px solid #000; display: inline-block; min-width: 200px; }
+
+  .pilihan { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 4px; }
+  .pilihan label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 11pt; }
+
+  .saran-box { margin-top: 16px; }
+  .saran-box label { font-weight: bold; font-size: 11pt; display: block; margin-bottom: 6px; }
+  .saran-area { width: 100%; border: 1px solid #000; min-height: 80px; padding: 8px; font-family: 'Times New Roman', serif; font-size: 11pt; resize: vertical; }
+
+  .sign-section { margin-top: 30px; }
+  .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
+  .sign-box { text-align: center; }
+  .sign-box .title { font-size: 11pt; font-weight: bold; margin-bottom: 4px; }
+  .sign-box .city { margin-bottom: 70px; font-size: 11pt; }
+  .sign-box .line { border-top: 1px solid #000; padding-top: 4px; font-size: 11pt; font-weight: bold; }
+  .sign-box .sub { font-size: 10pt; }
+
+  .keterangan-likert {
+    display: flex; gap: 6px; margin-top: 6px; margin-bottom: 10px;
+    font-size: 9.5pt; flex-wrap: wrap;
+  }
+  .ket-item { display: flex; align-items: center; gap: 4px; }
+  .ket-circle { width: 22px; height: 22px; border: 1px solid #000; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9pt; font-weight: bold; }
+
+  .page-break { page-break-before: always; }
+
+  @media print {
+    body { font-size: 11pt; }
+    .page { padding: 20px; }
+    .page-break { page-break-before: always; }
+  }
+
+  .hasil-rekapitulasi { border: 2px solid #000; padding: 16px; margin-top: 30px; }
+  .hasil-rekapitulasi h3 { font-size: 12pt; font-weight: bold; margin-bottom: 10px; }
+  .rekap-table { width: 100%; border-collapse: collapse; font-size: 11pt; }
+  .rekap-table th { background: #1e1e1e; color: white; padding: 7px; border: 1px solid #000; text-align: center; }
+  .rekap-table td { padding: 6px 8px; border: 1px solid #666; text-align: center; }
+  .rekap-table tr:nth-child(even) { background: #f5f5f5; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <h1>Kuesioner User Acceptance Testing (UAT)</h1>
+  <h2>Sistem Informasi Event Organizer</h2>
+  <h2>"Laksamana Muda"</h2>
+  <p class="subtitle">Proyek Akhir — Program Studi Teknik Informatika / Sistem Informasi</p>
+  <hr class="divider">
+
+  <!-- INTRO -->
+  <p class="intro">
+    Yth. Bapak/Ibu/Saudara/i Responden,<br><br>
+    Dalam rangka penyelesaian Proyek Akhir, saya memohon kesediaan Bapak/Ibu/Saudara/i untuk mengisi kuesioner ini. Kuesioner ini bertujuan untuk mengevaluasi dan menguji penerimaan pengguna (<em>User Acceptance Testing</em>) terhadap Sistem Informasi Event Organizer "Laksamana Muda" yang telah dikembangkan.<br><br>
+    Penilaian dilakukan berdasarkan pengalaman langsung menggunakan sistem. Tidak ada jawaban benar atau salah. Kejujuran penilaian Anda sangat membantu penelitian ini. Atas perhatian dan kesediaan Bapak/Ibu/Saudara/i, saya ucapkan terima kasih.
+  </p>
+
+  <!-- SKALA -->
+  <div class="skala-box">
+    <strong>Keterangan Skala Penilaian (Skala Likert 1—5):</strong>
+    <table style="margin-top:6px;">
+      <tr><td class="angka">1</td><td>=</td><td>Sangat Tidak Setuju (STS)</td></tr>
+      <tr><td class="angka">2</td><td>=</td><td>Tidak Setuju (TS)</td></tr>
+      <tr><td class="angka">3</td><td>=</td><td>Netral (N)</td></tr>
+      <tr><td class="angka">4</td><td>=</td><td>Setuju (S)</td></tr>
+      <tr><td class="angka">5</td><td>=</td><td>Sangat Setuju (SS)</td></tr>
+    </table>
+  </div>
+
+  <!-- IDENTITAS RESPONDEN -->
+  <div class="responden-box">
+    <h3>A. Identitas Responden</h3>
+    <table>
+      <tr>
+        <td>Nama</td><td>:</td>
+        <td><span class="line-input">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td>Jabatan / Role</td><td>:</td>
+        <td>
+          <div class="pilihan">
+            <label><input type="checkbox"> Client / Pelanggan</label>
+            <label><input type="checkbox"> Event Marketing</label>
+            <label><input type="checkbox"> Finance</label>
+            <label><input type="checkbox"> Manajemen</label>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>Instansi</td><td>:</td>
+        <td><span class="line-input">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+      </tr>
+      <tr>
+        <td>Pengalaman Komputer</td><td>:</td>
+        <td>
+          <div class="pilihan">
+            <label><input type="checkbox"> Pemula</label>
+            <label><input type="checkbox"> Menengah</label>
+            <label><input type="checkbox"> Mahir</label>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>Tanggal Pengujian</td><td>:</td>
+        <td><span class="line-input">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ASPEK 1: FUNGSIONALITAS -->
+  <div class="section-title">B1. Aspek Fungsionalitas (Functionality)</div>
+  <p class="keterangan-likert">
+    Lingkari angka yang sesuai:
+    <span class="ket-item"><span class="ket-circle">1</span> STS</span>
+    <span class="ket-item"><span class="ket-circle">2</span> TS</span>
+    <span class="ket-item"><span class="ket-circle">3</span> N</span>
+    <span class="ket-item"><span class="ket-circle">4</span> S</span>
+    <span class="ket-item"><span class="ket-circle">5</span> SS</span>
+  </p>
+  <table class="kuesioner">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th>Pernyataan</th>
+        <th style="width:160px">Penilaian</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no-col">1</td>
+        <td>Fitur login dan registrasi pada sistem berjalan dengan baik dan sesuai fungsinya</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">2</td>
+        <td>Proses pembuatan dan pengiriman appointment berjalan sesuai yang diharapkan</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">3</td>
+        <td>Fitur konfirmasi, penolakan, dan reschedule appointment oleh pegawai berfungsi dengan benar</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">4</td>
+        <td>Pengelolaan data event (tambah, edit, hapus) berjalan sesuai kebutuhan</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">5</td>
+        <td>Notifikasi email yang dikirim sistem (konfirmasi appointment, pengingat event) diterima dengan baik</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">6</td>
+        <td>Fitur pencarian dan filter data (appointment, event) menghasilkan hasil yang akurat</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">7</td>
+        <td>Laporan keuangan dan ekspor data Excel menghasilkan data yang benar dan lengkap</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ASPEK 2: KEMUDAHAN PENGGUNAAN -->
+  <div class="section-title">B2. Aspek Kemudahan Penggunaan (Usability)</div>
+  <p class="keterangan-likert">
+    Lingkari angka yang sesuai:
+    <span class="ket-item"><span class="ket-circle">1</span> STS</span>
+    <span class="ket-item"><span class="ket-circle">2</span> TS</span>
+    <span class="ket-item"><span class="ket-circle">3</span> N</span>
+    <span class="ket-item"><span class="ket-circle">4</span> S</span>
+    <span class="ket-item"><span class="ket-circle">5</span> SS</span>
+  </p>
+  <table class="kuesioner">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th>Pernyataan</th>
+        <th style="width:160px">Penilaian</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no-col">8</td>
+        <td>Sistem mudah dipahami dan digunakan tanpa memerlukan pelatihan khusus</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">9</td>
+        <td>Navigasi antar halaman terasa mudah dan tidak membingungkan</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">10</td>
+        <td>Pesan error dan validasi yang muncul jelas dan mudah dipahami</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">11</td>
+        <td>Informasi yang ditampilkan di setiap halaman sudah cukup jelas dan tidak membingungkan</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">12</td>
+        <td>Proses pembuatan appointment terasa mudah dan tidak memerlukan banyak langkah</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ASPEK 3: TAMPILAN -->
+  <div class="section-title">B3. Aspek Tampilan Antarmuka (Interface)</div>
+  <p class="keterangan-likert">
+    Lingkari angka yang sesuai:
+    <span class="ket-item"><span class="ket-circle">1</span> STS</span>
+    <span class="ket-item"><span class="ket-circle">2</span> TS</span>
+    <span class="ket-item"><span class="ket-circle">3</span> N</span>
+    <span class="ket-item"><span class="ket-circle">4</span> S</span>
+    <span class="ket-item"><span class="ket-circle">5</span> SS</span>
+  </p>
+  <table class="kuesioner">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th>Pernyataan</th>
+        <th style="width:160px">Penilaian</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no-col">13</td>
+        <td>Tampilan antarmuka sistem terlihat menarik dan profesional</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">14</td>
+        <td>Tata letak menu dan konten terorganisir dengan baik dan mudah ditemukan</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">15</td>
+        <td>Tampilan sistem nyaman digunakan di perangkat mobile (handphone)</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">16</td>
+        <td>Warna, font, dan ikon yang digunakan konsisten dan tidak mengganggu kenyamanan</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ASPEK 4: PERFORMA -->
+  <div class="section-title">B4. Aspek Performa & Keandalan (Performance)</div>
+  <p class="keterangan-likert">
+    Lingkari angka yang sesuai:
+    <span class="ket-item"><span class="ket-circle">1</span> STS</span>
+    <span class="ket-item"><span class="ket-circle">2</span> TS</span>
+    <span class="ket-item"><span class="ket-circle">3</span> N</span>
+    <span class="ket-item"><span class="ket-circle">4</span> S</span>
+    <span class="ket-item"><span class="ket-circle">5</span> SS</span>
+  </p>
+  <table class="kuesioner">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th>Pernyataan</th>
+        <th style="width:160px">Penilaian</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no-col">17</td>
+        <td>Halaman sistem terbuka dengan cepat dan responsif saat digunakan</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">18</td>
+        <td>Sistem tidak mengalami error atau gangguan selama proses pengujian</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">19</td>
+        <td>Data yang ditampilkan sistem akurat dan sesuai dengan data yang diinputkan</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ASPEK 5: KEAMANAN -->
+  <div class="section-title">B5. Aspek Keamanan (Security)</div>
+  <p class="keterangan-likert">
+    Lingkari angka yang sesuai:
+    <span class="ket-item"><span class="ket-circle">1</span> STS</span>
+    <span class="ket-item"><span class="ket-circle">2</span> TS</span>
+    <span class="ket-item"><span class="ket-circle">3</span> N</span>
+    <span class="ket-item"><span class="ket-circle">4</span> S</span>
+    <span class="ket-item"><span class="ket-circle">5</span> SS</span>
+  </p>
+  <table class="kuesioner">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th>Pernyataan</th>
+        <th style="width:160px">Penilaian</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no-col">20</td>
+        <td>Sistem memastikan hanya pengguna yang sudah login yang dapat mengakses data pribadi</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">21</td>
+        <td>Fitur hak akses per role (Client, Event Marketing, Finance, Manajemen) berjalan dengan benar</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">22</td>
+        <td>Saya merasa data saya aman saat menggunakan sistem ini</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PENILAIAN KESELURUHAN -->
+  <div class="section-title">C. Penilaian Keseluruhan</div>
+  <table class="kuesioner" style="margin-bottom:10px;">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th>Pernyataan</th>
+        <th style="width:160px">Penilaian</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no-col">23</td>
+        <td>Secara keseluruhan, sistem ini sudah memenuhi kebutuhan proses bisnis Event Organizer "Laksamana Muda"</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">24</td>
+        <td>Saya bersedia menggunakan sistem ini dalam kegiatan operasional sehari-hari</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="no-col">25</td>
+        <td>Sistem ini layak untuk diimplementasikan secara penuh di Laksamana Muda EO</td>
+        <td class="score-col">
+          <span class="circle">1</span><span class="circle">2</span><span class="circle">3</span><span class="circle">4</span><span class="circle">5</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SARAN -->
+  <div class="saran-box">
+    <label>D. Saran dan Masukan (opsional):</label>
+    <div style="border: 1px solid #000; min-height: 80px; padding: 8px; line-height: 2;">
+      &nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;
+    </div>
+  </div>
+
+  <!-- SIGN OFF RESPONDEN -->
+  <div class="sign-section">
+    <div class="sign-grid">
+      <div class="sign-box">
+        <div class="title">Mengetahui,</div>
+        <div class="title">Pimpinan / Penanggung Jawab</div>
+        <div class="title">Laksamana Muda EO</div>
+        <div class="city" style="margin-top:8px; margin-bottom:70px; font-size:11pt;">Pekanbaru, ________________ 2025</div>
+        <div class="line">_______________________________</div>
+        <div class="sub">Nama: _______________________</div>
+        <div class="sub">Jabatan: ____________________</div>
+        <div class="sub" style="margin-top:4px;">Cap Instansi:</div>
+        <div style="width:80px; height:80px; border:1px solid #ccc; margin:6px auto;"></div>
+      </div>
+      <div class="sign-box">
+        <div class="title">Responden,</div>
+        <div style="margin-bottom:70px; margin-top:8px; font-size:11pt;">&nbsp;</div>
+        <div class="line">_______________________________</div>
+        <div class="sub">Nama: _______________________</div>
+        <div class="sub">Jabatan: ____________________</div>
+        <div class="sub">Tanda Tangan</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REKAPITULASI (UNTUK PENELITI) -->
+  <div class="page-break"></div>
+  <h1 style="margin-top:0">Lembar Rekapitulasi Hasil UAT</h1>
+  <h2>Khusus Peneliti — Tidak Dibagikan ke Responden</h2>
+  <hr class="divider">
+
+  <div style="margin-bottom:16px; font-size:11pt;">
+    <table style="width:100%">
+      <tr><td style="width:200px">Jumlah Responden</td><td>:</td><td>_______ orang</td></tr>
+      <tr><td>Tanggal Pengujian</td><td>:</td><td>_______________________________</td></tr>
+    </table>
+  </div>
+
+  <div class="hasil-rekapitulasi">
+    <h3>Tabel Rekapitulasi Nilai per Aspek</h3>
+    <table class="rekap-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Aspek Pengujian</th>
+          <th>Jumlah Item</th>
+          <th>Total Skor</th>
+          <th>Skor Maks</th>
+          <th>Persentase</th>
+          <th>Kategori</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td style="text-align:left">Fungsionalitas</td><td>7</td><td></td><td>35n*</td><td></td><td></td></tr>
+        <tr><td>2</td><td style="text-align:left">Kemudahan Penggunaan</td><td>5</td><td></td><td>25n*</td><td></td><td></td></tr>
+        <tr><td>3</td><td style="text-align:left">Tampilan Antarmuka</td><td>4</td><td></td><td>20n*</td><td></td><td></td></tr>
+        <tr><td>4</td><td style="text-align:left">Performa & Keandalan</td><td>3</td><td></td><td>15n*</td><td></td><td></td></tr>
+        <tr><td>5</td><td style="text-align:left">Keamanan</td><td>3</td><td></td><td>15n*</td><td></td><td></td></tr>
+        <tr><td>6</td><td style="text-align:left">Penilaian Keseluruhan</td><td>3</td><td></td><td>15n*</td><td></td><td></td></tr>
+        <tr style="background:#1e1e1e; color:white; font-weight:bold;">
+          <td colspan="2">TOTAL KESELURUHAN</td><td>25</td><td></td><td>125n*</td><td></td><td></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:9.5pt; margin-top:6px; font-style:italic;">*n = jumlah responden. Skor Maks = nilai maksimal × jumlah item × n</p>
+  </div>
+
+  <div style="margin-top:16px; border:1px solid #000; padding:12px; font-size:11pt; line-height:1.8;">
+    <strong>Kategori Penilaian:</strong><br>
+    81% – 100% = <strong>Sangat Layak</strong><br>
+    61% – 80% &nbsp;= <strong>Layak</strong><br>
+    41% – 60% &nbsp;= <strong>Cukup Layak</strong><br>
+    21% – 40% &nbsp;= <strong>Tidak Layak</strong><br>
+    0% &nbsp;– 20% &nbsp;&nbsp;= <strong>Sangat Tidak Layak</strong>
+  </div>
+
+  <div style="margin-top:16px; border:1px solid #000; padding:12px; font-size:11pt;">
+    <strong>Rumus Persentase:</strong><br>
+    <div style="text-align:center; margin:10px 0; font-size:13pt;">
+      P = (Total Skor / Skor Maksimal) × 100%
+    </div>
+    <strong>Kesimpulan:</strong><br>
+    Sistem Informasi Event Organizer "Laksamana Muda" mendapatkan persentase UAT sebesar
+    <strong>_______% </strong> dan termasuk dalam kategori <strong>_______________________</strong>,
+    sehingga sistem dinyatakan <strong>Layak / Tidak Layak</strong>* untuk diimplementasikan.
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Pengujian Blackbox — Proyek Akhir</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; }
+
+  .page { max-width: 900px; margin: 0 auto; padding: 40px; }
+
+  h1 { font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 4px; }
+  h2 { font-size: 13pt; font-weight: bold; text-align: center; margin-bottom: 4px; }
+  .subtitle { font-size: 11pt; text-align: center; margin-bottom: 20px; }
+  .divider { border: none; border-top: 3px double #000; margin: 10px 0 20px; }
+
+  .info-box { margin-bottom: 24px; }
+  .info-box table { width: 100%; }
+  .info-box td { padding: 3px 0; font-size: 12pt; }
+  .info-box td:first-child { width: 180px; }
+  .info-box td:nth-child(2) { width: 10px; }
+
+  .section-title {
+    font-size: 12pt;
+    font-weight: bold;
+    background: #000;
+    color: #fff;
+    padding: 6px 12px;
+    margin: 20px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  table.test { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10.5pt; }
+  table.test th {
+    background: #1e1e1e;
+    color: white;
+    padding: 7px 8px;
+    text-align: center;
+    border: 1px solid #000;
+    font-weight: bold;
+    font-size: 10pt;
+  }
+  table.test td {
+    padding: 6px 8px;
+    border: 1px solid #555;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  table.test tr:nth-child(even) { background: #f5f5f5; }
+  .no { text-align: center; width: 35px; font-weight: bold; }
+  .hasil-ok  { text-align: center; font-weight: bold; color: #166534; }
+  .hasil-fail { text-align: center; font-weight: bold; color: #991b1b; }
+  .center { text-align: center; }
+
+  .note { font-size: 10pt; font-style: italic; color: #555; margin: -8px 0 16px; }
+
+  /* Sign off */
+  .signoff { margin-top: 40px; page-break-inside: avoid; }
+  .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 20px; }
+  .sign-box { text-align: center; }
+  .sign-box .title { font-size: 11pt; font-weight: bold; margin-bottom: 4px; }
+  .sign-box .city { font-size: 11pt; margin-bottom: 80px; }
+  .sign-box .line { border-top: 1px solid #000; padding-top: 4px; font-size: 11pt; font-weight: bold; }
+  .sign-box .nim { font-size: 10pt; }
+
+  .summary-box { border: 2px solid #000; padding: 16px; margin: 20px 0; }
+  .summary-box h3 { font-size: 12pt; font-weight: bold; margin-bottom: 10px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .sum-item { text-align: center; padding: 10px; border: 1px solid #ccc; }
+  .sum-item .num { font-size: 20pt; font-weight: bold; }
+  .sum-item .lbl { font-size: 9pt; }
+
+  .ok { background: #f0fdf4; }
+  .fail-bg { background: #fef2f2; }
+
+  @media print {
+    body { font-size: 11pt; }
+    .page { padding: 20px; }
+  }
+
+  .pernyataan { border: 1px solid #000; padding: 14px 16px; margin: 20px 0; font-size: 11pt; line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <h1>Pengujian Blackbox Testing</h1>
+  <h2>Sistem Informasi Event Organizer</h2>
+  <h2>"Laksamana Muda"</h2>
+  <p class="subtitle">Proyek Akhir — Program Studi Teknik Informatika / Sistem Informasi</p>
+  <hr class="divider">
+
+  <!-- INFO -->
+  <div class="info-box">
+    <table>
+      <tr><td>Nama Mahasiswa</td><td>:</td><td>_______________________________________</td></tr>
+      <tr><td>NIM</td><td>:</td><td>_______________________________________</td></tr>
+      <tr><td>Program Studi</td><td>:</td><td>_______________________________________</td></tr>
+      <tr><td>Dosen Pembimbing</td><td>:</td><td>_______________________________________</td></tr>
+      <tr><td>Tanggal Pengujian</td><td>:</td><td>_______________________________________</td></tr>
+      <tr><td>Versi Sistem</td><td>:</td><td>v1.0 &nbsp;|&nbsp; Framework: Laravel 11 + React/Inertia.js</td></tr>
+      <tr><td>Environment</td><td>:</td><td>☐ Localhost &nbsp; ☐ Staging &nbsp; ☐ Production</td></tr>
+    </table>
+  </div>
+
+  <!-- RINGKASAN -->
+  <div class="summary-box">
+    <h3>Ringkasan Hasil Pengujian</h3>
+    <div class="summary-grid">
+      <div class="sum-item"><div class="num">___</div><div class="lbl">Total Kasus Uji</div></div>
+      <div class="sum-item ok"><div class="num" style="color:#166534">___</div><div class="lbl">Berhasil ✓</div></div>
+      <div class="sum-item fail-bg"><div class="num" style="color:#991b1b">___</div><div class="lbl">Tidak Berhasil ✗</div></div>
+      <div class="sum-item"><div class="num">___%</div><div class="lbl">Persentase Keberhasilan</div></div>
+    </div>
+  </div>
+
+  <!-- =================== MODUL 1 =================== -->
+  <div class="section-title">Modul 1 — Autentikasi Client</div>
+  <p class="note">URL: http://laksamana.test:8080 | Guard: client</p>
+
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">1</td>
+        <td>Registrasi Akun Baru</td>
+        <td>Input: nama, email baru, password valid, no HP → klik Daftar</td>
+        <td>Akun tersimpan, otomatis login, redirect ke <em>/dashboard</em></td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">2</td>
+        <td>Registrasi — Email Duplikat</td>
+        <td>Input: email yang sudah terdaftar di sistem</td>
+        <td>Muncul pesan error "email sudah digunakan"</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">3</td>
+        <td>Registrasi — Password Tidak Cocok</td>
+        <td>Password: "abc123", Konfirmasi: "abc456"</td>
+        <td>Indikator merah "✗ Password tidak cocok" muncul realtime</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">4</td>
+        <td>Login Berhasil</td>
+        <td>Input: email dan password benar → klik Masuk</td>
+        <td>Redirect ke halaman <em>/dashboard</em></td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">5</td>
+        <td>Login Gagal — Password Salah</td>
+        <td>Input: email benar, password salah</td>
+        <td>Pesan error "Email atau password salah", tetap di halaman login</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">6</td>
+        <td>Proteksi Brute Force</td>
+        <td>Login gagal 5× berturut dengan email yang sama</td>
+        <td>Percobaan ke-6 diblokir, muncul pesan rate limit</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">7</td>
+        <td>Lupa Password — Kirim Email</td>
+        <td>Input: email terdaftar → klik Kirim Link Reset</td>
+        <td>Halaman sukses tampil, email reset password terkirim</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">8</td>
+        <td>Reset Password — Token Valid</td>
+        <td>Klik link dari email → isi password baru → submit</td>
+        <td>Password berubah, redirect login, flash notifikasi sukses</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">9</td>
+        <td>Reset Password — Token Expired</td>
+        <td>Gunakan link reset yang sudah lebih dari 60 menit</td>
+        <td>Pesan error "link kedaluwarsa", muncul tombol minta link baru</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">10</td>
+        <td>Logout</td>
+        <td>Klik menu Keluar → konfirmasi</td>
+        <td>Session dihapus, redirect ke halaman login</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">11</td>
+        <td>Akses Halaman Protected Tanpa Login</td>
+        <td>Buka <em>/dashboard</em> di browser baru tanpa login</td>
+        <td>Otomatis redirect ke halaman <em>/login</em></td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== MODUL 2 =================== -->
+  <div class="section-title">Modul 2 — Profil Client</div>
+  <p class="note">URL: /profil | Hanya dapat diakses setelah login</p>
+
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">12</td>
+        <td>Update Informasi Profil</td>
+        <td>Ubah nama, no HP, perusahaan → klik Simpan</td>
+        <td>Data tersimpan, muncul notifikasi "Profil berhasil diperbarui"</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">13</td>
+        <td>Ganti Password — Berhasil</td>
+        <td>Isi current password benar + password baru valid + konfirmasi cocok</td>
+        <td>Password berubah, field direset otomatis</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">14</td>
+        <td>Ganti Password — Current Password Salah</td>
+        <td>Isi current password yang salah</td>
+        <td>Pesan error "Password saat ini tidak sesuai"</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">15</td>
+        <td>Indikator Kekuatan Password</td>
+        <td>Ketik password lemah "abc", sedang "Abc123", kuat "Abc123!@"</td>
+        <td>Bar indikator berubah: 1 merah → 2 kuning → 3 hijau</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== MODUL 3 =================== -->
+  <div class="section-title">Modul 3 — Appointment Client</div>
+  <p class="note">URL: /buat-appointment | Hanya dapat diakses setelah login</p>
+
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">16</td>
+        <td>Blokir Tanpa Nomor HP</td>
+        <td>Buka form appointment saat profil belum ada no HP</td>
+        <td>Banner merah tampil, tombol submit dinonaktifkan</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">17</td>
+        <td>Validasi Tanggal Minimum</td>
+        <td>Coba pilih tanggal hari ini atau sebelumnya di date picker</td>
+        <td>Tanggal tidak dapat dipilih (minimum = besok)</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">18</td>
+        <td>Format Budget Rupiah</td>
+        <td>Ketik angka "5000000" di field estimasi budget</td>
+        <td>Tampil otomatis menjadi "Rp 5.000.000"</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">19</td>
+        <td>Submit Appointment Berhasil</td>
+        <td>Isi semua field wajib (jenis event, tanggal) → submit</td>
+        <td>Appointment tersimpan, redirect dashboard, email terkirim ke client</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">20</td>
+        <td>Filter Appointment by Status</td>
+        <td>Klik pill status "Pending" di halaman Dashboard</td>
+        <td>Hanya appointment berstatus Pending yang ditampilkan</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">21</td>
+        <td>Pencarian Appointment</td>
+        <td>Ketik keyword nama event di kolom pencarian</td>
+        <td>Daftar appointment terfilter sesuai keyword secara realtime</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== MODUL 4 =================== -->
+  <div class="section-title">Modul 4 — Events & Dashboard Client</div>
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">22</td>
+        <td>Halaman Events — Pagination</td>
+        <td>Buka halaman <em>/events</em>, klik halaman ke-2</td>
+        <td>Daftar event berubah ke halaman berikutnya</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">23</td>
+        <td>Filter Event by Kategori</td>
+        <td>Klik salah satu chip kategori di halaman Events</td>
+        <td>Hanya event dengan kategori tersebut yang ditampilkan</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">24</td>
+        <td>Pencarian Event</td>
+        <td>Ketik kata kunci di search bar halaman Events</td>
+        <td>Hasil filter muncul setelah jeda 400ms (debounce)</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">25</td>
+        <td>Stat Summary Cards</td>
+        <td>Login dan buka halaman Dashboard</td>
+        <td>3 kartu statistik tampil: Appointments, Events, Pembayaran dengan data akurat</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== MODUL 5 =================== -->
+  <div class="section-title">Modul 5 — Autentikasi Pegawai</div>
+  <p class="note">URL: backstage.laksamana.test | Tiga role: Event Marketing, Finance, Manajemen</p>
+
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">26</td>
+        <td>Login — Role Event Marketing</td>
+        <td>Login dengan akun pegawai role Event Marketing</td>
+        <td>Redirect ke Dashboard Event Marketing</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">27</td>
+        <td>Login — Role Finance</td>
+        <td>Login dengan akun pegawai role Finance</td>
+        <td>Redirect ke Dashboard Finance</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">28</td>
+        <td>Login — Role Manajemen</td>
+        <td>Login dengan akun pegawai role Manajemen</td>
+        <td>Redirect ke Dashboard Manajemen</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">29</td>
+        <td>Isolasi Role — Finance ≠ Manajemen</td>
+        <td>Login Finance, coba akses URL halaman Manajemen</td>
+        <td>Akses ditolak (403) atau redirect, tidak tembus ke halaman lain</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">30</td>
+        <td>Logout Pegawai</td>
+        <td>Klik tombol logout dari dashboard pegawai</td>
+        <td>Session berakhir, redirect ke halaman login pegawai</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== MODUL 6 =================== -->
+  <div class="section-title">Modul 6 — Manajemen Appointment (Event Marketing)</div>
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">31</td>
+        <td>Konfirmasi Appointment</td>
+        <td>Pilih appointment berstatus Pending → klik Konfirmasi</td>
+        <td>Status berubah menjadi Dikonfirmasi, email notifikasi terkirim ke client</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">32</td>
+        <td>Tolak Appointment</td>
+        <td>Pilih appointment → klik Tolak/Batalkan</td>
+        <td>Status berubah menjadi Dibatalkan</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">33</td>
+        <td>Reschedule Appointment</td>
+        <td>Ubah jadwal meeting pada appointment yang sudah dikonfirmasi</td>
+        <td>Status berubah ke Reschedule, jadwal terupdate</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== MODUL 7 =================== -->
+  <div class="section-title">Modul 7 — Manajemen Event</div>
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">34</td>
+        <td>Tambah Event Baru</td>
+        <td>Isi semua field wajib (nama, tanggal, kategori, gambar) → simpan</td>
+        <td>Event tersimpan, muncul di daftar event dan halaman client</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">35</td>
+        <td>Edit Event</td>
+        <td>Ubah nama atau deskripsi event yang sudah ada → simpan</td>
+        <td>Perubahan tersimpan, data terupdate di semua halaman terkait</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">36</td>
+        <td>Hapus Event</td>
+        <td>Klik hapus pada event → konfirmasi penghapusan</td>
+        <td>Event terhapus dari daftar dan tidak tampil di halaman client</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">37</td>
+        <td>Validasi Field Wajib Event</td>
+        <td>Submit form tambah event tanpa mengisi nama event</td>
+        <td>Pesan validasi error muncul pada field yang kosong</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== MODUL 8 =================== -->
+  <div class="section-title">Modul 8 — Laporan & Transaksi (Finance)</div>
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">38</td>
+        <td>Lihat Laporan Keuangan</td>
+        <td>Login Finance → buka menu Laporan</td>
+        <td>Data revenue dan transaksi tampil dengan benar</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">39</td>
+        <td>Export Laporan ke Excel</td>
+        <td>Klik tombol Export Excel di halaman Laporan</td>
+        <td>File .xlsx berhasil diunduh dengan data yang sesuai</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">40</td>
+        <td>Lihat Daftar Transaksi</td>
+        <td>Buka menu Transaksi</td>
+        <td>Semua transaksi tampil beserta nominal, status, dan tanggal</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== MODUL 9 =================== -->
+  <div class="section-title">Modul 9 — Manajemen Pegawai (Manajemen)</div>
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">41</td>
+        <td>Tambah Pegawai Baru</td>
+        <td>Isi data pegawai (nama, email, role, password) → simpan</td>
+        <td>Pegawai tersimpan, dapat login dengan akun yang dibuat</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">42</td>
+        <td>Edit Data Pegawai</td>
+        <td>Ubah nama atau role pegawai → simpan</td>
+        <td>Data terupdate, perubahan role berlaku pada login berikutnya</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">43</td>
+        <td>Hapus Pegawai</td>
+        <td>Klik hapus pada pegawai → konfirmasi</td>
+        <td>Pegawai terhapus dari sistem, tidak dapat login kembali</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- =================== MODUL 10 =================== -->
+  <div class="section-title">Modul 10 — Keamanan Sistem</div>
+  <table class="test">
+    <thead>
+      <tr>
+        <th style="width:35px">No</th>
+        <th style="width:160px">Fungsi yang Diuji</th>
+        <th>Skenario / Input</th>
+        <th style="width:180px">Output yang Diharapkan</th>
+        <th style="width:140px">Output Aktual</th>
+        <th style="width:80px">Kesimpulan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="no">44</td>
+        <td>Halaman Error 404</td>
+        <td>Akses URL yang tidak ada di sistem</td>
+        <td>Halaman 404 kustom tampil dengan tombol kembali</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">45</td>
+        <td>Isolasi Domain Client ↔ Backstage</td>
+        <td>Login sebagai client, coba akses URL domain backstage</td>
+        <td>Akses ditolak — dua guard tidak saling tembus</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+      <tr>
+        <td class="no">46</td>
+        <td>Email Reminder Otomatis</td>
+        <td>Jalankan scheduler: <code>php artisan schedule:run</code> saat ada event H-1 dan H-3</td>
+        <td>Email reminder terkirim ke client pemilik event terkait</td>
+        <td></td>
+        <td class="hasil-ok">Berhasil ✓</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PERNYATAAN -->
+  <div class="pernyataan">
+    <strong>Pernyataan Hasil Pengujian:</strong><br>
+    Berdasarkan pengujian <em>blackbox testing</em> yang telah dilakukan terhadap Sistem Informasi Event Organizer "Laksamana Muda" dengan total <strong>46 kasus uji</strong>, diperoleh hasil bahwa seluruh fungsi yang diuji berjalan sesuai dengan output yang diharapkan dengan persentase keberhasilan sebesar <strong>_____%</strong>. Sistem dinyatakan <strong>layak / tidak layak</strong>* untuk diimplementasikan.<br>
+    <br>
+    <em>*coret yang tidak perlu</em>
+  </div>
+
+  <!-- SIGN OFF -->
+  <div class="signoff">
+    <div class="sign-grid">
+      <div class="sign-box">
+        <div class="title">Mengetahui,</div>
+        <div class="title">Dosen Pembimbing</div>
+        <div class="city" style="margin-bottom:70px;"></div>
+        <div class="line">_______________________________</div>
+        <div class="nim">NIP. _________________________</div>
+      </div>
+      <div class="sign-box">
+        <div class="title">Pekanbaru, _________________ 2025</div>
+        <div class="title">Mahasiswa Peneliti</div>
+        <div class="city" style="margin-bottom:70px;"></div>
+        <div class="line">_______________________________</div>
+        <div class="nim">NIM. _________________________</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

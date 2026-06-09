@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "email-preview",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["-S", "localhost:7777", "-t", "public"],
+      "port": 7777
+    }
+  ]
+}

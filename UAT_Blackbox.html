@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blackbox UAT — Laksamana Muda Event Organizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; background: #f4f6f9; color: #1a1a2e; }
+
+  /* Cover */
+  .cover { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%); color: white; padding: 60px 40px; text-align: center; page-break-after: always; }
+  .cover .logo { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #f5a623; background: #000; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 20px; }
+  .cover h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; }
+  .cover h1 span { color: #f5a623; }
+  .cover .subtitle { font-size: 14px; color: #94a3b8; margin-top: 8px; }
+  .cover .meta { margin-top: 40px; display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
+  .cover .meta-item { text-align: center; }
+  .cover .meta-item .val { font-size: 16px; font-weight: 700; color: #f5a623; }
+  .cover .meta-item .lbl { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .cover .badges { margin-top: 32px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .cover .badge { padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .badge-client { background: #f5a623; color: #000; }
+  .badge-em { background: #3b82f6; color: #fff; }
+  .badge-fin { background: #10b981; color: #fff; }
+  .badge-mgmt { background: #8b5cf6; color: #fff; }
+
+  /* Section */
+  .section { padding: 30px 30px 10px; page-break-inside: avoid; }
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }
+  .section-header .icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .section-header h2 { font-size: 15px; font-weight: 800; color: #1e293b; }
+  .section-header .role-tag { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+
+  .bg-client { background: #fef3c7; }
+  .bg-em { background: #dbeafe; }
+  .bg-fin { background: #d1fae5; }
+  .bg-mgmt { background: #ede9fe; }
+  .bg-sec { background: #fee2e2; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  thead tr { background: #1e293b; color: white; }
+  thead th { padding: 9px 10px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid #e2e8f0; }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  tbody tr:hover { background: #f1f5f9; }
+  td { padding: 8px 10px; vertical-align: top; line-height: 1.5; }
+
+  .tc-id { font-family: monospace; font-weight: 700; color: #475569; font-size: 11px; white-space: nowrap; }
+  .scenario { font-weight: 600; color: #1e293b; }
+  .steps { color: #475569; font-size: 11px; }
+  .steps ol { padding-left: 14px; }
+  .steps ol li { margin-bottom: 2px; }
+  .expected { color: #374151; font-size: 11px; }
+
+  .prio-high { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; background: #fee2e2; color: #dc2626; }
+  .prio-med  { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; background: #fef3c7; color: #d97706; }
+  .prio-low  { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; background: #d1fae5; color: #059669; }
+
+  .status-box { width: 80px; height: 24px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; }
+
+  .actual-box { min-height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; width: 120px; }
+
+  /* Summary table */
+  .summary { margin: 20px 30px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
+  .summary h3 { font-size: 13px; font-weight: 800; margin-bottom: 12px; color: #1e293b; }
+  .sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .sum-card { text-align: center; padding: 12px; border-radius: 10px; }
+  .sum-card .num { font-size: 24px; font-weight: 900; }
+  .sum-card .lbl { font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px; }
+  .sum-card.total { background: #1e293b; color: white; }
+  .sum-card.total .lbl { color: #94a3b8; }
+  .sum-card.client { background: #fef3c7; }
+  .sum-card.client .num { color: #d97706; }
+  .sum-card.em { background: #dbeafe; }
+  .sum-card.em .num { color: #2563eb; }
+  .sum-card.fin { background: #d1fae5; }
+  .sum-card.fin .num { color: #059669; }
+  .sum-card.mgmt { background: #ede9fe; }
+  .sum-card.mgmt .num { color: #7c3aed; }
+  .sum-card.sec { background: #fee2e2; }
+  .sum-card.sec .num { color: #dc2626; }
+
+  /* Sign off */
+  .signoff { margin: 20px 30px; padding: 24px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; page-break-inside: avoid; }
+  .signoff h3 { font-size: 13px; font-weight: 800; margin-bottom: 16px; }
+  .sign-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .sign-box { text-align: center; }
+  .sign-box .title { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 60px; }
+  .sign-box .line { border-top: 1px solid #334155; padding-top: 6px; font-size: 11px; font-weight: 700; }
+  .sign-box .role { font-size: 10px; color: #64748b; margin-top: 2px; }
+
+  /* Print */
+  @media print {
+    body { background: white; }
+    .cover { page-break-after: always; }
+    .section { page-break-inside: avoid; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; }
+    thead { display: table-header-group; }
+  }
+
+  /* Page break utility */
+  .pb { page-break-before: always; }
+
+  .note { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 14px; margin: 0 30px 16px; font-size: 11px; color: #92400e; }
+  .note strong { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ===== COVER ===== -->
+<div class="cover">
+  <div class="logo">⚓</div>
+  <h1>Blackbox UAT<br><span>Laksamana Muda</span> Event Organizer</h1>
+  <p class="subtitle">User Acceptance Testing — Dokumen Pengujian Sistem</p>
+  <div class="meta">
+    <div class="meta-item"><div class="val">4</div><div class="lbl">Role User</div></div>
+    <div class="meta-item"><div class="val" id="tc-count">135</div><div class="lbl">Test Cases</div></div>
+    <div class="meta-item"><div class="val">Laravel 11</div><div class="lbl">Framework</div></div>
+    <div class="meta-item"><div class="val">React/Inertia</div><div class="lbl">Frontend</div></div>
+  </div>
+  <div class="badges">
+    <span class="badge badge-client">CLIENT</span>
+    <span class="badge badge-em">EVENT MARKETING</span>
+    <span class="badge badge-fin">FINANCE</span>
+    <span class="badge badge-mgmt">MANAJEMEN</span>
+  </div>
+  <div style="margin-top:40px; color:#64748b; font-size:11px;">
+    <p>Tester: _____________________________ &nbsp;|&nbsp; Tanggal Mulai: _____________ &nbsp;|&nbsp; Tanggal Selesai: _____________</p>
+    <p style="margin-top:8px;">Versi Aplikasi: _____________________________ &nbsp;|&nbsp; Environment: ☐ Local &nbsp; ☐ Staging &nbsp; ☐ Production</p>
+  </div>
+</div>
+
+<!-- ===== SUMMARY ===== -->
+<div class="summary">
+  <h3>📊 Ringkasan Test Cases per Modul</h3>
+  <div class="sum-grid">
+    <div class="sum-card total"><div class="num">135</div><div class="lbl">Total TC</div></div>
+    <div class="sum-card client"><div class="num">45</div><div class="lbl">Client</div></div>
+    <div class="sum-card em"><div class="num">32</div><div class="lbl">Event Marketing</div></div>
+    <div class="sum-card fin"><div class="num">22</div><div class="lbl">Finance</div></div>
+    <div class="sum-card mgmt"><div class="num">28</div><div class="lbl">Manajemen</div></div>
+    <div class="sum-card sec"><div class="num">8</div><div class="lbl">Security & Email</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Petunjuk Pengisian:</strong> Kolom <em>Actual Result</em> diisi saat testing berlangsung. Kolom <em>Status</em> diisi: <strong>PASS</strong> (hijau) / <strong>FAIL</strong> (merah) / <strong>N/A</strong>. Screenshot dilampirkan terpisah dengan nomor TC sebagai referensi.
+</div>
+
+<!-- =========================================================== -->
+<!-- BAGIAN A — CLIENT                                            -->
+<!-- =========================================================== -->
+
+<!-- A1. AUTH CLIENT -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-client">🔐</div>
+    <div>
+      <h2>A1 — Autentikasi Client</h2>
+      <span class="role-tag bg-client" style="color:#92400e;">CLIENT · laksamana.test:8080</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-A1-01</td>
+        <td class="scenario">Register akun baru berhasil</td>
+        <td class="steps"><ol><li>Buka <code>/daftar</code></li><li>Isi semua field valid</li><li>Klik Daftar Sekarang</li></ol></td>
+        <td class="expected">Akun tersimpan, otomatis login, redirect ke <code>/dashboard</code></td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-02</td>
+        <td class="scenario">Register — email sudah terdaftar</td>
+        <td class="steps"><ol><li>Gunakan email yang sudah ada</li><li>Submit form</li></ol></td>
+        <td class="expected">Error: "email sudah digunakan", tetap di halaman daftar</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-03</td>
+        <td class="scenario">Register — nama < 3 karakter</td>
+        <td class="steps"><ol><li>Isi nama "AB"</li><li>Submit form</li></ol></td>
+        <td class="expected">Error validasi nama minimal 3 karakter</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-04</td>
+        <td class="scenario">Register — password < 6 karakter</td>
+        <td class="steps"><ol><li>Isi password "abc"</li><li>Submit form</li></ol></td>
+        <td class="expected">Error validasi, strength bar = Lemah (merah)</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-05</td>
+        <td class="scenario">Register — password tidak cocok</td>
+        <td class="steps"><ol><li>Isi password "abc123"</li><li>Konfirmasi "abc456"</li><li>Perhatikan indikator</li></ol></td>
+        <td class="expected">Indikator "✗ Password tidak cocok" merah muncul realtime</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-06</td>
+        <td class="scenario">Register — password strength bar</td>
+        <td class="steps"><ol><li>Ketik password lemah "abc"</li><li>Ketik password sedang "Abc12345"</li><li>Ketik password kuat "Abc123!@#"</li></ol></td>
+        <td class="expected">Bar berubah: 1 merah → 2 kuning → 3 hijau sesuai kekuatan</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-07</td>
+        <td class="scenario">Login berhasil dengan email + password</td>
+        <td class="steps"><ol><li>Buka <code>/login</code></li><li>Isi email + password benar</li><li>Klik Masuk</li></ol></td>
+        <td class="expected">Redirect ke <code>/dashboard</code></td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-08</td>
+        <td class="scenario">Login — password salah</td>
+        <td class="steps"><ol><li>Isi email benar, password salah</li><li>Submit</li></ol></td>
+        <td class="expected">Error "Email atau password salah", tetap di halaman login</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-09</td>
+        <td class="scenario">Login — brute force 5x gagal (rate limit)</td>
+        <td class="steps"><ol><li>Login salah 5x berturut dengan email sama</li><li>Coba lagi ke-6</li></ol></td>
+        <td class="expected">Error "Terlalu banyak percobaan login" — locked 1 menit</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-10</td>
+        <td class="scenario">Login — "Ingat saya" aktif</td>
+        <td class="steps"><ol><li>Login dengan centang "Ingat saya"</li><li>Tutup browser</li><li>Buka lagi URL dashboard</li></ol></td>
+        <td class="expected">Session tetap aktif, tidak diminta login ulang</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-11</td>
+        <td class="scenario">Login dengan Google (OAuth)</td>
+        <td class="steps"><ol><li>Klik "Masuk dengan Google"</li><li>Pilih akun Google</li><li>Authorize</li></ol></td>
+        <td class="expected">Redirect ke <code>/dashboard</code>, akun tersimpan/terlink</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-12</td>
+        <td class="scenario">Lupa password — kirim link reset</td>
+        <td class="steps"><ol><li>Klik "Lupa password?"</li><li>Masukkan email terdaftar</li><li>Submit</li></ol></td>
+        <td class="expected">Halaman sukses tampil, email reset terkirim ke inbox</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-13</td>
+        <td class="scenario">Lupa password — email tidak terdaftar</td>
+        <td class="steps"><ol><li>Masukkan email yang tidak ada</li><li>Submit</li></ol></td>
+        <td class="expected">Halaman sukses tetap tampil (security — tidak reveal email exists)</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-14</td>
+        <td class="scenario">Reset password — token valid</td>
+        <td class="steps"><ol><li>Klik link reset dari email</li><li>Isi password baru + konfirmasi</li><li>Submit</li></ol></td>
+        <td class="expected">Password berubah, redirect login, flash "Password berhasil direset"</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-15</td>
+        <td class="scenario">Reset password — token expired (>60 menit)</td>
+        <td class="steps"><ol><li>Gunakan link reset yang sudah >60 menit</li><li>Submit</li></ol></td>
+        <td class="expected">Error "Link reset telah kedaluwarsa" dengan link minta yang baru</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A1-16</td>
+        <td class="scenario">Logout client</td>
+        <td class="steps"><ol><li>Klik avatar → Keluar</li><li>Konfirmasi logout</li></ol></td>
+        <td class="expected">Session dihapus, redirect ke <code>/login</code>, tidak bisa back ke dashboard</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- A2. PROFIL CLIENT -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-client">👤</div>
+    <div>
+      <h2>A2 — Profil Client</h2>
+      <span class="role-tag bg-client" style="color:#92400e;">CLIENT · /profil</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-A2-01</td>
+        <td class="scenario">Update nama dan perusahaan</td>
+        <td class="steps"><ol><li>Ubah nama dan perusahaan</li><li>Klik Simpan Perubahan</li></ol></td>
+        <td class="expected">Flash "Profil berhasil diperbarui", data terupdate</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A2-02</td>
+        <td class="scenario">Update no. HP dengan format valid</td>
+        <td class="steps"><ol><li>Isi no HP "08123456789"</li><li>Simpan</li></ol></td>
+        <td class="expected">Tersimpan berhasil</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A2-03</td>
+        <td class="scenario">Ganti password — tanpa isi current password</td>
+        <td class="steps"><ol><li>Langsung isi password baru saja</li><li>Submit tanpa current password</li></ol></td>
+        <td class="expected">Error "Password saat ini wajib diisi"</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A2-04</td>
+        <td class="scenario">Ganti password — current password salah</td>
+        <td class="steps"><ol><li>Isi current password yang salah</li><li>Isi password baru valid</li><li>Submit</li></ol></td>
+        <td class="expected">Error "Password saat ini tidak sesuai"</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A2-05</td>
+        <td class="scenario">Ganti password berhasil</td>
+        <td class="steps"><ol><li>Isi current password benar</li><li>Isi password baru + konfirmasi cocok</li><li>Submit</li></ol></td>
+        <td class="expected">Flash sukses, field password direset (kosong)</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A2-06</td>
+        <td class="scenario">Password strength bar di Profil</td>
+        <td class="steps"><ol><li>Ketik di field "Password Baru" berbagai variasi</li></ol></td>
+        <td class="expected">Bar strength muncul realtime (Lemah/Sedang/Kuat)</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A2-07</td>
+        <td class="scenario">Akun Google — field password baru tanpa current password</td>
+        <td class="steps"><ol><li>Login via Google (akun tanpa password)</li><li>Buka profil, isi password baru</li></ol></td>
+        <td class="expected">Field "Password Saat Ini" tidak muncul (akun Google only)</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A2-08</td>
+        <td class="scenario">Badge Google muncul di profil</td>
+        <td class="steps"><ol><li>Login dengan Google</li><li>Buka halaman profil</li></ol></td>
+        <td class="expected">Badge biru "Terhubung dengan Google" tampil di header profil</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- A3. APPOINTMENT CLIENT -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-client">📋</div>
+    <div>
+      <h2>A3 — Appointment Client</h2>
+      <span class="role-tag bg-client" style="color:#92400e;">CLIENT · /buat-appointment</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-A3-01</td>
+        <td class="scenario">Buka form appointment tanpa nomor HP</td>
+        <td class="steps"><ol><li>Pastikan profil belum ada no HP</li><li>Klik "Buat Appointment"</li></ol></td>
+        <td class="expected">Banner merah "Nomor HP belum diisi", tombol submit disabled</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A3-02</td>
+        <td class="scenario">Banner warning ada appointment aktif</td>
+        <td class="steps"><ol><li>Pastikan sudah ada appointment Pending/Dikonfirmasi</li><li>Buka form appointment lagi</li></ol></td>
+        <td class="expected">Banner kuning "Ada appointment yang sedang diproses" tampil</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A3-03</td>
+        <td class="scenario">Pilih tanggal hari ini (min date)</td>
+        <td class="steps"><ol><li>Buka date picker</li><li>Coba pilih tanggal hari ini atau kemarin</li></ol></td>
+        <td class="expected">Tanggal hari ini dan sebelumnya tidak bisa dipilih (disabled)</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A3-04</td>
+        <td class="scenario">Stepper progress — pilih jenis event</td>
+        <td class="steps"><ol><li>Pilih salah satu jenis event</li></ol></td>
+        <td class="expected">Step 1 ter-highlight, tombol jenis event aktif (border kuning)</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A3-05</td>
+        <td class="scenario">Input budget — format Rupiah otomatis</td>
+        <td class="steps"><ol><li>Ketik "5000000" di field Estimasi Budget</li></ol></td>
+        <td class="expected">Tampil "5.000.000" dengan prefix Rp, preview di bawah field</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A3-06</td>
+        <td class="scenario">Submit appointment valid</td>
+        <td class="steps"><ol><li>Isi semua field wajib</li><li>Pilih tanggal besok</li><li>Klik Kirim Appointment</li></ol></td>
+        <td class="expected">Appointment tersimpan, redirect dashboard, email konfirmasi terkirim</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A3-07</td>
+        <td class="scenario">Submit tanpa pilih jenis event</td>
+        <td class="steps"><ol><li>Tidak memilih jenis event</li><li>Coba submit</li></ol></td>
+        <td class="expected">Tombol submit disabled sampai jenis event dan tanggal dipilih</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A3-08</td>
+        <td class="scenario">Filter appointment by status di Dashboard</td>
+        <td class="steps"><ol><li>Di Dashboard, klik pill "Pending"</li></ol></td>
+        <td class="expected">Hanya appointment berstatus Pending yang tampil</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A3-09</td>
+        <td class="scenario">Search appointment by keyword</td>
+        <td class="steps"><ol><li>Ketik nama event di search bar dashboard</li></ol></td>
+        <td class="expected">List appointment terfilter sesuai keyword realtime</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A3-10</td>
+        <td class="scenario">Timeline visual appointment di Dashboard</td>
+        <td class="steps"><ol><li>Lihat card appointment yang sudah melewati tahapan</li></ol></td>
+        <td class="expected">Titik timeline Diajukan→Meeting→Selesai berwarna kuning jika done</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- A4. EVENTS & DASHBOARD CLIENT -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-client">🎪</div>
+    <div>
+      <h2>A4 — Events & Dashboard Client</h2>
+      <span class="role-tag bg-client" style="color:#92400e;">CLIENT · /events · /dashboard</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-A4-01</td>
+        <td class="scenario">Halaman Events tampil dengan pagination</td>
+        <td class="steps"><ol><li>Buka <code>/events</code></li><li>Scroll ke bawah</li></ol></td>
+        <td class="expected">List event tampil, pagination muncul jika data > per_page</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A4-02</td>
+        <td class="scenario">Filter event by kategori</td>
+        <td class="steps"><ol><li>Klik salah satu chip kategori</li></ol></td>
+        <td class="expected">Hanya event kategori itu tampil (server-side filter)</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A4-03</td>
+        <td class="scenario">Search event by keyword</td>
+        <td class="steps"><ol><li>Ketik kata kunci di search bar Events</li></ol></td>
+        <td class="expected">Hasil filter sesuai keyword, debounce 400ms (tidak langsung fire)</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A4-04</td>
+        <td class="scenario">Countdown badge event di Dashboard</td>
+        <td class="steps"><ol><li>Lihat kartu event di Dashboard yang akan segera berlangsung</li></ol></td>
+        <td class="expected">Badge merah (≤7 hari), kuning (≤30 hari), orange pulse (hari ini)</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A4-05</td>
+        <td class="scenario">Stat card Dashboard — klik Appointments</td>
+        <td class="steps"><ol><li>Klik stat card "Appointments" di Dashboard</li></ol></td>
+        <td class="expected">Halaman scroll ke seksi daftar appointment</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A4-06</td>
+        <td class="scenario">Dashboard tampil stat card dengan badge</td>
+        <td class="steps"><ol><li>Login lalu buka Dashboard</li></ol></td>
+        <td class="expected">Stat card: Appointments (badge aktif), Events (badge upcoming), Pembayaran (status warna)</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A4-07</td>
+        <td class="scenario">Akses Dashboard tanpa login</td>
+        <td class="steps"><ol><li>Buka <code>/dashboard</code> di browser baru (tanpa login)</li></ol></td>
+        <td class="expected">Redirect ke <code>/login</code></td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A4-08</td>
+        <td class="scenario">Banner Google — HP belum diisi</td>
+        <td class="steps"><ol><li>Login via Google (belum isi no HP)</li><li>Buka Dashboard</li></ol></td>
+        <td class="expected">Banner kuning muncul: "Lengkapi nomor HP Anda"</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A4-09</td>
+        <td class="scenario">Mobile responsive — Dashboard & Navbar</td>
+        <td class="steps"><ol><li>Buka Dashboard di mobile (viewport 375px)</li></ol></td>
+        <td class="expected">Layout stack vertikal, tidak ada overflow horizontal, navbar readable</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-A4-10</td>
+        <td class="scenario">Akses halaman Client dari domain Backstage</td>
+        <td class="steps"><ol><li>Coba buka <code>backstage.laksamana.test/dashboard</code></li></ol></td>
+        <td class="expected">404 atau redirect — bukan halaman client</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =========================================================== -->
+<!-- BAGIAN B — EVENT MARKETING                                   -->
+<!-- =========================================================== -->
+<div class="section pb">
+  <div class="section-header">
+    <div class="icon bg-em">🎯</div>
+    <div>
+      <h2>B1 — Auth Event Marketing</h2>
+      <span class="role-tag bg-em" style="color:#1d4ed8;">EVENT MARKETING · backstage.laksamana.test</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-B1-01</td>
+        <td class="scenario">Login pegawai role Event Marketing berhasil</td>
+        <td class="steps"><ol><li>Buka halaman login backstage</li><li>Isi kredensial Event Marketing</li><li>Login</li></ol></td>
+        <td class="expected">Redirect ke Dashboard Event Marketing</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B1-02</td>
+        <td class="scenario">Login dengan password salah</td>
+        <td class="steps"><ol><li>Masukkan password salah</li><li>Submit</li></ol></td>
+        <td class="expected">Error, tetap di halaman login</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B1-03</td>
+        <td class="scenario">Logout Event Marketing</td>
+        <td class="steps"><ol><li>Klik logout</li></ol></td>
+        <td class="expected">Session habis, redirect login backstage</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B1-04</td>
+        <td class="scenario">Akses halaman Manajemen dari akun Event Marketing</td>
+        <td class="steps"><ol><li>Login sebagai Event Marketing</li><li>Coba akses URL Manajemen</li></ol></td>
+        <td class="expected">Forbidden (403) atau redirect — role tidak sesuai</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- B2. EM APPOINTMENT -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-em">📅</div>
+    <div>
+      <h2>B2 — Manajemen Appointment (Event Marketing)</h2>
+      <span class="role-tag bg-em" style="color:#1d4ed8;">EVENT MARKETING</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-B2-01</td>
+        <td class="scenario">Lihat daftar semua appointment</td>
+        <td class="steps"><ol><li>Buka menu Appointment</li></ol></td>
+        <td class="expected">Semua appointment tampil dengan status, nama client, tanggal</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B2-02</td>
+        <td class="scenario">Lihat detail appointment</td>
+        <td class="steps"><ol><li>Klik detail salah satu appointment</li></ol></td>
+        <td class="expected">Detail tampil: info client, jenis event, jadwal, status</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B2-03</td>
+        <td class="scenario">Konfirmasi appointment Pending</td>
+        <td class="steps"><ol><li>Buka appointment berstatus Pending</li><li>Klik Konfirmasi</li></ol></td>
+        <td class="expected">Status berubah jadi Dikonfirmasi, email notifikasi terkirim ke client</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B2-04</td>
+        <td class="scenario">Tolak / Batalkan appointment</td>
+        <td class="steps"><ol><li>Pilih appointment</li><li>Klik Tolak/Batalkan</li></ol></td>
+        <td class="expected">Status berubah ke Dibatalkan, client mendapat notifikasi</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B2-05</td>
+        <td class="scenario">Reschedule appointment</td>
+        <td class="steps"><ol><li>Pilih appointment Dikonfirmasi</li><li>Ubah jadwal meeting</li><li>Simpan</li></ol></td>
+        <td class="expected">Status berubah ke Reschedule, jadwal terupdate</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B2-06</td>
+        <td class="scenario">Tandai meeting selesai</td>
+        <td class="steps"><ol><li>Setelah meeting berlangsung, update status ke Selesai</li></ol></td>
+        <td class="expected">Status berubah ke Selesai</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- B3. EM EVENT -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-em">🎵</div>
+    <div>
+      <h2>B3 — Manajemen Event (Event Marketing)</h2>
+      <span class="role-tag bg-em" style="color:#1d4ed8;">EVENT MARKETING</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-B3-01</td>
+        <td class="scenario">Lihat daftar event</td>
+        <td class="steps"><ol><li>Buka menu Event</li></ol></td>
+        <td class="expected">Daftar event dengan nama, tanggal, status, kategori tampil</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B3-02</td>
+        <td class="scenario">Buat event baru berhasil</td>
+        <td class="steps"><ol><li>Klik Tambah Event</li><li>Isi semua field wajib</li><li>Upload gambar</li><li>Simpan</li></ol></td>
+        <td class="expected">Event tersimpan, muncul di daftar, gambar tampil</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B3-03</td>
+        <td class="scenario">Buat event — field wajib kosong</td>
+        <td class="steps"><ol><li>Submit form tanpa nama event</li></ol></td>
+        <td class="expected">Error validasi tampil per field</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B3-04</td>
+        <td class="scenario">Edit event yang sudah ada</td>
+        <td class="steps"><ol><li>Klik Edit pada event</li><li>Ubah nama/deskripsi</li><li>Simpan</li></ol></td>
+        <td class="expected">Perubahan tersimpan, data terupdate di daftar</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B3-05</td>
+        <td class="scenario">Ubah status event (Active/Inactive)</td>
+        <td class="steps"><ol><li>Ubah status event dari Active ke Inactive</li></ol></td>
+        <td class="expected">Status berubah, event tidak tampil di halaman client Events</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B3-06</td>
+        <td class="scenario">Lihat daftar client</td>
+        <td class="steps"><ol><li>Buka menu Client</li></ol></td>
+        <td class="expected">Daftar client dengan nama, email, no HP tampil</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B3-07</td>
+        <td class="scenario">Lihat Transaksi / Pembayaran</td>
+        <td class="steps"><ol><li>Buka menu Transaksi</li></ol></td>
+        <td class="expected">Daftar transaksi tampil dengan nominal, status, event terkait</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B3-08</td>
+        <td class="scenario">Jadwal Acara (kalender event)</td>
+        <td class="steps"><ol><li>Buka menu Jadwal Acara</li></ol></td>
+        <td class="expected">Jadwal semua event Active tampil berurutan berdasarkan tanggal</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B3-09</td>
+        <td class="scenario">Todo List / Tugas</td>
+        <td class="steps"><ol><li>Buka menu Todo List</li><li>Tambah tugas baru</li></ol></td>
+        <td class="expected">Tugas tersimpan, tampil di daftar</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-B3-10</td>
+        <td class="scenario">Dashboard Event Marketing</td>
+        <td class="steps"><ol><li>Buka Dashboard</li></ol></td>
+        <td class="expected">Statistik appointment pending, event aktif, transaksi tampil</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =========================================================== -->
+<!-- BAGIAN C — FINANCE                                           -->
+<!-- =========================================================== -->
+<div class="section pb">
+  <div class="section-header">
+    <div class="icon bg-fin">💰</div>
+    <div>
+      <h2>C1 — Auth Finance</h2>
+      <span class="role-tag bg-fin" style="color:#065f46;">FINANCE · backstage.laksamana.test</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-C1-01</td>
+        <td class="scenario">Login pegawai role Finance berhasil</td>
+        <td class="steps"><ol><li>Isi kredensial Finance</li><li>Login</li></ol></td>
+        <td class="expected">Redirect ke Dashboard Finance</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C1-02</td>
+        <td class="scenario">Akses halaman Event Marketing dari akun Finance</td>
+        <td class="steps"><ol><li>Login Finance, coba akses URL Event Marketing</li></ol></td>
+        <td class="expected">Forbidden (403) atau redirect</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C1-03</td>
+        <td class="scenario">Logout Finance</td>
+        <td class="steps"><ol><li>Klik logout</li></ol></td>
+        <td class="expected">Session habis, redirect login</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- C2. LAPORAN & TRANSAKSI -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-fin">📊</div>
+    <div>
+      <h2>C2 — Laporan & Transaksi (Finance)</h2>
+      <span class="role-tag bg-fin" style="color:#065f46;">FINANCE</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-C2-01</td>
+        <td class="scenario">Dashboard Finance — tampil statistik keuangan</td>
+        <td class="steps"><ol><li>Buka Dashboard Finance</li></ol></td>
+        <td class="expected">Total revenue, jumlah transaksi, event tampil dengan akurat</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C2-02</td>
+        <td class="scenario">Lihat daftar semua transaksi</td>
+        <td class="steps"><ol><li>Buka menu Transaksi</li></ol></td>
+        <td class="expected">Semua transaksi tampil: nominal, status bayar, tanggal, client</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C2-03</td>
+        <td class="scenario">Lihat Laporan Keuangan</td>
+        <td class="steps"><ol><li>Buka menu Laporan</li></ol></td>
+        <td class="expected">Summary revenue per periode tampil dengan benar</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C2-04</td>
+        <td class="scenario">Export laporan ke Excel</td>
+        <td class="steps"><ol><li>Di halaman Laporan, klik tombol Export Excel</li></ol></td>
+        <td class="expected">File .xlsx terdownload dengan data lengkap dan format benar</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C2-05</td>
+        <td class="scenario">Print laporan</td>
+        <td class="steps"><ol><li>Klik tombol Print di halaman Laporan</li></ol></td>
+        <td class="expected">Dialog print muncul, layout print-friendly tampil dengan benar</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C2-06</td>
+        <td class="scenario">Lihat Bukti Pembayaran</td>
+        <td class="steps"><ol><li>Buka menu Bukti Pembayaran</li></ol></td>
+        <td class="expected">Daftar bukti pembayaran tampil, bisa lihat detail/preview</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C2-07</td>
+        <td class="scenario">Lihat daftar event (Finance)</td>
+        <td class="steps"><ol><li>Buka menu Event</li></ol></td>
+        <td class="expected">Event tampil dengan info keuangan yang relevan</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C2-08</td>
+        <td class="scenario">Lihat data client (Finance)</td>
+        <td class="steps"><ol><li>Buka menu Client</li></ol></td>
+        <td class="expected">Daftar client read-only tampil (Finance hanya view)</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-C2-09</td>
+        <td class="scenario">Jadwal Acara Finance</td>
+        <td class="steps"><ol><li>Buka menu Jadwal Acara</li></ol></td>
+        <td class="expected">Jadwal event tampil, bisa filter berdasarkan periode</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =========================================================== -->
+<!-- BAGIAN D — MANAJEMEN                                         -->
+<!-- =========================================================== -->
+<div class="section pb">
+  <div class="section-header">
+    <div class="icon bg-mgmt">👔</div>
+    <div>
+      <h2>D1 — Auth Manajemen</h2>
+      <span class="role-tag bg-mgmt" style="color:#4c1d95;">MANAJEMEN · backstage.laksamana.test</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-D1-01</td>
+        <td class="scenario">Login pegawai role Manajemen berhasil</td>
+        <td class="steps"><ol><li>Isi kredensial Manajemen</li><li>Login</li></ol></td>
+        <td class="expected">Redirect ke Dashboard Manajemen</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D1-02</td>
+        <td class="scenario">Manajemen akses semua modul</td>
+        <td class="steps"><ol><li>Login Manajemen</li><li>Cek akses ke Appointment, Event, Client, Pegawai, Evaluasi</li></ol></td>
+        <td class="expected">Semua menu dapat diakses (role tertinggi)</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D1-03</td>
+        <td class="scenario">Logout Manajemen</td>
+        <td class="steps"><ol><li>Klik logout</li></ol></td>
+        <td class="expected">Session habis, redirect login</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- D2. MANAJEMEN PEGAWAI -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-mgmt">👥</div>
+    <div>
+      <h2>D2 — Manajemen Pegawai</h2>
+      <span class="role-tag bg-mgmt" style="color:#4c1d95;">MANAJEMEN</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-D2-01</td>
+        <td class="scenario">Lihat daftar semua pegawai</td>
+        <td class="steps"><ol><li>Buka menu Pegawai</li></ol></td>
+        <td class="expected">Daftar pegawai tampil: nama, role, email, status</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D2-02</td>
+        <td class="scenario">Tambah pegawai baru</td>
+        <td class="steps"><ol><li>Klik Tambah Pegawai</li><li>Isi nama, email, role, password</li><li>Simpan</li></ol></td>
+        <td class="expected">Pegawai tersimpan, muncul di daftar, bisa login</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D2-03</td>
+        <td class="scenario">Tambah pegawai — email duplikat</td>
+        <td class="steps"><ol><li>Isi email yang sudah ada</li><li>Submit</li></ol></td>
+        <td class="expected">Error validasi "email sudah digunakan"</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D2-04</td>
+        <td class="scenario">Edit data pegawai</td>
+        <td class="steps"><ol><li>Klik Edit pada pegawai</li><li>Ubah nama atau role</li><li>Simpan</li></ol></td>
+        <td class="expected">Data terupdate, perubahan role berlaku saat pegawai login berikutnya</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D2-05</td>
+        <td class="scenario">Hapus pegawai</td>
+        <td class="steps"><ol><li>Klik Hapus pada pegawai</li><li>Konfirmasi</li></ol></td>
+        <td class="expected">Pegawai terhapus dari daftar, tidak bisa login lagi</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- D3. MANAJEMEN CLIENT -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-mgmt">🤝</div>
+    <div>
+      <h2>D3 — Manajemen Client (dari Backstage)</h2>
+      <span class="role-tag bg-mgmt" style="color:#4c1d95;">MANAJEMEN</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-D3-01</td>
+        <td class="scenario">Lihat daftar semua client</td>
+        <td class="steps"><ol><li>Buka menu Client</li></ol></td>
+        <td class="expected">Semua client terdaftar tampil dengan info lengkap</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D3-02</td>
+        <td class="scenario">Tambah client manual dari backstage</td>
+        <td class="steps"><ol><li>Klik Tambah Client</li><li>Isi data client</li><li>Simpan</li></ol></td>
+        <td class="expected">Client tersimpan, muncul di daftar</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D3-03</td>
+        <td class="scenario">Edit data client</td>
+        <td class="steps"><ol><li>Edit data client yang ada</li><li>Simpan</li></ol></td>
+        <td class="expected">Data client terupdate</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D3-04</td>
+        <td class="scenario">Lihat detail client + riwayat appointment</td>
+        <td class="steps"><ol><li>Klik detail client tertentu</li></ol></td>
+        <td class="expected">Detail client tampil beserta riwayat appointment dan event</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- D4. MANAJEMEN EVENT & APPOINTMENT -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon bg-mgmt">🏆</div>
+    <div>
+      <h2>D4 — Event, Appointment & Evaluasi (Manajemen)</h2>
+      <span class="role-tag bg-mgmt" style="color:#4c1d95;">MANAJEMEN</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-D4-01</td>
+        <td class="scenario">Dashboard Manajemen — ringkasan data</td>
+        <td class="steps"><ol><li>Buka Dashboard</li></ol></td>
+        <td class="expected">Statistik total client, event, appointment, revenue tampil</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D4-02</td>
+        <td class="scenario">Lihat semua appointment (Manajemen)</td>
+        <td class="steps"><ol><li>Buka menu Appointment</li></ol></td>
+        <td class="expected">Semua appointment dari semua client tampil</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D4-03</td>
+        <td class="scenario">Buat event baru (Manajemen)</td>
+        <td class="steps"><ol><li>Buka menu Event → Tambah</li><li>Isi semua field</li><li>Simpan</li></ol></td>
+        <td class="expected">Event tersimpan dan langsung tampil di halaman client Events</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D4-04</td>
+        <td class="scenario">Edit dan hapus event (Manajemen)</td>
+        <td class="steps"><ol><li>Edit nama event</li><li>Coba hapus event</li></ol></td>
+        <td class="expected">Edit berhasil. Hapus berhasil dengan konfirmasi</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D4-05</td>
+        <td class="scenario">Lihat Evaluasi Event</td>
+        <td class="steps"><ol><li>Buka menu Evaluasi</li><li>Pilih salah satu event</li></ol></td>
+        <td class="expected">Detail evaluasi event: timeline, tugas, pegawai terlibat tampil</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D4-06</td>
+        <td class="scenario">Lihat Evaluasi Pegawai</td>
+        <td class="steps"><ol><li>Buka menu Evaluasi → Pegawai</li></ol></td>
+        <td class="expected">Performa pegawai berdasarkan tugas yang diselesaikan tampil</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D4-07</td>
+        <td class="scenario">Lihat dan kelola Transaksi (Manajemen)</td>
+        <td class="steps"><ol><li>Buka menu Transaksi</li></ol></td>
+        <td class="expected">Semua transaksi tampil, bisa view detail</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-D4-08</td>
+        <td class="scenario">Todo List / Tugas (Manajemen)</td>
+        <td class="steps"><ol><li>Buka menu Tugas</li><li>Tambah tugas baru</li><li>Tandai selesai</li></ol></td>
+        <td class="expected">Tugas tersimpan, status bisa diubah antara pending/selesai</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =========================================================== -->
+<!-- BAGIAN E — SECURITY & EMAIL                                  -->
+<!-- =========================================================== -->
+<div class="section pb">
+  <div class="section-header">
+    <div class="icon bg-sec">🔒</div>
+    <div>
+      <h2>E — Security, Email & Error Pages</h2>
+      <span class="role-tag bg-sec" style="color:#991b1b;">SEMUA ROLE</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Skenario</th><th>Langkah Uji</th><th>Expected Result</th><th>Prioritas</th><th>Actual Result</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc-id">TC-E-01</td>
+        <td class="scenario">Akses halaman protected tanpa login</td>
+        <td class="steps"><ol><li>Buka browser baru (incognito)</li><li>Langsung akses <code>/dashboard</code></li></ol></td>
+        <td class="expected">Redirect 302 ke <code>/login</code></td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-E-02</td>
+        <td class="scenario">Client akses URL backstage</td>
+        <td class="steps"><ol><li>Login sebagai Client</li><li>Akses URL <code>backstage.laksamana.test/...</code></li></ol></td>
+        <td class="expected">Redirect atau 404 — guard berbeda tidak saling tembus</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-E-03</td>
+        <td class="scenario">Halaman 404 — URL tidak ada</td>
+        <td class="steps"><ol><li>Akses URL yang tidak exist: <code>/halaman-tidak-ada</code></li></ol></td>
+        <td class="expected">Custom 404 page tampil (dark theme, bukan Laravel default)</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-E-04</td>
+        <td class="scenario">Halaman 403 — akses ditolak</td>
+        <td class="steps"><ol><li>Paksa akses resource yang forbidden</li></ol></td>
+        <td class="expected">Custom 403 page tampil dengan tombol kembali</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-E-05</td>
+        <td class="scenario">Halaman 419 — CSRF expired</td>
+        <td class="steps"><ol><li>Biarkan form terbuka lama lalu submit</li></ol></td>
+        <td class="expected">Custom 419 page tampil dengan pesan "sesi kedaluwarsa"</td>
+        <td><span class="prio-low">Low</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-E-06</td>
+        <td class="scenario">Rate limit forgot password — 5x dari IP sama</td>
+        <td class="steps"><ol><li>Submit forgot password 5x berturut dari IP sama</li><li>Coba ke-6</li></ol></td>
+        <td class="expected">Error rate limit, harus tunggu 10 menit</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-E-07</td>
+        <td class="scenario">Email konfirmasi appointment terkirim</td>
+        <td class="steps"><ol><li>Submit appointment baru</li><li>Cek inbox email client</li></ol></td>
+        <td class="expected">Email konfirmasi diterima dalam 1-2 menit dengan detail appointment</td>
+        <td><span class="prio-high">High</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+      <tr>
+        <td class="tc-id">TC-E-08</td>
+        <td class="scenario">Email reminder event H-1 dan H-3</td>
+        <td class="steps"><ol><li>Buat event dengan tanggal mulai H+1 dan H+3 dari hari ini</li><li>Jalankan: <code>php artisan schedule:run</code></li><li>Cek inbox</li></ol></td>
+        <td class="expected">Email reminder terkirim ke client terkait event H-1 dan H-3</td>
+        <td><span class="prio-med">Med</span></td>
+        <td class="actual-box"></td>
+        <td class="status-box"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== SIGN OFF ===== -->
+<div class="signoff">
+  <h3>✅ Sign-Off UAT</h3>
+  <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+    <thead>
+      <tr style="background:#1e293b; color:white;">
+        <th style="padding:8px 12px; text-align:left; font-size:11px;">Kategori</th>
+        <th style="padding:8px 12px; text-align:center; font-size:11px;">Total TC</th>
+        <th style="padding:8px 12px; text-align:center; font-size:11px;">PASS</th>
+        <th style="padding:8px 12px; text-align:center; font-size:11px;">FAIL</th>
+        <th style="padding:8px 12px; text-align:center; font-size:11px;">N/A</th>
+        <th style="padding:8px 12px; text-align:center; font-size:11px;">% Pass</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;">A — Client</td><td style="text-align:center;">44</td><td></td><td></td><td></td><td></td></tr>
+      <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;">B — Event Marketing</td><td style="text-align:center;">14</td><td></td><td></td><td></td><td></td></tr>
+      <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;">C — Finance</td><td style="text-align:center;">12</td><td></td><td></td><td></td><td></td></tr>
+      <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;">D — Manajemen</td><td style="text-align:center;">19</td><td></td><td></td><td></td><td></td></tr>
+      <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;">E — Security & Email</td><td style="text-align:center;">8</td><td></td><td></td><td></td><td></td></tr>
+      <tr style="background:#1e293b; color:white; font-weight:700;"><td style="padding:8px 12px;">TOTAL</td><td style="text-align:center;">97</td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <div class="sign-grid">
+    <div class="sign-box">
+      <div class="title">Dibuat oleh</div>
+      <div class="line">_______________________</div>
+      <div class="role">QA / Tester</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Tanggal: ______________</div>
+    </div>
+    <div class="sign-box">
+      <div class="title">Diperiksa oleh</div>
+      <div class="line">_______________________</div>
+      <div class="role">Project Manager / Lead Dev</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Tanggal: ______________</div>
+    </div>
+    <div class="sign-box">
+      <div class="title">Disetujui oleh</div>
+      <div class="line">_______________________</div>
+      <div class="role">Stakeholder / Owner</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Tanggal: ______________</div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px; padding:12px; background:#f8fafc; border-radius:8px; font-size:11px; color:#475569;">
+    <strong>Kriteria Kelulusan UAT:</strong> Minimum <strong>95%</strong> test case berstatus PASS dengan <strong>0 defect High/Critical</strong> yang masih terbuka sebelum go-live.
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,184 @@
+version: '3.9'
+
+# =============================================================================
+# EventManagement — Production Docker Compose
+# Client   : https://laksamanamuda.my.id
+# Backstage: https://backstage.laksamanamuda.my.id
+# =============================================================================
+
+services:
+
+  # ── Laravel PHP-FPM ─────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      target: app
+    image: eventmanagement/app:latest
+    container_name: em_app
+    restart: unless-stopped
+    volumes:
+      - storage_data:/var/www/html/storage
+    env_file: .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - em_network
+
+  # ── Nginx ────────────────────────────────────────────────────────────────────
+  # Pakai official image — config & public files di-bind mount dari host
+  # Sehingga bisa ganti config (HTTP→HTTPS) tanpa rebuild image
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: em_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./public:/var/www/html/public:ro          # Static files (CSS/JS/img)
+      - storage_data:/var/www/html/storage:ro     # Uploaded files (poster dll)
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro # Config (bisa ganti tanpa rebuild)
+      - certbot_conf:/etc/letsencrypt:ro          # SSL certificates
+      - certbot_www:/var/www/certbot:ro           # ACME challenge files
+    depends_on:
+      - app
+    networks:
+      - em_network
+
+  # ── MySQL ────────────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: em_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - em_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1",
+             "-u", "root", "--password=${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: em_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - em_network
+
+  # ── Queue Worker ──────────────────────────────────────────────────────────
+  queue:
+    build:
+      context: .
+      target: app
+    image: eventmanagement/app:latest
+    container_name: em_queue
+    restart: unless-stopped
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    volumes:
+      - storage_data:/var/www/html/storage
+    env_file: .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - em_network
+
+  # ── Reverb WebSocket Server ────────────────────────────────────────────────
+  reverb:
+    build:
+      context: .
+      target: app
+    image: eventmanagement/app:latest
+    container_name: em_reverb
+    restart: unless-stopped
+    command: php artisan reverb:start --host=0.0.0.0 --port=9090 --no-interaction
+    volumes:
+      - storage_data:/var/www/html/storage
+    env_file: .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - em_network
+
+  # ── Scheduler (Cron) ──────────────────────────────────────────────────────
+  # Jalankan php artisan schedule:run setiap menit (untuk email reminder event)
+  scheduler:
+    build:
+      context: .
+      target: app
+    image: eventmanagement/app:latest
+    container_name: em_scheduler
+    restart: unless-stopped
+    command: >
+      sh -c "while true; do
+        php artisan schedule:run --no-interaction >> /dev/null 2>&1;
+        sleep 60;
+      done"
+    volumes:
+      - storage_data:/var/www/html/storage
+    env_file: .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - em_network
+
+  # ── Certbot (SSL Auto-Renew) ───────────────────────────────────────────────
+  certbot:
+    image: certbot/certbot:latest
+    container_name: em_certbot
+    restart: unless-stopped
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done'"
+
+  # ── Node Builder (hanya dijalankan manual untuk build frontend) ───────────
+  # Cara pakai: docker compose run --rm node_builder
+  node_builder:
+    build:
+      context: .
+      target: node_builder
+    container_name: em_node_builder
+    volumes:
+      - ./public:/app/public  # Hasil build langsung masuk ke ./public di host
+    profiles:
+      - build  # Tidak auto-start, harus dipanggil manual
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  storage_data:
+    driver: local
+  certbot_conf:
+    driver: local
+  certbot_www:
+    driver: local
+
+networks:
+  em_network:
+    driver: bridge

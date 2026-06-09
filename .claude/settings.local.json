@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(findstr \"client\\\\.\")",
+      "Bash(findstr \"register\\\\|profile\\\\|reset\")",
+      "Bash(powershell -Command \"Select-String -Path 'resources\\\\js\\\\Pages\\\\Client\\\\Events.jsx' -Pattern 'events\\\\.links|eventsData\\\\.' | Select-Object LineNumber, Line\")"
+    ]
+  }
+}

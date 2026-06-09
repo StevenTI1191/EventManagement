@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+
+# Laravel cache & local files
+bootstrap/cache/*.php
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# Environment (JANGAN di-copy ke image!)
+.env
+.env.*
+!.env.example
+
+# Docker files itu sendiri (tidak perlu di-copy)
+docker-compose*.yml
+Dockerfile
+
+# OS & editor files
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+
+# Test files
+tests/
+phpunit.xml
+
+# Docs
+*.md
+Dokumen_Testing
+UAT_Blackbox.html
+CHANGELOG.md
