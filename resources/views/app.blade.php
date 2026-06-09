@@ -3,6 +3,10 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        {{-- Situs ini light-mode only. Tanpa ini, "Auto Dark Theme" di
+             Chrome Android/Samsung Internet meng-invert warna sendiri
+             (mis. kuning jadi maroon). --}}
+        <meta name="color-scheme" content="light">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 

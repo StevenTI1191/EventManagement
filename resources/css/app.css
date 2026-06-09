@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Paksa light-mode: cegah browser HP (Auto Dark Theme) menginversi warna */
+:root {
+    color-scheme: light;
+}
