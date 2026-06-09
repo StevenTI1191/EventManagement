@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 // Password strength scorer
 const getPasswordStrength = (password) => {
@@ -64,6 +64,14 @@ export default function Register() {
         <>
             <Head title="Daftar - Laksamana Muda" />
             <div className="flex items-center justify-center min-h-screen px-6 py-12 bg-black">
+                {/* Tombol kembali ke homepage — mengambang pojok kiri atas */}
+                <Link
+                    href={route('client.home')}
+                    className="fixed z-50 flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold text-gray-300 border rounded-full top-5 left-5 bg-gray-900/80 border-gray-700 backdrop-blur hover:text-yellow-400 hover:border-yellow-500/50 transition-all"
+                >
+                    <ArrowLeft size={16} />
+                    Kembali
+                </Link>
                 <div className="w-full max-w-md">
 
                     {/* Logo */}
