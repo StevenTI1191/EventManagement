@@ -18,6 +18,9 @@ services:
     restart: unless-stopped
     volumes:
       - storage_data:/var/www/html/storage
+      # Manifest Vite HARUS sama dengan yang disajikan Nginx (host ./public/build).
+      # Tanpa ini, PHP membaca manifest dari image (hash beda) → semua asset 404.
+      - ./public/build:/var/www/html/public/build:ro
     env_file: .env
     depends_on:
       mysql:
