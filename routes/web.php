@@ -357,6 +357,37 @@ Route::domain(config('app.domain'))->group(function () {
         ->name('client.home');
     Route::get('/events', [\App\Http\Controllers\Client\HomeController::class, 'events'])
         ->name('client.events');
+
+    // ── SEO: sitemap.xml dinamis (halaman publik) ──────────────────────
+    Route::get('/sitemap.xml', function () {
+        $base    = rtrim(config('seo.url'), '/');
+        $lastmod = optional(\App\Models\Event::max('updated_at'))
+            ? \Illuminate\Support\Carbon::parse(\App\Models\Event::max('updated_at'))->toAtomString()
+            : now()->toAtomString();
+
+        $urls = [
+            ['loc' => $base . '/',         'priority' => '1.0', 'freq' => 'weekly',  'lastmod' => $lastmod],
+            ['loc' => $base . '/events',   'priority' => '0.8', 'freq' => 'daily',   'lastmod' => $lastmod],
+            ['loc' => $base . '/login',    'priority' => '0.3', 'freq' => 'monthly', 'lastmod' => null],
+            ['loc' => $base . '/register', 'priority' => '0.3', 'freq' => 'monthly', 'lastmod' => null],
+        ];
+
+        $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+        foreach ($urls as $u) {
+            $xml .= "  <url>\n";
+            $xml .= "    <loc>{$u['loc']}</loc>\n";
+            if ($u['lastmod']) {
+                $xml .= "    <lastmod>{$u['lastmod']}</lastmod>\n";
+            }
+            $xml .= "    <changefreq>{$u['freq']}</changefreq>\n";
+            $xml .= "    <priority>{$u['priority']}</priority>\n";
+            $xml .= "  </url>\n";
+        }
+        $xml .= '</urlset>';
+
+        return response($xml, 200)->header('Content-Type', 'application/xml');
+    })->name('client.sitemap');
     Route::get('/login', [\App\Http\Controllers\Client\AuthController::class, 'showLogin'])
         ->name('client.login');
     Route::post('/login', [\App\Http\Controllers\Client\AuthController::class, 'login']);

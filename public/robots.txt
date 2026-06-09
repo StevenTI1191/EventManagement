@@ -1,2 +1,13 @@
 User-agent: *
-Disallow:
+Allow: /
+
+# Area privat — jangan di-index
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /appointment
+Disallow: /manajemen
+Disallow: /event-marketing
+Disallow: /finance
+Disallow: /auth/
+
+Sitemap: https://laksamanamuda.my.id/sitemap.xml
