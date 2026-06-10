@@ -16,12 +16,12 @@ return [
 
     // ── Identitas bisnis ────────────────────────────────────────────────
     'name'        => 'Laksamana Muda',
-    'legal_name'  => 'Laksamana Muda Event Organizer',
-    'tagline'     => 'Professional Event Organizer — Pekanbaru, Riau',
+    'legal_name'  => 'Laksamana Muda — Event Organizer & Live Space',
+    'tagline'     => 'Event Organizer & Cafe Live Space (Bebas Alkohol) — Pekanbaru',
 
     // Deskripsi default (≤ 160 karakter ideal untuk hasil search)
-    'description' => 'Laksamana Muda adalah Event Organizer profesional di Pekanbaru, Riau. '
-        . 'Spesialis corporate event, wedding, konser musik, exhibition, dan private party.',
+    'description' => 'Laksamana Muda — Event Organizer & cafe live space bebas alkohol di Pekanbaru, Riau. '
+        . 'Musik live, tempat nongkrong nyaman, dan jasa penyelenggara acara profesional.',
 
     // ── URL & gambar ────────────────────────────────────────────────────
     // URL utama situs client (tanpa trailing slash)
@@ -31,9 +31,9 @@ return [
     // Gambar preview saat link di-share (idealnya 1200x630). Ganti bila ada banner.
     'og_image' => '/images/LaksamanaLogo.png',
 
-    // ── Kontak (PLACEHOLDER — ganti dengan data asli) ───────────────────
-    'phone'   => '+62 812-3456-7890',
-    'email'   => 'info@laksamanamuda.co.id',
+    // ── Kontak (data resmi) ─────────────────────────────────────────────
+    'phone'   => '+62 853-6523-4898',
+    'email'   => 'contactus@laksamanamuda.com',
 
     // ── Alamat ──────────────────────────────────────────────────────────
     'address' => [
