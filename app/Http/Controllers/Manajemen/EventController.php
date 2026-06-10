@@ -20,6 +20,7 @@ class EventController extends Controller
             'tgl_awal'   => 'nullable|date',
             'tgl_akhir'  => 'nullable|date|after_or_equal:tgl_awal',
             'status'     => 'nullable|in:Pending,Active,Done,Cancelled',
+            'kategori'   => 'nullable|string|max:255',
             'id_client'  => 'nullable|integer|min:1',
             'id_pegawai' => 'nullable|integer|min:1',
             'search'     => 'nullable|string|max:255',
@@ -32,6 +33,9 @@ class EventController extends Controller
         }
         if ($request->status) {
             $query->where('status_event', $request->status);
+        }
+        if ($request->kategori) {
+            $query->where('kategori_event', $request->kategori);
         }
         if ($request->id_client) {
             $query->where('id_client', $request->id_client);
@@ -47,7 +51,7 @@ class EventController extends Controller
 
         return Inertia::render('Manajemen/Event/Index', [
             'events'   => $events,
-            'filters'  => $request->only(['tgl_awal', 'tgl_akhir', 'status', 'id_client', 'id_pegawai', 'search']),
+            'filters'  => $request->only(['tgl_awal', 'tgl_akhir', 'status', 'kategori', 'id_client', 'id_pegawai', 'search']),
             'clients'  => \App\Models\Client::select('id', 'nama_client', 'perusahaan_client')->get(),
             'pegawais' => \App\Models\Pegawai::select('id_pegawai', 'nama_pegawai', 'posisi_pegawai')->get(),
         ]);
