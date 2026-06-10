@@ -470,8 +470,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                         return (
                             <div className="grid grid-cols-1 gap-3 mb-6 sm:grid-cols-3">
                                 {cards.map((card, i) => {
-                                    // 'payments' card bukan tab — klik redirect ke tab 'events' (info pembayaran ada di sana)
-                                    const effectiveTab = card.id === 'payments' ? 'events' : card.id;
+                                    const effectiveTab = card.id;
                                     const isActive = activeTab === card.id;
                                     const accentMap = {
                                         orange: 'bg-orange-500/10 border-orange-500/40 hover:shadow-orange-500/10',
@@ -492,7 +491,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                     : isActive
                                                         ? 'bg-yellow-500/15 border-yellow-500/50 shadow-lg shadow-yellow-500/10'
                                                         : 'bg-gray-900 border-gray-800 hover:border-yellow-500/30'
-                                            }`}>
+                                            } ${isActive ? 'ring-2 ring-yellow-500/40' : ''}`}>
                                             <div className="flex items-start justify-between mb-3">
                                                 <span className="text-2xl leading-none">{card.icon}</span>
                                                 {card.badge && (
@@ -957,6 +956,134 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                             )}
                         </div>
                     )}
+
+                    {/* TAB: PAYMENTS */}
+                    {activeTab === 'payments' && (() => {
+                        const sumBayar  = (e) => (e.bukti_pembayaran || [])
+                            .filter(b => b.status === 'Diverifikasi')
+                            .reduce((a, b) => a + (Number(b.nominal) || 0), 0);
+                        const payEvents = (events || []).filter(e => Number(e.deal_harga_event) > 0);
+                        const totalTagihan  = payEvents.reduce((s, e) => s + Number(e.deal_harga_event || 0), 0);
+                        const totalTerbayar = payEvents.reduce((s, e) => s + sumBayar(e), 0);
+                        const totalSisa     = Math.max(0, totalTagihan - totalTerbayar);
+
+                        if (payEvents.length === 0) {
+                            return (
+                                <div className="py-20 text-center border-2 border-gray-800 border-dashed rounded-3xl">
+                                    <span className="block mb-4 text-5xl">💳</span>
+                                    <p className="text-lg font-bold text-gray-500">Belum ada tagihan</p>
+                                    <p className="mt-1 text-sm text-gray-600">Tagihan muncul setelah event Anda memiliki harga deal.</p>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div className="space-y-4">
+                                {/* Ringkasan keuangan */}
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                    <div className="p-5 bg-gray-900 border border-gray-800 rounded-2xl">
+                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Total Tagihan</p>
+                                        <p className="text-xl font-black text-yellow-400">{formatBudget(totalTagihan)}</p>
+                                    </div>
+                                    <div className="p-5 bg-green-500/5 border border-green-500/20 rounded-2xl">
+                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Total Terbayar</p>
+                                        <p className="text-xl font-black text-green-400">{formatBudget(totalTerbayar)}</p>
+                                    </div>
+                                    <div className="p-5 bg-orange-500/5 border border-orange-500/20 rounded-2xl">
+                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Sisa</p>
+                                        <p className="text-xl font-black text-orange-400">{totalSisa === 0 ? '✓ Lunas' : formatBudget(totalSisa)}</p>
+                                    </div>
+                                </div>
+
+                                {/* Daftar tagihan per event */}
+                                {payEvents.map(event => {
+                                    const dibayar    = sumBayar(event);
+                                    const dealHarga  = Number(event.deal_harga_event) || 0;
+                                    const pct        = dealHarga > 0 ? Math.min(100, Math.round((dibayar / dealHarga) * 100)) : 0;
+                                    const lunas      = dibayar >= dealHarga;
+                                    const sisa       = dealHarga - dibayar;
+                                    const isExpanded = expandedEvent === event.id_event;
+                                    const buktiList  = event.bukti_pembayaran || [];
+
+                                    return (
+                                    <div key={event.id_event} className="p-5 bg-gray-900 border border-gray-800 rounded-2xl">
+                                        <div className="flex items-start justify-between gap-3 mb-3">
+                                            <div className="min-w-0">
+                                                <h3 className="text-base font-black text-white truncate">{event.nama_event}</h3>
+                                                <p className="text-xs text-gray-500 mt-0.5">{formatTanggal(event.tgl_mulai_event)}</p>
+                                            </div>
+                                            {lunas
+                                                ? <span className="px-2 py-1 text-[10px] font-black text-green-400 bg-green-500/10 border border-green-500/30 rounded-full flex-shrink-0">✓ LUNAS</span>
+                                                : <span className="px-2 py-1 text-[10px] font-black text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-full flex-shrink-0">{pct}%</span>
+                                            }
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-2 mb-3">
+                                            <div>
+                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Total</p>
+                                                <p className="text-sm font-bold text-yellow-400">{formatBudget(dealHarga)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Terbayar</p>
+                                                <p className="text-sm font-bold text-green-400">{formatBudget(dibayar)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Sisa</p>
+                                                <p className={`text-sm font-bold ${lunas ? 'text-green-400' : 'text-orange-400'}`}>{lunas ? '✓' : formatBudget(sisa)}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="w-full h-2 mb-3 overflow-hidden bg-gray-800 rounded-full">
+                                            <div className="h-2 rounded-full transition-all duration-700"
+                                                style={{ width: `${pct}%`, background: lunas ? '#22c55e' : pct >= 50 ? '#eab308' : '#f97316' }} />
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <button onClick={() => openUpload(event)}
+                                                className="flex items-center justify-center gap-1 px-4 py-2 text-xs font-bold text-yellow-400 transition-colors border bg-yellow-500/10 rounded-xl hover:bg-yellow-500/20 border-yellow-500/30">
+                                                <Upload size={13} /> Upload Bukti
+                                            </button>
+                                            <button onClick={() => setExpandedEvent(isExpanded ? null : event.id_event)}
+                                                className="flex items-center justify-center gap-1 px-4 py-2 text-xs font-bold text-gray-300 transition-colors bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700">
+                                                {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                                {buktiList.length} Bukti
+                                            </button>
+                                        </div>
+
+                                        {isExpanded && (
+                                            <div className="pt-3 mt-3 border-t border-gray-800">
+                                                {buktiList.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {buktiList.map(bukti => (
+                                                            <div key={bukti.id} className="flex items-center justify-between p-2.5 bg-gray-800 rounded-xl">
+                                                                <div className="flex items-center gap-2 min-w-0">
+                                                                    <FileText size={14} className="flex-shrink-0 text-gray-400" />
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-xs font-bold text-white truncate">{bukti.nominal ? formatBudget(bukti.nominal) : 'Bukti'}</p>
+                                                                        <p className="text-[10px] text-gray-500">{new Date(bukti.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                                    <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full border ${getBuktiStatusColor(bukti.status)}`}>{bukti.status}</span>
+                                                                    <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer" className="p-1 text-gray-400 transition-colors hover:text-yellow-400"><Eye size={13} /></a>
+                                                                    {bukti.status === 'Menunggu' && (
+                                                                        <button onClick={() => handleDeleteBukti(bukti.id)} className="p-1 text-gray-400 transition-colors hover:text-red-400"><X size={13} /></button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="py-4 text-sm text-center text-gray-600">Belum ada bukti pembayaran</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
 
