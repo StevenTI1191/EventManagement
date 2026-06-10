@@ -1,6 +1,6 @@
 import React from 'react';
 import ManajemenLayout from '@/Layouts/ManajemenLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import StatCard from '@/Components/StatCard';
 import {
     CheckCircle, Calendar, Layout,
@@ -238,8 +238,9 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
                     <h3 className="mb-5 text-base font-extrabold text-gray-900">Event Terbaru</h3>
                     <div className="space-y-3">
                         {recentEvents?.length > 0 ? recentEvents.map(event => (
-                            <div key={event.id_event}
-                                className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-pink-50 transition-colors">
+                            <Link key={event.id_event}
+                                href={route('manajemen.event.edit', event.id_event)}
+                                className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-pink-50 transition-colors cursor-pointer">
                                 <div className="flex-shrink-0 w-12 h-12 overflow-hidden rounded-xl bg-gray-200">
                                     {event.poster_event ? (
                                         <img src={`/${event.poster_event}`} alt={event.nama_event}
@@ -266,7 +267,7 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
                                 }`}>
                                     {event.status_event || 'Pending'}
                                 </span>
-                            </div>
+                            </Link>
                         )) : (
                             <p className="py-6 text-sm text-center text-gray-400">Belum ada event.</p>
                         )}

@@ -6,3 +6,17 @@
 :root {
     color-scheme: light;
 }
+
+/* Ikon picker date/time agar terlihat di input bertema gelap (mis. form appointment).
+   Tanpa ini ikon kalender/jam gelap di atas background hitam → tak kelihatan. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.55;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}

@@ -229,7 +229,8 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                                     <input type="date" value={data.tgl_request}
                                         min={minDate}
                                         onChange={e => setData('tgl_request', e.target.value)}
-                                        className={inputClass} />
+                                        onClick={e => e.target.showPicker?.()}
+                                        className={inputClass + ' cursor-pointer'} />
                                     {errors.tgl_request && <p className="mt-1 text-xs text-red-400">⚠ {errors.tgl_request}</p>}
                                 </div>
                                 <div>
@@ -239,7 +240,8 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                                     </label>
                                     <input type="time" value={data.jam_request}
                                         onChange={e => setData('jam_request', e.target.value)}
-                                        className={inputClass} />
+                                        onClick={e => e.target.showPicker?.()}
+                                        className={inputClass + ' cursor-pointer'} />
                                 </div>
                             </div>
                         </div>
