@@ -440,6 +440,8 @@ Route::domain(config('app.domain'))->group(function () {
         })->name('client.notifikasi.destroy');
         Route::get('/appointment/create', [\App\Http\Controllers\Client\AppointmentController::class, 'create'])
             ->name('client.appointment.create');
+        Route::get('/appointment/slots', [\App\Http\Controllers\Client\AppointmentController::class, 'bookedSlots'])
+            ->name('client.appointment.slots');
         Route::post('/appointment', [\App\Http\Controllers\Client\AppointmentController::class, 'store'])
             ->name('client.appointment.store');
         Route::delete('/appointment/{id}', [\App\Http\Controllers\Client\AppointmentController::class, 'destroy'])

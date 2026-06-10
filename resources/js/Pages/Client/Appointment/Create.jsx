@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import { Calendar, Clock, Users, Wallet, FileText, CheckCircle, LayoutDashboard, AlertTriangle, Phone } from 'lucide-react';
 
 const EVENT_TYPES = [
@@ -13,7 +14,7 @@ const EVENT_TYPES = [
 
 const STEPS = ['Jenis Event', 'Detail', 'Jadwal'];
 
-export default function AppointmentCreate({ has_active_appointment, missing_phone }) {
+export default function AppointmentCreate({ has_active_appointment, missing_phone, slots = [] }) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const minDate = tomorrow.toISOString().split('T')[0];
@@ -26,6 +27,32 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
         tgl_request: '',
         jam_request: '',
     });
+
+    // Slot yang sudah dipesan pada tanggal terpilih (untuk dinonaktifkan di dropdown)
+    const [bookedSlots, setBookedSlots] = useState([]);
+    const [slotLoading, setSlotLoading]  = useState(false);
+    const [dateError, setDateError]      = useState('');
+
+    const handleDateChange = (value) => {
+        setData('tgl_request', value);
+        setData('jam_request', '');   // reset jam saat tanggal berubah
+        setBookedSlots([]);
+        setDateError('');
+        if (!value) return;
+
+        // Tolak hari Minggu (0 = Minggu)
+        if (new Date(value + 'T00:00').getDay() === 0) {
+            setDateError('Hari Minggu libur. Pilih hari Senin–Sabtu.');
+            return;
+        }
+
+        setSlotLoading(true);
+        fetch(`/appointment/slots?tgl=${value}`, { headers: { Accept: 'application/json' } })
+            .then(r => r.json())
+            .then(d => setBookedSlots(d.booked || []))
+            .catch(() => setBookedSlots([]))
+            .finally(() => setSlotLoading(false));
+    };
 
     const step = !data.jenis_event ? 0 : (!data.tgl_request ? 1 : 2);
 
@@ -228,20 +255,37 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                                     </label>
                                     <input type="date" value={data.tgl_request}
                                         min={minDate}
-                                        onChange={e => setData('tgl_request', e.target.value)}
+                                        onChange={e => handleDateChange(e.target.value)}
                                         onClick={e => e.target.showPicker?.()}
                                         className={inputClass + ' cursor-pointer'} />
+                                    {dateError && <p className="mt-1 text-xs text-red-400">⚠ {dateError}</p>}
                                     {errors.tgl_request && <p className="mt-1 text-xs text-red-400">⚠ {errors.tgl_request}</p>}
                                 </div>
                                 <div>
                                     <label className={labelClass}>
                                         <Clock size={11} className="inline mr-1" />
-                                        Jam yang Diinginkan
+                                        Jam Mulai *
                                     </label>
-                                    <input type="time" value={data.jam_request}
+                                    <select value={data.jam_request}
                                         onChange={e => setData('jam_request', e.target.value)}
-                                        onClick={e => e.target.showPicker?.()}
-                                        className={inputClass + ' cursor-pointer'} />
+                                        disabled={!data.tgl_request || !!dateError || slotLoading}
+                                        className={inputClass + ' cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'}>
+                                        <option value="">
+                                            {!data.tgl_request ? 'Pilih tanggal dulu'
+                                                : slotLoading ? 'Memuat slot...'
+                                                : '— Pilih jam —'}
+                                        </option>
+                                        {slots.map(s => {
+                                            const taken = bookedSlots.includes(s);
+                                            return (
+                                                <option key={s} value={s} disabled={taken}>
+                                                    {s} {taken ? '(sudah dipesan)' : ''}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                    <p className="mt-1 text-[10px] text-gray-600">Meeting 30 menit · Senin–Sabtu 09:00–17:00</p>
+                                    {errors.jam_request && <p className="mt-1 text-xs text-red-400">⚠ {errors.jam_request}</p>}
                                 </div>
                             </div>
                         </div>
@@ -265,7 +309,7 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                                 Batal
                             </Link>
                             <button type="submit"
-                                disabled={processing || !data.jenis_event || !data.tgl_request || missing_phone}
+                                disabled={processing || !data.jenis_event || !data.tgl_request || !data.jam_request || !!dateError || missing_phone}
                                 className="flex-1 py-3.5 font-black text-black transition-all bg-yellow-500 rounded-xl hover:bg-yellow-400 disabled:opacity-40 disabled:cursor-not-allowed">
                                 {processing ? '⏳ Mengirim...' : '🚀 Kirim Appointment'}
                             </button>
