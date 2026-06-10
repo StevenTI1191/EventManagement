@@ -21,6 +21,9 @@ services:
       # Manifest Vite HARUS sama dengan yang disajikan Nginx (host ./public/build).
       # Tanpa ini, PHP membaca manifest dari image (hash beda) → semua asset 404.
       - ./public/build:/var/www/html/public/build:ro
+      # Poster event di-upload ke public/posters. Harus volume bersama agar
+      # (1) persisten saat container recreate, (2) bisa dibaca Nginx.
+      - posters_data:/var/www/html/public/posters
     env_file: .env
     depends_on:
       mysql:
@@ -42,7 +45,8 @@ services:
       - "443:443"
     volumes:
       - ./public:/var/www/html/public:ro          # Static files (CSS/JS/img)
-      - storage_data:/var/www/html/storage:ro     # Uploaded files (poster dll)
+      - posters_data:/var/www/html/public/posters:ro  # Poster event (volume bersama dgn app)
+      - storage_data:/var/www/html/storage:ro     # Uploaded files (bukti pembayaran dll)
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro # Config (bisa ganti tanpa rebuild)
       - certbot_conf:/etc/letsencrypt:ro          # SSL certificates
       - certbot_www:/var/www/certbot:ro           # ACME challenge files
@@ -176,6 +180,8 @@ volumes:
   redis_data:
     driver: local
   storage_data:
+    driver: local
+  posters_data:
     driver: local
   certbot_conf:
     driver: local
