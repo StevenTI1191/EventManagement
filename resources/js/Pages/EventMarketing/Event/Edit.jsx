@@ -3,7 +3,7 @@ import { Head, useForm, Link } from '@inertiajs/react';
 import { Download } from 'lucide-react';
 
 export default function Edit({ auth, event, clients, pegawais }) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
         _method:              'PUT',
         nama_event:           event.nama_event || '',
         kategori_event:       event.kategori_event || '',
@@ -26,6 +26,33 @@ export default function Edit({ auth, event, clients, pegawais }) {
         poster_event:         null,
         kontrak_file:         null,
     });
+
+    // Aturan file (samakan dgn validasi backend: poster max 2MB image, kontrak max 5MB pdf/doc)
+    const FILE_RULES = {
+        poster_event: { maxMB: 2, exts: ['jpg', 'jpeg', 'png', 'gif', 'webp'], accept: 'gambar (JPG/PNG)' },
+        kontrak_file: { maxMB: 5, exts: ['pdf', 'doc', 'docx'],               accept: 'PDF atau Word' },
+    };
+
+    const handleFile = (field, file, inputEl) => {
+        clearErrors(field);
+        if (!file) { setData(field, null); return; }
+        const rule = FILE_RULES[field];
+        const ext  = (file.name.split('.').pop() || '').toLowerCase();
+
+        if (!rule.exts.includes(ext)) {
+            setError(field, `Format ".${ext}" tidak didukung. Gunakan ${rule.accept}.`);
+            setData(field, null);
+            if (inputEl) inputEl.value = '';
+            return;
+        }
+        if (file.size > rule.maxMB * 1024 * 1024) {
+            setError(field, `Ukuran ${(file.size / 1048576).toFixed(1)} MB melebihi batas ${rule.maxMB} MB.`);
+            setData(field, null);
+            if (inputEl) inputEl.value = '';
+            return;
+        }
+        setData(field, file);
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -159,7 +186,9 @@ export default function Edit({ auth, event, clients, pegawais }) {
                             </div>
 
                             <div>
-                                <label className="block mb-1 text-sm font-bold text-gray-700">Ganti Poster (Opsional)</label>
+                                <label className="block mb-1 text-sm font-bold text-gray-700">
+                                    Ganti Poster <span className="font-normal text-gray-400">(Opsional · maks 2 MB · JPG/PNG)</span>
+                                </label>
                                 {event.poster_event && (
                                     <div className="flex items-center gap-2 p-2 mb-2 border border-gray-200 bg-gray-50 rounded-xl">
                                         <img src={'/' + event.poster_event} alt="Poster saat ini"
@@ -169,16 +198,19 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                 )}
                                 <input type="file" accept="image/*"
                                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
-                                    onChange={e => {
-                                        if (e.target.files && e.target.files[0]) {
-                                            setData('poster_event', e.target.files[0]);
-                                        }
-                                    }} />
+                                    onChange={e => handleFile('poster_event', e.target.files?.[0], e.target)} />
+                                {errors.poster_event && <span className="block mt-1 text-xs text-red-500">⚠ {errors.poster_event}</span>}
+                                {data.poster_event && (
+                                    <p className="mt-1 text-xs text-gray-400">
+                                        File baru: <span className="font-semibold text-gray-600">{data.poster_event.name}</span>
+                                        {' '}({(data.poster_event.size / 1048576).toFixed(1)} MB)
+                                    </p>
+                                )}
                             </div>
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">
-                                    Ganti Kontrak <span className="font-normal text-gray-400">(PDF / Word)</span>
+                                    Ganti Kontrak <span className="font-normal text-gray-400">(PDF / Word · maks 5 MB)</span>
                                 </label>
                                 {event.kontrak_file && (
                                     <div className="flex items-center justify-between p-3 mb-2 border border-orange-200 bg-orange-50 rounded-xl">
@@ -202,12 +234,14 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                 <input type="file"
                                     accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
-                                    onChange={e => {
-                                        if (e.target.files && e.target.files[0]) {
-                                            setData('kontrak_file', e.target.files[0]);
-                                        }
-                                    }} />
-                                {errors.kontrak_file && <span className="text-xs text-red-500">{errors.kontrak_file}</span>}
+                                    onChange={e => handleFile('kontrak_file', e.target.files?.[0], e.target)} />
+                                {errors.kontrak_file && <span className="block mt-1 text-xs text-red-500">⚠ {errors.kontrak_file}</span>}
+                                {data.kontrak_file && (
+                                    <p className="mt-1 text-xs text-gray-400">
+                                        File baru: <span className="font-semibold text-gray-600">{data.kontrak_file.name}</span>
+                                        {' '}({(data.kontrak_file.size / 1048576).toFixed(1)} MB)
+                                    </p>
+                                )}
                             </div>
 
                             <div>
