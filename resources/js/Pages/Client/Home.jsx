@@ -538,8 +538,8 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                     </div>
                     <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-3">
                         {[
-                            { icon: <Phone size={24} />, title: 'Telepon / WhatsApp', value: '+62 812-3456-7890', sub: 'Senin – Sabtu, 09.00 – 18.00 WIB' },
-                            { icon: <Mail size={24} />,  title: 'Email',              value: 'info@laksamanamuda.co.id', sub: 'Respon dalam 1x24 jam' },
+                            { icon: <Phone size={24} />, title: 'Telepon / WhatsApp', value: '+62 853-6523-4898', sub: 'Senin – Sabtu, 09.00 – 18.00 WIB' },
+                            { icon: <Mail size={24} />,  title: 'Email',              value: 'contactus@laksamanamuda.com', sub: 'Respon dalam 1x24 jam' },
                             { icon: <MapPin size={24}/>, title: 'Alamat',             value: 'Pekanbaru, Riau', sub: 'Indonesia' },
                         ].map(item => (
                             <div key={item.title} className="p-6 text-center transition-colors bg-gray-900 border border-gray-800 rounded-2xl hover:border-yellow-500/50">
@@ -587,7 +587,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                                 <span className="text-lg font-black text-white">Laksamana <span className="text-yellow-500">Muda</span></span>
                             </div>
                             <p className="mb-4 text-sm leading-relaxed text-gray-400 max-w-xs">
-                                Event Organizer profesional di Pekanbaru, Riau. Kami hadir untuk mewujudkan setiap event impian Anda.
+                                Event Organizer & cafe live space bebas alkohol di Pekanbaru, Riau. Musik live, suasana nyaman, dan acara yang berkesan.
                             </p>
                             <div className="flex gap-3">
                                 {[
@@ -626,8 +626,8 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                         <div>
                             <h4 className="mb-4 text-sm font-bold text-white uppercase tracking-widest">Kontak</h4>
                             <ul className="space-y-3">
-                                <li className="flex items-start gap-2 text-sm text-gray-400"><Phone size={14} className="mt-0.5 text-yellow-500 shrink-0" /> +62 812-3456-7890</li>
-                                <li className="flex items-start gap-2 text-sm text-gray-400"><Mail size={14} className="mt-0.5 text-yellow-500 shrink-0" /> info@laksamanamuda.co.id</li>
+                                <li className="flex items-start gap-2 text-sm text-gray-400"><Phone size={14} className="mt-0.5 text-yellow-500 shrink-0" /> +62 853-6523-4898</li>
+                                <li className="flex items-start gap-2 text-sm text-gray-400"><Mail size={14} className="mt-0.5 text-yellow-500 shrink-0" /> contactus@laksamanamuda.com</li>
                                 <li className="flex items-start gap-2 text-sm text-gray-400"><MapPin size={14} className="mt-0.5 text-yellow-500 shrink-0" /> Pekanbaru, Riau, Indonesia</li>
                             </ul>
                         </div>
