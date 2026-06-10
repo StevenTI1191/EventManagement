@@ -135,7 +135,7 @@ export default function PegawaiCreate({ auth }) {
                         <label className={labelClass}>Password</label>
                         <input
                             type="password"
-                            placeholder="Minimal 6 karakter"
+                            placeholder="Minimal 8 karakter"
                             className={inputClass}
                             value={data.password_pegawai}
                             onChange={e => setData('password_pegawai', e.target.value)}

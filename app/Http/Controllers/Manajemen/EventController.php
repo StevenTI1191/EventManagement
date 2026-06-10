@@ -129,7 +129,7 @@ class EventController extends Controller
         if ($request->hasFile('kontrak_file') && $request->file('kontrak_file')->isValid()) {
             $file = $request->file('kontrak_file');
             $filename = $file->hashName();
-            Storage::disk('local')->putFileAs('private/kontrak', $file, $filename);
+            Storage::disk('local')->putFileAs('kontrak', $file, $filename);
             $data['kontrak_file'] = $filename;
         }
 
@@ -227,11 +227,11 @@ class EventController extends Controller
         // --- UPDATE KONTRAK FILE (private storage) ---
         if ($request->hasFile('kontrak_file') && $request->file('kontrak_file')->isValid()) {
             if ($event->kontrak_file) {
-                Storage::disk('local')->delete('private/kontrak/' . $event->kontrak_file);
+                Storage::disk('local')->delete('kontrak/' . $event->kontrak_file);
             }
             $file = $request->file('kontrak_file');
             $filename = $file->hashName();
-            Storage::disk('local')->putFileAs('private/kontrak', $file, $filename);
+            Storage::disk('local')->putFileAs('kontrak', $file, $filename);
             $data['kontrak_file'] = $filename;
         }
 
@@ -257,7 +257,7 @@ class EventController extends Controller
 
         // Hapus kontrak (private storage)
         if ($event->kontrak_file) {
-            Storage::disk('local')->delete('private/kontrak/' . $event->kontrak_file);
+            Storage::disk('local')->delete('kontrak/' . $event->kontrak_file);
         }
 
         $event->delete();

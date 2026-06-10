@@ -141,7 +141,7 @@ class TransaksiController extends Controller
         if ($request->hasFile('bukti_file') && $request->file('bukti_file')->isValid()) {
             $file     = $request->file('bukti_file');
             $filename = $file->hashName();
-            Storage::disk('local')->putFileAs('private/bukti-transaksi', $file, $filename);
+            Storage::disk('local')->putFileAs('bukti-transaksi', $file, $filename);
             $data['bukti_file'] = $filename;
         }
 
@@ -165,11 +165,11 @@ class TransaksiController extends Controller
 
         if ($request->hasFile('bukti_file') && $request->file('bukti_file')->isValid()) {
             if ($transaksi->bukti_file) {
-                Storage::disk('local')->delete('private/bukti-transaksi/' . $transaksi->bukti_file);
+                Storage::disk('local')->delete('bukti-transaksi/' . $transaksi->bukti_file);
             }
             $file     = $request->file('bukti_file');
             $filename = $file->hashName();
-            Storage::disk('local')->putFileAs('private/bukti-transaksi', $file, $filename);
+            Storage::disk('local')->putFileAs('bukti-transaksi', $file, $filename);
             $data['bukti_file'] = $filename;
         }
 
@@ -183,7 +183,7 @@ class TransaksiController extends Controller
 
         $transaksi = Transaksi::findOrFail($id);
         if ($transaksi->bukti_file) {
-            Storage::disk('local')->delete('private/bukti-transaksi/' . $transaksi->bukti_file);
+            Storage::disk('local')->delete('bukti-transaksi/' . $transaksi->bukti_file);
         }
         $transaksi->delete();
         return back();

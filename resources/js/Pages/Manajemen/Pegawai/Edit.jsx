@@ -115,7 +115,7 @@ export default function PegawaiEdit({ auth, pegawai }) {
                         <label className={labelClass}>Password Baru <span className="text-xs font-normal text-gray-400">(kosongkan jika tidak ingin ubah)</span></label>
                         <input
                             type="password"
-                            placeholder="Minimal 6 karakter"
+                            placeholder="Minimal 8 karakter"
                             className={inputClass}
                             value={data.password_pegawai}
                             onChange={e => setData('password_pegawai', e.target.value)}

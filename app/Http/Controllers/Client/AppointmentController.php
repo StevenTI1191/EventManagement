@@ -168,7 +168,7 @@ class AppointmentController extends Controller
 
         $file     = $request->file('file_bukti');
         $filename = $file->hashName();
-        Storage::disk('local')->putFileAs('private/bukti-pembayaran', $file, $filename);
+        Storage::disk('local')->putFileAs('bukti-pembayaran', $file, $filename);
         $path = 'bukti-pembayaran/' . $filename;
 
         BuktiPembayaran::create([
