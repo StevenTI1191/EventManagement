@@ -17,7 +17,7 @@
         .card { background: #fff5f7; border: 1px solid #ffd6de; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
         .card-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
         .card-row:last-child { margin-bottom: 0; }
-        .card-label { color: #6b7280; min-width: 120px; }
+        .card-label { color: #6b7280; min-width: 120px; padding-right: 12px; }
         .card-value { color: #111827; font-weight: 600; text-align: right; max-width: 60%; }
         .highlight { font-size: 20px; font-weight: 800; color: #FF2D55; }
         .divider { border: none; border-top: 1px solid #f3f4f6; margin: 20px 0; }

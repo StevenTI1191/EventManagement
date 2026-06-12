@@ -21,7 +21,7 @@
         .event-title { font-size: 18px; font-weight: 800; color: #f59e0b; margin-bottom: 16px; }
         .card-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
         .card-row:last-child { margin-bottom: 0; }
-        .card-label { color: #6b7280; }
+        .card-label { color: #6b7280; padding-right: 12px; }
         .card-value { color: #111827; font-weight: 600; text-align: right; max-width: 60%; }
         .checklist { background: #f9fafb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; }
         .checklist-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; }

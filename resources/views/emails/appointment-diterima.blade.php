@@ -17,7 +17,7 @@
         .card { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
         .card-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
         .card-row:last-child { margin-bottom: 0; }
-        .card-label { color: #6b7280; }
+        .card-label { color: #6b7280; padding-right: 12px; }
         .card-value { color: #111827; font-weight: 600; text-align: right; max-width: 60%; }
         .badge { background: #F59E0B; color: #000; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; display: inline-block; }
         .info-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; font-size: 13px; color: #0369a1; line-height: 1.6; }

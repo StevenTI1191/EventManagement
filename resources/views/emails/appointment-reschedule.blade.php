@@ -17,7 +17,7 @@
         .card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
         .card-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
         .card-row:last-child { margin-bottom: 0; }
-        .card-label { color: #6b7280; }
+        .card-label { color: #6b7280; padding-right: 12px; }
         .card-value { color: #111827; font-weight: 600; text-align: right; max-width: 60%; }
         .highlight { background: #dbeafe; color: #2563eb; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 99px; display: inline-block; }
         .catatan { background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 20px; font-size: 14px; color: #1e40af; }

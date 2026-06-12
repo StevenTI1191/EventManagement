@@ -257,7 +257,7 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                                         min={minDate}
                                         onChange={e => handleDateChange(e.target.value)}
                                         onClick={e => e.target.showPicker?.()}
-                                        className={inputClass + ' cursor-pointer'} />
+                                        className={inputClass + ' input-dark cursor-pointer'} />
                                     {dateError && <p className="mt-1 text-xs text-red-400">⚠ {dateError}</p>}
                                     {errors.tgl_request && <p className="mt-1 text-xs text-red-400">⚠ {errors.tgl_request}</p>}
                                 </div>

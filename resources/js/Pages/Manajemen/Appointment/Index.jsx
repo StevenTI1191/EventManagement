@@ -147,8 +147,14 @@ export default function ManajemenAppointmentIndex({ auth, appointments, counts, 
                                     )}
                                 </div>
 
-                                {/* Siapa yang konfirmasi */}
-                                {apt.pegawai && (
+                                {/* Siapa yang membatalkan / konfirmasi */}
+                                {apt.status === 'Dibatalkan' && apt.alasan_batal_client ? (
+                                    // Dibatalkan oleh CLIENT (alasan dari client terisi)
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-50 text-red-500">
+                                        <UserCheck size={13} />
+                                        Dibatalkan oleh: <span className="font-black">Client</span>
+                                    </div>
+                                ) : apt.pegawai && (
                                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold ${
                                         apt.status === 'Dibatalkan'
                                             ? 'bg-red-50 text-red-500'
