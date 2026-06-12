@@ -28,7 +28,7 @@ export default function Create({ auth, clients, pegawais }) {
 
     // Aturan file (samakan dgn validasi backend: poster max 2MB image, kontrak max 5MB pdf/doc)
     const FILE_RULES = {
-        poster_event: { maxMB: 2, exts: ['jpg', 'jpeg', 'png', 'gif', 'webp'], accept: 'gambar (JPG/PNG)' },
+        poster_event: { maxMB: 10, exts: ['jpg', 'jpeg', 'png', 'gif', 'webp'], accept: 'gambar (JPG/PNG)' },
         kontrak_file: { maxMB: 5, exts: ['pdf', 'doc', 'docx'],               accept: 'PDF atau Word' },
     };
 
@@ -197,7 +197,7 @@ export default function Create({ auth, clients, pegawais }) {
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">
-                                    Upload Poster <span className="font-normal text-gray-400">(Opsional · maks 2 MB · JPG/PNG)</span>
+                                    Upload Poster <span className="font-normal text-gray-400">(Opsional · maks 10 MB · JPG/PNG)</span>
                                 </label>
                                 <input type="file" accept="image/*"
                                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"

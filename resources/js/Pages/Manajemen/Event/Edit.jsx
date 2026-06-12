@@ -30,7 +30,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
 
     // Aturan file (samakan dgn validasi backend: poster max 2MB image, kontrak max 5MB pdf/doc)
     const FILE_RULES = {
-        poster_event: { maxMB: 2, exts: ['jpg', 'jpeg', 'png', 'gif', 'webp'], accept: 'gambar (JPG/PNG)' },
+        poster_event: { maxMB: 10, exts: ['jpg', 'jpeg', 'png', 'gif', 'webp'], accept: 'gambar (JPG/PNG)' },
         kontrak_file: { maxMB: 5, exts: ['pdf', 'doc', 'docx'],               accept: 'PDF atau Word' },
     };
 
@@ -214,7 +214,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                                     onChange={e => handleFile('poster_event', e.target.files?.[0], e.target)}
                                 />
-                                <p className="mt-1 text-[10px] text-gray-400">Maks 2 MB · JPG/PNG</p>
+                                <p className="mt-1 text-[10px] text-gray-400">Maks 10 MB · JPG/PNG</p>
                                 {errors.poster_event && <span className="block mt-1 text-xs text-red-500">⚠ {errors.poster_event}</span>}
                                 {data.poster_event && (
                                     <p className="mt-1 text-xs text-gray-400">

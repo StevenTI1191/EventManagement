@@ -90,8 +90,9 @@ Route::get('/kontrak/{filename}', function ($filename) {
 
     if (!file_exists($fullPath)) abort(404);
 
-    $mime = mime_content_type($fullPath);
-    return response()->file($fullPath, ['Content-Type' => $mime]);
+    // Paksa download (attachment) — lebih andal untuk PDF/DOC/DOCX daripada
+    // tampil inline (doc/docx tidak bisa dirender browser).
+    return response()->download($fullPath, basename($fullPath));
 })->name('kontrak.serve')->where('filename', '[^/]+');
 
 Route::domain(config('app.backstage_domain'))->group(function () {

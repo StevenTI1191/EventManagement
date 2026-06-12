@@ -87,7 +87,7 @@ class EventController extends Controller
             'gladi_resik'       => 'nullable|string|max:255',
             'status_event'      => 'nullable|in:Pending,Active,Done,Cancelled',
             'is_public'         => 'nullable|boolean',
-            'poster_event'      => 'nullable|file|image|max:2048',
+            'poster_event'      => 'nullable|file|image|max:10240',
             'kontrak_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
         ]);
 
@@ -180,7 +180,7 @@ class EventController extends Controller
             'gladi_resik'       => 'nullable|string|max:255',
             'status_event'      => 'nullable|in:Pending,Active,Done,Cancelled',
             'is_public'         => 'nullable|boolean',
-            'poster_event'      => 'nullable|file|image|max:2048',
+            'poster_event'      => 'nullable|file|image|max:10240',
             'kontrak_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
         ]);
 
