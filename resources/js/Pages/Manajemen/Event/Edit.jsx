@@ -13,6 +13,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
         id_client:            event.id_client || '',
         id_pegawai:           event.id_pegawai || '',
         status_event:         event.status_event || 'Pending',
+        is_public:            event.is_public ?? false,
         tgl_mulai_event:      event.tgl_mulai_event || '',
         jam_mulai:            event.jam_mulai || '09:00',
         jam_selesai:          event.jam_selesai || '13:00',
@@ -183,6 +184,17 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                     <option value="Upcoming">Upcoming</option>
                                     <option value="Done">Done</option>
                                 </select>
+                            </div>
+
+                            <div>
+                                <label className="block mb-1 text-sm font-bold text-gray-700">Sifat Acara</label>
+                                <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                    value={data.is_public ? '1' : '0'}
+                                    onChange={e => setData('is_public', e.target.value === '1')}>
+                                    <option value="0">Privat — hanya undangan, tidak tampil di web</option>
+                                    <option value="1">Publik — tampil di homepage & halaman event</option>
+                                </select>
+                                <p className="mt-1 text-xs text-gray-400">Wedding, ulang tahun, & acara internal sebaiknya Privat.</p>
                             </div>
 
                             {/* GANTI POSTER */}

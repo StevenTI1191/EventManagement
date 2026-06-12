@@ -11,6 +11,7 @@ export default function Create({ auth, clients, pegawais }) {
         kategori_event: '',
         id_pegawai: '',
         status_event: 'Pending',
+        is_public: false,
         tgl_mulai_event: '',
         jam_mulai: '09:00',
         jam_selesai: '13:00',
@@ -181,6 +182,17 @@ export default function Create({ auth, clients, pegawais }) {
                                     <option value="Upcoming">Upcoming</option>
                                     <option value="Done">Done</option>
                                 </select>
+                            </div>
+
+                            <div>
+                                <label className="block mb-1 text-sm font-bold text-gray-700">Sifat Acara</label>
+                                <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                    value={data.is_public ? '1' : '0'}
+                                    onChange={e => setData('is_public', e.target.value === '1')}>
+                                    <option value="0">Privat — hanya undangan, tidak tampil di web</option>
+                                    <option value="1">Publik — tampil di homepage & halaman event</option>
+                                </select>
+                                <p className="mt-1 text-xs text-gray-400">Wedding, ulang tahun, & acara internal sebaiknya Privat.</p>
                             </div>
 
                             <div>

@@ -12,14 +12,16 @@ class HomeController extends Controller
 {
     public function index()
     {
-        // Portfolio — event Done terbaru
+        // Portfolio — event Done terbaru (hanya yang Publik)
         $portfolio = Event::where('status_event', 'Done')
+            ->where('is_public', true)
             ->latest('tgl_mulai_event')
             ->take(6)
             ->get(['id_event', 'nama_event', 'kategori_event', 'tgl_mulai_event', 'poster_event', 'status_event', 'area_event']);
 
-        // Upcoming events — Active / Pending, urut terdekat
+        // Upcoming events — Active / Pending, urut terdekat (hanya yang Publik)
         $upcoming = Event::whereIn('status_event', ['Active', 'Pending'])
+            ->where('is_public', true)
             ->orderBy('tgl_mulai_event', 'asc')
             ->take(4)
             ->get(['id_event', 'nama_event', 'kategori_event', 'tgl_mulai_event', 'jam_mulai', 'jam_selesai', 'area_event', 'poster_event', 'status_event', 'jumlah_pax']);
@@ -49,7 +51,8 @@ class HomeController extends Controller
             'status'   => 'nullable|in:Pending,Active,Done,Cancelled',
         ]);
 
-        $query = Event::whereNotNull('status_event');
+        // Hanya event Publik yang boleh tampil di listing publik
+        $query = Event::whereNotNull('status_event')->where('is_public', true);
 
         if ($request->filled('search')) {
             $query->where('nama_event', 'like', '%' . $request->search . '%');

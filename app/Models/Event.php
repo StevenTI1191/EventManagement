@@ -31,7 +31,12 @@ class Event extends Model
         'technical_meeting',
         'gladi_resik',
         'status_event',
+        'is_public',
         'deal_harga_event',
+    ];
+
+    protected $casts = [
+        'is_public' => 'boolean',
     ];
 
     public function client(): BelongsTo

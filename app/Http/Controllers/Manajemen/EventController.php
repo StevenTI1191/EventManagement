@@ -86,6 +86,7 @@ class EventController extends Controller
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
             'status_event'      => 'nullable|in:Pending,Active,Done,Cancelled',
+            'is_public'         => 'nullable|boolean',
             'poster_event'      => 'nullable|file|image|max:2048',
             'kontrak_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
         ]);
@@ -114,6 +115,8 @@ class EventController extends Controller
             'note_event', 'food_beverage_event', 'entairtainment_event',
             'technical_meeting', 'gladi_resik', 'deal_harga_event', 'status_event',
         ]);
+
+        $data['is_public'] = $request->boolean('is_public');
 
         if (empty($data['deal_harga_event'])) {
             $data['deal_harga_event'] = 0;
@@ -176,6 +179,7 @@ class EventController extends Controller
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
             'status_event'      => 'nullable|in:Pending,Active,Done,Cancelled',
+            'is_public'         => 'nullable|boolean',
             'poster_event'      => 'nullable|file|image|max:2048',
             'kontrak_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
         ]);
@@ -205,6 +209,8 @@ class EventController extends Controller
             'note_event', 'food_beverage_event', 'entairtainment_event',
             'technical_meeting', 'gladi_resik', 'deal_harga_event', 'status_event',
         ]);
+
+        $data['is_public'] = $request->boolean('is_public');
 
         if (empty($data['deal_harga_event'])) {
             $data['deal_harga_event'] = 0;
