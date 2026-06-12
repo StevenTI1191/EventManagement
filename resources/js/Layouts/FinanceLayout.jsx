@@ -5,12 +5,14 @@ import {
     LayoutDashboard, Calendar, CalendarDays, CreditCard,
     LogOut, ChevronLeft, ChevronRight, Users, Receipt,
     Bell, Trash2, CheckCheck, Upload, FileBarChart, StickyNote,
+    Menu, X,
 } from 'lucide-react';
 
 export default function FinanceLayout({ children }) {
     const { auth } = usePage().props;
     const user = auth.user;
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [mobileOpen, setMobileOpen]       = useState(false);
     const [showNotif, setShowNotif]         = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [unread, setUnread]               = useState(0);
@@ -93,26 +95,34 @@ export default function FinanceLayout({ children }) {
     };
 
     return (
-        <div className="flex min-h-screen bg-gray-50">
-            <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 flex flex-col fixed h-full z-50`}>
+        <div className="min-h-screen bg-gray-50">
+
+            {/* BACKDROP (mobile, saat drawer terbuka) */}
+            {mobileOpen && (
+                <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />
+            )}
+
+            <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-white border-r border-gray-200 transition-transform duration-300 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${isSidebarOpen ? 'lg:w-64' : 'lg:w-20'}`}>
 
                 {/* LOGO & TOGGLE */}
                 <div className="flex items-center justify-between p-5 mb-4">
                     <div className="flex items-center justify-center flex-shrink-0 overflow-hidden bg-black rounded-full w-14 h-14">
                         <img src="/images/LaksamanaLogo.png" alt="Laksamana Muda" className="object-contain w-12 h-12" />
                     </div>
-                    {isSidebarOpen && (
-                        <span className="flex-1 ml-3 text-sm font-bold tracking-tight text-gray-800">Finance</span>
-                    )}
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+                    <span className={`flex-1 ml-3 text-sm font-bold tracking-tight text-gray-800 ${isSidebarOpen ? '' : 'lg:hidden'}`}>Finance</span>
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 lg:block">
                         {isSidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+                    </button>
+                    <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 lg:hidden">
+                        <X size={20} />
                     </button>
                 </div>
 
                 {/* MENU */}
-                <nav className="flex-1 px-3 space-y-1">
+                <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
                     {menuItems.map((item) => (
                         <Link key={item.name} href={item.href}
+                            onClick={() => setMobileOpen(false)}
                             className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                                 item.active
                                     ? 'bg-[#FF2D55] text-white shadow-lg shadow-[#FF2D55]/30'
@@ -120,15 +130,15 @@ export default function FinanceLayout({ children }) {
                             }`}>
                             <div className="relative flex-shrink-0">
                                 <item.icon size={20} />
-                                {/* Dot kecil saat sidebar collapse */}
-                                {item.name === 'Bukti Pembayaran' && unread > 0 && !isSidebarOpen && (
-                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#FF2D55] rounded-full border-2 border-white" />
+                                {/* Dot kecil hanya saat sidebar collapse di desktop */}
+                                {item.name === 'Bukti Pembayaran' && unread > 0 && (
+                                    <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#FF2D55] rounded-full border-2 border-white ${isSidebarOpen ? 'hidden' : 'hidden lg:block'}`} />
                                 )}
                             </div>
-                            {isSidebarOpen && <span className="text-sm font-medium">{item.name}</span>}
-                            {/* Badge angka saat sidebar open */}
-                            {item.name === 'Bukti Pembayaran' && unread > 0 && isSidebarOpen && (
-                                <span className="ml-auto px-1.5 py-0.5 text-[10px] font-black bg-white text-[#FF2D55] rounded-full leading-none">
+                            <span className={`text-sm font-medium ${isSidebarOpen ? '' : 'lg:hidden'}`}>{item.name}</span>
+                            {/* Badge angka */}
+                            {item.name === 'Bukti Pembayaran' && unread > 0 && (
+                                <span className={`ml-auto px-1.5 py-0.5 text-[10px] font-black bg-white text-[#FF2D55] rounded-full leading-none ${isSidebarOpen ? '' : 'lg:hidden'}`}>
                                     {unread}
                                 </span>
                             )}
@@ -138,40 +148,51 @@ export default function FinanceLayout({ children }) {
 
                 {/* PROFILE & LOGOUT */}
                 <div className="p-4 border-t border-gray-100">
-                    <div className={`flex items-center gap-3 p-2 mb-2 ${!isSidebarOpen && 'justify-center'}`}>
+                    <div className={`flex items-center gap-3 p-2 mb-2 ${!isSidebarOpen && 'lg:justify-center'}`}>
                         <div className="w-8 h-8 rounded-full bg-[#FF2D55]/10 flex-shrink-0 flex items-center justify-center text-xs font-bold text-[#FF2D55]">
                             {user.nama_pegawai ? user.nama_pegawai.substring(0, 2).toUpperCase() : 'FN'}
                         </div>
-                        {isSidebarOpen && (
-                            <div className="overflow-hidden leading-tight">
-                                <p className="text-xs font-bold text-gray-900 truncate">{user.nama_pegawai}</p>
-                                <p className="text-[10px] text-gray-500 truncate">{user.posisi_pegawai}</p>
-                            </div>
-                        )}
+                        <div className={`overflow-hidden leading-tight ${isSidebarOpen ? '' : 'lg:hidden'}`}>
+                            <p className="text-xs font-bold text-gray-900 truncate">{user.nama_pegawai}</p>
+                            <p className="text-[10px] text-gray-500 truncate">{user.posisi_pegawai}</p>
+                        </div>
                     </div>
                     <Link href={route('profile.edit')}
+                        onClick={() => setMobileOpen(false)}
                         className="relative flex items-center w-full gap-3 p-2.5 text-gray-500 rounded-xl hover:bg-yellow-50 hover:text-yellow-600 transition-all">
-                        <div className="relative">
+                        <div className="relative flex-shrink-0">
                             <StickyNote size={20} />
                             {user.note_pegawai && (
                                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border-2 border-white" />
                             )}
                         </div>
-                        {isSidebarOpen && <span className="text-sm font-medium">Profile & Note</span>}
+                        <span className={`text-sm font-medium ${isSidebarOpen ? '' : 'lg:hidden'}`}>Profile & Note</span>
                     </Link>
                     <Link href={route('logout')} method="post" as="button"
                         className="flex items-center w-full gap-3 p-2.5 text-gray-500 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all">
-                        <LogOut size={20} />
-                        {isSidebarOpen && <span className="text-sm font-medium">Log Out</span>}
+                        <LogOut size={20} className="flex-shrink-0" />
+                        <span className={`text-sm font-medium ${isSidebarOpen ? '' : 'lg:hidden'}`}>Log Out</span>
                     </Link>
                 </div>
             </aside>
 
             {/* MAIN CONTENT */}
-            <main className={`flex-1 ${isSidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
+            <main className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
 
                 {/* TOP BAR */}
-                <div className="sticky top-0 z-40 flex items-center justify-end px-8 py-3 bg-white border-b border-gray-100 shadow-sm">
+                <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shadow-sm lg:justify-end lg:px-8">
+                    {/* Kiri: hamburger + brand (mobile) */}
+                    <div className="flex items-center gap-2 lg:hidden">
+                        <button onClick={() => setMobileOpen(true)}
+                            className="p-2 -ml-2 text-gray-600 rounded-lg hover:bg-gray-100">
+                            <Menu size={22} />
+                        </button>
+                        <div className="flex items-center justify-center w-8 h-8 overflow-hidden bg-black rounded-full">
+                            <img src="/images/LaksamanaLogo.png" alt="Laksamana Muda" className="object-contain w-6 h-6" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-800">Finance</span>
+                    </div>
+
                     {/* Bell Notifikasi */}
                     <div className="relative" ref={notifRef}>
                         <button onClick={handleOpenNotif}
@@ -244,7 +265,7 @@ export default function FinanceLayout({ children }) {
                     </div>
                 </div>
 
-                <div className="p-8 max-w-[1600px] mx-auto">
+                <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
                     {children}
                 </div>
             </main>
