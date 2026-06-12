@@ -15,7 +15,10 @@ echo "[1/4] Pulling latest code..."
 git pull
 
 # ── 2. Rebuild frontend jika ada perubahan JS/CSS ─────────────────────────
+# PENTING: rebuild image node_builder dulu! Kalau tidak, ia memakai source
+# lama yang ter-bake di image (COPY . .) → frontend tidak pernah update.
 echo "[2/4] Rebuilding frontend assets..."
+docker compose build node_builder
 docker compose --profile build run --rm node_builder
 
 # ── 3. Rebuild PHP image + restart ────────────────────────────────────────
