@@ -111,10 +111,11 @@ export default function Register() {
                             </div>
 
                             <div>
-                                <label className={labelClass}>Perusahaan <span className="normal-case font-normal text-gray-600">(opsional)</span></label>
+                                <label className={labelClass}>Perusahaan *</label>
                                 <input type="text" value={data.perusahaan_client}
                                     onChange={e => setData('perusahaan_client', e.target.value)}
                                     placeholder="PT. Example" className={inputClass} />
+                                {errors.perusahaan_client && <p className="mt-1 text-xs text-red-400">{errors.perusahaan_client}</p>}
                             </div>
 
                             <div>

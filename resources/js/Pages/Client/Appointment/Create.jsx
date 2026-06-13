@@ -14,7 +14,8 @@ const EVENT_TYPES = [
 
 const STEPS = ['Jenis Event', 'Detail', 'Jadwal'];
 
-export default function AppointmentCreate({ has_active_appointment, missing_phone, slots = [] }) {
+export default function AppointmentCreate({ has_active_appointment, missing_phone, missing_company, slots = [] }) {
+    const missingProfile = missing_phone || missing_company;
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const minDate = tomorrow.toISOString().split('T')[0];
@@ -106,14 +107,18 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                         <p className="mt-2 text-gray-400">Isi detail event Anda dan tim kami akan mengkonfirmasi jadwal meeting.</p>
                     </div>
 
-                    {/* Banner: No HP belum diisi — BLOCKING */}
-                    {missing_phone && (
+                    {/* Banner: Profil belum lengkap (perusahaan / no HP) — BLOCKING */}
+                    {missingProfile && (
                         <div className="flex items-start gap-3 p-4 mb-6 bg-red-500/10 border border-red-500/30 rounded-xl">
                             <Phone size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-red-400">Nomor HP belum diisi</p>
+                                <p className="text-sm font-bold text-red-400">
+                                    {missing_phone && missing_company ? 'Nama perusahaan & nomor HP belum diisi'
+                                        : missing_company ? 'Nama perusahaan belum diisi'
+                                        : 'Nomor HP belum diisi'}
+                                </p>
                                 <p className="text-xs text-red-300/80 mt-0.5 leading-relaxed">
-                                    Tim kami membutuhkan nomor HP untuk menghubungi Anda. Lengkapi profil terlebih dahulu.
+                                    Lengkapi profil Anda terlebih dahulu agar tim kami bisa memproses appointment.
                                 </p>
                             </div>
                             <Link href={route('client.profile')}
@@ -124,7 +129,7 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                     )}
 
                     {/* Banner: Sudah ada appointment aktif — WARNING */}
-                    {has_active_appointment && !missing_phone && (
+                    {has_active_appointment && !missingProfile && (
                         <div className="flex items-start gap-3 p-4 mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
                             <AlertTriangle size={18} className="text-yellow-400 flex-shrink-0 mt-0.5" />
                             <div>
@@ -309,7 +314,7 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                                 Batal
                             </Link>
                             <button type="submit"
-                                disabled={processing || !data.jenis_event || !data.tgl_request || !data.jam_request || !!dateError || missing_phone}
+                                disabled={processing || !data.jenis_event || !data.tgl_request || !data.jam_request || !!dateError || missingProfile}
                                 className="flex-1 py-3.5 font-black text-black transition-all bg-yellow-500 rounded-xl hover:bg-yellow-400 disabled:opacity-40 disabled:cursor-not-allowed">
                                 {processing ? '⏳ Mengirim...' : '🚀 Kirim Appointment'}
                             </button>

@@ -167,7 +167,7 @@ export default function ClientProfile({ auth, has_password }) {
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Perusahaan <span className="normal-case font-normal text-gray-600">(opsional)</span></label>
+                                    <label className={labelClass}>Perusahaan *</label>
                                     <div className="relative">
                                         <Building2 size={15} className="absolute text-gray-600 left-3 top-3.5" />
                                         <input type="text" value={data.perusahaan_client}
@@ -175,6 +175,7 @@ export default function ClientProfile({ auth, has_password }) {
                                             placeholder="PT. Nama Perusahaan"
                                             className={inputClass + ' pl-9'} />
                                     </div>
+                                    {errors.perusahaan_client && <p className="mt-1 text-xs text-red-400">{errors.perusahaan_client}</p>}
                                 </div>
                             </div>
                         </div>

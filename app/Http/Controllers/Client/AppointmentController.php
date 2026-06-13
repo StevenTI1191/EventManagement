@@ -117,6 +117,7 @@ class AppointmentController extends Controller
         return Inertia::render('Client/Appointment/Create', [
             'has_active_appointment' => $hasActive,
             'missing_phone'          => empty($client->no_telp_client),
+            'missing_company'        => empty($client->perusahaan_client),
             'slots'                  => self::workingSlots(),
         ]);
     }
@@ -135,10 +136,10 @@ class AppointmentController extends Controller
         }
         RateLimiter::hit($rateLimitKey, 3600);
 
-        // Blokir jika no HP belum diisi
-        if (empty($client->no_telp_client)) {
+        // Blokir jika nama perusahaan / no HP belum diisi
+        if (empty($client->perusahaan_client) || empty($client->no_telp_client)) {
             return back()->withErrors([
-                'jenis_event' => 'Nomor HP belum diisi. Lengkapi profil Anda terlebih dahulu.',
+                'jenis_event' => 'Lengkapi nama perusahaan dan nomor HP di profil terlebih dahulu.',
             ]);
         }
 

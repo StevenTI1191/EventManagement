@@ -90,11 +90,12 @@ class AuthController extends Controller
             'email_client'      => 'required|email|unique:clients,email_client',
             'password'          => 'required|min:8|max:255|confirmed',
             'no_telp_client'    => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/'],
-            'perusahaan_client' => 'nullable|string|max:255',
+            'perusahaan_client' => 'required|string|max:255',
         ], [
-            'nama_client.min'        => 'Nama minimal 3 karakter.',
-            'no_telp_client.regex'   => 'Format nomor HP tidak valid.',
-            'email_client.unique'    => 'Email ini sudah terdaftar. Silakan login atau gunakan email lain.',
+            'nama_client.min'            => 'Nama minimal 3 karakter.',
+            'no_telp_client.regex'       => 'Format nomor HP tidak valid.',
+            'perusahaan_client.required' => 'Nama perusahaan wajib diisi.',
+            'email_client.unique'        => 'Email ini sudah terdaftar. Silakan login atau gunakan email lain.',
         ]);
 
         $client = Client::create([

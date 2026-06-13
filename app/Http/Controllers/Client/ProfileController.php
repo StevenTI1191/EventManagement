@@ -28,7 +28,7 @@ class ProfileController extends Controller
         $rules = [
             'nama_client'       => 'required|string|max:255',
             'no_telp_client'    => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/'],
-            'perusahaan_client' => 'nullable|string|max:255',
+            'perusahaan_client' => 'required|string|max:255',
             'email_client'      => ['required', 'email', Rule::unique('clients', 'email_client')->ignore($client->id)],
             'password'          => 'nullable|string|min:8|max:255|confirmed',
         ];

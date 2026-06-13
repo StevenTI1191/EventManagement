@@ -396,15 +396,19 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                         </div>
                     )}
 
-                    {/* Banner: lengkapi profil (akun Google tanpa no HP) */}
-                    {user?.has_google && !user?.no_telp_client && (
+                    {/* Banner: lengkapi profil (perusahaan / no HP belum diisi — mis. akun Google) */}
+                    {(!user?.no_telp_client || !user?.perusahaan_client) && (
                         <div className="flex items-center justify-between gap-4 p-4 mb-6 bg-blue-500/10 border border-blue-500/30 rounded-xl">
                             <div className="flex items-center gap-3 min-w-0">
                                 <span className="text-xl flex-shrink-0">📋</span>
                                 <div className="min-w-0">
                                     <p className="text-sm font-bold text-blue-300">Lengkapi profil Anda</p>
                                     <p className="text-xs text-blue-400/70 mt-0.5 leading-relaxed">
-                                        Nomor HP belum diisi — diperlukan agar tim kami bisa menghubungi Anda.
+                                        {!user?.perusahaan_client && !user?.no_telp_client
+                                            ? 'Nama perusahaan & nomor HP belum diisi — wajib untuk membuat appointment.'
+                                            : !user?.perusahaan_client
+                                                ? 'Nama perusahaan belum diisi — wajib untuk membuat appointment.'
+                                                : 'Nomor HP belum diisi — diperlukan agar tim kami bisa menghubungi Anda.'}
                                     </p>
                                 </div>
                             </div>
