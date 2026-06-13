@@ -123,6 +123,12 @@ export default function ClientProfile({ auth, has_password }) {
                             <p className="text-sm font-bold text-green-400">{flash.success}</p>
                         </div>
                     )}
+                    {flash?.warning && (
+                        <div className="flex items-center gap-3 p-4 mb-6 border bg-yellow-500/10 border-yellow-500/30 rounded-xl">
+                            <span className="text-lg flex-shrink-0">📋</span>
+                            <p className="text-sm font-bold text-yellow-400">{flash.warning}</p>
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
 

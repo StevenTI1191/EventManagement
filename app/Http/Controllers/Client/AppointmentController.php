@@ -110,6 +110,13 @@ class AppointmentController extends Controller
     {
         $client = Auth::guard('client')->user();
 
+        // Wajib lengkapi profil (perusahaan + no HP) dulu — terutama akun Google
+        // yang otomatis tanpa data ini. Arahkan ke profil sebelum buat appointment.
+        if (empty($client->perusahaan_client) || empty($client->no_telp_client)) {
+            return redirect()->route('client.profile')
+                ->with('warning', 'Lengkapi nama perusahaan dan nomor HP terlebih dahulu sebelum membuat appointment.');
+        }
+
         $hasActive = Appointment::where('client_id', $client->id)
             ->whereIn('status', ['Pending', 'Dikonfirmasi', 'Reschedule'])
             ->exists();
