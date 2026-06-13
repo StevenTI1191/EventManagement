@@ -342,7 +342,7 @@ export default function Dashboard({ auth, stats, aptStats, recentEvents, pending
                     <div className="space-y-3">
                         {recentEvents.map(event => (
                             <Link key={event.id_event}
-                                href={route('em.event.edit', event.id_event)}
+                                href={`${route('em.event.index')}?open=${event.id_event}`}
                                 className="flex items-center gap-3 p-3 transition-colors rounded-xl bg-gray-50 hover:bg-gray-100">
                                 {/* Poster mini */}
                                 {event.poster_event ? (
