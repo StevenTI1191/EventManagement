@@ -5,5 +5,5 @@
 @section('description', 'Anda tidak memiliki izin untuk mengakses halaman ini.')
 
 @section('actions')
-    <a href="/" class="btn-primary">← Kembali ke Beranda</a>
+    @include('errors.partials.actions')
 @endsection

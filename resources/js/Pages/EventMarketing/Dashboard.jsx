@@ -341,15 +341,26 @@ export default function Dashboard({ auth, stats, aptStats, recentEvents, pending
                 {recentEvents.length > 0 ? (
                     <div className="space-y-3">
                         {recentEvents.map(event => (
-                            <div key={event.id_event} className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
-                                <div>
-                                    <p className="text-sm font-bold text-gray-800">{event.nama_event}</p>
+                            <Link key={event.id_event}
+                                href={route('em.event.edit', event.id_event)}
+                                className="flex items-center gap-3 p-3 transition-colors rounded-xl bg-gray-50 hover:bg-gray-100">
+                                {/* Poster mini */}
+                                {event.poster_event ? (
+                                    <img src={`/${event.poster_event}`} alt={event.nama_event}
+                                        className="flex-shrink-0 object-cover w-10 h-10 rounded-lg" />
+                                ) : (
+                                    <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF2D55]/20 to-gray-200 text-[10px] font-black text-gray-500">
+                                        {event.nama_event.substring(0, 2).toUpperCase()}
+                                    </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-gray-800 truncate">{event.nama_event}</p>
                                     <p className="text-xs text-gray-400">{formatTanggal(event.tgl_mulai_event)}</p>
                                 </div>
-                                <span className={'px-2 py-0.5 text-xs font-bold rounded-full ' + getStatusColor(event.status_event)}>
+                                <span className={'px-2 py-0.5 text-xs font-bold rounded-full flex-shrink-0 ' + getStatusColor(event.status_event)}>
                                     {event.status_event}
                                 </span>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 ) : (

@@ -118,9 +118,9 @@ class AppointmentController extends Controller
     {
         $this->checkEventMarketing();
 
-        // State machine: hanya appointment yang sudah Dikonfirmasi yang bisa diselesaikan
+        // Appointment yang sudah Dikonfirmasi atau Reschedule (keduanya = sudah ada jadwal) bisa diselesaikan
         $appointment = Appointment::where('id', $id)
-            ->where('status', 'Dikonfirmasi')
+            ->whereIn('status', ['Dikonfirmasi', 'Reschedule'])
             ->firstOrFail();
 
         $appointment->update(['status' => 'Selesai']);
