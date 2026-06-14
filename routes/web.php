@@ -90,9 +90,15 @@ Route::get('/kontrak/{filename}', function ($filename) {
 
     if (!file_exists($fullPath)) abort(404);
 
+    // Nama unduhan ramah berdasarkan nama event (file disimpan dgn nama hash).
+    $ext   = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) ?: 'pdf';
+    $event = \App\Models\Event::where('kontrak_file', $filename)->first();
+    $namaEvent = $event ? preg_replace('/[^A-Za-z0-9 _-]/', '', $event->nama_event) : null;
+    $downloadName = $namaEvent ? "Kontrak - {$namaEvent}.{$ext}" : basename($fullPath);
+
     // Paksa download (attachment) — lebih andal untuk PDF/DOC/DOCX daripada
     // tampil inline (doc/docx tidak bisa dirender browser).
-    return response()->download($fullPath, basename($fullPath));
+    return response()->download($fullPath, $downloadName);
 })->name('kontrak.serve')->where('filename', '[^/]+');
 
 Route::domain(config('app.backstage_domain'))->group(function () {
