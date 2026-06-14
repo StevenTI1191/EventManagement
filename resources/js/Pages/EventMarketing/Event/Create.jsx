@@ -53,11 +53,25 @@ export default function Create({ auth, clients, pegawais }) {
         setData(field, file);
     };
 
+    const REQUIRED = {
+        nama_event:      'Nama Event',
+        id_client:       'Client',
+        id_pegawai:      'PIC Event',
+        tgl_mulai_event: 'Tanggal Event',
+        jam_mulai:       'Acara Mulai',
+        jam_selesai:     'Acara Selesai',
+        area_event:      'Area Event',
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('em.event.store'), {
-            forceFormData: true,
-        });
+        const kosong = Object.entries(REQUIRED).filter(([k]) => !data[k] || String(data[k]).trim() === '');
+        if (kosong.length) {
+            kosong.forEach(([k, label]) => setError(k, `${label} wajib diisi.`));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+        post(route('em.event.store'), { forceFormData: true });
     };
 
     return (
@@ -71,6 +85,17 @@ export default function Create({ auth, clients, pegawais }) {
                 </div>
 
                 <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100">
+                    {Object.keys(errors).length > 0 && (
+                        <div className="flex items-start gap-3 p-4 mb-6 border border-red-200 bg-red-50 rounded-2xl">
+                            <span className="text-lg leading-none">⚠️</span>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-red-600">Data belum lengkap / belum sesuai. Mohon periksa:</p>
+                                <ul className="mt-1 text-xs text-red-500 list-disc list-inside space-y-0.5">
+                                    {Object.values(errors).map((msg, i) => <li key={i}>{msg}</li>)}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
 
                         {/* --- KOLOM KIRI --- */}
@@ -112,6 +137,7 @@ export default function Create({ auth, clients, pegawais }) {
                                         <option value="">Select</option>
                                         {clients.map(c => <option key={c.id} value={c.id}>{c.nama_client}</option>)}
                                     </select>
+                                    {errors.id_client && <span className="text-xs text-red-500">{errors.id_client}</span>}
                                 </div>
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">PIC Event</label>
@@ -120,6 +146,7 @@ export default function Create({ auth, clients, pegawais }) {
                                         <option value="">Select</option>
                                         {pegawais.map(p => <option key={p.id_pegawai} value={p.id_pegawai}>{p.nama_pegawai}</option>)}
                                     </select>
+                                    {errors.id_pegawai && <span className="text-xs text-red-500">{errors.id_pegawai}</span>}
                                 </div>
                             </div>
 
@@ -127,6 +154,7 @@ export default function Create({ auth, clients, pegawais }) {
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Tanggal Event</label>
                                 <input type="date" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
                                     value={data.tgl_mulai_event} onChange={e => setData('tgl_mulai_event', e.target.value)} />
+                                {errors.tgl_mulai_event && <span className="text-xs text-red-500">{errors.tgl_mulai_event}</span>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
