@@ -76,10 +76,10 @@ export default function FinanceJadwalAcara({ events }) {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                    {['all', 'Done', 'Active', 'Pending', 'Cancelled'].map(f => (
+                    {['all', 'Active', 'Done'].map(f => (
                         <button key={f} onClick={() => setActiveFilter(f)}
                             className={`px-4 py-1 rounded-full text-xs font-medium border transition-all ${activeFilter === f ? 'bg-[#FF2D55] text-white border-[#FF2D55]' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
-                            {f === 'all' ? 'Semua' : f}
+                            {f === 'all' ? 'Semua' : f === 'Active' ? 'Upcoming' : f}
                         </button>
                     ))}
                 </div>
