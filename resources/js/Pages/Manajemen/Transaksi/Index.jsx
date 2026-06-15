@@ -1,5 +1,6 @@
 ﻿import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import Pagination from '@/Components/Pagination';
+import RupiahInput from '@/Components/RupiahInput';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState, Fragment } from 'react';
 import { ChevronDown, ChevronUp, Plus, Trash2, X, Pencil } from 'lucide-react';
@@ -179,9 +180,9 @@ export default function TransaksiIndex({ auth, events, filters = {} }) {
                         <form onSubmit={handleBayar} className="space-y-4">
                             <div>
                                 <label className="block mb-1 text-xs font-bold text-gray-600">Nominal</label>
-                                <input type="number" min="0" placeholder="Masukkan nominal"
+                                <RupiahInput placeholder="Masukkan nominal"
                                     className="w-full p-3 text-sm border border-gray-200 rounded-xl bg-gray-50"
-                                    value={formBayar.data.nominal} onChange={e => formBayar.setData('nominal', e.target.value)} />
+                                    value={formBayar.data.nominal} onChange={v => formBayar.setData('nominal', v)} />
                                 {formBayar.errors.nominal && <p className="mt-1 text-xs text-red-500">{formBayar.errors.nominal}</p>}
                             </div>
                             <div>
@@ -258,9 +259,9 @@ export default function TransaksiIndex({ auth, events, filters = {} }) {
                                 </div>
                                 <div>
                                     <label className="block mb-1 text-xs font-bold text-gray-600">Harga</label>
-                                    <input type="number" min="0" placeholder="0"
+                                    <RupiahInput placeholder="0"
                                         className="w-full p-3 text-sm border border-gray-200 rounded-xl bg-gray-50"
-                                        value={formItem.data.harga} onChange={e => formItem.setData('harga', e.target.value)} />
+                                        value={formItem.data.harga} onChange={v => formItem.setData('harga', v)} />
                                 </div>
                             </div>
                             {formItem.data.qty && formItem.data.harga && (
@@ -404,10 +405,10 @@ export default function TransaksiIndex({ auth, events, filters = {} }) {
             <form onSubmit={handleEditBayar} className="space-y-4">
                 <div>
                     <label className="block mb-1 text-xs font-bold text-gray-600">Nominal</label>
-                    <input type="number" min="0"
+                    <RupiahInput
                         className="w-full p-3 text-sm border border-gray-200 rounded-xl bg-gray-50"
                         value={formEditBayar.data.nominal}
-                        onChange={e => formEditBayar.setData('nominal', e.target.value)} />
+                        onChange={v => formEditBayar.setData('nominal', v)} />
                 </div>
                 <div>
                     <label className="block mb-1 text-xs font-bold text-gray-600">Tanggal Bayar</label>
@@ -484,10 +485,10 @@ export default function TransaksiIndex({ auth, events, filters = {} }) {
                     </div>
                     <div>
                         <label className="block mb-1 text-xs font-bold text-gray-600">Harga</label>
-                        <input type="number" min="0"
+                        <RupiahInput
                             className="w-full p-3 text-sm border border-gray-200 rounded-xl bg-gray-50"
                             value={formEditItem.data.harga}
-                            onChange={e => formEditItem.setData('harga', e.target.value)} />
+                            onChange={v => formEditItem.setData('harga', v)} />
                     </div>
                 </div>
                 {formEditItem.data.qty && formEditItem.data.harga && (

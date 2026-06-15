@@ -1,5 +1,6 @@
 ﻿import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
+import RupiahInput from '@/Components/RupiahInput';
 
 export default function Create({ auth, clients, pegawais }) {
     const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
@@ -191,14 +192,11 @@ export default function Create({ auth, clients, pegawais }) {
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Deal Total Harga</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="1000"
+                                <RupiahInput
                                     placeholder="Silahkan Input Deal Total"
                                     className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
                                     value={data.deal_harga_event}
-                                    onChange={e => setData('deal_harga_event', e.target.value)}
+                                    onChange={v => setData('deal_harga_event', v)}
                                 />
                                 {errors.deal_harga_event && <span className="text-xs text-red-500">{errors.deal_harga_event}</span>}
                             </div>

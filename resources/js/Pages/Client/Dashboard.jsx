@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import { useState, useEffect, useRef, Fragment } from 'react';
 import axios from 'axios';
+import RupiahInput from '@/Components/RupiahInput';
 import {
     Plus, Calendar, Clock, CheckCircle, XCircle,
     AlertCircle, LogOut, Home, Upload, FileText,
@@ -1173,9 +1174,9 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                             </div>
                             <div>
                                 <label className="block mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">Nominal Pembayaran</label>
-                                <input type="number" value={data.nominal}
-                                    onChange={e => setData('nominal', e.target.value)}
-                                    placeholder="Contoh: 5000000"
+                                <RupiahInput value={data.nominal}
+                                    onChange={v => setData('nominal', v)}
+                                    placeholder="Contoh: 5.000.000"
                                     className="w-full px-4 py-3 text-sm text-white placeholder-gray-600 bg-black border border-gray-700 rounded-xl focus:border-yellow-500" />
                             </div>
                             <div>
