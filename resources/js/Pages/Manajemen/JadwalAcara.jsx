@@ -99,15 +99,9 @@ export default function JadwalAcara({ events }) {
                     </div>
                     <div className="grid grid-cols-7">
                         {cells.map((cell, i) => (
-                            <div key={i} className={`relative min-h-[110px] p-2 border-b border-r border-gray-50 hover:bg-gray-50 transition-colors
+                            <div key={i} className={`relative min-h-[110px] p-2 border-b border-r border-gray-50 transition-colors hover:bg-gray-50
                                 ${i % 7 === 6 ? 'border-r-0' : ''}
-                                ${cell.isToday ? 'bg-red-50/40' : ''}`}>
-
-                                {/* Watermark bulan & tahun */}
-
-                                <span className="absolute text-xs font-bold leading-tight text-right pointer-events-none select-none bottom-2 right-2" style={{ color: '#9ca3af' }}>
-                                    {cell.cellMonthName.slice(0, 3)}<br />{cell.cellYear}
-                                </span>
+                                ${cell.isOther ? 'bg-gray-50/60' : cell.isToday ? 'bg-red-50/50' : cell.isWeekend ? 'bg-rose-50/40' : ''}`}>
 
                                 {/* Nomor tanggal */}
                                 <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mb-1
