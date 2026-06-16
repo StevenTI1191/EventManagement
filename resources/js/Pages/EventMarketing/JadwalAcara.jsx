@@ -23,11 +23,14 @@ export default function JadwalAcara({ events }) {
     const today = new Date();
     const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
 
-    const filtered = events.filter(e => activeFilter === 'all' || e.status === activeFilter);
+    const filtered = events.filter(e =>
+        activeFilter === 'all' ? true
+        : activeFilter === 'Upcoming' ? (e.status === 'Upcoming' || e.status === 'Active')
+        : e.status === activeFilter);
 
     const getChipClass = (status) => {
         if (status === 'Done') return 'bg-green-100 text-green-800';
-        if (status === 'Active') return 'bg-blue-100 text-blue-800';
+        if (status === 'Upcoming' || status === 'Active') return 'bg-blue-100 text-blue-800';
         if (status === 'Cancelled') return 'bg-red-100 text-red-800';
         return 'bg-yellow-100 text-yellow-800';
     };
@@ -80,10 +83,10 @@ export default function JadwalAcara({ events }) {
 
                 {/* Filter */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                    {['all', 'Active', 'Done'].map(f => (
+                    {['all', 'Upcoming', 'Done'].map(f => (
                         <button key={f} onClick={() => setActiveFilter(f)}
                             className={`px-4 py-1 rounded-full text-xs font-medium border transition-all ${activeFilter === f ? 'bg-[#FF2D55] text-white border-[#FF2D55]' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
-                            {f === 'all' ? 'Semua' : f === 'Active' ? 'Upcoming' : f}
+                            {f === 'all' ? 'Semua' : f}
                         </button>
                     ))}
                 </div>
@@ -137,7 +140,7 @@ export default function JadwalAcara({ events }) {
                                 <button onClick={() => setSelectedEvent(null)}
                                     className="absolute flex items-center justify-center w-8 h-8 text-lg text-gray-600 bg-white rounded-full shadow top-3 right-3 hover:bg-gray-100">&times;</button>
                                 <span className={`absolute bottom-3 left-3 px-2 py-0.5 text-[10px] font-bold rounded-full ${getChipClass(selectedEvent.status)}`}>
-                                    {selectedEvent.status === 'Active' ? 'Upcoming' : selectedEvent.status}
+                                    {selectedEvent.status}
                                 </span>
                             </div>
                             <div className="p-5">
