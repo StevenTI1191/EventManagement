@@ -116,22 +116,44 @@ export default function FinanceJadwalAcara({ events }) {
                 </div>
 
                 {selectedEvent && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setSelectedEvent(null)}>
-                        <div className="p-6 bg-white shadow-xl rounded-2xl w-80" onClick={e => e.stopPropagation()}>
-                            <div className="flex items-start justify-between mb-4">
-                                <h3 className="pr-4 text-base font-semibold text-gray-900">{selectedEvent.title}</h3>
-                                <button onClick={() => setSelectedEvent(null)} className="text-xl leading-none text-gray-400 hover:text-gray-600">&times;</button>
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setSelectedEvent(null)}>
+                        <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white shadow-2xl rounded-2xl" onClick={e => e.stopPropagation()}>
+                            <div className="relative h-40 bg-gradient-to-br from-[#FF2D55]/20 to-gray-200">
+                                {selectedEvent.poster ? (
+                                    <img src={`/${selectedEvent.poster}`} alt={selectedEvent.title} className="object-cover w-full h-full" />
+                                ) : (
+                                    <div className="flex items-center justify-center w-full h-full text-3xl font-black text-gray-300 select-none">
+                                        {selectedEvent.title?.slice(0, 2).toUpperCase()}
+                                    </div>
+                                )}
+                                <button onClick={() => setSelectedEvent(null)}
+                                    className="absolute flex items-center justify-center w-8 h-8 text-lg text-gray-600 bg-white rounded-full shadow top-3 right-3 hover:bg-gray-100">&times;</button>
+                                <span className={`absolute bottom-3 left-3 px-2 py-0.5 text-[10px] font-bold rounded-full ${getChipClass(selectedEvent.status)}`}>
+                                    {selectedEvent.status === 'Active' ? 'Upcoming' : selectedEvent.status}
+                                </span>
                             </div>
-                            {[
-                                ['Tanggal', selectedEvent.start],
-                                ['Jam', selectedEvent.time],
-                                ['Status', selectedEvent.status],
-                            ].map(([label, val]) => (
-                                <div key={label} className="flex gap-3 mb-2 text-sm">
-                                    <span className="w-16 text-gray-400 shrink-0">{label}</span>
-                                    <span className="text-gray-800">{val}</span>
+                            <div className="p-5">
+                                <h3 className="text-lg font-bold text-gray-900">{selectedEvent.title}</h3>
+                                {selectedEvent.kategori && (
+                                    <span className="inline-block mt-1 mb-3 px-2 py-0.5 text-[10px] font-bold text-[#FF2D55] bg-[#FF2D55]/10 rounded-full">{selectedEvent.kategori}</span>
+                                )}
+                                <div className="space-y-2">
+                                    {[
+                                        ['📅 Tanggal', selectedEvent.start],
+                                        ['⏰ Jam', `${selectedEvent.time || '-'}${selectedEvent.jam_selesai ? ' – ' + selectedEvent.jam_selesai : ''}`],
+                                        ['🏢 Client', selectedEvent.client || '-'],
+                                        ['👤 PIC', selectedEvent.pic || '-'],
+                                        ['📍 Area', selectedEvent.area || '-'],
+                                        ['👥 Jumlah Pax', selectedEvent.jumlah_pax ? selectedEvent.jumlah_pax + ' orang' : '-'],
+                                        ['💰 Deal Harga', selectedEvent.deal_harga ? 'Rp ' + new Intl.NumberFormat('id-ID').format(selectedEvent.deal_harga) : '-'],
+                                    ].map(([label, val]) => (
+                                        <div key={label} className="flex gap-3 text-sm">
+                                            <span className="text-gray-400 w-28 shrink-0">{label}</span>
+                                            <span className="font-medium text-gray-800">{val}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </div>
                         </div>
                     </div>
                 )}

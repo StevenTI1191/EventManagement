@@ -61,7 +61,10 @@ class EventController extends Controller
         }
 
         // Filter ±1 tahun dari sekarang — mencegah load seluruh tabel events ke memori
-        $events = Event::select(['id_event', 'nama_event', 'tgl_mulai_event', 'status_event', 'jam_mulai'])
+        $events = Event::with(['client:id,nama_client', 'pic:id_pegawai,nama_pegawai'])
+            ->select(['id_event', 'nama_event', 'tgl_mulai_event', 'tgl_selesai_event', 'status_event',
+                      'jam_mulai', 'jam_selesai', 'poster_event', 'area_event', 'kategori_event',
+                      'jumlah_pax', 'deal_harga_event', 'id_client', 'id_pegawai'])
             ->whereBetween('tgl_mulai_event', [
                 now()->subYear()->startOfYear()->toDateString(),
                 now()->addYear()->endOfYear()->toDateString(),
@@ -70,11 +73,19 @@ class EventController extends Controller
             ->get()
             ->map(function ($event) {
                 return [
-                    'id'     => $event->id_event,
-                    'title'  => $event->nama_event,
-                    'start'  => $event->tgl_mulai_event,
-                    'status' => $event->status_event,
-                    'time'   => $event->jam_mulai,
+                    'id'          => $event->id_event,
+                    'title'       => $event->nama_event,
+                    'start'       => $event->tgl_mulai_event,
+                    'status'      => $event->status_event,
+                    'time'        => $event->jam_mulai,
+                    'jam_selesai' => $event->jam_selesai,
+                    'poster'      => $event->poster_event,
+                    'area'        => $event->area_event,
+                    'kategori'    => $event->kategori_event,
+                    'jumlah_pax'  => $event->jumlah_pax,
+                    'deal_harga'  => $event->deal_harga_event,
+                    'client'      => $event->client?->nama_client,
+                    'pic'         => $event->pic?->nama_pegawai,
                 ];
             });
 
