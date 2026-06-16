@@ -19,8 +19,8 @@ class HomeController extends Controller
             ->take(6)
             ->get(['id_event', 'nama_event', 'kategori_event', 'tgl_mulai_event', 'poster_event', 'status_event', 'area_event']);
 
-        // Upcoming events — Active / Pending, urut terdekat (hanya yang Publik)
-        $upcoming = Event::whereIn('status_event', ['Active', 'Pending'])
+        // Upcoming events — urut terdekat (hanya yang Publik)
+        $upcoming = Event::where('status_event', 'Upcoming')
             ->where('is_public', true)
             ->orderBy('tgl_mulai_event', 'asc')
             ->take(4)
@@ -48,7 +48,7 @@ class HomeController extends Controller
         $request->validate([
             'search'   => 'nullable|string|max:255',
             'kategori' => 'nullable|string|max:255',
-            'status'   => 'nullable|in:Pending,Active,Done,Cancelled',
+            'status'   => 'nullable|in:Upcoming,Done',
         ]);
 
         // Hanya event Publik yang boleh tampil di listing publik

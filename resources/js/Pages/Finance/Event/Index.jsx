@@ -190,8 +190,8 @@ export default function FinanceEventIndex({ auth, events, filters, clients, pega
                                     className="w-full h-56 object-cover rounded-[2rem]"
                                 />
                                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full shadow-sm">
-                                    <span className={`text-[10px] font-black uppercase tracking-wider ${event.status_event === 'Active' ? 'text-orange-500' : 'text-[#FF2D55]'}`}>
-                                        ● {event.status_event || 'Active'}
+                                    <span className={`text-[10px] font-black uppercase tracking-wider ${event.status_event === 'Upcoming' ? 'text-orange-500' : 'text-[#FF2D55]'}`}>
+                                        ● {event.status_event || 'Upcoming'}
                                     </span>
                                 </div>
                             </div>

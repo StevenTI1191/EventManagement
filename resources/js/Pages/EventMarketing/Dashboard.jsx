@@ -66,7 +66,7 @@ export default function Dashboard({ auth, stats, aptStats, recentEvents, pending
 
     const getStatusColor = (status) => {
         if (status === 'Done') return 'bg-green-100 text-green-700';
-        if (status === 'Active') return 'bg-orange-100 text-orange-600';
+        if (status === 'Upcoming') return 'bg-orange-100 text-orange-600';
         return 'bg-gray-100 text-gray-600';
     };
 

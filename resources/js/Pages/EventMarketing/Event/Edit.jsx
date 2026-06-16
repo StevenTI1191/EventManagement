@@ -13,7 +13,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
         deal_harga_event:     event.deal_harga_event || '',
         id_client:            event.id_client || '',
         id_pegawai:           event.id_pegawai || '',
-        status_event:         event.status_event || 'Pending',
+        status_event:         event.status_event || 'Upcoming',
         is_public:            event.is_public ?? false,
         tgl_mulai_event:      event.tgl_mulai_event || '',
         jam_mulai:            event.jam_mulai || '09:00',

@@ -59,7 +59,7 @@ class Event extends Model
             ->where('area_event', $area)
             ->where('jam_mulai', '<', $jam_selesai)
             ->where('jam_selesai', '>', $jam_mulai)
-            ->whereNotIn('status_event', ['Cancelled', 'Done']); // event yg sudah selesai/batal tidak dihitung bentrok
+            ->where('status_event', '!=', 'Done'); // event yang sudah selesai tidak dihitung bentrok
 
         if ($exclude_id) {
             $query->where('id_event', '!=', $exclude_id);

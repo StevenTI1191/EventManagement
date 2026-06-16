@@ -20,9 +20,8 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
 
     const statusTabs = [
         { key: 'all',      label: 'Semua' },
-        { key: 'Active',   label: 'Upcoming' },
+        { key: 'Upcoming',   label: 'Upcoming' },
         { key: 'Done',     label: 'Selesai' },
-        { key: 'Pending',  label: 'Pending' },
     ];
 
     // Trigger server-side filter
@@ -63,7 +62,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
 
     const getStatusBadge = (status) => {
         if (status === 'Done')      return { label: 'Selesai',   cls: 'bg-green-500/20 text-green-400 border-green-500/30' };
-        if (status === 'Active')    return { label: 'Upcoming',  cls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
+        if (status === 'Upcoming')    return { label: 'Upcoming',  cls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
         if (status === 'Pending')   return { label: 'Pending',   cls: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' };
         if (status === 'Cancelled') return { label: 'Dibatalkan',cls: 'bg-red-500/20 text-red-400 border-red-500/30' };
         return { label: status || '-', cls: 'bg-gray-500/20 text-gray-400 border-gray-500/30' };

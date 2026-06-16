@@ -18,7 +18,7 @@ class DashboardController extends Controller
         $this->checkEventMarketing();
 
         $totalEvent  = Event::count();
-        $eventActive = Event::where('status_event', 'Active')->count();
+        $eventActive = Event::where('status_event', 'Upcoming')->count();
         $eventDone   = Event::where('status_event', 'Done')->count();
         $recentEvents = Event::latest()->take(5)->get();
 

@@ -261,11 +261,10 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
                                 </div>
                                 <span className={`px-2.5 py-1 text-[10px] font-black uppercase rounded-full flex-shrink-0 ${
                                     event.status_event === 'Done'      ? 'bg-green-50 text-green-600' :
-                                    event.status_event === 'Active'    ? 'bg-blue-50 text-blue-600' :
-                                    event.status_event === 'Cancelled' ? 'bg-red-50 text-red-500' :
-                                    'bg-yellow-50 text-yellow-600'
+                                    event.status_event === 'Upcoming'    ? 'bg-blue-50 text-blue-600' :
+                                    'bg-blue-50 text-blue-600'
                                 }`}>
-                                    {event.status_event || 'Pending'}
+                                    {event.status_event || 'Upcoming'}
                                 </span>
                             </Link>
                         )) : (

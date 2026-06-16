@@ -10,7 +10,7 @@ export default function EventCard({ title, date, status, image }) {
                 <h4 className="text-sm font-bold leading-tight text-gray-900">{title}</h4>
                 <p className="mt-1 text-xs text-gray-500">📅 {date}</p>
                 <div className="flex gap-2 mt-3">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${status === 'Active' ? 'bg-yellow-100 text-yellow-600' : 'bg-pink-100 text-pink-600'}`}>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${status === 'Upcoming' ? 'bg-yellow-100 text-yellow-600' : 'bg-pink-100 text-pink-600'}`}>
                         {status}
                     </span>
                 </div>

@@ -109,7 +109,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
     // Status untuk Event
     const getEventStatusColor = (status) => {
-        if (status === 'Active')    return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+        if (status === 'Upcoming')    return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
         if (status === 'Done')      return 'bg-green-500/20 text-green-300 border-green-500/30';
         if (status === 'Pending')   return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
         if (status === 'Cancelled') return 'bg-red-500/20 text-red-300 border-red-500/30';
@@ -117,7 +117,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
     };
 
     const getEventStatusLabel = (status) => {
-        if (status === 'Active')    return 'Upcoming';
+        if (status === 'Upcoming')    return 'Upcoming';
         if (status === 'Done')      return 'Selesai';
         if (status === 'Pending')   return 'Pending';
         if (status === 'Cancelled') return 'Dibatalkan';
@@ -427,7 +427,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                         ).length;
 
                         const evList       = events || [];
-                        const eventAktif   = evList.filter(e => e.status_event === 'Active').length;
+                        const eventAktif   = evList.filter(e => e.status_event === 'Upcoming').length;
                         const eventSelesai = evList.filter(e => e.status_event === 'Done').length;
 
                         const eventBelumLunas = evList.filter(event => {
@@ -749,7 +749,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                     <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border backdrop-blur-sm ${getEventStatusColor(event.status_event)}`}>
                                                         {getEventStatusLabel(event.status_event)}
                                                     </span>
-                                                    {event.status_event === 'Active' && days !== null && days >= 0 && (
+                                                    {event.status_event === 'Upcoming' && days !== null && days >= 0 && (
                                                         days === 0
                                                             ? <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-orange-500/90 text-white backdrop-blur-sm animate-pulse">🎉 Hari ini!</span>
                                                             : days <= 7

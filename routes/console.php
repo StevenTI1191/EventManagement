@@ -21,7 +21,7 @@ Artisan::command('inspire', function () {
 Schedule::call(function () {
     foreach ([7, 3, 1] as $hariLagi) {
         $events = Event::with(['client'])
-            ->where('status_event', 'Active')
+            ->where('status_event', 'Upcoming')
             ->whereDate('tgl_mulai_event', now()->addDays($hariLagi))
             ->get();
 

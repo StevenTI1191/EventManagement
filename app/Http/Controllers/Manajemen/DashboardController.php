@@ -19,7 +19,7 @@ class DashboardController extends Controller
         $this->checkManajemen();
 
         $totalEvent     = Event::count();
-        $eventActive    = Event::where('status_event', 'Active')->count();
+        $eventActive    = Event::where('status_event', 'Upcoming')->count();
         $eventDone      = Event::where('status_event', 'Done')->count();
         $totalClient    = Client::count();
         $totalTransaksi = \App\Models\Transaksi::count();
@@ -65,7 +65,7 @@ class DashboardController extends Controller
             ]);
 
         // ── Chart 5: Event per status (donut) ────────────────────────────
-        $statusChart = Event::selectRaw('COALESCE(status_event, "Pending") as status, COUNT(*) as total')
+        $statusChart = Event::selectRaw('COALESCE(status_event, "Upcoming") as status, COUNT(*) as total')
             ->groupBy('status')
             ->get()
             ->map(fn($r) => ['name' => $r->status, 'value' => (int) $r->total]);

@@ -90,7 +90,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
 
     const getStatusBadge = (status) => {
         if (status === 'Done')    return { label: 'Selesai', cls: 'bg-green-500/20 text-green-400' };
-        if (status === 'Active')  return { label: 'Upcoming', cls: 'bg-blue-500/20 text-blue-400' };
+        if (status === 'Upcoming')  return { label: 'Upcoming', cls: 'bg-blue-500/20 text-blue-400' };
         if (status === 'Pending') return { label: 'Pending', cls: 'bg-yellow-500/20 text-yellow-400' };
         return { label: status, cls: 'bg-gray-500/20 text-gray-400' };
     };

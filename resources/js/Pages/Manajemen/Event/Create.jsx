@@ -11,7 +11,7 @@ export default function Create({ auth, clients, pegawais }) {
         id_client: '',
         kategori_event: '',
         id_pegawai: '',
-        status_event: 'Pending',
+        status_event: 'Upcoming',
         is_public: false,
         tgl_mulai_event: '',
         jam_mulai: '09:00',

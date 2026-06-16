@@ -328,8 +328,8 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
                                     className="w-full h-56 object-cover rounded-[2rem]"
                                 />
                                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full shadow-sm">
-                                    <span className={`text-[10px] font-black uppercase tracking-wider ${event.status_event === 'Active' ? 'text-orange-500' : 'text-[#FF2D55]'}`}>
-                                        ● {event.status_event || 'Active'}
+                                    <span className={`text-[10px] font-black uppercase tracking-wider ${event.status_event === 'Upcoming' ? 'text-orange-500' : 'text-[#FF2D55]'}`}>
+                                        ● {event.status_event || 'Upcoming'}
                                     </span>
                                 </div>
                                 <div className="absolute flex gap-2 transition-all duration-200 opacity-0 top-4 left-4 group-hover:opacity-100">
