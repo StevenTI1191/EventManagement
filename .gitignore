@@ -25,3 +25,7 @@ Thumbs.db
 
 # File lock sementara Word
 ~$*
+
+# Sisa folder upload publik lama (bukti kini di private storage) — jangan track
+/public/bukti-pembayaran/
+/public/bukti/
