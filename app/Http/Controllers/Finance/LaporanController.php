@@ -20,10 +20,6 @@ class LaporanController extends Controller
 {
     use ChecksPegawaiRole;
 
-    private function checkFinance()
-    {
-        $this->checkFinance();
-    }
 
     public function index()
     {
