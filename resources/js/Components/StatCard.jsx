@@ -16,7 +16,7 @@ export default function StatCard({ title, value, icon, color = '#FF2D55', hint }
             </div>
 
             <div className="min-w-0 text-left">
-                <p className="text-sm font-semibold text-gray-500 group-hover:text-[#FF2D55] transition-colors">
+                <p className="text-sm font-semibold leading-tight text-gray-500 group-hover:text-[#FF2D55] transition-colors min-h-[2.5rem]">
                     {title}
                 </p>
                 <h2 title={hint || undefined}
