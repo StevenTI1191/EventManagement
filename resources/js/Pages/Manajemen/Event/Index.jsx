@@ -1,7 +1,7 @@
 ﻿import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import Pagination from '@/Components/Pagination';
 import { Search, Plus, Calendar as CalendarIcon, X, Pencil, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 
 export default function Index({ auth, events, filters, clients, pegawais }) {
@@ -47,6 +47,15 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
             setModalTugas(selectedEvent.tugas || []);
         }
     };
+
+    // Auto-buka modal detail jika datang dari ?open={id_event} (mis. dari Event Terbaru dashboard)
+    useEffect(() => {
+        const openId = new URLSearchParams(window.location.search).get('open');
+        if (openId) {
+            const ev = (events.data || []).find(e => String(e.id_event) === String(openId));
+            if (ev) handleOpenModal(ev);
+        }
+    }, []);
 
 
 

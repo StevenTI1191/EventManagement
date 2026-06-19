@@ -75,7 +75,14 @@ export default function JadwalAcara({ events }) {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <button onClick={prevMonth} className="flex items-center justify-center w-8 h-8 text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">&#8249;</button>
-                        <span className="text-lg font-semibold text-center text-gray-800 w-44">{monthNames[m]} {y}</span>
+                        <select value={m} onChange={e => setCurrentDate(new Date(y, Number(e.target.value), 1))}
+                            className="px-3 py-1.5 text-sm font-semibold text-gray-800 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FF2D55]/30">
+                            {monthNames.map((name, i) => <option key={i} value={i}>{name}</option>)}
+                        </select>
+                        <select value={y} onChange={e => setCurrentDate(new Date(Number(e.target.value), m, 1))}
+                            className="px-3 py-1.5 text-sm font-semibold text-gray-800 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FF2D55]/30">
+                            {Array.from({ length: 9 }, (_, i) => new Date().getFullYear() - 3 + i).map(yr => <option key={yr} value={yr}>{yr}</option>)}
+                        </select>
                         <button onClick={nextMonth} className="flex items-center justify-center w-8 h-8 text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">&#8250;</button>
                     </div>
                     <button onClick={goToday} className="text-sm px-4 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">Hari ini</button>
@@ -92,17 +99,17 @@ export default function JadwalAcara({ events }) {
                 </div>
 
                 {/* Grid */}
-                <div className="overflow-hidden bg-white border border-gray-100 rounded-2xl">
-                    <div className="grid grid-cols-7 border-b border-gray-100">
+                <div className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-2xl">
+                    <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
                         {dayNames.map((d, i) => (
                             <div key={d} className={`py-3 text-center text-xs font-semibold ${i >= 5 ? 'text-[#FF2D55]' : 'text-gray-500'}`}>{d}</div>
                         ))}
                     </div>
                     <div className="grid grid-cols-7">
                         {cells.map((cell, i) => (
-                            <div key={i} className={`relative min-h-[110px] p-2 border-b border-r border-gray-50 transition-colors hover:bg-gray-50
+                            <div key={i} className={`relative min-h-[110px] p-2 border-b border-r border-gray-200 transition-colors hover:bg-gray-50
                                 ${i % 7 === 6 ? 'border-r-0' : ''}
-                                ${cell.isOther ? 'bg-gray-50/60' : cell.isToday ? 'bg-red-50/50' : cell.isWeekend ? 'bg-rose-50/40' : ''}`}>
+                                ${cell.isOther ? 'bg-gray-100/70' : cell.isToday ? 'bg-[#FF2D55]/5' : cell.isWeekend ? 'bg-rose-50/70' : 'bg-white'}`}>
 
                                 <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mb-1
                                     ${cell.isToday ? 'bg-[#FF2D55] text-white' :

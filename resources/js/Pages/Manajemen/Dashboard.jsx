@@ -240,7 +240,7 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
                     <div className="space-y-3">
                         {recentEvents?.length > 0 ? recentEvents.map(event => (
                             <Link key={event.id_event}
-                                href={route('manajemen.event.edit', event.id_event)}
+                                href={route('manajemen.event.index') + '?open=' + event.id_event}
                                 className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-pink-50 transition-colors cursor-pointer">
                                 <div className="flex-shrink-0 w-12 h-12 overflow-hidden rounded-xl bg-gray-200">
                                     {event.poster_event ? (
