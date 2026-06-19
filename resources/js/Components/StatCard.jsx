@@ -15,12 +15,12 @@ export default function StatCard({ title, value, icon, color = '#FF2D55', hint }
                 {icon}
             </div>
 
-            <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide group-hover:text-[#FF2D55] transition-colors">
+            <div className="min-w-0 text-left">
+                <p className="text-sm font-semibold text-gray-500 group-hover:text-[#FF2D55] transition-colors">
                     {title}
                 </p>
                 <h2 title={hint || undefined}
-                    className="mt-1 text-2xl font-extrabold leading-tight tracking-tight text-gray-900 whitespace-nowrap">
+                    className="mt-1 text-2xl font-extrabold leading-tight tracking-tight text-left text-gray-900 whitespace-nowrap">
                     {value}
                 </h2>
             </div>
