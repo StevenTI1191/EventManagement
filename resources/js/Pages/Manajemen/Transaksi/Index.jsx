@@ -559,7 +559,7 @@ export default function TransaksiIndex({ auth, events, filters = {} }) {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 text-[10px] font-black uppercase rounded-full ${
+                                        <span className={`px-3 py-1 inline-block whitespace-nowrap text-[10px] font-black uppercase rounded-full ${
                                             event.status === 'Lunas' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-[#FF2D55]'
                                         }`}>
                                             {event.status}
@@ -690,7 +690,7 @@ export default function TransaksiIndex({ auth, events, filters = {} }) {
                                                                 {event.pengeluarans.map((item) => (
                                                                     <tr key={item.id_item}>
                                                                         <td className="py-2">
-                                                                            <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-full ${
+                                                                            <span className={`px-2 py-0.5 inline-block whitespace-nowrap text-[10px] font-black uppercase rounded-full ${
                                                                                 item.tipe === 'Pengeluaran' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'
                                                                             }`}>{item.tipe}</span>
                                                                         </td>
