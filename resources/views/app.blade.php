@@ -23,6 +23,12 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
+        {{-- Favicon (logo Laksamana). ?v=filemtime agar browser ambil versi terbaru, bukan cache --}}
+        @php $favicon = '/images/LaksamanaLogo.png'; $faviconVer = @filemtime(public_path('images/LaksamanaLogo.png')) ?: '1'; @endphp
+        <link rel="icon" type="image/png" href="{{ $favicon }}?v={{ $faviconVer }}">
+        <link rel="shortcut icon" type="image/png" href="{{ $favicon }}?v={{ $faviconVer }}">
+        <link rel="apple-touch-icon" href="{{ $favicon }}?v={{ $faviconVer }}">
+
         @if ($isClient)
             {{-- ── SEO dasar ── --}}
             <meta name="description" content="{{ $seoDesc }}">
