@@ -14,13 +14,15 @@ use OpenSpout\Writer\XLSX\Options as XlsxOptions;
 use OpenSpout\Common\Entity\Row;
 use Carbon\Carbon;
 
+use App\Traits\ChecksPegawaiRole;
+
 class LaporanController extends Controller
 {
+    use ChecksPegawaiRole;
+
     private function checkFinance()
     {
-        if (Auth::guard('pegawai')->user()->posisi_pegawai !== 'Finance') {
-            abort(403);
-        }
+        $this->checkFinance();
     }
 
     public function index()

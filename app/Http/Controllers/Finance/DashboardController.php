@@ -9,13 +9,15 @@ use App\Models\TransaksiItem;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
+use App\Traits\ChecksPegawaiRole;
+
 class DashboardController extends Controller
 {
+    use ChecksPegawaiRole;
+
     public function index()
     {
-        if (Auth::guard('pegawai')->user()->posisi_pegawai !== 'Finance') {
-            abort(403);
-        }
+        $this->checkFinance();
 
         // ── KPI UTAMA ──────────────────────────────────────────────
         $totalPenjualan   = Transaksi::sum('nominal');

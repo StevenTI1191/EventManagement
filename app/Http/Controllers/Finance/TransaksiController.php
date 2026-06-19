@@ -11,13 +11,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
+use App\Traits\ChecksPegawaiRole;
+
 class TransaksiController extends Controller
 {
+    use ChecksPegawaiRole;
+
     private function checkFinance()
     {
-        if (Auth::guard('pegawai')->user()->posisi_pegawai !== 'Finance') {
-            abort(403);
-        }
+        $this->checkFinance();
     }
 
     public function index(Request $request)

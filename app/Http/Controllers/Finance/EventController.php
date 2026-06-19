@@ -9,13 +9,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
+use App\Traits\ChecksPegawaiRole;
+
 class EventController extends Controller
 {
+    use ChecksPegawaiRole;
+
     public function index(Request $request)
     {
-        if (Auth::guard('pegawai')->user()->posisi_pegawai !== 'Finance') {
-            abort(403);
-        }
+        $this->checkFinance();
 
         $request->validate([
             'tgl_awal'   => 'nullable|date',
@@ -56,9 +58,7 @@ class EventController extends Controller
 
     public function jadwal()
     {
-        if (Auth::guard('pegawai')->user()->posisi_pegawai !== 'Finance') {
-            abort(403);
-        }
+        $this->checkFinance();
 
         // Filter ±1 tahun dari sekarang — mencegah load seluruh tabel events ke memori
         $events = Event::with(['client:id,nama_client', 'pic:id_pegawai,nama_pegawai'])

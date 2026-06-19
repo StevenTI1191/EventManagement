@@ -10,13 +10,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
+use App\Traits\ChecksPegawaiRole;
+
 class ClientController extends Controller
 {
+    use ChecksPegawaiRole;
+
     public function index(Request $request)
     {
-        if (Auth::guard('pegawai')->user()->posisi_pegawai !== 'Finance') {
-            abort(403);
-        }
+        $this->checkFinance();
 
         $query = Client::withCount('events');
 
@@ -38,9 +40,7 @@ class ClientController extends Controller
 
     public function show($id)
     {
-        if (Auth::guard('pegawai')->user()->posisi_pegawai !== 'Finance') {
-            abort(403);
-        }
+        $this->checkFinance();
 
         $client = Client::findOrFail($id);
 

@@ -13,13 +13,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
+use App\Traits\ChecksPegawaiRole;
+
 class BuktiPembayaranController extends Controller
 {
+    use ChecksPegawaiRole;
+
     private function checkFinance()
     {
-        if (Auth::guard('pegawai')->user()->posisi_pegawai !== 'Finance') {
-            abort(403);
-        }
+        $this->checkFinance();
     }
 
     public function index(Request $request)
