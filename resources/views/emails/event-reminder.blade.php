@@ -18,16 +18,16 @@
         .greeting { font-size: 16px; color: #111827; font-weight: 600; margin-bottom: 12px; }
         .text { font-size: 14px; color: #4b5563; line-height: 1.7; margin-bottom: 20px; }
         .card { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
-        .event-title { font-size: 18px; font-weight: 800; color: #f59e0b; margin-bottom: 16px; }
-        .card-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
-        .card-row:last-child { margin-bottom: 0; }
-        .card-label { color: #6b7280; padding-right: 12px; }
-        .card-value { color: #111827; font-weight: 600; text-align: right; max-width: 60%; }
+        .event-title { font-size: 18px; font-weight: 800; color: #f59e0b; margin: 0 0 16px; }
+        .card-table { width: 100%; border-collapse: collapse; }
+        .card-table td { padding: 6px 0; font-size: 13px; vertical-align: top; }
+        .card-table td.card-label { color: #6b7280; white-space: nowrap; width: 42%; }
+        .card-table td.card-value { color: #111827; font-weight: 600; text-align: right; }
         .checklist { background: #f9fafb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; }
-        .checklist-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; }
-        .checklist-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4b5563; margin-bottom: 6px; }
-        .checklist-item:last-child { margin-bottom: 0; }
-        .check-icon { width: 18px; height: 18px; background: #fef3c7; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+        .checklist-title { font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 12px; }
+        .checklist-table { width: 100%; border-collapse: collapse; }
+        .checklist-table td { padding: 5px 0; font-size: 13px; color: #4b5563; vertical-align: top; line-height: 1.5; }
+        .checklist-table td.check-icon { width: 26px; color: #f59e0b; font-weight: 700; }
         .divider { border: none; border-top: 1px solid #f3f4f6; margin: 20px 0; }
         .footer { background: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #f3f4f6; }
         .footer p { font-size: 12px; color: #9ca3af; margin: 0; line-height: 1.6; }
@@ -54,34 +54,34 @@
 
         <div class="card">
             <p class="event-title">{{ $event->nama_event }}</p>
-            <div class="card-row">
-                <span class="card-label">Tanggal Pelaksanaan</span>
-                <span class="card-value">
-                    {{ \Carbon\Carbon::parse($event->tgl_mulai_event)->translatedFormat('l, d F Y') }}
-                </span>
-            </div>
-            <div class="card-row">
-                <span class="card-label">Waktu</span>
-                <span class="card-value">{{ $event->jam_mulai }} – {{ $event->jam_selesai }} WIB</span>
-            </div>
-            @if($event->area_event)
-            <div class="card-row">
-                <span class="card-label">Lokasi / Area</span>
-                <span class="card-value">{{ $event->area_event }}</span>
-            </div>
-            @endif
-            @if($event->jumlah_pax)
-            <div class="card-row">
-                <span class="card-label">Jumlah Pax</span>
-                <span class="card-value">{{ number_format($event->jumlah_pax, 0, ',', '.') }} orang</span>
-            </div>
-            @endif
-            @if($event->kategori_event)
-            <div class="card-row">
-                <span class="card-label">Kategori</span>
-                <span class="card-value">{{ $event->kategori_event }}</span>
-            </div>
-            @endif
+            <table class="card-table" role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="card-label">Tanggal Pelaksanaan</td>
+                    <td class="card-value">{{ \Carbon\Carbon::parse($event->tgl_mulai_event)->translatedFormat('l, d F Y') }}</td>
+                </tr>
+                <tr>
+                    <td class="card-label">Waktu</td>
+                    <td class="card-value">{{ substr($event->jam_mulai, 0, 5) }} – {{ substr($event->jam_selesai, 0, 5) }} WIB</td>
+                </tr>
+                @if($event->area_event)
+                <tr>
+                    <td class="card-label">Lokasi / Area</td>
+                    <td class="card-value">{{ $event->area_event }}</td>
+                </tr>
+                @endif
+                @if($event->jumlah_pax)
+                <tr>
+                    <td class="card-label">Jumlah Pax</td>
+                    <td class="card-value">{{ number_format($event->jumlah_pax, 0, ',', '.') }} orang</td>
+                </tr>
+                @endif
+                @if($event->kategori_event)
+                <tr>
+                    <td class="card-label">Kategori</td>
+                    <td class="card-value">{{ $event->kategori_event }}</td>
+                </tr>
+                @endif
+            </table>
         </div>
 
         <div class="checklist">
@@ -89,29 +89,31 @@
             @php
                 $sisa = $event->deal_harga_event - ($event->transaksis?->sum('nominal') ?? 0);
             @endphp
-            <div class="checklist-item">
-                <span class="check-icon">{{ $sisa <= 0 ? '✓' : '!' }}</span>
-                <span>
-                    Pelunasan pembayaran
-                    @if($sisa > 0)
-                        <strong style="color:#ef4444">(Sisa: Rp {{ number_format($sisa, 0, ',', '.') }})</strong>
-                    @else
-                        <strong style="color:#16a34a">(Lunas ✓)</strong>
-                    @endif
-                </span>
-            </div>
-            <div class="checklist-item">
-                <span class="check-icon">📞</span>
-                <span>Konfirmasi jumlah tamu final ke tim kami</span>
-            </div>
-            <div class="checklist-item">
-                <span class="check-icon">📋</span>
-                <span>Pastikan semua detail acara sudah sesuai</span>
-            </div>
-            <div class="checklist-item">
-                <span class="check-icon">🚗</span>
-                <span>Siapkan transportasi dan akomodasi</span>
-            </div>
+            <table class="checklist-table" role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="check-icon">@if($sisa <= 0)<span style="color:#16a34a">&#10003;</span>@else<span style="color:#ef4444">&#33;</span>@endif</td>
+                    <td>
+                        Pelunasan pembayaran
+                        @if($sisa > 0)
+                            <strong style="color:#ef4444">(Sisa: Rp {{ number_format($sisa, 0, ',', '.') }})</strong>
+                        @else
+                            <strong style="color:#16a34a">(Lunas)</strong>
+                        @endif
+                    </td>
+                </tr>
+                <tr>
+                    <td class="check-icon">&bull;</td>
+                    <td>Konfirmasi jumlah tamu final ke tim kami</td>
+                </tr>
+                <tr>
+                    <td class="check-icon">&bull;</td>
+                    <td>Pastikan semua detail acara sudah sesuai</td>
+                </tr>
+                <tr>
+                    <td class="check-icon">&bull;</td>
+                    <td>Siapkan transportasi dan akomodasi</td>
+                </tr>
+            </table>
         </div>
 
         <p class="text">
