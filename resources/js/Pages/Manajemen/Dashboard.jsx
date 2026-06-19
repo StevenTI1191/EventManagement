@@ -17,11 +17,12 @@ const fmt = (v) =>
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v ?? 0);
 
 const fmtShort = (v) => {
-    if (!v) return 'Rp 0';
-    if (v >= 1_000_000_000) return `Rp ${(v / 1_000_000_000).toFixed(1)}M`;
-    if (v >= 1_000_000)     return `Rp ${(v / 1_000_000).toFixed(1)}Jt`;
-    if (v >= 1_000)         return `Rp ${(v / 1_000).toFixed(0)}K`;
-    return `Rp ${v}`;
+    const n = Number(v) || 0;
+    const d = (x, dec = 1) => x.toLocaleString('id-ID', { maximumFractionDigits: dec });
+    if (n >= 1_000_000_000) return `Rp ${d(n / 1_000_000_000)} M`;
+    if (n >= 1_000_000)     return `Rp ${d(n / 1_000_000)} Jt`;
+    if (n >= 1_000)         return `Rp ${d(n / 1_000, 0)} Rb`;
+    return `Rp ${d(n, 0)}`;
 };
 
 const PIE_COLORS = ['#FF2D55','#ff6b35','#fbbf24','#34d399','#60a5fa','#a78bfa','#f472b6'];
@@ -71,12 +72,12 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
 
             {/* ── STAT CARDS ─────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-4 mb-8 md:grid-cols-3 xl:grid-cols-6">
-                <StatCard title="Event Done"      value={stats.eventDone}                    icon={<CheckCircle size={22} />}    color="#FF2D55" />
-                <StatCard title="Event Active"    value={stats.eventActive}                  icon={<Calendar size={22} />}       color="#FF2D55" />
+                <StatCard title="Event Selesai"   value={stats.eventDone}                    icon={<CheckCircle size={22} />}    color="#FF2D55" />
+                <StatCard title="Event Mendatang" value={stats.eventActive}                  icon={<Calendar size={22} />}       color="#FF2D55" />
                 <StatCard title="Total Event"     value={stats.totalEvent}                   icon={<Layout size={22} />}         color="#FF2D55" />
-                <StatCard title="Total Penjualan" value={fmtShort(stats.totalPenjualan)}     icon={<Wallet size={22} />}         color="#FF2D55" />
+                <StatCard title="Total Penjualan" value={fmtShort(stats.totalPenjualan)} hint={fmt(stats.totalPenjualan)} icon={<Wallet size={22} />} color="#FF2D55" />
                 <StatCard title="Total Transaksi" value={stats.totalTransaksi}               icon={<ArrowRightLeft size={22} />} color="#FF2D55" />
-                <StatCard title="Total Client"    value={stats.totalClient}                  icon={<Users size={22} />}          color="#FF2D55" />
+                <StatCard title="Total Klien"     value={stats.totalClient}                  icon={<Users size={22} />}          color="#FF2D55" />
             </div>
 
             {/* ── ROW 1: Sales Chart + Event Status Donut ────── */}

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function StatCard({ title, value, icon, color = '#FF2D55' }) {
+export default function StatCard({ title, value, icon, color = '#FF2D55', hint }) {
     return (
         <div className="flex items-start gap-4 p-6 transition-all bg-white border border-gray-100 shadow-sm rounded-2xl hover:shadow-md group">
             {/* BAGIAN IKON: Sekarang otomatis mengikuti variabel color (Merah #FF2D55) */}
@@ -15,11 +15,12 @@ export default function StatCard({ title, value, icon, color = '#FF2D55' }) {
                 {icon}
             </div>
 
-            <div>
+            <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide group-hover:text-[#FF2D55] transition-colors">
                     {title}
                 </p>
-                <h2 className="mt-1 text-3xl font-extrabold tracking-tight text-gray-900">
+                <h2 title={hint || undefined}
+                    className="mt-1 text-2xl font-extrabold leading-tight tracking-tight text-gray-900 whitespace-nowrap">
                     {value}
                 </h2>
             </div>
