@@ -61,7 +61,7 @@ export default function LaporanIndex() {
         { label: 'Total Pengeluaran', value: preview.summary.total_pengeluaran, color: 'text-red-500',   bg: 'bg-red-50',     border: 'border-red-100',    icon: <TrendingDown size={20}/> },
         { label: 'Laba Bersih',       value: preview.summary.laba_bersih,       color: preview.summary.laba_bersih_raw >= 0 ? 'text-blue-600' : 'text-orange-500', bg: preview.summary.laba_bersih_raw >= 0 ? 'bg-blue-50' : 'bg-orange-50', border: preview.summary.laba_bersih_raw >= 0 ? 'border-blue-100' : 'border-orange-100', icon: <TrendingUp size={20}/> },
         { label: 'Piutang',           value: preview.summary.total_piutang,     color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-100', icon: <AlertCircle size={20}/> },
-        { label: 'Total Transaksi',   value: preview.summary.total_transaksi + ' trx', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', icon: <Wallet size={20}/> },
+        { label: 'Total Transaksi',   value: preview.summary.total_transaksi + ' transaksi', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', icon: <Wallet size={20}/> },
     ] : [];
 
     return (
@@ -244,7 +244,7 @@ export default function LaporanIndex() {
                                     {label:'Total Pengeluaran', value: preview.summary.total_pengeluaran, cls:'pc-red'},
                                     {label:'Laba Bersih',       value: preview.summary.laba_bersih,       cls: preview.summary.laba_bersih_raw >= 0 ? 'pc-blue' : 'pc-red'},
                                     {label:'Piutang',           value: preview.summary.total_piutang,     cls:'pc-yellow'},
-                                    {label:'Total Transaksi',   value: preview.summary.total_transaksi+' trx', cls:'pc-purple'},
+                                    {label:'Total Transaksi',   value: preview.summary.total_transaksi+' transaksi', cls:'pc-purple'},
                                 ].map(c => (
                                     <div key={c.label} className="print-card">
                                         <div className="pc-label">{c.label}</div>

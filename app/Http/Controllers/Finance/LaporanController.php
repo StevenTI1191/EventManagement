@@ -12,6 +12,11 @@ use Inertia\Inertia;
 use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
 use OpenSpout\Writer\XLSX\Options as XlsxOptions;
 use OpenSpout\Common\Entity\Row;
+use OpenSpout\Common\Entity\Style\Style;
+use OpenSpout\Common\Entity\Style\Color;
+use OpenSpout\Common\Entity\Style\Border;
+use OpenSpout\Common\Entity\Style\BorderPart;
+use OpenSpout\Common\Entity\Style\CellAlignment;
 use Carbon\Carbon;
 
 use App\Traits\ChecksPegawaiRole;
@@ -219,11 +224,37 @@ class LaporanController extends Controller
         $writer  = new XlsxWriter($options);
         $writer->openToFile($filePath);
 
+        // Gaya tampilan tabel
+        $headerStyle = (new Style())
+            ->setFontBold()
+            ->setFontSize(11)
+            ->setFontColor(Color::WHITE)
+            ->setBackgroundColor('FF2D55')
+            ->setCellAlignment(CellAlignment::CENTER)
+            ->setBorder(new Border(
+                new BorderPart(Border::BOTTOM, 'FF2D55', Border::WIDTH_THIN, Border::STYLE_SOLID),
+                new BorderPart(Border::TOP,    'FF2D55', Border::WIDTH_THIN, Border::STYLE_SOLID),
+            ));
+
+        $dataStyle = (new Style())->setBorder(new Border(
+            new BorderPart(Border::BOTTOM, 'E5E7EB', Border::WIDTH_THIN, Border::STYLE_SOLID),
+            new BorderPart(Border::LEFT,   'E5E7EB', Border::WIDTH_THIN, Border::STYLE_SOLID),
+            new BorderPart(Border::RIGHT,  'E5E7EB', Border::WIDTH_THIN, Border::STYLE_SOLID),
+        ));
+
+        // Lebar kolom per sheet (biar tidak terpotong)
+        $colWidths = [
+            'Ringkasan'               => [24, 30],
+            'Pembayaran'              => [6, 16, 28, 22, 28, 20],
+            'Pengeluaran & Pemasukan' => [6, 26, 14, 28, 8, 18, 18],
+            'Rekap Event'             => [6, 24, 22, 20, 20, 20, 20, 16],
+        ];
+
         $sheetsData = [
-            'Ringkasan'   => $ringkasan,
-            'Pembayaran'  => $pembayaran,
-            'Item'        => $items,
-            'Rekap Event' => $rekap,
+            'Ringkasan'               => $ringkasan,
+            'Pembayaran'              => $pembayaran,
+            'Pengeluaran & Pemasukan' => $items,   // dulu bernama "Item"
+            'Rekap Event'             => $rekap,
         ];
 
         $firstSheet = true;
@@ -236,16 +267,23 @@ class LaporanController extends Controller
             }
             $sheet->setName($sheetName);
 
+            // Atur lebar kolom sebelum menulis baris
+            if (isset($colWidths[$sheetName])) {
+                foreach ($colWidths[$sheetName] as $i => $w) {
+                    $sheet->setColumnWidth((float) $w, $i + 1);
+                }
+            }
+
             $rows = $collection->toArray();
             if (empty($rows)) continue;
 
-            // Header row
+            // Header row (berwarna)
             $headers = array_keys($rows[0]);
-            $writer->addRow(Row::fromValues($headers));
+            $writer->addRow(Row::fromValues($headers, $headerStyle));
 
-            // Data rows
+            // Data rows (border tipis)
             foreach ($rows as $rowData) {
-                $writer->addRow(Row::fromValues(array_values($rowData)));
+                $writer->addRow(Row::fromValues(array_values($rowData), $dataStyle));
             }
         }
 
