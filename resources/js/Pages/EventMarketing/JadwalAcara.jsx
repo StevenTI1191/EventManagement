@@ -48,7 +48,7 @@ export default function JadwalAcara({ events }) {
         }
 
         const cellDate = new Date(yr, mo, day);
-        const dateStr = cellDate.toISOString().slice(0, 10);
+        const dateStr = `${cellDate.getFullYear()}-${String(cellDate.getMonth()+1).padStart(2,'0')}-${String(cellDate.getDate()).padStart(2,'0')}`;
         const isToday = !isOther && day === today.getDate() && m === today.getMonth() && y === today.getFullYear();
         const isWeekend = dow === 5 || dow === 6;
         const dayEvents = filtered.filter(e => e.start === dateStr);
