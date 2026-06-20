@@ -18,7 +18,7 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
     const missingProfile = missing_phone || missing_company;
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const minDate = tomorrow.toISOString().split('T')[0];
+    const minDate = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
 
     const { data, setData, post, processing, errors } = useForm({
         jenis_event: '',
