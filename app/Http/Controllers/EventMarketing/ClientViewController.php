@@ -80,4 +80,81 @@ class ClientViewController extends Controller
             'filters'  => request()->only(['tgl_awal', 'tgl_akhir', 'kategori', 'pic', 'search']),
         ]);
     }
+
+    public function create()
+    {
+        $this->checkEventMarketing();
+
+        return Inertia::render('EventMarketing/Client/Create');
+    }
+
+    public function store(Request $request)
+    {
+        $this->checkEventMarketing();
+
+        $request->validate([
+            'nama_client'       => 'required|string|max:255',
+            'perusahaan_client' => 'nullable|string|max:255',
+            'no_telp_client'    => 'nullable|string|max:20',
+            'email_client'      => 'nullable|email|unique:clients,email_client',
+        ]);
+
+        Client::create($request->only([
+            'nama_client', 'perusahaan_client', 'no_telp_client', 'email_client',
+        ]));
+
+        return redirect()->route('em.client.index')
+            ->with('success', 'Client berhasil ditambahkan.');
+    }
+
+    public function edit($id)
+    {
+        $this->checkEventMarketing();
+
+        $client = Client::findOrFail($id);
+
+        return Inertia::render('EventMarketing/Client/Edit', [
+            'client' => $client,
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $this->checkEventMarketing();
+
+        $client = Client::findOrFail($id);
+
+        $request->validate([
+            'nama_client'       => 'required|string|max:255',
+            'perusahaan_client' => 'nullable|string|max:255',
+            'no_telp_client'    => 'nullable|string|max:20',
+            'email_client'      => 'nullable|email|unique:clients,email_client,' . $client->id,
+        ]);
+
+        $client->update($request->only([
+            'nama_client', 'perusahaan_client', 'no_telp_client', 'email_client',
+        ]));
+
+        return redirect()->route('em.client.index')
+            ->with('success', 'Client berhasil diupdate.');
+    }
+
+    public function destroy($id)
+    {
+        $this->checkEventMarketing();
+
+        $client = Client::withCount('events')->findOrFail($id);
+
+        // Blokir penghapusan jika client masih punya event (cascade akan menghapus
+        // semua event, transaksi, tugas, bukti, dan appointment milik mereka).
+        if ($client->events_count > 0) {
+            return redirect()->route('em.client.index')
+                ->with('error', "Client \"{$client->nama_client}\" tidak bisa dihapus karena masih memiliki {$client->events_count} event terkait. Hapus event terlebih dahulu.");
+        }
+
+        $client->delete();
+
+        return redirect()->route('em.client.index')
+            ->with('success', 'Client berhasil dihapus.');
+    }
 }

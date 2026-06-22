@@ -273,9 +273,14 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('em.todo.update');
         Route::delete('/event-marketing/todo/{id_tugas}', [\App\Http\Controllers\EventMarketing\TugasController::class, 'destroy'])
             ->name('em.todo.destroy');
-        // --- EVENT MARKETING: CLIENT (VIEW ONLY) ---
+        // --- EVENT MARKETING: CLIENT (CRUD) ---
         Route::get('/event-marketing/client', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'index'])->name('em.client.index');
+        Route::get('/event-marketing/client/create', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'create'])->name('em.client.create');
+        Route::post('/event-marketing/client', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'store'])->name('em.client.store');
         Route::get('/event-marketing/client/{id}', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'show'])->name('em.client.show');
+        Route::get('/event-marketing/client/{id}/edit', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'edit'])->name('em.client.edit');
+        Route::put('/event-marketing/client/{id}', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'update'])->name('em.client.update');
+        Route::delete('/event-marketing/client/{id}', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'destroy'])->name('em.client.destroy');
         // --- ROLE: FINANCE ---
         Route::get('/finance/dashboard', [\App\Http\Controllers\Finance\DashboardController::class, 'index'])
             ->name('finance.dashboard');
