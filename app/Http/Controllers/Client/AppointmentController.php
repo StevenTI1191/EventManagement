@@ -272,6 +272,38 @@ class AppointmentController extends Controller
         return back()->with('success', 'Bukti pembayaran berhasil diupload.');
     }
 
+    /**
+     * Klien mengunggah kontrak untuk event miliknya sendiri.
+     * Memakai field kontrak_file yang sama dengan sisi Manajemen/EM — siapa pun
+     * yang mengunggah, file terbaru yang dipakai (satu kontrak per event).
+     */
+    public function uploadKontrak(Request $request)
+    {
+        $client = Auth::guard('client')->user();
+
+        $request->validate([
+            // Pastikan event milik client yang login — cegah IDOR
+            'id_event'     => ['required', Rule::exists('events', 'id_event')->where('id_client', $client->id)],
+            'kontrak_file' => 'required|file|mimes:pdf,doc,docx|max:5120',
+        ]);
+
+        $event = Event::where('id_event', $request->id_event)
+            ->where('id_client', $client->id)
+            ->firstOrFail();
+
+        // Hapus kontrak lama bila ada
+        if ($event->kontrak_file) {
+            Storage::disk('local')->delete('kontrak/' . $event->kontrak_file);
+        }
+
+        $file     = $request->file('kontrak_file');
+        $filename = $file->hashName();
+        Storage::disk('local')->putFileAs('kontrak', $file, $filename);
+        $event->update(['kontrak_file' => $filename]);
+
+        return back()->with('success', 'Kontrak berhasil diupload.');
+    }
+
     public function deleteBukti($id)
     {
         $bukti = BuktiPembayaran::where('id', $id)

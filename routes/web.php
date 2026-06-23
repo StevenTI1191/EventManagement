@@ -77,7 +77,12 @@ Route::get('/bukti-transaksi/{filename}', function ($filename) {
 |--------------------------------------------------------------------------
 */
 Route::get('/kontrak/{filename}', function ($filename) {
-    if (!Auth::guard('pegawai')->check()) {
+    // Boleh diakses pegawai mana pun, ATAU klien pemilik event kontrak tersebut.
+    $isPegawai = Auth::guard('pegawai')->check();
+    $isOwner   = Auth::guard('client')->check()
+        && \App\Models\Event::where('kontrak_file', $filename)
+            ->where('id_client', Auth::guard('client')->id())->exists();
+    if (!$isPegawai && !$isOwner) {
         abort(403, 'Akses ditolak.');
     }
 
@@ -468,5 +473,9 @@ Route::domain(config('app.domain'))->group(function () {
             ->name('client.bukti.upload');
         Route::delete('/bukti-pembayaran/{id}', [\App\Http\Controllers\Client\AppointmentController::class, 'deleteBukti'])
             ->name('client.bukti.delete');
+
+        // Klien mengunggah kontrak untuk event miliknya (path unik agar tak kena redirect static nginx)
+        Route::post('/kontrak-upload', [\App\Http\Controllers\Client\AppointmentController::class, 'uploadKontrak'])
+            ->name('client.kontrak.upload');
     }); // auth:client
 }); // domain
