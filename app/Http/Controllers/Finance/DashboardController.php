@@ -23,11 +23,15 @@ class DashboardController extends Controller
         $totalPenjualan   = Transaksi::sum('nominal');
         $totalPengeluaran = TransaksiItem::where('tipe', 'Pengeluaran')->sum('total');
         $totalPemasukan   = TransaksiItem::where('tipe', 'Pemasukan')->sum('total');
-        $labaBersih       = $totalPenjualan - $totalPengeluaran;
+        // Laba bersih = pembayaran klien + pemasukan tambahan (sponsor, dll) - pengeluaran
+        $labaBersih       = $totalPenjualan + $totalPemasukan - $totalPengeluaran;
 
-        // Piutang: sum(deal_harga_event) - sum(pembayaran masuk)
-        $totalDeal   = Event::sum('deal_harga_event');
-        $totalPiutang = $totalDeal - $totalPenjualan;
+        $totalDeal = Event::sum('deal_harga_event');
+        // Piutang = jumlah kekurangan bayar PER EVENT (event yang lebih bayar tidak menutup yang kurang)
+        $totalPiutang = Event::where('deal_harga_event', '>', 0)
+            ->withSum('transaksis as total_dibayar', 'nominal')
+            ->get()
+            ->sum(fn ($e) => max($e->deal_harga_event - ($e->total_dibayar ?? 0), 0));
 
         // Status event — hitung di PHP untuk hindari konflik only_full_group_by
         $eventBelumLunas = Event::where('deal_harga_event', '>', 0)
