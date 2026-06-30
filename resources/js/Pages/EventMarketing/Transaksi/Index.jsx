@@ -68,7 +68,26 @@ export default function TransaksiIndex({ auth, events }) {
                                         <p className="text-xs text-gray-400">{event.client || '-'}</p>
                                     </td>
                                     <td className="px-6 py-4 text-sm font-semibold text-gray-800">{formatRupiah(event.deal)}</td>
-                                    <td className="px-6 py-4 text-sm font-semibold text-green-600">{formatRupiah(event.total_dibayar)}</td>
+                                    <td className="px-6 py-4">
+                                        {(() => {
+                                            const pct = event.deal > 0 ? Math.min(100, Math.round((event.total_dibayar / event.deal) * 100)) : 0;
+                                            return (
+                                                <div className="min-w-[120px]">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-sm font-semibold text-green-600">{formatRupiah(event.total_dibayar)}</span>
+                                                        <span className="text-[10px] font-black text-gray-400">{pct}%</span>
+                                                    </div>
+                                                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div className="h-2 rounded-full transition-all duration-500"
+                                                            style={{
+                                                                width: `${pct}%`,
+                                                                background: pct >= 100 ? '#16a34a' : pct >= 50 ? '#FF2D55' : '#f97316'
+                                                            }} />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </td>
                                     <td className="px-6 py-4 text-sm font-semibold text-red-500">{formatRupiah(event.sisa)}</td>
                                     <td className="px-6 py-4">
                                         <span className={'text-sm font-extrabold ' + (event.laba_bersih >= 0 ? 'text-green-600' : 'text-red-500')}>
