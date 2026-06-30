@@ -1,4 +1,4 @@
-﻿import ManajemenLayout from '@/Layouts/ManajemenLayout';
+import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { Download } from 'lucide-react';
 import RupiahInput from '@/Components/RupiahInput';
@@ -26,7 +26,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
         note_event:           event.note_event || '',
         jam_keluar_makanan:   event.jam_keluar_makanan || '',
         poster_event:         null,
-        kontrak_file:         null, // â† tambah ini
+        kontrak_file:         null, // tambah ini
     });
 
     // Aturan file (samakan dgn validasi backend: poster max 2MB image, kontrak max 5MB pdf/doc)
@@ -225,7 +225,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                 )}
                             </div>
 
-                            {/* GANTI KONTRAK FILE â† bagian baru */}
+                            {/* GANTI KONTRAK FILE bagian baru */}
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">
                                     Ganti Kontrak <span className="font-normal text-gray-400">(PDF / Word · maks 5 MB)</span>

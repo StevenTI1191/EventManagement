@@ -1,4 +1,4 @@
-﻿import ManajemenLayout from '@/Layouts/ManajemenLayout';
+import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
 
@@ -89,9 +89,9 @@ export default function PegawaiCreate({ auth }) {
                                 </select>
                                 {data.posisi_pegawai && (
                                     <p className="mt-1.5 text-xs text-gray-400">
-                                        {data.posisi_pegawai === 'Manajemen' && 'ðŸ‘” Akses penuh ke semua fitur manajemen.'}
-                                        {data.posisi_pegawai === 'EventMarketing' && 'ðŸŽ¯ Akses ke fitur event dan pemasaran.'}
-                                        {data.posisi_pegawai === 'Finance' && 'ðŸ’° Akses ke fitur keuangan dan transaksi.'}
+                                        {data.posisi_pegawai === 'Manajemen' && '👔 Akses penuh ke semua fitur manajemen.'}
+                                        {data.posisi_pegawai === 'EventMarketing' && '🎯 Akses ke fitur event dan pemasaran.'}
+                                        {data.posisi_pegawai === 'Finance' && '💰 Akses ke fitur keuangan dan transaksi.'}
                                     </p>
                                 )}
                             </>

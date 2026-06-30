@@ -1,4 +1,4 @@
-﻿import ManajemenLayout from '@/Layouts/ManajemenLayout';
+import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import Pagination from '@/Components/Pagination';
 import { Search, Plus, Calendar as CalendarIcon, X, Pencil, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -38,7 +38,7 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
     const handleOpenModal = (event, tab = 'detail') => {
         setSelectedEvent(event);
         setModalTab(tab);
-        setModalTugas(event.tugas || []); // â† langsung dari props
+        setModalTugas(event.tugas || []); // langsung dari props
     };
 
     const handleTabSwitch = (tab) => {
@@ -249,7 +249,7 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
                                             href={route('manajemen.todo.index', selectedEvent.id_event)}
                                             className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-blue-600 transition-colors bg-blue-50 rounded-2xl hover:bg-blue-100"
                                         >
-                                            Kelola semua tugas â†’
+                                            Kelola semua tugas →
                                         </Link>
                                     </div>
                                 </div>
