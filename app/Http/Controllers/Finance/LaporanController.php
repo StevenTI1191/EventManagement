@@ -111,8 +111,11 @@ class LaporanController extends Controller
                 'total_raw'   => (float) $i->total,
             ])->toArray();
 
-        $totalPengeluaran = collect($items)->where('tipe', 'Pengeluaran')->sum('total_raw');
-        $labaBersih       = $totalPemasukan - $totalPengeluaran;
+        $totalPengeluaran   = collect($items)->where('tipe', 'Pengeluaran')->sum('total_raw');
+        $totalPemasukanItem = collect($items)->where('tipe', 'Pemasukan')->sum('total_raw');
+        // Total pemasukan = pembayaran klien + pemasukan tambahan (sponsor, dll)
+        $totalPemasukan     = $totalPemasukan + $totalPemasukanItem;
+        $labaBersih         = $totalPemasukan - $totalPengeluaran;
 
         // Rekap per event
         $events = Event::with(['client', 'transaksis', 'transaksiItems'])
@@ -123,8 +126,9 @@ class LaporanController extends Controller
         $rekap_event = $events->map(function ($ev) use ($fmt) {
             $terbayar    = $ev->transaksis->sum('nominal');
             $pengeluaran = $ev->transaksiItems->where('tipe', 'Pengeluaran')->sum('total');
+            $pemasukan   = $ev->transaksiItems->where('tipe', 'Pemasukan')->sum('total');
             $deal        = $ev->deal_harga_event;
-            $laba        = $terbayar - $pengeluaran;
+            $laba        = $terbayar + $pemasukan - $pengeluaran;
             $status      = $terbayar >= $deal && $deal > 0 ? 'Lunas' : 'Belum Lunas';
 
             return [

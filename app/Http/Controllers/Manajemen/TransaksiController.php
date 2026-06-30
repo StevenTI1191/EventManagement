@@ -78,7 +78,8 @@ class TransaksiController extends Controller
                 $totalPemasukan  = $event->transaksiItems->where('tipe', 'Pemasukan')->sum('total');
                 $deal            = $event->deal_harga_event;
                 $sisa            = $deal - $totalDibayar;
-                $labaBersih      = $totalDibayar - $totalPengeluaran;
+                // Laba bersih = pembayaran klien + pemasukan tambahan (sponsor, dll) - pengeluaran
+                $labaBersih      = $totalDibayar + $totalPemasukan - $totalPengeluaran;
                 $status          = $totalDibayar >= $deal && $deal > 0 ? 'Lunas' : 'Belum Lunas';
 
                 return [
