@@ -79,7 +79,6 @@ export default function ClientDashboard({ appointments, events, totalAppointment
     const [alasanBatal, setAlasanBatal]     = useState('');
     const [deleteBuktiId, setDeleteBuktiId] = useState(null);
     const [deletingBukti, setDeletingBukti] = useState(false);
-    const [kontrakModal, setKontrakModal]   = useState(null);
 
     const { data, setData, post, processing, reset, errors } = useForm({
         id_event: '',
@@ -87,12 +86,6 @@ export default function ClientDashboard({ appointments, events, totalAppointment
         nominal: '',
         keterangan: '',
     });
-
-    // Form terpisah untuk upload kontrak
-    const {
-        data: kData, setData: kSetData, post: kPost,
-        processing: kProcessing, reset: kReset, errors: kErrors,
-    } = useForm({ id_event: '', kontrak_file: null });
 
     const user = auth?.user;
     const BASE_URL = window.location.origin;
@@ -196,22 +189,6 @@ export default function ClientDashboard({ appointments, events, totalAppointment
         });
     };
 
-    const openKontrak = (event) => {
-        kReset();
-        kSetData({ id_event: event.id_event, kontrak_file: null });
-        setKontrakModal(event);
-    };
-
-    const handleUploadKontrak = (e) => {
-        e.preventDefault();
-        kPost(route('client.kontrak.upload'), {
-            forceFormData: true,
-            onSuccess: () => {
-                setKontrakModal(null);
-                kReset();
-            },
-        });
-    };
 
     const handleDeleteBukti = (id) => {
         setDeleteBuktiId(id);
@@ -867,28 +844,16 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                     </button>
                                                 </div>
 
-                                                {/* Buttons: Kontrak */}
-                                                <div className="flex gap-1.5 mt-1.5">
-                                                    {event.kontrak_file ? (
-                                                        <>
-                                                            <a href={`/kontrak/${event.kontrak_file}`}
-                                                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-500/10 text-blue-400 text-[11px] font-bold rounded-xl hover:bg-blue-500/20 transition-colors border border-blue-500/30">
-                                                                <FileText size={12} />
-                                                                Kontrak
-                                                            </a>
-                                                            <button onClick={() => openKontrak(event)} title="Ganti kontrak"
-                                                                className="flex items-center justify-center px-3 py-2 bg-gray-800 text-gray-400 rounded-xl hover:bg-gray-700 transition-colors border border-gray-700">
-                                                                <Upload size={12} />
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <button onClick={() => openKontrak(event)}
-                                                            className="flex-1 flex items-center justify-center gap-1 py-2 bg-pink-500/10 text-[#FF2D55] text-[11px] font-bold rounded-xl hover:bg-pink-500/20 transition-colors border border-pink-500/30">
-                                                            <Upload size={12} />
-                                                            Upload Kontrak
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                {/* Kontrak (download saja — upload dikelola tim internal) */}
+                                                {event.kontrak_file && (
+                                                    <div className="flex gap-1.5 mt-1.5">
+                                                        <a href={`/kontrak/${event.kontrak_file}`}
+                                                            className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-500/10 text-blue-400 text-[11px] font-bold rounded-xl hover:bg-blue-500/20 transition-colors border border-blue-500/30">
+                                                            <FileText size={12} />
+                                                            Kontrak
+                                                        </a>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1241,48 +1206,6 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                 <button type="submit" disabled={processing}
                                     className="flex-1 py-2.5 bg-yellow-500 text-black font-black rounded-xl hover:bg-yellow-400 disabled:opacity-60">
                                     {processing ? 'Mengupload...' : '📤 Upload'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal Upload Kontrak */}
-            {kontrakModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-md p-6 bg-gray-900 border border-gray-700 shadow-xl rounded-2xl">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h2 className="text-lg font-extrabold text-white">Upload Kontrak</h2>
-                                <p className="text-xs text-gray-400 mt-0.5">{kontrakModal.nama_event}</p>
-                            </div>
-                            <button onClick={() => { setKontrakModal(null); kReset(); }}
-                                className="p-1.5 text-gray-400 hover:bg-gray-800 rounded-lg">
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleUploadKontrak} className="space-y-4">
-                            <div>
-                                <label className="block mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">
-                                    File Kontrak * (PDF, DOC, DOCX — max 5MB)
-                                </label>
-                                <input type="file" accept=".pdf,.doc,.docx"
-                                    onChange={e => kSetData('kontrak_file', e.target.files[0])}
-                                    className="w-full px-4 py-3 text-sm text-white bg-black border border-gray-700 rounded-xl file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#FF2D55] file:text-white" />
-                                {kErrors.kontrak_file && <p className="mt-1 text-xs text-red-400">{kErrors.kontrak_file}</p>}
-                            </div>
-                            {kontrakModal.kontrak_file && (
-                                <p className="text-[11px] text-gray-500">Sudah ada kontrak — mengunggah file baru akan menggantikannya.</p>
-                            )}
-                            <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => { setKontrakModal(null); kReset(); }}
-                                    className="flex-1 py-2.5 border border-gray-700 text-gray-400 font-bold rounded-xl hover:bg-gray-800">
-                                    Batal
-                                </button>
-                                <button type="submit" disabled={kProcessing}
-                                    className="flex-1 py-2.5 bg-[#FF2D55] text-white font-black rounded-xl hover:bg-[#e02249] disabled:opacity-60">
-                                    {kProcessing ? 'Mengupload...' : '📤 Upload'}
                                 </button>
                             </div>
                         </form>

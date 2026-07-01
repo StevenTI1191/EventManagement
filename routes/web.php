@@ -475,9 +475,5 @@ Route::domain(config('app.domain'))->group(function () {
             ->name('client.bukti.upload');
         Route::delete('/bukti-pembayaran/{id}', [\App\Http\Controllers\Client\AppointmentController::class, 'deleteBukti'])
             ->name('client.bukti.delete');
-
-        // Klien mengunggah kontrak untuk event miliknya (path unik agar tak kena redirect static nginx)
-        Route::post('/kontrak-upload', [\App\Http\Controllers\Client\AppointmentController::class, 'uploadKontrak'])
-            ->name('client.kontrak.upload');
     }); // auth:client
 }); // domain
