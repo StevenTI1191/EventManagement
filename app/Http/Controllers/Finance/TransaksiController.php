@@ -91,6 +91,8 @@ class TransaksiController extends Controller
                     'tgl_event'         => $event->tgl_mulai_event,
                     'client'            => $event->client?->nama_client,
                     'perusahaan'        => $event->client?->perusahaan_client,
+                    'jumlah_pax'        => $event->jumlah_pax,
+                    'harga_per_pax'     => $event->harga_per_pax,
                     'deal'              => $deal,
                     'total_dibayar'     => $totalDibayar,
                     'sisa'              => $sisa,

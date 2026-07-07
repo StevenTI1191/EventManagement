@@ -491,6 +491,7 @@ export default function FinanceTransaksiIndex({ auth, events, filters = {} }) {
                             <th className="w-12 px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">No</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Event</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Client</th>
+                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Pax</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Deal</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Terbayar</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Sisa</th>
@@ -511,6 +512,10 @@ export default function FinanceTransaksiIndex({ auth, events, filters = {} }) {
                                     <td className="px-6 py-4">
                                         <p className="text-sm font-bold text-gray-800">{event.perusahaan || '-'}</p>
                                         <p className="text-xs text-gray-400">{event.client || '-'}</p>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <p className="text-sm font-semibold text-gray-800">{event.jumlah_pax ? `${event.jumlah_pax} pax` : '-'}</p>
+                                        {event.harga_per_pax ? <p className="text-xs text-gray-400">@ {formatRupiah(event.harga_per_pax)}</p> : null}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-semibold text-gray-800">{formatRupiah(event.deal)}</td>
                                     <td className="px-6 py-4">
@@ -556,7 +561,7 @@ export default function FinanceTransaksiIndex({ auth, events, filters = {} }) {
 
                                 {expandedEvent === event.id_event && (
                                     <tr>
-                                        <td colSpan={9} className="px-6 py-5 bg-gray-50/80">
+                                        <td colSpan={10} className="px-6 py-5 bg-gray-50/80">
                                             <div className="flex gap-2 p-1 mb-5 bg-gray-200 rounded-2xl w-fit">
                                                 <button onClick={() => setExpandedTab('pembayaran')}
                                                     className={`px-5 py-1.5 rounded-xl text-xs font-bold transition-all ${expandedTab === 'pembayaran' ? 'bg-white text-[#FF2D55] shadow-sm' : 'text-gray-500'}`}>
@@ -721,7 +726,7 @@ export default function FinanceTransaksiIndex({ auth, events, filters = {} }) {
                             </Fragment>
                         )) : (
                             <tr>
-                                <td colSpan={9} className="px-6 py-16 text-center text-gray-400">
+                                <td colSpan={10} className="px-6 py-16 text-center text-gray-400">
                                     <p className="font-bold">Belum ada data event.</p>
                                 </td>
                             </tr>
