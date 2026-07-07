@@ -3,9 +3,10 @@
 namespace App\Support;
 
 /**
- * Template To-Do persiapan event Laksamana Muda (sumber: sheet "1" mindmap).
+ * Template To-Do persiapan event Laksamana Muda.
  * Dipakai untuk auto-generate tugas saat event dibuat lewat menu Planning Event.
- * Tiap item: [nama, timeline]. Timeline hanya teks (H-60 dst), deadline diisi manual.
+ * Saat menambah event, user memilih kategori mana yang ikut di-generate.
+ * Tiap item: [nama, timeline?]. Timeline opsional (bisa diisi manual di board).
  */
 class PlanningTemplate
 {
@@ -16,86 +17,89 @@ class PlanningTemplate
     {
         return [
             'Talent' => [
-                ['Pemilihan Talent', 'H-60'],
-                ['Negosiasi Fee & Kontrak', 'H-45'],
-                ['Band Pengiring', 'H-30'],
-                ['Kebutuhan Teknis', 'H-14'],
-                ['Kebutuhan Rider & Konsumsi', 'H-1'],
+                ['Pemilihan Talent', null],
+                ['Negosiasi Fee & Kontrak', null],
+                ['Transportasi', null],
+                ['Band Pengiring', null],
+                ['Kebutuhan Teknis', null],
+                ['Hotel & Transportasi Hari H', null],
+                ['Kebutuhan Rider & Konsumsi', null],
             ],
             'Legalitas' => [
-                ['Surat Izin Keramaian', 'H-30'],
-                ['Keamanan', 'H-7'],
+                ['Surat Izin Keramaian', null],
+                ['Keamanan', null],
             ],
             'Marketing' => [
-                ['Proposal Sponsorship', 'H-45'],
-                ['Approach Sponsor', 'H-45'],
-                ['Distribusi ke Komunitas', 'H-25'],
+                ['Proposal Sponsorship', null],
+                ['Approach Sponsor', null],
             ],
             'Sosial Media & Designer' => [
-                ['Design Flyer Promosi', 'H-45'],
-                ['Design Feeds', 'H-30'],
-                ['Design Videotron', 'H-30'],
-                ['Design Spanduk Depan', 'H-30'],
-                ['Design Flyer A4 & A6', null],
-                ['Design Tiket Gelang', 'H-15'],
-                ['Design E-tiket', 'H-40'],
-                ['Publikasi Sosmed', 'H-30 s/d H'],
-                ['Ads Digital', 'H-30 s/d H'],
-                ['Media Partner & KOL', 'H-30'],
-                ['Branding & Konsep Campaign', 'H-45'],
-                ['Cetakan Menu Khusus Event', 'H-3'],
-                ['Cetak Tiket Gelang', 'H-7'],
+                ['Design Flyer Promosi', null],
+                ['Design Feeds', null],
+                ['Design Videotron', null],
+                ['Design Spanduk Depan', null],
+                ['Design Tiket Gelang', null],
+                ['Design E-tiket', null],
+                ['Cetakan Menu Khusus Event', null],
+                ['Cetak Tiket Gelang', null],
+                ['Branding & Konsep Campaign', null],
+                ['Publikasi Sosmed', null],
+                ['Ads Digital', null],
+                ['Media Partner & KOL', null],
+            ],
+            'Strategi Penjualan / Promo' => [
+                ['Giveaway', null],
             ],
             'Ticketing & Registration' => [
-                ['Google Form Ticketing', 'H-45'],
-                ['Integrasi Seatmap ke Sistem', 'H-40'],
-                ['Uji Coba Sistem Tiket', 'H-35'],
-                ['Publikasi Link Tiket / QR Code', 'H-30'],
-                ['Monitoring Penjualan', 'H-30 s/d H'],
-                ['Check in & Scanning Tiket', 'H'],
+                ['Google Form Ticketing', null],
+                ['Integrasi Seatmap ke Sistem', null],
+                ['Uji Coba Sistem Tiket', null],
+                ['Publikasi Link Tiket / QR Code', null],
+                ['Monitoring Penjualan', null],
+                ['Check in & Scanning Tiket', null],
             ],
             'F&B' => [
-                ['Menu Khusus Makanan', 'H-40'],
-                ['Menu Khusus Minuman', 'H-40'],
-                ['Stock & Purchase Order', 'H-14'],
-                ['Persiapan bahan-bahan', 'H-7'],
+                ['Menu Khusus Makanan', null],
+                ['Menu Khusus Minuman', null],
+                ['Stock & Purchase Order', null],
+                ['Persiapan bahan-bahan', null],
             ],
             'Finance' => [
-                ['RAB Awal', 'H-60'],
-                ['Update Realisasi Harian', 'H-30 s/d H'],
-                ['Pembayaran DP Talent', 'H-30'],
-                ['Pelunasan Talent', 'H-1'],
-                ['Pembayaran DP Vendor (Jika ada)', 'H-30'],
-                ['Pelunasan Vendor (Jika ada)', 'H-1'],
+                ['RAB Awal', null],
+                ['Update Realisasi Harian', null],
+                ['Pembayaran DP Talent', null],
+                ['Pelunasan Talent', null],
+                ['Pembayaran DP Band Pengiring', null],
+                ['Pelunasan Band Pengiring', null],
             ],
             'Acara' => [
-                ['Draft Rundown', 'H-30'],
-                ['Final Rundown', 'H-7'],
-                ['Brief MC / Talent', 'H-1'],
+                ['Draft Rundown', null],
+                ['Final Rundown', null],
+                ['Brief MC / Talent', null],
             ],
             'Operasional - Floor' => [
-                ['Draft Layout Meja (untuk seatmap)', 'H-60 s/d H-45'],
-                ['Final Layout Meja', 'H-30'],
+                ['Draft Layout Meja (untuk seatmap)', null],
+                ['Final Layout Meja', null],
                 ['Cek Kebutuhan Extra Meja & Kursi', null],
-                ['Seatmap Publikasi', 'H-30'],
-                ['Cek Kebutuhan Extra Freelance', 'H-5'],
-                ['Training & Pengenalan Layout', 'H-3'],
-                ['Setting kebutuhan lainnya', 'H-3'],
-                ['Sign Petunjuk Arah / Aturan', 'H-3'],
-                ['Set up Meja Fisik', 'H-1'],
+                ['Seatmap Publikasi', null],
+                ['Cek Kebutuhan Extra Freelance', null],
+                ['Training & Pengenalan Layout', null],
+                ['Setting kebutuhan lainnya', null],
+                ['Sign Petunjuk Arah / Aturan', null],
+                ['Set up Meja Fisik', null],
             ],
             'Operasional - Kasir' => [
-                ['Sistem Kasir untuk menu paket event', 'H-5'],
-                ['Menu Paket Event', 'H-5'],
-                ['Training & Pengenalan menu event', 'H-3'],
-                ['List kasir yang bertugas', 'H-3'],
+                ['Sistem Kasir untuk menu paket event', null],
+                ['Menu Paket Event', null],
+                ['Training & Pengenalan menu event', null],
+                ['List kasir yang bertugas', null],
             ],
             'Operasional - Lainnya' => [],
         ];
     }
 
     /**
-     * Urutan kanonik kategori (untuk pengelompokan tampilan board).
+     * Urutan kanonik kategori (untuk pengelompokan tampilan board & pilihan saat buat event).
      * @return array<int, string>
      */
     public static function categories(): array

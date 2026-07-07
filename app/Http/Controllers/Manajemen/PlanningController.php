@@ -30,12 +30,12 @@ class PlanningController extends Controller
     {
         $this->checkManajemen();
 
-        return Inertia::render('Manajemen/Event/Create', [
-            'clients'     => Client::select('id', 'nama_client', 'perusahaan_client')->get(),
-            'pegawais'    => Pegawai::select('id_pegawai', 'nama_pegawai', 'posisi_pegawai')->get(),
+        return Inertia::render('Manajemen/Planning/Create', [
+            'categories'  => collect(\App\Support\PlanningTemplate::items())
+                ->map(fn ($items, $name) => ['name' => $name, 'count' => count($items)])
+                ->values(),
             'submitRoute' => 'manajemen.planning.store',
             'indexRoute'  => 'manajemen.planning.index',
-            'planning'    => true,
         ]);
     }
 
@@ -76,7 +76,7 @@ class PlanningController extends Controller
         $event = Event::where('status_event', 'Planning')->findOrFail($id_event);
         $event->update(['status_event' => 'Upcoming']);
 
-        return redirect()->route('manajemen.event.index')
-            ->with('success', 'Event dipindahkan ke daftar Events (Upcoming).');
+        return redirect()->route('manajemen.event.edit', $event->id_event)
+            ->with('success', 'Event difinalisasi ke Upcoming. Lengkapi detail (Client, PIC, jam, area).');
     }
 }

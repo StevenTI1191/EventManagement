@@ -287,6 +287,7 @@ class EventController extends Controller
                 now()->subYear()->startOfYear()->toDateString(),
                 now()->addYear()->endOfYear()->toDateString(),
             ])
+            ->where('status_event', '!=', 'Planning')
             ->orderBy('tgl_mulai_event')
             ->get()
             ->map(function($event) {

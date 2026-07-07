@@ -28,7 +28,7 @@ class EventController extends Controller
             'search'     => 'nullable|string|max:255',
         ]);
 
-        $query = Event::with(['client', 'pic', 'tugas']);
+        $query = Event::with(['client', 'pic', 'tugas'])->where('status_event', '!=', 'Planning');
 
         if ($request->tgl_awal && $request->tgl_akhir) {
             $query->whereBetween('tgl_mulai_event', [$request->tgl_awal, $request->tgl_akhir]);
@@ -69,6 +69,7 @@ class EventController extends Controller
                 now()->subYear()->startOfYear()->toDateString(),
                 now()->addYear()->endOfYear()->toDateString(),
             ])
+            ->where('status_event', '!=', 'Planning')
             ->orderBy('tgl_mulai_event')
             ->get()
             ->map(function ($event) {

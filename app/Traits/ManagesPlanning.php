@@ -7,11 +7,12 @@ use App\Models\Tugas;
 use App\Support\PlanningTemplate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Logika bersama menu "Planning Event" (EM & Manajemen):
- * daftar event Planning, pembuatan event + generate to-do template, finalisasi.
+ * daftar event Planning, pembuatan event ringkas + generate to-do template
+ * berdasarkan kategori yang dipilih, dan finalisasi ke Upcoming.
  */
 trait ManagesPlanning
 {
@@ -32,7 +33,6 @@ trait ManagesPlanning
                 'nama_event'      => $e->nama_event,
                 'kategori_event'  => $e->kategori_event,
                 'tgl_mulai_event' => $e->tgl_mulai_event,
-                'area_event'      => $e->area_event,
                 'client'          => $e->client?->nama_client,
                 'pic'             => $e->pic?->nama_pegawai,
                 'total'           => (int) $e->total_tugas,
@@ -41,12 +41,15 @@ trait ManagesPlanning
             ]);
     }
 
-    /** Buat semua item to-do template (per kategori) untuk sebuah event. */
-    protected function generateTemplate(Event $event): void
+    /** Buat item to-do template untuk kategori terpilih (null = semua kategori). */
+    protected function generateTemplate(Event $event, ?array $categories = null): void
     {
         $now  = now();
         $rows = [];
         foreach (PlanningTemplate::items() as $kategori => $items) {
+            if ($categories !== null && ! in_array($kategori, $categories, true)) {
+                continue;
+            }
             $urutan = 0;
             foreach ($items as [$nama, $timeline]) {
                 $rows[] = [
@@ -67,78 +70,35 @@ trait ManagesPlanning
         }
     }
 
-    /** Validasi + buat event (status Planning) + generate template, lalu redirect ke board. */
+    /**
+     * Form Planning ringkas: hanya Nama, Deskripsi, Kategori Event, Tanggal + pilihan kategori to-do.
+     * Client/PIC/jam/area dilengkapi nanti saat finalisasi (edit event). PIC default = pembuat.
+     */
     protected function handlePlanningStore(Request $request, string $showRoute): RedirectResponse
     {
         $request->validate([
-            'nama_event'        => 'required|string|max:255',
-            'id_client'         => 'required|exists:clients,id',
-            'id_pegawai'        => 'required|exists:pegawais,id_pegawai',
-            'kategori_event'    => 'nullable|string|max:255',
-            'jumlah_pax'        => 'nullable|integer|min:0|max:100000',
-            'deal_harga_event'  => 'nullable|numeric|min:0|max:9999999999999',
-            'tgl_mulai_event'   => 'required|date',
-            'tgl_selesai_event' => 'nullable|date|after_or_equal:tgl_mulai_event',
-            'jam_mulai'         => 'required|string|max:8',
-            'jam_selesai'       => 'required|string|max:8',
-            'area_event'        => 'required|string|max:255',
-            'technical_meeting' => 'nullable|string|max:255',
-            'gladi_resik'       => 'nullable|string|max:255',
-            'is_public'         => 'nullable|boolean',
-            'poster_event'      => 'nullable|file|image|max:10240',
-            'kontrak_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+            'nama_event'      => 'required|string|max:255',
+            'deskripsi_event' => 'nullable|string|max:5000',
+            'kategori_event'  => 'nullable|string|max:255',
+            'tgl_mulai_event' => 'required|date',
+            'categories'      => 'nullable|array',
+            'categories.*'    => 'string|max:255',
         ]);
 
-        $bentrok = Event::checkBentrok(
-            $request->tgl_mulai_event,
-            $request->jam_mulai,
-            $request->jam_selesai,
-            $request->area_event
-        );
-
-        if ($bentrok) {
-            return back()->withErrors([
-                'bentrok' => "Jadwal bentrok dengan event \"{$bentrok->nama_event}\"
-                            ({$bentrok->jam_mulai} - {$bentrok->jam_selesai})
-                            di area {$bentrok->area_event}
-                            pada tanggal {$bentrok->tgl_mulai_event}."
-            ])->withInput();
-        }
-
-        $data = $request->only([
-            'nama_event', 'id_client', 'id_pegawai', 'kategori_event', 'deskripsi_event',
-            'tgl_mulai_event', 'tgl_selesai_event', 'jam_mulai', 'jam_selesai',
-            'jam_meeting', 'jam_keluar_makanan', 'area_event', 'jumlah_pax',
-            'note_event', 'food_beverage_event', 'entairtainment_event',
-            'technical_meeting', 'gladi_resik', 'deal_harga_event',
+        $event = Event::create([
+            'nama_event'       => $request->nama_event,
+            'deskripsi_event'  => $request->deskripsi_event,
+            'kategori_event'   => $request->kategori_event,
+            'tgl_mulai_event'  => $request->tgl_mulai_event,
+            'id_pegawai'       => Auth::guard('pegawai')->id(),
+            'status_event'     => 'Planning',
+            'is_public'        => false,
+            'jumlah_pax'       => 0,
+            'deal_harga_event' => 0,
         ]);
 
-        $data['status_event'] = 'Planning';
-        $data['is_public']    = $request->boolean('is_public');
-        if (empty($data['deal_harga_event'])) {
-            $data['deal_harga_event'] = 0;
-        }
-
-        if ($request->hasFile('poster_event') && $request->file('poster_event')->isValid()) {
-            $file = $request->file('poster_event');
-            $filename = $file->hashName();
-            $destinationPath = public_path('posters');
-            if (! file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
-            }
-            $file->move($destinationPath, $filename);
-            $data['poster_event'] = 'posters/' . $filename;
-        }
-
-        if ($request->hasFile('kontrak_file') && $request->file('kontrak_file')->isValid()) {
-            $file = $request->file('kontrak_file');
-            $filename = $file->hashName();
-            Storage::disk('local')->putFileAs('kontrak', $file, $filename);
-            $data['kontrak_file'] = $filename;
-        }
-
-        $event = Event::create($data);
-        $this->generateTemplate($event);
+        $cats = $request->input('categories');
+        $this->generateTemplate($event, is_array($cats) ? $cats : null);
 
         return redirect()->route($showRoute, $event->id_event);
     }

@@ -7,6 +7,7 @@ const CATEGORY_ORDER = [
     'Legalitas',
     'Marketing',
     'Sosial Media & Designer',
+    'Strategi Penjualan / Promo',
     'Ticketing & Registration',
     'F&B',
     'Finance',

@@ -18,14 +18,14 @@ class DashboardController extends Controller
     {
         $this->checkManajemen();
 
-        $totalEvent     = Event::count();
+        $totalEvent     = Event::where('status_event', '!=', 'Planning')->count();
         $eventActive    = Event::where('status_event', 'Upcoming')->count();
         $eventDone      = Event::where('status_event', 'Done')->count();
         $totalClient    = Client::count();
         $totalTransaksi = \App\Models\Transaksi::count();
         $totalPenjualan = \App\Models\Transaksi::sum('nominal');
 
-        $recentEvents = Event::with('client')->latest()->take(5)->get();
+        $recentEvents = Event::with('client')->where('status_event', '!=', 'Planning')->latest()->take(5)->get();
 
         // ── Chart 1: Penjualan per bulan (tahun ini) ─────────────────────
         $bulanLabels = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
@@ -66,6 +66,7 @@ class DashboardController extends Controller
 
         // ── Chart 5: Event per status (donut) ────────────────────────────
         $statusChart = Event::selectRaw('COALESCE(status_event, "Upcoming") as status, COUNT(*) as total')
+            ->where('status_event', '!=', 'Planning')
             ->groupBy('status')
             ->get()
             ->map(fn($r) => ['name' => $r->status, 'value' => (int) $r->total]);

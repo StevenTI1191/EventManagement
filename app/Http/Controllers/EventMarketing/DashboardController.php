@@ -17,10 +17,10 @@ class DashboardController extends Controller
     {
         $this->checkEventMarketing();
 
-        $totalEvent  = Event::count();
+        $totalEvent  = Event::where('status_event', '!=', 'Planning')->count();
         $eventActive = Event::where('status_event', 'Upcoming')->count();
         $eventDone   = Event::where('status_event', 'Done')->count();
-        $recentEvents = Event::latest()->take(5)->get();
+        $recentEvents = Event::where('status_event', '!=', 'Planning')->latest()->take(5)->get();
 
         // Appointment stats
         $aptTotal        = Appointment::count();
