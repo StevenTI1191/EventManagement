@@ -89,6 +89,7 @@ export default function FinanceEventIndex({ auth, events, filters, clients, pega
                                     { label: 'Client', value: selectedEvent.client?.nama_client || '-' },
                                     { label: 'PIC Event', value: selectedEvent.pic?.nama_pegawai || '-' },
                                     { label: 'Jumlah Pax', value: selectedEvent.jumlah_pax ? `${selectedEvent.jumlah_pax} orang` : '-' },
+                                    { label: 'Harga per Pax', value: formatRupiah(selectedEvent.harga_per_pax) },
                                     { label: 'Area Event', value: selectedEvent.area_event || '-' },
                                     { label: 'Deal Harga', value: formatRupiah(selectedEvent.deal_harga_event) },
                                     { label: 'Technical Meeting', value: selectedEvent.technical_meeting || '-' },

@@ -9,6 +9,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
         nama_event:           event.nama_event || '',
         kategori_event:       event.kategori_event || '',
         jumlah_pax:           event.jumlah_pax || '',
+        harga_per_pax:        event.harga_per_pax || '',
         deskripsi_event:      event.deskripsi_event || '',
         deal_harga_event:     event.deal_harga_event || '',
         id_client:            event.id_client || '',
@@ -28,6 +29,12 @@ export default function Edit({ auth, event, clients, pegawais }) {
         poster_event:         null,
         kontrak_file:         null,
     });
+
+    // Deal Total = Jumlah Pax x Harga per Pax (otomatis, tetap bisa diedit manual)
+    const computeDeal = (pax, hpp) => {
+        const t = (parseInt(pax, 10) || 0) * (parseFloat(hpp) || 0);
+        return t ? String(t) : '';
+    };
 
     // Aturan file (samakan dgn validasi backend: poster max 2MB image, kontrak max 5MB pdf/doc)
     const FILE_RULES = {
@@ -166,7 +173,18 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Jumlah Pax</label>
                                 <input type="number" placeholder="Silahkan Input Jumlah Pax Event"
                                     className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                    value={data.jumlah_pax} onChange={e => setData('jumlah_pax', e.target.value)} />
+                                    value={data.jumlah_pax}
+                                    onChange={e => { const v = e.target.value; setData({ ...data, jumlah_pax: v, deal_harga_event: computeDeal(v, data.harga_per_pax) }); }} />
+                            </div>
+
+                            <div>
+                                <label className="block mb-1 text-sm font-bold text-gray-700">Harga per Pax</label>
+                                <RupiahInput
+                                    placeholder="Silahkan Input Harga per Pax"
+                                    className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                    value={data.harga_per_pax}
+                                    onChange={v => setData({ ...data, harga_per_pax: v, deal_harga_event: computeDeal(data.jumlah_pax, v) })} />
+                                {errors.harga_per_pax && <span className="text-xs text-red-500">{errors.harga_per_pax}</span>}
                             </div>
 
                             <div>
@@ -175,6 +193,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                     placeholder="Silahkan Input Deal Total"
                                     className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
                                     value={data.deal_harga_event} onChange={v => setData('deal_harga_event', v)} />
+                                <p className="mt-1 text-xs text-gray-400">Terisi otomatis dari Jumlah Pax × Harga per Pax, bisa diubah manual.</p>
                                 {errors.deal_harga_event && <span className="text-xs text-red-500">{errors.deal_harga_event}</span>}
                             </div>
 

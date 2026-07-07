@@ -77,6 +77,7 @@ class EventController extends Controller
             'id_pegawai'        => 'required|exists:pegawais,id_pegawai',
             'kategori_event'    => 'nullable|string|max:255',
             'jumlah_pax'        => 'nullable|integer|min:0|max:100000',
+            'harga_per_pax'     => 'nullable|numeric|min:0|max:9999999999999',
             'deal_harga_event'  => 'nullable|numeric|min:0|max:9999999999999',
             'tgl_mulai_event'   => 'required|date',
             'tgl_selesai_event' => 'nullable|date|after_or_equal:tgl_mulai_event',
@@ -111,7 +112,7 @@ class EventController extends Controller
         $data = $request->only([
             'nama_event', 'id_client', 'id_pegawai', 'kategori_event', 'deskripsi_event',
             'tgl_mulai_event', 'tgl_selesai_event', 'jam_mulai', 'jam_selesai',
-            'jam_meeting', 'jam_keluar_makanan', 'area_event', 'jumlah_pax',
+            'jam_meeting', 'jam_keluar_makanan', 'area_event', 'jumlah_pax', 'harga_per_pax',
             'note_event', 'food_beverage_event', 'entairtainment_event',
             'technical_meeting', 'gladi_resik', 'deal_harga_event', 'status_event',
         ]);
@@ -170,6 +171,7 @@ class EventController extends Controller
             'id_pegawai'        => 'required|exists:pegawais,id_pegawai',
             'kategori_event'    => 'nullable|string|max:255',
             'jumlah_pax'        => 'nullable|integer|min:0|max:100000',
+            'harga_per_pax'     => 'nullable|numeric|min:0|max:9999999999999',
             'deal_harga_event'  => 'nullable|numeric|min:0|max:9999999999999',
             'tgl_mulai_event'   => 'required|date',
             'tgl_selesai_event' => 'nullable|date|after_or_equal:tgl_mulai_event',
@@ -205,7 +207,7 @@ class EventController extends Controller
         $data = $request->only([
             'nama_event', 'id_client', 'id_pegawai', 'kategori_event', 'deskripsi_event',
             'tgl_mulai_event', 'tgl_selesai_event', 'jam_mulai', 'jam_selesai',
-            'jam_meeting', 'jam_keluar_makanan', 'area_event', 'jumlah_pax',
+            'jam_meeting', 'jam_keluar_makanan', 'area_event', 'jumlah_pax', 'harga_per_pax',
             'note_event', 'food_beverage_event', 'entairtainment_event',
             'technical_meeting', 'gladi_resik', 'deal_harga_event', 'status_event',
         ]);

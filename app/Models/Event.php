@@ -23,6 +23,7 @@ class Event extends Model
         'jam_keluar_makanan',
         'area_event',
         'jumlah_pax',
+        'harga_per_pax',
         'note_event',
         'food_beverage_event',
         'entairtainment_event',
