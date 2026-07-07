@@ -32,7 +32,7 @@ export default function EventMarketingLayout({ children }) {
             active: currentPath === '/event-marketing/dashboard',
         },
         {
-            name: 'Jadwal Acara',
+            name: 'Kalender',
             icon: CalendarDays,
             href: route('em.jadwal.index'),
             active: currentPath.includes('/event-marketing/jadwal'),

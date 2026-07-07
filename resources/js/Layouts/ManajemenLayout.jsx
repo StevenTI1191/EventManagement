@@ -38,7 +38,7 @@ export default function ManajemenLayout({ children }) {
             active: currentPath.includes('dashboard'),
         },
         {
-            name: 'Jadwal Acara',
+            name: 'Kalender',
             icon: Calendar,
             href: '/manajemen/jadwal-acara',
             active: currentPath.includes('jadwal-acara'),

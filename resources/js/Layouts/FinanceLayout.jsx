@@ -22,7 +22,7 @@ export default function FinanceLayout({ children }) {
 
     const menuItems = [
         { name: 'Dashboard',        icon: LayoutDashboard, href: route('finance.dashboard'),       active: currentPath === '/finance/dashboard' },
-        { name: 'Jadwal Acara',     icon: CalendarDays,    href: route('finance.jadwal.index'),    active: currentPath.includes('/finance/jadwal') },
+        { name: 'Kalender',         icon: CalendarDays,    href: route('finance.jadwal.index'),    active: currentPath.includes('/finance/jadwal') },
         { name: 'Event',            icon: Calendar,        href: route('finance.event.index'),     active: currentPath.includes('/finance/event') },
         { name: 'Client',           icon: Users,           href: route('finance.client.index'),    active: currentPath.includes('/finance/client') },
         { name: 'Transaksi',        icon: CreditCard,      href: route('finance.transaksi.index'), active: currentPath.includes('/finance/transaksi') },

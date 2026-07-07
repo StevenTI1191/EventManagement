@@ -293,6 +293,7 @@ class EventController extends Controller
             ->map(function($event) {
                 return [
                     'id'          => $event->id_event,
+                    'type'        => 'event',
                     'title'       => $event->nama_event,
                     'start'       => $event->tgl_mulai_event,
                     'status'      => $event->status_event,
@@ -308,8 +309,30 @@ class EventController extends Controller
                 ];
             });
 
+        // Appointment yang sudah dikonfirmasi / reschedule ikut tampil di kalender
+        $appointments = \App\Models\Appointment::with(['client:id,nama_client', 'pegawai:id_pegawai,nama_pegawai'])
+            ->whereIn('status', ['Dikonfirmasi', 'Reschedule'])
+            ->get()
+            ->map(function ($a) {
+                $tgl = $a->tgl_konfirmasi ?: $a->tgl_request;
+                return [
+                    'id'          => 'apt-' . $a->id,
+                    'type'        => 'appointment',
+                    'title'       => $a->jenis_event ?: 'Meeting',
+                    'start'       => $tgl ? \Illuminate\Support\Carbon::parse($tgl)->toDateString() : null,
+                    'status'      => $a->status,
+                    'time'        => $a->jam_konfirmasi ?: $a->jam_request,
+                    'client'      => $a->client?->nama_client,
+                    'pic'         => $a->pegawai?->nama_pegawai,
+                    'jumlah_tamu' => $a->jumlah_tamu,
+                    'deskripsi'   => $a->deskripsi_event,
+                ];
+            })
+            ->filter(fn ($a) => $a['start'])
+            ->values();
+
         return Inertia::render('Manajemen/JadwalAcara', [
-            'events' => $events
+            'events' => $events->concat($appointments)->values(),
         ]);
     }
 }

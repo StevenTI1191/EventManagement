@@ -16,9 +16,9 @@ export default function PegawaiLayout({ user, header, children }) {
                         <span className="ms-3">Dashboard</span>
                     </Link>
 
-                    {/* Menu Jadwal Acara */}
+                    {/* Menu Kalender */}
                     <Link href="#" className="flex items-center px-4 py-3 text-gray-600 transition hover:bg-gray-100 rounded-xl">
-                        <span className="text-sm ms-3">Jadwal Acara</span>
+                        <span className="text-sm ms-3">Kalender</span>
                     </Link>
 
                     {/* Menu Event */}

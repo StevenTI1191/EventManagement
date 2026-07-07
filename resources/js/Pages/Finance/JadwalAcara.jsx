@@ -62,10 +62,10 @@ export default function FinanceJadwalAcara({ events }) {
 
     return (
         <FinanceLayout>
-            <Head title="Jadwal Acara - Finance" />
+            <Head title="Kalender - Finance" />
             <div className="p-6">
                 <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900">Jadwal Acara</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">Kalender</h1>
                     <p className="mt-1 text-gray-500">Selamat datang, {auth.user.nama_pegawai}!</p>
                 </div>
 

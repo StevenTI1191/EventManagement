@@ -1,4 +1,4 @@
-﻿import ManajemenLayout from '@/Layouts/ManajemenLayout';
+import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -23,17 +23,23 @@ export default function JadwalAcara({ events }) {
     const today = new Date();
     const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
 
-    const filtered = events.filter(e =>
-        activeFilter === 'all' ? true
-        : activeFilter === 'Upcoming' ? (e.status === 'Upcoming' || e.status === 'Active')
-        : e.status === activeFilter);
+    const filtered = events.filter(e => {
+        if (activeFilter === 'all') return true;
+        if (activeFilter === 'Meeting') return e.type === 'appointment';
+        if (activeFilter === 'Upcoming') return e.type !== 'appointment' && (e.status === 'Upcoming' || e.status === 'Active');
+        if (activeFilter === 'Done') return e.type !== 'appointment' && e.status === 'Done';
+        return e.status === activeFilter;
+    });
 
-    const getChipClass = (status) => {
-        if (status === 'Done') return 'bg-green-100 text-green-800';
-        if (status === 'Upcoming' || status === 'Active') return 'bg-blue-100 text-blue-800';
-        if (status === 'Cancelled') return 'bg-red-100 text-red-800';
+    const getChipClass = (ev) => {
+        if (ev.type === 'appointment') return ev.status === 'Reschedule' ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800';
+        if (ev.status === 'Done') return 'bg-green-100 text-green-800';
+        if (ev.status === 'Upcoming' || ev.status === 'Active') return 'bg-blue-100 text-blue-800';
+        if (ev.status === 'Cancelled') return 'bg-red-100 text-red-800';
         return 'bg-yellow-100 text-yellow-800';
     };
+
+    const fmtTime = (t) => (t ? String(t).slice(0, 5) : '');
 
     const cells = [];
     for (let i = 0; i < totalCells; i++) {
@@ -53,7 +59,6 @@ export default function JadwalAcara({ events }) {
         const isWeekend = dow === 5 || dow === 6;
         const dayEvents = filtered.filter(e => e.start === dateStr);
 
-        // Bulan watermark - pakai bulan cell itu sendiri, bukan bulan aktif
         const cellMonthName = monthNames[((mo % 12) + 12) % 12];
         const cellYear = yr;
 
@@ -64,12 +69,14 @@ export default function JadwalAcara({ events }) {
     const nextMonth = () => setCurrentDate(new Date(y, m + 1, 1));
     const goToday = () => setCurrentDate(new Date());
 
+    const isApt = selectedEvent?.type === 'appointment';
+
     return (
         <ManajemenLayout>
-            <Head title="Jadwal Acara" />
+            <Head title="Kalender" />
             <div className="p-6">
                 <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900">Jadwal Acara</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">Kalender</h1>
                     <p className="mt-1 text-gray-500">Selamat datang, {auth.user.nama_pegawai}!</p>
                 </div>
 
@@ -90,14 +97,21 @@ export default function JadwalAcara({ events }) {
                     <button onClick={goToday} className="text-sm px-4 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">Hari ini</button>
                 </div>
 
-                {/* Filter */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {['all', 'Upcoming', 'Done'].map(f => (
-                        <button key={f} onClick={() => setActiveFilter(f)}
-                            className={`px-4 py-1 rounded-full text-xs font-medium border transition-all ${activeFilter === f ? 'bg-[#FF2D55] text-white border-[#FF2D55]' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
-                            {f === 'all' ? 'Semua' : f}
-                        </button>
-                    ))}
+                {/* Filter + legend */}
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div className="flex flex-wrap gap-2">
+                        {['all', 'Upcoming', 'Done', 'Meeting'].map(f => (
+                            <button key={f} onClick={() => setActiveFilter(f)}
+                                className={`px-4 py-1 rounded-full text-xs font-medium border transition-all ${activeFilter === f ? 'bg-[#FF2D55] text-white border-[#FF2D55]' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
+                                {f === 'all' ? 'Semua' : f === 'Meeting' ? 'Appointment' : f}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-3 text-[11px] text-gray-500">
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-200"></span> Event</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-purple-200"></span> Appointment</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-200"></span> Reschedule</span>
+                    </div>
                 </div>
 
                 {/* Grid */}
@@ -121,11 +135,11 @@ export default function JadwalAcara({ events }) {
                                     {cell.day}
                                 </span>
 
-                                {/* Event chips */}
+                                {/* Event / appointment chips */}
                                 {cell.dayEvents.slice(0, 2).map(ev => (
                                     <div key={ev.id} onClick={() => setSelectedEvent(ev)}
-                                        className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate cursor-pointer font-medium ${getChipClass(ev.status)}`}>
-                                        {ev.time} {ev.title}
+                                        className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate cursor-pointer font-medium ${getChipClass(ev)}`}>
+                                        {ev.type === 'appointment' ? '🤝 ' : ''}{fmtTime(ev.time)} {ev.title}
                                     </div>
                                 ))}
                                 {cell.dayEvents.length > 2 && (
@@ -146,30 +160,37 @@ export default function JadwalAcara({ events }) {
                                     <img src={`/${selectedEvent.poster}`} alt={selectedEvent.title} className="object-cover w-full h-full" />
                                 ) : (
                                     <div className="flex items-center justify-center w-full h-full text-3xl font-black text-gray-300 select-none">
-                                        {selectedEvent.title?.slice(0, 2).toUpperCase()}
+                                        {isApt ? '🤝' : selectedEvent.title?.slice(0, 2).toUpperCase()}
                                     </div>
                                 )}
                                 <button onClick={() => setSelectedEvent(null)}
                                     className="absolute flex items-center justify-center w-8 h-8 text-lg text-gray-600 bg-white rounded-full shadow top-3 right-3 hover:bg-gray-100">&times;</button>
-                                <span className={`absolute bottom-3 left-3 px-2 py-0.5 text-[10px] font-bold rounded-full ${getChipClass(selectedEvent.status)}`}>
-                                    {selectedEvent.status}
+                                <span className={`absolute bottom-3 left-3 px-2 py-0.5 text-[10px] font-bold rounded-full ${getChipClass(selectedEvent)}`}>
+                                    {isApt ? `Appointment · ${selectedEvent.status}` : selectedEvent.status}
                                 </span>
                             </div>
                             <div className="p-5">
                                 <h3 className="text-lg font-bold text-gray-900">{selectedEvent.title}</h3>
-                                {selectedEvent.kategori && (
+                                {!isApt && selectedEvent.kategori && (
                                     <span className="inline-block mt-1 mb-3 px-2 py-0.5 text-[10px] font-bold text-[#FF2D55] bg-[#FF2D55]/10 rounded-full">{selectedEvent.kategori}</span>
                                 )}
-                                <div className="space-y-2">
-                                    {[
+                                <div className="mt-2 space-y-2">
+                                    {(isApt ? [
                                         ['📅 Tanggal', selectedEvent.start],
-                                        ['⏰ Jam', `${selectedEvent.time || '-'}${selectedEvent.jam_selesai ? ' – ' + selectedEvent.jam_selesai : ''}`],
+                                        ['⏰ Jam', fmtTime(selectedEvent.time) || '-'],
+                                        ['🏢 Client', selectedEvent.client || '-'],
+                                        ['👤 PIC', selectedEvent.pic || '-'],
+                                        ['👥 Jumlah Tamu', selectedEvent.jumlah_tamu ? selectedEvent.jumlah_tamu + ' orang' : '-'],
+                                        ['🗒️ Deskripsi', selectedEvent.deskripsi || '-'],
+                                    ] : [
+                                        ['📅 Tanggal', selectedEvent.start],
+                                        ['⏰ Jam', `${fmtTime(selectedEvent.time) || '-'}${selectedEvent.jam_selesai ? ' – ' + fmtTime(selectedEvent.jam_selesai) : ''}`],
                                         ['🏢 Client', selectedEvent.client || '-'],
                                         ['👤 PIC', selectedEvent.pic || '-'],
                                         ['📍 Area', selectedEvent.area || '-'],
                                         ['👥 Jumlah Pax', selectedEvent.jumlah_pax ? selectedEvent.jumlah_pax + ' orang' : '-'],
                                         ['💰 Deal Harga', selectedEvent.deal_harga ? 'Rp ' + new Intl.NumberFormat('id-ID').format(selectedEvent.deal_harga) : '-'],
-                                    ].map(([label, val]) => (
+                                    ]).map(([label, val]) => (
                                         <div key={label} className="flex gap-3 text-sm">
                                             <span className="text-gray-400 w-28 shrink-0">{label}</span>
                                             <span className="font-medium text-gray-800">{val}</span>
@@ -184,4 +205,3 @@ export default function JadwalAcara({ events }) {
         </ManajemenLayout>
     );
 }
-
