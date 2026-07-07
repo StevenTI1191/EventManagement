@@ -31,7 +31,8 @@ class TransaksiController extends Controller
             'search' => 'nullable|string|max:255',
         ]);
 
-        $query = Event::with(['client', 'pic', 'transaksis.pegawai', 'transaksiItems']);
+        $query = Event::with(['client', 'pic', 'transaksis.pegawai', 'transaksiItems'])
+            ->where('status_event', '!=', 'Planning');
 
         // Filter by bulan
         if ($request->filled('bulan')) {
