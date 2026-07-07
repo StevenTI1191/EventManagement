@@ -44,6 +44,12 @@ export default function EventMarketingLayout({ children }) {
             active: currentPath.includes('/event-marketing/event'),
         },
         {
+            name: 'Planning Event',
+            icon: ClipboardList,
+            href: route('em.planning.index'),
+            active: currentPath.includes('/event-marketing/planning'),
+        },
+        {
             name: 'Client',
             icon: Users,
             href: route('em.client.index'),

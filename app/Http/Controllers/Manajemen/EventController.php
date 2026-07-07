@@ -26,7 +26,7 @@ class EventController extends Controller
             'search'     => 'nullable|string|max:255',
         ]);
 
-        $query = Event::query();
+        $query = Event::query()->where('status_event', '!=', 'Planning');
 
         if ($request->tgl_awal && $request->tgl_akhir) {
             $query->whereBetween('tgl_mulai_event', [$request->tgl_awal, $request->tgl_akhir]);

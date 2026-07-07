@@ -154,6 +154,18 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         Route::get('/manajemen/jadwal-acara', [EventController::class, 'jadwal'])
             ->name('jadwal.index');
 
+        // --- MANAJEMEN: PLANNING EVENT ---
+        Route::get('/manajemen/planning', [\App\Http\Controllers\Manajemen\PlanningController::class, 'index'])
+            ->name('manajemen.planning.index');
+        Route::get('/manajemen/planning/create', [\App\Http\Controllers\Manajemen\PlanningController::class, 'create'])
+            ->name('manajemen.planning.create');
+        Route::post('/manajemen/planning', [\App\Http\Controllers\Manajemen\PlanningController::class, 'store'])
+            ->name('manajemen.planning.store');
+        Route::get('/manajemen/planning/{id}', [\App\Http\Controllers\Manajemen\PlanningController::class, 'show'])
+            ->whereNumber('id')->name('manajemen.planning.show');
+        Route::patch('/manajemen/planning/{id}/finalize', [\App\Http\Controllers\Manajemen\PlanningController::class, 'finalize'])
+            ->name('manajemen.planning.finalize');
+
         // --- CLIENT ---
         Route::get('/manajemen/client', [ClientController::class, 'index'])
             ->name('manajemen.client.index');
@@ -269,6 +281,18 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('em.event.update');
         Route::delete('/event-marketing/event/{id}', [EMEventController::class, 'destroy'])
             ->name('em.event.destroy');
+
+        // --- EVENT MARKETING: PLANNING EVENT ---
+        Route::get('/event-marketing/planning', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'index'])
+            ->name('em.planning.index');
+        Route::get('/event-marketing/planning/create', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'create'])
+            ->name('em.planning.create');
+        Route::post('/event-marketing/planning', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'store'])
+            ->name('em.planning.store');
+        Route::get('/event-marketing/planning/{id}', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'show'])
+            ->whereNumber('id')->name('em.planning.show');
+        Route::patch('/event-marketing/planning/{id}/finalize', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'finalize'])
+            ->name('em.planning.finalize');
         Route::get('/event-marketing/transaksi', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'index'])
         ->name('em.transaksi.index');
         // --- EVENT MARKETING: TODO / TUGAS ---

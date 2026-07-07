@@ -2,7 +2,7 @@ import EventMarketingLayout from '@/Layouts/EventMarketingLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import RupiahInput from '@/Components/RupiahInput';
 
-export default function Create({ auth, clients, pegawais }) {
+export default function Create({ auth, clients, pegawais, submitRoute = 'em.event.store', indexRoute = 'em.event.index', planning = false }) {
     const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
         nama_event: '',
         jumlah_pax: '',
@@ -72,7 +72,7 @@ export default function Create({ auth, clients, pegawais }) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
-        post(route('em.event.store'), { forceFormData: true });
+        post(route(submitRoute), { forceFormData: true });
     };
 
     return (
@@ -81,8 +81,12 @@ export default function Create({ auth, clients, pegawais }) {
 
             <div className="p-6">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-extrabold text-gray-900">Form Event</h1>
-                    <p className="font-medium text-gray-500">Selamat Datang, {auth.user.nama_pegawai}!</p>
+                    <h1 className="text-3xl font-extrabold text-gray-900">{planning ? 'Form Planning Event' : 'Form Event'}</h1>
+                    <p className="font-medium text-gray-500">
+                        {planning
+                            ? 'Event akan dibuat dengan status Planning beserta to-do list template per kategori.'
+                            : `Selamat Datang, ${auth.user.nama_pegawai}!`}
+                    </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100">
@@ -204,14 +208,16 @@ export default function Create({ auth, clients, pegawais }) {
                                 {errors.deal_harga_event && <span className="text-xs text-red-500">{errors.deal_harga_event}</span>}
                             </div>
 
-                            <div>
-                                <label className="block mb-1 text-sm font-bold text-gray-700">Status Event</label>
-                                <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                    value={data.status_event} onChange={e => setData('status_event', e.target.value)}>
-                                    <option value="Upcoming">Upcoming</option>
-                                    <option value="Done">Done</option>
-                                </select>
-                            </div>
+                            {!planning && (
+                                <div>
+                                    <label className="block mb-1 text-sm font-bold text-gray-700">Status Event</label>
+                                    <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                        value={data.status_event} onChange={e => setData('status_event', e.target.value)}>
+                                        <option value="Upcoming">Upcoming</option>
+                                        <option value="Done">Done</option>
+                                    </select>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Sifat Acara</label>
@@ -308,7 +314,7 @@ export default function Create({ auth, clients, pegawais }) {
                     )}
 
                     <div className="flex justify-end gap-4 mt-12">
-                        <Link href={route('em.event.index')}
+                        <Link href={route(indexRoute)}
                             className="px-10 py-3 font-bold text-gray-600 transition-all border border-gray-300 rounded-full hover:bg-gray-50">
                             Back
                         </Link>

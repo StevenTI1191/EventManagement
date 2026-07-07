@@ -10,6 +10,7 @@ import {
     CreditCard,
     Star,
     CalendarCheck,
+    ClipboardList,
     Menu,
     X,
 } from 'lucide-react';
@@ -46,7 +47,13 @@ export default function ManajemenLayout({ children }) {
             name: 'Events',
             icon: Calendar,
             href: route('manajemen.event.index'),
-            active: currentPath.includes('event') && !currentPath.includes('client') && !currentPath.includes('evaluasi'),
+            active: currentPath.includes('/manajemen/event'),
+        },
+        {
+            name: 'Planning Event',
+            icon: ClipboardList,
+            href: route('manajemen.planning.index'),
+            active: currentPath.includes('/manajemen/planning'),
         },
         {
             name: 'Client',
