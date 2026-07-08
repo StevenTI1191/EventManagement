@@ -65,9 +65,49 @@ class EvaluasiController extends Controller
             ->take(200)
             ->get();
 
+        // Statistik closing rate (khusus Event Marketing) — dipindah dari Manajemen Pegawai.
+        // Klien yang ditangani EM ini lewat appointment (id_pegawai di-set saat konfirmasi/batal)
+        $clientIds = \App\Models\Appointment::where('id_pegawai', $id)
+            ->whereNotNull('client_id')
+            ->distinct()
+            ->pluck('client_id');
+
+        $klienDihandle = $clientIds->count();
+
+        // Klien dari appointment yang akhirnya memiliki event = closing (deal terjadi)
+        $klienClosing = $clientIds->isEmpty() ? 0 :
+            Event::whereIn('id_client', $clientIds)->distinct()->pluck('id_client')->count();
+
+        $closingRate = $klienDihandle > 0 ? (int) round($klienClosing / $klienDihandle * 100) : 0;
+
+        $stats = [
+            'klien_dihandle'      => $klienDihandle,
+            'klien_closing'       => $klienClosing,
+            'closing_rate'        => $closingRate,
+            'total_appointment'   => \App\Models\Appointment::where('id_pegawai', $id)->count(),
+            'appointment_selesai' => \App\Models\Appointment::where('id_pegawai', $id)->where('status', 'Selesai')->count(),
+            'total_event_pic'     => Event::where('id_pegawai', $id)->count(),
+        ];
+
+        // Rincian klien yang ditangani + status closing-nya
+        $clients = \App\Models\Client::whereIn('id', $clientIds)
+            ->withCount('events')
+            ->orderByDesc('events_count')
+            ->get()
+            ->map(fn ($c) => [
+                'id'                => $c->id,
+                'nama_client'       => $c->nama_client,
+                'perusahaan_client' => $c->perusahaan_client,
+                'events_count'      => $c->events_count,
+                'closed'            => $c->events_count > 0,
+            ]);
+
         return Inertia::render('Manajemen/Evaluasi/PegawaiDetail', [
             'pegawai' => $pegawai,
-            'events' => $events,
+            'events'  => $events,
+            'stats'   => $stats,
+            'clients' => $clients,
+            'isEM'    => in_array($pegawai->posisi_pegawai, ['EventMarketing', 'Event Marketing']),
         ]);
     }
 

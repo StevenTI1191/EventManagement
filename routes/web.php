@@ -219,8 +219,6 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('manajemen.pegawai.create');
         Route::post('/manajemen/pegawai', [\App\Http\Controllers\Manajemen\PegawaiController::class, 'store'])
             ->name('manajemen.pegawai.store');
-        Route::get('/manajemen/pegawai/{id}', [\App\Http\Controllers\Manajemen\PegawaiController::class, 'show'])
-            ->whereNumber('id')->name('manajemen.pegawai.show');
         Route::get('/manajemen/pegawai/{id}/edit', [\App\Http\Controllers\Manajemen\PegawaiController::class, 'edit'])
             ->name('manajemen.pegawai.edit');
         Route::put('/manajemen/pegawai/{id}', [\App\Http\Controllers\Manajemen\PegawaiController::class, 'update'])

@@ -90,10 +90,10 @@ export default function PegawaiIndex({ auth, internal, eksternal }) {
                     )}
                     {(pegawai.posisi_pegawai === 'EventMarketing' || pegawai.posisi_pegawai === 'Event Marketing') && (
                         <Link
-                            href={route('manajemen.pegawai.show', pegawai.id_pegawai)}
+                            href={route('manajemen.evaluasi.pegawai', pegawai.id_pegawai)}
                             className="inline-flex items-center gap-1 mt-1.5 text-xs font-bold text-[#FF2D55] hover:underline"
                         >
-                            📊 Lihat statistik &amp; closing rate →
+                            📊 Lihat closing rate di Evaluasi Kinerja →
                         </Link>
                     )}
                 </div>
