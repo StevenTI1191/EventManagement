@@ -81,6 +81,8 @@ trait ManagesPlanning
             'deskripsi_event' => 'nullable|string|max:5000',
             'kategori_event'  => 'nullable|string|max:255',
             'tgl_mulai_event' => 'required|date',
+            'target_pax'      => 'nullable|integer|min:0|max:100000',
+            'target_omset'    => 'nullable|numeric|min:0|max:9999999999999',
             'categories'      => 'nullable|array',
             'categories.*'    => 'string|max:255',
         ]);
@@ -90,6 +92,8 @@ trait ManagesPlanning
             'deskripsi_event'  => $request->deskripsi_event,
             'kategori_event'   => $request->kategori_event,
             'tgl_mulai_event'  => $request->tgl_mulai_event,
+            'target_pax'       => $request->target_pax,
+            'target_omset'     => $request->target_omset,
             'id_pegawai'       => Auth::guard('pegawai')->id(),
             'status_event'     => 'Planning',
             'is_public'        => false,

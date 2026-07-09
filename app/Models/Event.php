@@ -24,6 +24,8 @@ class Event extends Model
         'area_event',
         'jumlah_pax',
         'harga_per_pax',
+        'target_pax',
+        'target_omset',
         'note_event',
         'food_beverage_event',
         'entairtainment_event',

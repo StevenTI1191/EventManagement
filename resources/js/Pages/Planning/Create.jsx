@@ -1,5 +1,6 @@
 import { Head, useForm, Link } from '@inertiajs/react';
 import { ListChecks, Check } from 'lucide-react';
+import RupiahInput from '@/Components/RupiahInput';
 
 const EVENT_CATEGORIES = ['Konser', 'Wedding', 'Corporate', 'Birthday', 'Seminar', 'Lainnya'];
 
@@ -9,6 +10,8 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
         kategori_event: '',
         deskripsi_event: '',
         tgl_mulai_event: '',
+        target_pax: '',
+        target_omset: '',
         categories: categories.map((c) => c.name), // default: semua kategori dipilih
     });
 
@@ -76,6 +79,23 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                             <input type="date" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:ring-[#FF2D55]"
                                 value={data.tgl_mulai_event} onChange={(e) => setData('tgl_mulai_event', e.target.value)} />
                             {errors.tgl_mulai_event && <span className="text-xs text-red-500">{errors.tgl_mulai_event}</span>}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <div>
+                            <label className="block mb-1 text-sm font-bold text-gray-700">Target Pax</label>
+                            <input type="number" min="0" placeholder="Silahkan Input Target Pax"
+                                className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:ring-[#FF2D55]"
+                                value={data.target_pax} onChange={(e) => setData('target_pax', e.target.value)} />
+                            {errors.target_pax && <span className="text-xs text-red-500">{errors.target_pax}</span>}
+                        </div>
+                        <div>
+                            <label className="block mb-1 text-sm font-bold text-gray-700">Target Omset</label>
+                            <RupiahInput placeholder="Silahkan Input Target Omset"
+                                className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:ring-[#FF2D55]"
+                                value={data.target_omset} onChange={(v) => setData('target_omset', v)} />
+                            {errors.target_omset && <span className="text-xs text-red-500">{errors.target_omset}</span>}
                         </div>
                     </div>
 
