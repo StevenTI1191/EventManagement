@@ -110,15 +110,14 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
                 </Link>
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <ListChecks size={22} className="text-[#FF2D55]" />
-                            <h1 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">
+                        <div className="flex items-center gap-1.5">
+                            <ListChecks size={14} className="text-[#FF2D55]" />
+                            <span className="text-xs font-bold tracking-wider text-gray-400 uppercase">
                                 {isPlanning ? 'Planning Event' : 'To-Do List'}
-                            </h1>
+                            </span>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                            <div className="w-2 h-2 rounded-full bg-[#FF2D55]" />
-                            <p className="font-medium text-gray-500">{event.nama_event}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">{event.nama_event}</h1>
                             {event.kategori_event && (
                                 <span className="px-2 py-0.5 bg-pink-50 text-[#FF2D55] text-[10px] font-black uppercase tracking-wider rounded-full">
                                     {event.kategori_event}
