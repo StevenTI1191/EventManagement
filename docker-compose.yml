@@ -1,5 +1,3 @@
-version: '3.9'
-
 # =============================================================================
 # EventManagement — Production Docker Compose
 # Client   : https://laksamanamuda.my.id
@@ -57,7 +55,10 @@ services:
 
   # ── MySQL ────────────────────────────────────────────────────────────────────
   mysql:
-    image: mysql:8.0
+    # MariaDB dipakai sebagai pengganti MySQL 8.0 karena image MySQL 8.0.31+
+    # butuh CPU x86-64-v2 yang tidak didukung sebagian VPS. MariaDB drop-in
+    # compatible (Laravel tetap DB_CONNECTION=mysql) & baca env MYSQL_* yang sama.
+    image: mariadb:10.11
     container_name: em_mysql
     restart: unless-stopped
     environment:
