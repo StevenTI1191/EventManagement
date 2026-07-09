@@ -60,7 +60,7 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                     <div>
                         <label className="block mb-1 text-sm font-bold text-gray-700">Nama Event</label>
                         <input type="text" placeholder="Silahkan Input Nama Event"
-                            className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:ring-[#FF2D55] focus:border-[#FF2D55]"
+                            className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
                             value={data.nama_event} onChange={(e) => setData('nama_event', e.target.value)} />
                         {errors.nama_event && <span className="text-xs text-red-500">{errors.nama_event}</span>}
                     </div>
@@ -68,7 +68,7 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <div>
                             <label className="block mb-1 text-sm font-bold text-gray-700">Kategori Event</label>
-                            <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:ring-[#FF2D55]"
+                            <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
                                 value={data.kategori_event} onChange={(e) => setData('kategori_event', e.target.value)}>
                                 <option value="">Pilih Kategori</option>
                                 {EVENT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -76,7 +76,7 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                         </div>
                         <div>
                             <label className="block mb-1 text-sm font-bold text-gray-700">Tanggal Acara</label>
-                            <input type="date" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:ring-[#FF2D55]"
+                            <input type="date" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
                                 value={data.tgl_mulai_event} onChange={(e) => setData('tgl_mulai_event', e.target.value)} />
                             {errors.tgl_mulai_event && <span className="text-xs text-red-500">{errors.tgl_mulai_event}</span>}
                         </div>
@@ -86,14 +86,14 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                         <div>
                             <label className="block mb-1 text-sm font-bold text-gray-700">Target Pax</label>
                             <input type="number" min="0" placeholder="Silahkan Input Target Pax"
-                                className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:ring-[#FF2D55]"
+                                className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
                                 value={data.target_pax} onChange={(e) => setData('target_pax', e.target.value)} />
                             {errors.target_pax && <span className="text-xs text-red-500">{errors.target_pax}</span>}
                         </div>
                         <div>
                             <label className="block mb-1 text-sm font-bold text-gray-700">Target Omset</label>
                             <RupiahInput placeholder="Silahkan Input Target Omset"
-                                className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:ring-[#FF2D55]"
+                                className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
                                 value={data.target_omset} onChange={(v) => setData('target_omset', v)} />
                             {errors.target_omset && <span className="text-xs text-red-500">{errors.target_omset}</span>}
                         </div>
@@ -102,7 +102,7 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                     <div>
                         <label className="block mb-1 text-sm font-bold text-gray-700">Deskripsi Event</label>
                         <textarea placeholder="Silahkan Input Deskripsi Event"
-                            className="w-full h-24 p-3 border-gray-200 rounded-xl bg-gray-50 focus:ring-[#FF2D55]"
+                            className="w-full h-24 p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
                             value={data.deskripsi_event} onChange={(e) => setData('deskripsi_event', e.target.value)} />
                     </div>
 
