@@ -1,6 +1,6 @@
 import { Head, router, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Plus, Trash2, Check, Flag, ListChecks } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, Check, Flag, ListChecks, Pencil } from 'lucide-react';
 
 const CATEGORY_ORDER = [
     'Talent',
@@ -54,6 +54,8 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
     const [deleteId, setDeleteId] = useState(null);
     const [finalizing, setFinalizing] = useState(false);
     const [confirmFinalize, setConfirmFinalize] = useState(false);
+    const [confirmDeleteEvent, setConfirmDeleteEvent] = useState(false);
+    const [deletingEvent, setDeletingEvent] = useState(false);
 
     useEffect(() => { setItems(tugas || []); }, [tugas]);
 
@@ -99,6 +101,11 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
         router.patch(route(routes.finalize, event.id_event), {}, { onFinish: () => { setFinalizing(false); setConfirmFinalize(false); } });
     };
 
+    const doDeleteEvent = () => {
+        setDeletingEvent(true);
+        router.delete(route(routes.eventDestroy, event.id_event), { onFinish: () => { setDeletingEvent(false); setConfirmDeleteEvent(false); } });
+    };
+
     return (
         <Layout>
             <Head title={`${isPlanning ? 'Planning' : 'To-Do'} — ${event.nama_event}`} />
@@ -125,11 +132,27 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
                             )}
                         </div>
                     </div>
-                    {isPlanning && routes.finalize && (
-                        <button onClick={() => setConfirmFinalize(true)}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 shadow-lg shadow-green-600/20">
-                            <Flag size={16} /> Finalisasi → Upcoming
-                        </button>
+                    {isPlanning && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            {routes.eventEdit && (
+                                <Link href={route(routes.eventEdit, event.id_event)}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-50">
+                                    <Pencil size={15} /> Edit
+                                </Link>
+                            )}
+                            {routes.eventDestroy && (
+                                <button onClick={() => setConfirmDeleteEvent(true)}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 border border-red-200 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50">
+                                    <Trash2 size={15} /> Hapus
+                                </button>
+                            )}
+                            {routes.finalize && (
+                                <button onClick={() => setConfirmFinalize(true)}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 shadow-lg shadow-green-600/20">
+                                    <Flag size={16} /> Finalisasi → Upcoming
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
 
@@ -292,6 +315,25 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
                             <button onClick={() => setConfirmFinalize(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50">Batal</button>
                             <button onClick={doFinalize} disabled={finalizing} className="flex-1 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 disabled:opacity-60">
                                 {finalizing ? 'Memproses…' : 'Ya, Finalisasi'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* delete event modal */}
+            {confirmDeleteEvent && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="w-full max-w-sm p-6 bg-white shadow-xl rounded-2xl">
+                        <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-red-50">
+                            <Trash2 size={20} className="text-red-500" />
+                        </div>
+                        <h2 className="mb-1 text-base font-extrabold text-center text-gray-900">Hapus Event Planning?</h2>
+                        <p className="mb-5 text-sm text-center text-gray-400">Event <b>{event.nama_event}</b> beserta seluruh to-do list-nya akan dihapus permanen.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setConfirmDeleteEvent(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50">Batal</button>
+                            <button onClick={doDeleteEvent} disabled={deletingEvent} className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 disabled:opacity-60">
+                                {deletingEvent ? 'Menghapus…' : 'Ya, Hapus'}
                             </button>
                         </div>
                     </div>

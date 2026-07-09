@@ -60,13 +60,49 @@ class PlanningController extends Controller
             'pegawai' => Pegawai::select('id_pegawai', 'nama_pegawai', 'posisi_pegawai')->orderBy('nama_pegawai')->get(),
             'mode'    => 'planning',
             'routes'  => [
-                'store'    => 'manajemen.todo.store',
-                'update'   => 'manajemen.todo.update',
-                'destroy'  => 'manajemen.todo.destroy',
-                'finalize' => 'manajemen.planning.finalize',
-                'back'     => 'manajemen.planning.index',
+                'store'        => 'manajemen.todo.store',
+                'update'       => 'manajemen.todo.update',
+                'destroy'      => 'manajemen.todo.destroy',
+                'finalize'     => 'manajemen.planning.finalize',
+                'eventEdit'    => 'manajemen.planning.edit',
+                'eventDestroy' => 'manajemen.planning.destroy',
+                'back'         => 'manajemen.planning.index',
             ],
         ]);
+    }
+
+    public function edit($id)
+    {
+        $this->checkManajemen();
+
+        $event = Event::where('status_event', 'Planning')->findOrFail($id);
+
+        return Inertia::render('Manajemen/Planning/Create', [
+            'event'       => $event,
+            'submitRoute' => 'manajemen.planning.update',
+            'indexRoute'  => 'manajemen.planning.index',
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $this->checkManajemen();
+
+        $event = Event::where('status_event', 'Planning')->findOrFail($id);
+        $this->updatePlanningEvent($request, $event);
+
+        return redirect()->route('manajemen.planning.show', $event->id_event)
+            ->with('success', 'Event Planning berhasil diperbarui.');
+    }
+
+    public function destroy($id)
+    {
+        $this->checkManajemen();
+
+        Event::where('status_event', 'Planning')->findOrFail($id)->delete();
+
+        return redirect()->route('manajemen.planning.index')
+            ->with('success', 'Event Planning berhasil dihapus.');
     }
 
     public function finalize($id_event)

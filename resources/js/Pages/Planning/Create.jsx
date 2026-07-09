@@ -4,15 +4,16 @@ import RupiahInput from '@/Components/RupiahInput';
 
 const EVENT_CATEGORIES = ['Konser', 'Wedding', 'Corporate', 'Birthday', 'Seminar', 'Lainnya'];
 
-export default function PlanningCreate({ Layout, categories = [], submitRoute, indexRoute }) {
-    const { data, setData, post, processing, errors, setError } = useForm({
-        nama_event: '',
-        kategori_event: '',
-        deskripsi_event: '',
-        tgl_mulai_event: '',
-        target_pax: '',
-        target_omset: '',
-        categories: categories.map((c) => c.name), // default: semua kategori dipilih
+export default function PlanningCreate({ Layout, categories = [], submitRoute, indexRoute, event = null }) {
+    const isEdit = !!event;
+    const { data, setData, post, put, processing, errors, setError } = useForm({
+        nama_event: event?.nama_event || '',
+        kategori_event: event?.kategori_event || '',
+        deskripsi_event: event?.deskripsi_event || '',
+        tgl_mulai_event: event?.tgl_mulai_event ? String(event.tgl_mulai_event).slice(0, 10) : '',
+        target_pax: event?.target_pax ?? '',
+        target_omset: event?.target_omset ?? '',
+        categories: categories.map((c) => c.name), // default: semua kategori dipilih (mode buat)
     });
 
     const toggleCat = (name) => {
@@ -29,20 +30,23 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
         if (!data.nama_event.trim()) { setError('nama_event', 'Nama Event wajib diisi.'); bad = true; }
         if (!data.tgl_mulai_event) { setError('tgl_mulai_event', 'Tanggal Acara wajib diisi.'); bad = true; }
         if (bad) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-        post(route(submitRoute));
+        if (isEdit) put(route(submitRoute, event.id_event));
+        else post(route(submitRoute));
     };
 
     return (
         <Layout>
-            <Head title="Tambah Event Planning — Laksamana Muda" />
+            <Head title={`${isEdit ? 'Edit' : 'Tambah'} Event Planning — Laksamana Muda`} />
 
             <div className="mb-8">
                 <div className="flex items-center gap-2">
                     <ListChecks size={24} className="text-[#FF2D55]" />
-                    <h1 className="text-3xl font-extrabold text-gray-900">Tambah Event Planning</h1>
+                    <h1 className="text-3xl font-extrabold text-gray-900">{isEdit ? 'Edit Event Planning' : 'Tambah Event Planning'}</h1>
                 </div>
                 <p className="mt-1 font-medium text-gray-500">
-                    Isi data ringkas lalu pilih kategori to-do. Item persiapan akan dibuat otomatis sesuai kategori yang dipilih.
+                    {isEdit
+                        ? 'Perbarui data event Planning. To-do list yang sudah dibuat tidak akan berubah.'
+                        : 'Isi data ringkas lalu pilih kategori to-do. Item persiapan akan dibuat otomatis sesuai kategori yang dipilih.'}
                 </p>
             </div>
 
@@ -106,7 +110,8 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                             value={data.deskripsi_event} onChange={(e) => setData('deskripsi_event', e.target.value)} />
                     </div>
 
-                    {/* Pilihan kategori to-do */}
+                    {/* Pilihan kategori to-do (hanya saat buat baru) */}
+                    {!isEdit && (
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-sm font-bold text-gray-700">Kategori To-Do yang Dibuat</label>
@@ -132,6 +137,7 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                         </div>
                         <p className="mt-2 text-xs text-gray-400">Kategori yang dicentang akan otomatis terisi item to-do standar. Bisa diubah lagi di board.</p>
                     </div>
+                    )}
                 </div>
 
                 <div className="flex justify-end gap-4 mt-10">
@@ -140,7 +146,7 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                     </Link>
                     <button type="submit" disabled={processing}
                         className="px-10 py-3 bg-[#FF2D55] text-white rounded-full font-bold shadow-lg shadow-red-200 hover:bg-[#e02249] transition-all disabled:opacity-60">
-                        {processing ? 'Menyimpan…' : 'Buat & Isi To-Do'}
+                        {processing ? 'Menyimpan…' : (isEdit ? 'Simpan Perubahan' : 'Buat & Isi To-Do')}
                     </button>
                 </div>
             </form>

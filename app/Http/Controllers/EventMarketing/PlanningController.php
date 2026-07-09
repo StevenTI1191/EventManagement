@@ -60,13 +60,49 @@ class PlanningController extends Controller
             'pegawai' => Pegawai::select('id_pegawai', 'nama_pegawai', 'posisi_pegawai')->orderBy('nama_pegawai')->get(),
             'mode'    => 'planning',
             'routes'  => [
-                'store'    => 'em.todo.store',
-                'update'   => 'em.todo.update',
-                'destroy'  => 'em.todo.destroy',
-                'finalize' => 'em.planning.finalize',
-                'back'     => 'em.planning.index',
+                'store'        => 'em.todo.store',
+                'update'       => 'em.todo.update',
+                'destroy'      => 'em.todo.destroy',
+                'finalize'     => 'em.planning.finalize',
+                'eventEdit'    => 'em.planning.edit',
+                'eventDestroy' => 'em.planning.destroy',
+                'back'         => 'em.planning.index',
             ],
         ]);
+    }
+
+    public function edit($id)
+    {
+        $this->checkEventMarketing();
+
+        $event = Event::where('status_event', 'Planning')->findOrFail($id);
+
+        return Inertia::render('EventMarketing/Planning/Create', [
+            'event'       => $event,
+            'submitRoute' => 'em.planning.update',
+            'indexRoute'  => 'em.planning.index',
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $this->checkEventMarketing();
+
+        $event = Event::where('status_event', 'Planning')->findOrFail($id);
+        $this->updatePlanningEvent($request, $event);
+
+        return redirect()->route('em.planning.show', $event->id_event)
+            ->with('success', 'Event Planning berhasil diperbarui.');
+    }
+
+    public function destroy($id)
+    {
+        $this->checkEventMarketing();
+
+        Event::where('status_event', 'Planning')->findOrFail($id)->delete();
+
+        return redirect()->route('em.planning.index')
+            ->with('success', 'Event Planning berhasil dihapus.');
     }
 
     public function finalize($id_event)

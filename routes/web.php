@@ -165,6 +165,12 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id')->name('manajemen.planning.show');
         Route::patch('/manajemen/planning/{id}/finalize', [\App\Http\Controllers\Manajemen\PlanningController::class, 'finalize'])
             ->name('manajemen.planning.finalize');
+        Route::get('/manajemen/planning/{id}/edit', [\App\Http\Controllers\Manajemen\PlanningController::class, 'edit'])
+            ->whereNumber('id')->name('manajemen.planning.edit');
+        Route::put('/manajemen/planning/{id}', [\App\Http\Controllers\Manajemen\PlanningController::class, 'update'])
+            ->whereNumber('id')->name('manajemen.planning.update');
+        Route::delete('/manajemen/planning/{id}', [\App\Http\Controllers\Manajemen\PlanningController::class, 'destroy'])
+            ->whereNumber('id')->name('manajemen.planning.destroy');
 
         // --- CLIENT ---
         Route::get('/manajemen/client', [ClientController::class, 'index'])
@@ -291,6 +297,12 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id')->name('em.planning.show');
         Route::patch('/event-marketing/planning/{id}/finalize', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'finalize'])
             ->name('em.planning.finalize');
+        Route::get('/event-marketing/planning/{id}/edit', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'edit'])
+            ->whereNumber('id')->name('em.planning.edit');
+        Route::put('/event-marketing/planning/{id}', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'update'])
+            ->whereNumber('id')->name('em.planning.update');
+        Route::delete('/event-marketing/planning/{id}', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'destroy'])
+            ->whereNumber('id')->name('em.planning.destroy');
         Route::get('/event-marketing/transaksi', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'index'])
         ->name('em.transaksi.index');
         // --- EVENT MARKETING: TODO / TUGAS ---

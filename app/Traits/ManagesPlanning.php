@@ -53,15 +53,16 @@ trait ManagesPlanning
             $urutan = 0;
             foreach ($items as [$nama, $timeline]) {
                 $rows[] = [
-                    'id_event'     => $event->id_event,
-                    'nama_tugas'   => $nama,
-                    'kategori'     => $kategori,
-                    'timeline'     => $timeline,
-                    'status_tugas' => 'Ongoing',
-                    'progress'     => 0,
-                    'urutan'       => $urutan++,
-                    'created_at'   => $now,
-                    'updated_at'   => $now,
+                    'id_event'       => $event->id_event,
+                    'nama_tugas'     => $nama,
+                    'kategori'       => $kategori,
+                    'timeline'       => $timeline,
+                    'deadline_tugas' => $this->deadlineFromTimeline($event->tgl_mulai_event, $timeline),
+                    'status_tugas'   => 'Ongoing',
+                    'progress'       => 0,
+                    'urutan'         => $urutan++,
+                    'created_at'     => $now,
+                    'updated_at'     => $now,
                 ];
             }
         }
@@ -105,5 +106,40 @@ trait ManagesPlanning
         $this->generateTemplate($event, is_array($cats) ? $cats : null);
 
         return redirect()->route($showRoute, $event->id_event);
+    }
+
+    /** Hitung deadline dari timeline H-x relatif ke tanggal acara. */
+    protected function deadlineFromTimeline($eventStart, ?string $timeline): ?string
+    {
+        if (! $eventStart || ! $timeline) {
+            return null;
+        }
+        $start = \Illuminate\Support\Carbon::parse($eventStart);
+        if (preg_match('/H\s*-\s*(\d+)/i', $timeline, $m)) {
+            return $start->copy()->subDays((int) $m[1])->toDateString();
+        }
+        // Timeline "H" atau "H (Hari - H)" tanpa angka dianggap hari-H
+        if (preg_match('/\bH\b/i', $timeline) && ! preg_match('/\d/', $timeline)) {
+            return $start->toDateString();
+        }
+        return null;
+    }
+
+    /** Update field ringkas event Planning (dari halaman edit). */
+    protected function updatePlanningEvent(Request $request, Event $event): void
+    {
+        $request->validate([
+            'nama_event'      => 'required|string|max:255',
+            'deskripsi_event' => 'nullable|string|max:5000',
+            'kategori_event'  => 'nullable|string|max:255',
+            'tgl_mulai_event' => 'required|date',
+            'target_pax'      => 'nullable|integer|min:0|max:100000',
+            'target_omset'    => 'nullable|numeric|min:0|max:9999999999999',
+        ]);
+
+        $event->update($request->only([
+            'nama_event', 'deskripsi_event', 'kategori_event',
+            'tgl_mulai_event', 'target_pax', 'target_omset',
+        ]));
     }
 }
