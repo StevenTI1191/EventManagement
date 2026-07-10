@@ -8,6 +8,16 @@ COPY package*.json ./
 RUN npm ci --ignore-scripts
 
 COPY . .
+# Nilai publik Reverb di-inject saat build (browser butuh ini; .env tidak terbaca
+# karena dikecualikan .dockerignore). Aman: VITE_REVERB_APP_KEY memang key publik.
+ARG VITE_REVERB_APP_KEY=
+ARG VITE_REVERB_HOST=
+ARG VITE_REVERB_PORT=443
+ARG VITE_REVERB_SCHEME=https
+ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
+    VITE_REVERB_HOST=$VITE_REVERB_HOST \
+    VITE_REVERB_PORT=$VITE_REVERB_PORT \
+    VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
 RUN npm run build
 
 
@@ -90,5 +100,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# Nilai publik Reverb di-inject saat build (lihat catatan di stage assets)
+ARG VITE_REVERB_APP_KEY=
+ARG VITE_REVERB_HOST=
+ARG VITE_REVERB_PORT=443
+ARG VITE_REVERB_SCHEME=https
+ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
+    VITE_REVERB_HOST=$VITE_REVERB_HOST \
+    VITE_REVERB_PORT=$VITE_REVERB_PORT \
+    VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
 # Output build ke ./public/build (di-mount dari host)
 CMD ["npm", "run", "build"]

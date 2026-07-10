@@ -11,6 +11,11 @@ services:
     build:
       context: .
       target: app
+      args:
+        VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY:-}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST:-}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT:-443}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME:-https}
     image: eventmanagement/app:latest
     container_name: em_app
     restart: unless-stopped
@@ -169,6 +174,11 @@ services:
     build:
       context: .
       target: node_builder
+      args:
+        VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY:-}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST:-}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT:-443}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME:-https}
     container_name: em_node_builder
     volumes:
       - ./public:/app/public  # Hasil build langsung masuk ke ./public di host
