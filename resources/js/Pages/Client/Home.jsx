@@ -244,7 +244,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             </section>
 
             {/* ── ABOUT ──────────────────────────────────────────── */}
-            <section id="about" className="py-24 bg-paper">
+            <section id="about" className="py-24 bg-paper bg-paper-glow">
                 <div className="px-6 mx-auto max-w-7xl">
                     <div className="grid items-center grid-cols-1 gap-16 lg:grid-cols-2">
                         <div>
@@ -286,7 +286,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             </section>
 
             {/* ── LAYANAN ────────────────────────────────────────── */}
-            <section id="layanan" className="py-24 bg-paper">
+            <section id="layanan" className="py-24 bg-surface">
                 <div className="px-6 mx-auto max-w-7xl">
                     <div className="mb-16 text-center">
                         <p className="mb-4 text-sm font-bold tracking-widest text-gold uppercase">Apa yang Kami Tawarkan</p>
@@ -313,7 +313,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             </section>
 
             {/* ── UPCOMING EVENTS ────────────────────────────────── */}
-            <section id="upcoming" className="py-24 bg-paper">
+            <section id="upcoming" className="py-24 bg-paper bg-paper-glow">
                 <div className="px-6 mx-auto max-w-7xl">
                     <div className="flex items-end justify-between mb-12">
                         <div>
@@ -392,7 +392,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             </section>
 
             {/* ── PORTFOLIO ──────────────────────────────────────── */}
-            <section id="portfolio" className="py-24 bg-paper">
+            <section id="portfolio" className="py-24 bg-surface">
                 <div className="px-6 mx-auto max-w-7xl">
                     <div className="mb-12 text-center">
                         <p className="mb-4 text-sm font-bold tracking-widest text-gold uppercase">Karya Terbaik Kami</p>
@@ -498,7 +498,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             )}
 
             {/* ── TESTIMONI ──────────────────────────────────────── */}
-            <section className="py-24 bg-paper">
+            <section className="py-24 bg-paper bg-paper-glow">
                 <div className="px-6 mx-auto max-w-7xl">
                     <div className="mb-16 text-center">
                         <p className="mb-4 text-sm font-bold tracking-widest text-gold uppercase">Apa Kata Mereka</p>
@@ -530,7 +530,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             </section>
 
             {/* ── KONTAK ─────────────────────────────────────────── */}
-            <section id="kontak" className="py-24 bg-paper">
+            <section id="kontak" className="py-24 bg-surface">
                 <div className="px-6 mx-auto max-w-7xl">
                     <div className="mb-16 text-center">
                         <p className="mb-4 text-sm font-bold tracking-widest text-gold uppercase">Hubungi Kami</p>
