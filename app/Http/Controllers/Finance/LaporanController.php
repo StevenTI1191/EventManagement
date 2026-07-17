@@ -117,8 +117,9 @@ class LaporanController extends Controller
         $totalPemasukan     = $totalPemasukan + $totalPemasukanItem;
         $labaBersih         = $totalPemasukan - $totalPengeluaran;
 
-        // Rekap per event
-        $events = Event::with(['client', 'transaksis', 'transaksiItems'])
+        // Rekap per event — hanya event terikat komitmen (Deal/Upcoming/Done).
+        // Prospek pipeline & event batal tidak masuk laporan keuangan.
+        $events = Event::untukFinance()->with(['client', 'transaksis', 'transaksiItems'])
             ->whereBetween('tgl_mulai_event', [$start->toDateString(), $end->toDateString()])
             ->orderBy('tgl_mulai_event')
             ->get();

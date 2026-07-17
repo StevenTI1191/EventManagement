@@ -30,8 +30,12 @@ class AppointmentController extends Controller
             ->take(50)
             ->get();
 
-        // Event yang sudah deal dengan client ini
+        // Hanya event terkonfirmasi (Upcoming/Done) milik client ini. Prospek yang
+        // masih di pipeline (Lead/Negotiation/Deal) maupun yang batal tidak
+        // ditampilkan di dashboard client — halaman ini hanya mengenali status
+        // Upcoming & Done. (Deal ditambah kelak saat alur invoice sisi client dibuat.)
         $events = Event::where('id_client', $client->id)
+            ->terkonfirmasi()
             ->with(['pic', 'buktiPembayaran' => function($q) use ($client) {
                 $q->where('client_id', $client->id);
             }])

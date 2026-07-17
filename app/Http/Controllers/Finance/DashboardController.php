@@ -26,15 +26,18 @@ class DashboardController extends Controller
         // Laba bersih = pembayaran klien + pemasukan tambahan (sponsor, dll) - pengeluaran
         $labaBersih       = $totalPenjualan + $totalPemasukan - $totalPengeluaran;
 
-        $totalDeal = Event::sum('deal_harga_event');
+        // Hanya event yang benar-benar terikat komitmen (Deal/Upcoming/Done) yang
+        // dihitung sebagai nilai deal & piutang. Prospek pipeline (Lead/Negotiation)
+        // dan yang batal tidak punya kewajiban bayar, jadi dikecualikan.
+        $totalDeal = Event::untukFinance()->sum('deal_harga_event');
         // Piutang = jumlah kekurangan bayar PER EVENT (event yang lebih bayar tidak menutup yang kurang)
-        $totalPiutang = Event::where('deal_harga_event', '>', 0)
+        $totalPiutang = Event::untukFinance()->where('deal_harga_event', '>', 0)
             ->withSum('transaksis as total_dibayar', 'nominal')
             ->get()
             ->sum(fn ($e) => max($e->deal_harga_event - ($e->total_dibayar ?? 0), 0));
 
         // Status event — hitung di PHP untuk hindari konflik only_full_group_by
-        $eventBelumLunas = Event::where('deal_harga_event', '>', 0)
+        $eventBelumLunas = Event::untukFinance()->where('deal_harga_event', '>', 0)
             ->whereRaw('(SELECT COALESCE(SUM(nominal),0) FROM transaksis WHERE transaksis.id_event = events.id_event) < deal_harga_event')
             ->count();
 
@@ -75,7 +78,7 @@ class DashboardController extends Controller
             ]);
 
         // ── TOP 5 EVENT BY DEAL ───────────────────────────────────
-        $topEvents = Event::with(['client', 'transaksis'])
+        $topEvents = Event::untukFinance()->with(['client', 'transaksis'])
             ->orderByDesc('deal_harga_event')
             ->take(5)
             ->get()

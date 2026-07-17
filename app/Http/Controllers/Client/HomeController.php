@@ -51,8 +51,9 @@ class HomeController extends Controller
             'status'   => 'nullable|in:Upcoming,Done',
         ]);
 
-        // Hanya event Publik yang boleh tampil di listing publik
-        $query = Event::whereNotNull('status_event')->where('is_public', true);
+        // Hanya event Publik & terkonfirmasi (Upcoming/Done) yang tampil di listing
+        // publik. Prospek pipeline dan event batal tidak boleh bocor ke halaman publik.
+        $query = Event::terkonfirmasi()->where('is_public', true);
 
         if ($request->filled('search')) {
             $query->where('nama_event', 'like', '%' . $request->search . '%');
