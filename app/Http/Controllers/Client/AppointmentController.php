@@ -30,15 +30,17 @@ class AppointmentController extends Controller
             ->take(50)
             ->get();
 
-        // Hanya event terkonfirmasi (Upcoming/Done) milik client ini. Prospek yang
-        // masih di pipeline (Lead/Negotiation/Deal) maupun yang batal tidak
-        // ditampilkan di dashboard client — halaman ini hanya mengenali status
-        // Upcoming & Done. (Deal ditambah kelak saat alur invoice sisi client dibuat.)
+        // Event milik client ini yang sudah terikat komitmen: Deal (menunggu DP),
+        // Upcoming (berjalan), dan Done (selesai). Prospek pipeline (Lead/Negotiation)
+        // dan event batal tidak ditampilkan. Deal disertakan agar client bisa
+        // melihat & mengunduh invoice DP-nya lalu mengunggah bukti pembayaran.
         $events = Event::where('id_client', $client->id)
-            ->terkonfirmasi()
-            ->with(['pic', 'buktiPembayaran' => function($q) use ($client) {
-                $q->where('client_id', $client->id);
-            }])
+            ->untukFinance()
+            ->with([
+                'pic',
+                'invoices' => fn($q) => $q->orderBy('tgl_terbit'),
+                'buktiPembayaran' => fn($q) => $q->where('client_id', $client->id),
+            ])
             ->latest('tgl_mulai_event')
             ->take(50)
             ->get();
@@ -298,5 +300,35 @@ class AppointmentController extends Controller
         }
 
         return back()->with('success', 'Bukti pembayaran berhasil dihapus.');
+    }
+
+    /**
+     * Unduh PDF invoice milik client sendiri. Dijaga kepemilikan: invoice harus
+     * menempel pada event milik client yang sedang login.
+     */
+    public function downloadInvoice($id_invoice)
+    {
+        $client = Auth::guard('client')->user();
+
+        $invoice = \App\Models\Invoice::with('event.client')
+            ->whereHas('event', fn($q) => $q->where('id_client', $client->id))
+            ->findOrFail($id_invoice);
+
+        $event = $invoice->event;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.invoice', [
+            'invoice'       => $invoice,
+            'event'         => $event,
+            'tglTerbit'     => optional($invoice->tgl_terbit)->translatedFormat('d F Y'),
+            'tglJatuhTempo' => optional($invoice->tgl_jatuh_tempo)?->translatedFormat('d F Y'),
+            'tglAcara'      => $event->tgl_mulai_event
+                ? \Carbon\Carbon::parse($event->tgl_mulai_event)->translatedFormat('d F Y')
+                : '—',
+        ]);
+
+        return $pdf->download(
+            'Invoice-' . \Illuminate\Support\Str::slug($invoice->nomor_invoice)
+            . '-' . \Illuminate\Support\Str::slug($event->nama_event) . '.pdf'
+        );
     }
 }

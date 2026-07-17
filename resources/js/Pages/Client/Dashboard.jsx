@@ -6,7 +6,7 @@ import {
     Plus, Calendar, Clock, CheckCircle, XCircle,
     AlertCircle, LogOut, Home, Upload, FileText,
     ChevronDown, ChevronUp, X, Eye, Bell, Trash2, CheckCheck,
-    User, Timer
+    User, Timer, Download
 } from 'lucide-react';
 
 export default function ClientDashboard({ appointments, events, totalAppointments, totalEvents }) {
@@ -109,6 +109,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
     // Status untuk Event
     const getEventStatusColor = (status) => {
+        if (status === 'Deal')      return 'bg-gold-soft text-gold-dim border-gold-2';
         if (status === 'Upcoming')    return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
         if (status === 'Done')      return 'bg-green-500/20 text-green-300 border-ok/30';
         if (status === 'Pending')   return 'bg-gold-soft text-gold border-gold-2';
@@ -117,6 +118,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
     };
 
     const getEventStatusLabel = (status) => {
+        if (status === 'Deal')      return 'Menunggu DP';
         if (status === 'Upcoming')    return 'Upcoming';
         if (status === 'Done')      return 'Selesai';
         if (status === 'Pending')   return 'Pending';
@@ -1054,6 +1056,36 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                             <div className="h-2 rounded-full transition-all duration-700"
                                                 style={{ width: `${pct}%`, background: lunas ? '#22c55e' : pct >= 50 ? '#eab308' : '#f97316' }} />
                                         </div>
+
+                                        {/* Invoice dari Finance — bisa diunduh & jadi acuan pembayaran */}
+                                        {(event.invoices || []).length > 0 && (
+                                            <div className="mb-3 space-y-1.5">
+                                                {event.invoices.map(inv => (
+                                                    <div key={inv.id_invoice} className="flex items-center justify-between gap-2 p-2.5 bg-paper border border-line rounded-xl">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <FileText size={14} className="flex-shrink-0 text-gold-dim" />
+                                                            <div className="min-w-0">
+                                                                <p className="text-xs font-bold text-ink truncate">
+                                                                    Invoice {inv.tipe} · {formatBudget(inv.nominal)}
+                                                                </p>
+                                                                <p className="text-[10px] text-muted truncate">{inv.nomor_invoice}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                            <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full border ${
+                                                                inv.status === 'Lunas'
+                                                                    ? 'text-ok bg-ok-bg border-ok/30'
+                                                                    : 'text-orange-500 bg-orange-500/10 border-orange-500/30'
+                                                            }`}>{inv.status}</span>
+                                                            <a href={route('client.invoice.pdf', inv.id_invoice)}
+                                                                className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-gold-dim transition-colors border bg-gold-soft border-gold-2 rounded-lg hover:brightness-95">
+                                                                <Download size={11} /> PDF
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
 
                                         <div className="flex gap-2">
                                             <button onClick={() => openUpload(event)}

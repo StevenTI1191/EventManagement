@@ -544,5 +544,7 @@ Route::domain(config('app.domain'))->group(function () {
             ->name('client.bukti.upload');
         Route::delete('/bukti-pembayaran/{id}', [\App\Http\Controllers\Client\AppointmentController::class, 'deleteBukti'])
             ->name('client.bukti.delete');
+        Route::get('/invoice/{id_invoice}/pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadInvoice'])
+            ->whereNumber('id_invoice')->name('client.invoice.pdf');
     }); // auth:client
 }); // domain
