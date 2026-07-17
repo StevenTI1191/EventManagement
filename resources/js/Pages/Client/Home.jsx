@@ -107,7 +107,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             <Head title="Laksamana Muda - Event Organizer Professional" />
 
             {/* ── NAVBAR ─────────────────────────────────────────── */}
-            <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-ink/40 backdrop-blur-md border-line">
+            <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-surface/85 backdrop-blur-md border-line shadow-lm">
                 <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-7xl">
                     <a href="#home" className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-10 h-10 overflow-hidden bg-surface border-2 border-gold rounded-full">
@@ -159,8 +159,8 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                             </div>
                         ) : (
                             <>
-                                <a href={`${BASE_URL}/login`} className="px-4 py-2 text-sm font-bold text-gold-dim transition-colors border rounded-full border-gold-2 hover:bg-gold-soft">Masuk</a>
-                                <a href={`${BASE_URL}/register`} className="px-5 py-2 text-sm font-black text-white transition-colors bg-gold rounded-full hover:bg-gold-2">Daftar</a>
+                                <a href={`${BASE_URL}/login`} className="px-4 py-2 text-sm font-bold text-gold-dim transition-all border-[1.5px] rounded-full bg-surface border-line hover:border-gold-2 hover:bg-gold-soft">Masuk</a>
+                                <a href={`${BASE_URL}/register`} className="px-5 py-2 text-sm font-black text-white transition-all rounded-full bg-gold-grad shadow-gold hover:brightness-110">Daftar</a>
                             </>
                         )}
                     </div>
@@ -190,7 +190,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                             ) : (
                                 <div className="flex gap-3">
                                     <a href={`${BASE_URL}/login`} className="flex-1 py-2 text-sm font-bold text-center text-gold-dim border rounded-full border-gold-2">Masuk</a>
-                                    <a href={`${BASE_URL}/register`} className="flex-1 py-2 text-sm font-black text-center text-white bg-gold rounded-full">Daftar</a>
+                                    <a href={`${BASE_URL}/register`} className="flex-1 py-2 text-sm font-black text-center text-white rounded-full bg-gold-grad shadow-gold">Daftar</a>
                                 </div>
                             )}
                         </div>
@@ -215,10 +215,10 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                     </p>
                     <div className="flex flex-col justify-center gap-4 sm:flex-row">
                         <a href={isLoggedIn ? `${BASE_URL}/appointment/create` : `${BASE_URL}/register`}
-                            className="px-8 py-4 text-lg font-black text-white transition-all bg-gold rounded-full hover:bg-gold-2 hover:scale-105">
+                            className="px-8 py-4 text-lg font-black text-white transition-all rounded-full bg-gold-grad shadow-gold hover:brightness-110 hover:scale-105">
                             🗓️ Buat Appointment
                         </a>
-                        <a href="#portfolio" className="px-8 py-4 text-lg font-bold text-gold-dim transition-all border rounded-full border-gold-2 hover:bg-gold-soft">
+                        <a href="#portfolio" className="px-8 py-4 text-lg font-bold text-gold-dim transition-all border-[1.5px] rounded-full bg-surface border-line shadow-lm hover:border-gold-2 hover:bg-gold-soft hover:scale-105">
                             Lihat Portfolio
                         </a>
                     </div>
@@ -229,14 +229,14 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             </section>
 
             {/* ── STATS BAR ──────────────────────────────────────── */}
-            <section id="stats" className="py-16 bg-gold">
+            <section id="stats" className="py-16 bg-gold-grad">
                 <div className="px-6 mx-auto max-w-7xl">
-                    <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-y-10 md:grid-cols-4 md:divide-x md:divide-white/20">
                         {statItems.map(s => (
-                            <div key={s.label} className="text-center">
-                                <div className="flex items-center justify-center gap-2 mb-1 text-white/70">{s.icon}</div>
-                                <p className="text-4xl font-black text-white">{s.value}</p>
-                                <p className="mt-1 text-sm font-bold text-white/70">{s.label}</p>
+                            <div key={s.label} className="px-4 text-center">
+                                <div className="inline-flex items-center justify-center w-11 h-11 mb-3 text-white rounded-full bg-white/15 ring-1 ring-white/25">{s.icon}</div>
+                                <p className="text-4xl font-black tracking-tight text-white tabular-nums">{s.value}</p>
+                                <p className="mt-1 text-sm font-bold tracking-wide text-white/75">{s.label}</p>
                             </div>
                         ))}
                     </div>
@@ -263,7 +263,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                             </p>
                             <div className="grid grid-cols-2 gap-4">
                                 {keunggulan.map(k => (
-                                    <div key={k.title} className="flex items-start gap-3 p-4 border border-line rounded-2xl bg-ink/40">
+                                    <div key={k.title} className="flex items-start gap-3 p-4 border border-line rounded-2xl bg-surface shadow-lm">
                                         <div className="text-gold mt-0.5 shrink-0">{k.icon}</div>
                                         <div>
                                             <p className="text-sm font-bold text-ink">{k.title}</p>
@@ -305,7 +305,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                         <h3 className="mb-3 text-2xl font-black text-ink">Tertarik dengan layanan kami?</h3>
                         <p className="mb-6 text-muted">Buat appointment sekarang dan diskusikan kebutuhan event Anda bersama tim kami.</p>
                         <a href={isLoggedIn ? `${BASE_URL}/appointment/create` : `${BASE_URL}/register`}
-                            className="inline-block px-8 py-3 font-black text-white transition-all bg-gold rounded-full hover:bg-gold-2 hover:scale-105">
+                            className="inline-block px-8 py-3 font-black text-white transition-all rounded-full bg-gold-grad shadow-gold hover:brightness-110 hover:scale-105">
                             🗓️ Buat Appointment
                         </a>
                     </div>
@@ -451,7 +451,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
 
                     <div className="mt-12 text-center">
                         <a href={`${BASE_URL}/events`}
-                            className="inline-flex items-center gap-2 px-8 py-3 text-sm font-black text-white transition-all bg-gold rounded-full hover:bg-gold-2 hover:scale-105">
+                            className="inline-flex items-center gap-2 px-8 py-3 text-sm font-black text-white transition-all rounded-full bg-gold-grad shadow-gold hover:brightness-110 hover:scale-105">
                             Lihat Semua Event <ArrowRight size={16} />
                         </a>
                     </div>
@@ -473,7 +473,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                                 </div>
                             )}
                             <button onClick={() => setSelectedEvent(null)}
-                                className="absolute flex items-center justify-center w-9 h-9 bg-ink/40 rounded-full top-4 right-4 hover:bg-surface transition-colors">
+                                className="absolute flex items-center justify-center w-9 h-9 bg-surface/90 backdrop-blur-sm border border-line rounded-full top-4 right-4 hover:bg-surface hover:border-gold-2 transition-colors">
                                 <X size={16} className="text-ink" />
                             </button>
                         </div>
@@ -555,13 +555,13 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                         <p className="mb-6 text-muted">Daftar sekarang dan buat appointment dengan tim Event Marketing kami.</p>
                         {isLoggedIn ? (
                             <a href={`${BASE_URL}/appointment/create`}
-                                className="inline-block px-8 py-3 font-black text-white transition-all bg-gold rounded-full hover:bg-gold-2 hover:scale-105">
+                                className="inline-block px-8 py-3 font-black text-white transition-all rounded-full bg-gold-grad shadow-gold hover:brightness-110 hover:scale-105">
                                 🗓️ Buat Appointment Sekarang
                             </a>
                         ) : (
                             <div className="flex flex-col justify-center gap-4 sm:flex-row">
                                 <a href={`${BASE_URL}/register`}
-                                    className="px-8 py-3 font-black text-white transition-all bg-gold rounded-full hover:bg-gold-2 hover:scale-105">
+                                    className="px-8 py-3 font-black text-white transition-all rounded-full bg-gold-grad shadow-gold hover:brightness-110 hover:scale-105">
                                     Daftar & Buat Appointment
                                 </a>
                                 <a href={`${BASE_URL}/login`}

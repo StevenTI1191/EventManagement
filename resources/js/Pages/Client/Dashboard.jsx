@@ -567,7 +567,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                 }`}>
                                                 {p.label}
                                                 <span className={`px-1.5 py-0.5 text-[10px] rounded-full ${
-                                                    aptFilter === p.key ? 'bg-ink/40 text-white' : 'bg-gold-soft text-muted'
+                                                    aptFilter === p.key ? 'bg-white/25 text-white' : 'bg-gold-soft text-muted'
                                                 }`}>{p.count}</span>
                                             </button>
                                         ))}

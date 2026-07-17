@@ -82,7 +82,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
             <Head title="Events - Laksamana Muda" />
 
             {/* ── NAVBAR ────────────────────────────────────────────── */}
-            <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-ink/40 backdrop-blur-md border-line">
+            <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-surface/85 backdrop-blur-md border-line shadow-lm">
                 <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-7xl">
                     <a href={`${BASE_URL}/`} className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-10 h-10 overflow-hidden bg-surface border-2 border-gold rounded-full">
@@ -259,7 +259,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                                                 {/* Top badges */}
                                                 <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
                                                     {event.kategori_event && (
-                                                        <span className="px-2.5 py-1 text-[10px] font-black bg-ink/40 backdrop-blur-sm text-gold-dim rounded-full border border-gold-2">
+                                                        <span className="px-2.5 py-1 text-[10px] font-black bg-surface/90 backdrop-blur-sm text-gold-dim rounded-full border border-gold-2">
                                                             {getCategoryIcon(event.kategori_event)} {event.kategori_event}
                                                         </span>
                                                     )}
@@ -405,14 +405,14 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                             )}
                             <div className="absolute inset-0 bg-gradient-to-t from-surface/90 via-transparent to-transparent" />
                             <button onClick={() => setSelectedEvent(null)}
-                                className="absolute flex items-center justify-center w-9 h-9 transition-colors bg-ink/40 backdrop-blur-sm rounded-full top-4 right-4 hover:bg-surface border border-line">
+                                className="absolute flex items-center justify-center w-9 h-9 transition-colors bg-surface/90 backdrop-blur-sm rounded-full top-4 right-4 hover:bg-surface hover:border-gold-2 border border-line">
                                 <X size={16} className="text-ink" />
                             </button>
                             {/* Status + Kategori at bottom */}
                             <div className="absolute bottom-4 left-5 right-5 flex items-end justify-between">
                                 <div>
                                     {selectedEvent.kategori_event && (
-                                        <span className="inline-block mb-1.5 px-2.5 py-0.5 bg-ink/40 backdrop-blur-sm text-gold-dim text-[10px] font-black uppercase rounded-full border border-gold-2">
+                                        <span className="inline-block mb-1.5 px-2.5 py-0.5 bg-surface/90 backdrop-blur-sm text-gold-dim text-[10px] font-black uppercase rounded-full border border-gold-2">
                                             {getCategoryIcon(selectedEvent.kategori_event)} {selectedEvent.kategori_event}
                                         </span>
                                     )}
