@@ -285,6 +285,24 @@ export default function AppointmentShow({ appointment }) {
                             </button>
                         </div>
                     )}
+
+                    {/* Tautan ke event — Buat Event dari appointment, atau lihat event yang sudah dibuat */}
+                    {['Dikonfirmasi', 'Reschedule', 'Selesai'].includes(appointment.status) && (
+                        appointment.event ? (
+                            <Link href={route('em.event.index')}
+                                className="flex items-center gap-2 p-3 mt-3 text-sm transition-colors border border-gray-200 bg-gray-50 rounded-xl hover:border-gray-300">
+                                <Calendar size={15} className="text-gray-500 shrink-0" />
+                                <span className="text-gray-600">Event terhubung:</span>
+                                <span className="font-bold text-gray-900 truncate">{appointment.event.nama_event}</span>
+                                <span className="ml-auto px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-200 text-gray-600 shrink-0">{appointment.event.status_event}</span>
+                            </Link>
+                        ) : appointment.status !== 'Selesai' ? (
+                            <Link href={route('em.event.create', { dari_appointment: appointment.id })}
+                                className="flex items-center justify-center gap-2 w-full py-3 mt-3 font-bold text-[#FF2D55] transition-colors border border-[#FF2D55]/30 rounded-xl hover:bg-[#FF2D55]/5">
+                                ➕ Buat Event dari Appointment
+                            </Link>
+                        ) : null
+                    )}
                 </div>
             </div>
 

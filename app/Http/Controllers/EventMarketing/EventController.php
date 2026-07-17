@@ -63,13 +63,33 @@ class EventController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->checkEventMarketing();
 
+        // Bila dibuka dari sebuah appointment ("Buat Event dari Appointment"),
+        // kirim data awal agar form terisi & event yang dibuat tertaut ke appointment.
+        $dariAppointment = null;
+        if ($request->filled('dari_appointment')) {
+            $apt = \App\Models\Appointment::whereIn('status', ['Dikonfirmasi', 'Reschedule'])
+                ->whereNull('id_event')
+                ->find($request->integer('dari_appointment'));
+
+            if ($apt) {
+                $dariAppointment = [
+                    'id'           => $apt->id,
+                    'client_id'    => $apt->client_id,
+                    'jenis_event'  => $apt->jenis_event,
+                    'jumlah_tamu'  => $apt->jumlah_tamu,
+                    'nama_client'  => $apt->client?->nama_client,
+                ];
+            }
+        }
+
         return Inertia::render('EventMarketing/Event/Create', [
-            'clients'  => \App\Models\Client::select('id', 'nama_client', 'perusahaan_client')->get(),
-            'pegawais' => \App\Models\Pegawai::select('id_pegawai', 'nama_pegawai', 'posisi_pegawai')->get(),
+            'clients'         => \App\Models\Client::select('id', 'nama_client', 'perusahaan_client')->get(),
+            'pegawais'        => \App\Models\Pegawai::select('id_pegawai', 'nama_pegawai', 'posisi_pegawai')->get(),
+            'dariAppointment' => $dariAppointment,
         ]);
     }
 
@@ -151,6 +171,15 @@ class EventController extends Controller
         $data['tipe_event']   = Event::TIPE_EKSTERNAL;
 
         $event = Event::create($data);
+
+        // Tautkan ke appointment asal bila dibuat lewat "Buat Event dari Appointment".
+        // Guard diulang (Dikonfirmasi/Reschedule & belum tertaut) agar aman.
+        if ($request->filled('dari_appointment')) {
+            \App\Models\Appointment::where('id', $request->integer('dari_appointment'))
+                ->whereIn('status', ['Dikonfirmasi', 'Reschedule'])
+                ->whereNull('id_event')
+                ->update(['id_event' => $event->id_event]);
+        }
 
         // Kirim email ke client saat event baru dikonfirmasi
         $client = Client::find($event->id_client);

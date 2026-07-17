@@ -11,7 +11,7 @@ class Appointment extends Model
         'client_id', 'jenis_event', 'deskripsi_event',
         'jumlah_tamu', 'estimasi_budget', 'tgl_request', 'jam_request',
         'tgl_konfirmasi', 'jam_konfirmasi', 'status', 'catatan_em',
-        'id_pegawai', 'alasan_batal_client',
+        'id_pegawai', 'alasan_batal_client', 'id_event',
     ];
 
     public function client()
@@ -22,5 +22,11 @@ class Appointment extends Model
     public function pegawai()
     {
         return $this->belongsTo(\App\Models\Pegawai::class, 'id_pegawai', 'id_pegawai');
+    }
+
+    /** Event yang lahir dari appointment ini (diisi lewat "Buat Event dari Appointment"). */
+    public function event()
+    {
+        return $this->belongsTo(\App\Models\Event::class, 'id_event', 'id_event');
     }
 }

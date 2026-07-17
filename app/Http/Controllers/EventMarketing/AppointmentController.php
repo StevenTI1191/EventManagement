@@ -51,7 +51,7 @@ class AppointmentController extends Controller
     {
         $this->checkEventMarketing();
 
-        $appointment = Appointment::with(['client', 'pegawai'])->findOrFail($id);
+        $appointment = Appointment::with(['client', 'pegawai', 'event:id_event,nama_event,status_event'])->findOrFail($id);
 
         return Inertia::render('EventMarketing/Appointment/Show', [
             'appointment' => $appointment,

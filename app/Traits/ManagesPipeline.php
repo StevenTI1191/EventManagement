@@ -132,6 +132,14 @@ trait ManagesPipeline
 
         $event->update(['status_event' => $baru]);
 
+        // Deal tercapai → appointment asal (bila ada) otomatis ditandai Selesai,
+        // sehingga tidak ikut terbatalkan scheduler auto-batal appointment.
+        if ($baru === Event::STATUS_DEAL) {
+            \App\Models\Appointment::where('id_event', $event->id_event)
+                ->whereIn('status', ['Dikonfirmasi', 'Reschedule'])
+                ->update(['status' => 'Selesai']);
+        }
+
         return back()->with('success', "Event \"{$event->nama_event}\" dipindahkan ke tahap {$baru}.");
     }
 

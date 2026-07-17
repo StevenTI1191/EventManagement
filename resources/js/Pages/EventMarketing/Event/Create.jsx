@@ -2,14 +2,14 @@ import EventMarketingLayout from '@/Layouts/EventMarketingLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import RupiahInput from '@/Components/RupiahInput';
 
-export default function Create({ auth, clients, pegawais, submitRoute = 'em.event.store', indexRoute = 'em.event.index', planning = false }) {
+export default function Create({ auth, clients, pegawais, submitRoute = 'em.event.store', indexRoute = 'em.event.index', planning = false, dariAppointment = null }) {
     const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
-        nama_event: '',
-        jumlah_pax: '',
+        nama_event: dariAppointment?.jenis_event ?? '',
+        jumlah_pax: dariAppointment?.jumlah_tamu ?? '',
         harga_per_pax: '',
         deskripsi_event: '',
         deal_harga_event: '',
-        id_client: '',
+        id_client: dariAppointment?.client_id ? String(dariAppointment.client_id) : '',
         kategori_event: '',
         id_pegawai: '',
         status_event: 'Upcoming',
@@ -26,6 +26,7 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
         jam_keluar_makanan: '',
         poster_event: null,
         kontrak_file: null,
+        dari_appointment: dariAppointment?.id ?? null,
     });
 
     // Deal Total = Jumlah Pax x Harga per Pax (otomatis, tetap bisa diedit manual)
@@ -97,6 +98,15 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
                 </div>
 
                 <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100">
+                    {dariAppointment && (
+                        <div className="flex items-start gap-3 p-4 mb-6 border border-[#FF2D55]/20 bg-[#FF2D55]/5 rounded-2xl">
+                            <span className="text-lg leading-none">📅</span>
+                            <p className="text-sm text-gray-700">
+                                Event ini dibuat dari appointment{dariAppointment.nama_client ? <> <span className="font-bold">{dariAppointment.nama_client}</span></> : ''}.
+                                Setelah tersimpan, event masuk pipeline (Lead) dan appointment akan otomatis ditandai <span className="font-bold">Selesai</span> begitu event mencapai tahap Deal.
+                            </p>
+                        </div>
+                    )}
                     {Object.keys(errors).length > 0 && (
                         <div className="flex items-start gap-3 p-4 mb-6 border border-red-200 bg-red-50 rounded-2xl">
                             <span className="text-lg leading-none">⚠️</span>
