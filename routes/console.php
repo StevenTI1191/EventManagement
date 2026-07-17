@@ -68,3 +68,29 @@ Schedule::call(function () {
         \Log::info("Appointment #{$appointment->id} dibatalkan otomatis (lewat 2 hari dari jadwal meeting).");
     }
 })->dailyAt('01:00')->name('appointment-auto-batal')->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Auto-Done Event — jalan setiap hari jam 02:00
+| Event yang sudah Upcoming (DP dibayar, terkonfirmasi) dan tanggal
+| berakhirnya sudah lewat otomatis ditandai selesai (Done). Tanggal akhir
+| memakai tgl_selesai_event; kalau kosong pakai tgl_mulai_event. Perbandingan
+| ketat "< hari ini" supaya event yang masih berlangsung di hari-H tidak
+| keburu ditandai selesai. Setelah Done, jadwalnya juga lepas dari deteksi
+| bentrok sehingga tanggal & area bisa dipakai lagi.
+|--------------------------------------------------------------------------
+*/
+Schedule::call(function () {
+    $hariIni = now()->toDateString();
+
+    $selesai = Event::where('status_event', Event::STATUS_UPCOMING)
+        ->whereRaw('COALESCE(tgl_selesai_event, tgl_mulai_event) < ?', [$hariIni])
+        ->get();
+
+    foreach ($selesai as $event) {
+        $event->update(['status_event' => Event::STATUS_DONE]);
+
+        $tglAkhir = $event->tgl_selesai_event ?? $event->tgl_mulai_event;
+        \Log::info("Event auto-Done: {$event->nama_event} (berakhir {$tglAkhir}).");
+    }
+})->dailyAt('02:00')->name('event-auto-done')->withoutOverlapping();
