@@ -5,7 +5,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useState, Fragment } from 'react';
 import { ChevronDown, ChevronUp, Plus, Trash2, X, Pencil } from 'lucide-react';
 
-export default function FinanceTransaksiIndex({ auth, events, filters = {} }) {
+export default function FinanceTransaksiIndex({ auth, events, filters = {}, counts = {} }) {
     const [expandedEvent, setExpandedEvent] = useState(null);
     const [expandedTab, setExpandedTab]     = useState('pembayaran');
     const [modalBayar, setModalBayar]       = useState(null);
@@ -16,6 +16,7 @@ export default function FinanceTransaksiIndex({ auth, events, filters = {} }) {
     const [deleting, setDeleting]           = useState(false);
 
     const [filterData, setFilterData] = useState({
+        tipe:   filters.tipe   || 'Eksternal',
         bulan:  filters.bulan  || '',
         tahun:  filters.tahun  || '',
         status: filters.status || '',
@@ -23,6 +24,15 @@ export default function FinanceTransaksiIndex({ auth, events, filters = {} }) {
         dir:    filters.dir    || 'desc',
         search: filters.search || '',
     });
+
+    const tipeAktif = filterData.tipe || 'Eksternal';
+
+    // Ganti tab internal/eksternal — reset filter lain agar tidak membingungkan.
+    const gantiTipe = (tipe) => {
+        const fresh = { tipe, bulan: '', tahun: '', status: '', sort: 'tanggal', dir: 'desc', search: '' };
+        setFilterData(fresh);
+        router.get(route('finance.transaksi.index'), fresh, { preserveState: true, replace: true });
+    };
 
     const bulanList = [
         { value: '1', label: 'Januari' }, { value: '2', label: 'Februari' },
@@ -41,9 +51,9 @@ export default function FinanceTransaksiIndex({ auth, events, filters = {} }) {
     };
 
     const resetFilter = () => {
-        const fresh = { bulan: '', tahun: '', status: '', sort: 'tanggal', dir: 'desc', search: '' };
+        const fresh = { tipe: tipeAktif, bulan: '', tahun: '', status: '', sort: 'tanggal', dir: 'desc', search: '' };
         setFilterData(fresh);
-        router.get(route('finance.transaksi.index'), {}, { preserveState: true, replace: true });
+        router.get(route('finance.transaksi.index'), { tipe: tipeAktif }, { preserveState: true, replace: true });
     };
 
     const toggleSort = (field) => {
@@ -375,9 +385,39 @@ export default function FinanceTransaksiIndex({ auth, events, filters = {} }) {
             )}
 
             {/* HEADER */}
-            <div className="mb-8">
+            <div className="mb-6">
                 <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">Transaksi</h1>
                 <p className="mt-1 font-medium text-gray-500">Selamat Datang, {auth.user.nama_pegawai}!</p>
+            </div>
+
+            {/* TAB: Event Klien (Eksternal) vs Event Internal */}
+            <div className="flex gap-2 mb-6">
+                {[
+                    { key: 'Eksternal', label: 'Event Klien',    ket: 'Transaksi dari deal klien' },
+                    { key: 'Internal',  label: 'Event Internal', ket: 'Event internal perusahaan' },
+                ].map(t => {
+                    const aktif = tipeAktif === t.key;
+                    return (
+                        <button
+                            key={t.key}
+                            type="button"
+                            onClick={() => gantiTipe(t.key)}
+                            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl border transition-colors ${
+                                aktif
+                                    ? 'bg-[#FF2D55] text-white border-[#FF2D55] shadow-sm'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                            }`}
+                            title={t.ket}
+                        >
+                            {t.label}
+                            <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                                aktif ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-500'
+                            }`}>
+                                {counts[t.key] ?? 0}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
 
             {/* FILTER BAR */}
