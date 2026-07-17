@@ -26,8 +26,8 @@ class InvoiceController extends Controller
 {
     use ChecksPegawaiRole;
 
-    /** Persentase uang muka. */
-    private const PERSEN_DP = 0.5;
+    /** Persentase uang muka (alias dari konstanta bersama di model Invoice). */
+    private const PERSEN_DP = Invoice::PERSEN_DP;
 
     public function index()
     {

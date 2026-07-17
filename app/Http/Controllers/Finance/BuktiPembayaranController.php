@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Mail\BuktiDiverifikasi;
 use App\Mail\BuktiDitolak;
 use App\Models\BuktiPembayaran;
+use App\Models\Event;
+use App\Models\Invoice;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -106,6 +108,10 @@ class BuktiPembayaranController extends Controller
                         'catatan_finance' => $request->catatan_finance,
                         'transaksi_id'    => $transaksi->id_transaksi,
                     ]);
+
+                    // Pembayaran klien terverifikasi → jika sudah menutup DP, event
+                    // Deal otomatis naik ke Upcoming (sejalan dengan Invoice::lunas).
+                    $this->promosikanJikaDpTerpenuhi($bukti->id_event);
                 } else {
                     $bukti->update([
                         'status'          => $statusBaru,
@@ -189,5 +195,40 @@ class BuktiPembayaranController extends Controller
         }
 
         return back()->with('success', 'Status bukti pembayaran berhasil diperbarui.');
+    }
+
+    /**
+     * Jika total pembayaran terverifikasi sebuah event eksternal sudah menutup
+     * uang muka (DP 50%) dan event masih berstatus Deal, promosikan ke Upcoming
+     * dan tandai invoice DP-nya lunas. Idempotent — aman dipanggil berkali-kali.
+     *
+     * Dipanggil di dalam DB::transaction verifikasi(), setelah Transaksi dibuat.
+     */
+    private function promosikanJikaDpTerpenuhi($id_event): void
+    {
+        $event = Event::find($id_event);
+
+        if (! $event
+            || $event->tipe_event !== Event::TIPE_EKSTERNAL
+            || $event->status_event !== Event::STATUS_DEAL) {
+            return;
+        }
+
+        $totalDeal = (float) ($event->deal_harga_event ?? 0);
+        if ($totalDeal <= 0) {
+            return;
+        }
+
+        $totalDibayar = (float) Transaksi::where('id_event', $id_event)->sum('nominal');
+
+        if ($totalDibayar >= Invoice::nominalDp($totalDeal)) {
+            $event->update(['status_event' => Event::STATUS_UPCOMING]);
+
+            // Selaraskan invoice DP (kalau sudah diterbitkan) menjadi lunas.
+            Invoice::where('id_event', $id_event)
+                ->where('tipe', Invoice::TIPE_DP)
+                ->where('status', '!=', Invoice::STATUS_LUNAS)
+                ->update(['status' => Invoice::STATUS_LUNAS]);
+        }
     }
 }

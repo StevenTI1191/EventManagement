@@ -38,6 +38,15 @@ class Invoice extends Model
     public const STATUS_BELUM    = 'Belum Dibayar';
     public const STATUS_LUNAS    = 'Lunas';
 
+    /** Persentase uang muka (DP) dari total deal. Dipakai lintas controller. */
+    public const PERSEN_DP = 0.5;
+
+    /** Nominal DP untuk sebuah total deal. */
+    public static function nominalDp(float $totalDeal): float
+    {
+        return round($totalDeal * self::PERSEN_DP);
+    }
+
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class, 'id_event', 'id_event');
