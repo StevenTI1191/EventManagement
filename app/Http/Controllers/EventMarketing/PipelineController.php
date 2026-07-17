@@ -36,4 +36,12 @@ class PipelineController extends Controller
 
         return $this->unduhPenawaran($id_event);
     }
+
+    /** Tandai prospek tidak jadi (batal) di tahap Lead/Negotiation. */
+    public function batal(Request $request, $id_event)
+    {
+        $this->checkEventMarketing();
+
+        return $this->handlePipelineBatal($request, $id_event);
+    }
 }

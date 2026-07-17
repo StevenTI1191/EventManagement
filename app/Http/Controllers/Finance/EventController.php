@@ -69,7 +69,7 @@ class EventController extends Controller
                 now()->subYear()->startOfYear()->toDateString(),
                 now()->addYear()->endOfYear()->toDateString(),
             ])
-            ->where('status_event', '!=', 'Planning')
+            ->whereNotIn('status_event', ['Planning', Event::STATUS_BATAL])
             ->orderBy('tgl_mulai_event')
             ->get()
             ->map(function ($event) {

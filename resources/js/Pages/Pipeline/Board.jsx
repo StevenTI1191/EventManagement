@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { GitBranch, Eye, Building2, CalendarDays, MapPin, User, GripVertical, FileDown, MessageCircle } from 'lucide-react';
+import { GitBranch, Eye, Building2, CalendarDays, MapPin, User, GripVertical, FileDown, MessageCircle, XCircle, X } from 'lucide-react';
 
 const KOLOM = [
     { key: 'Lead',        judul: 'Lead',        warna: 'bg-slate-500',   tint: 'bg-slate-50',   ket: 'Calon dari appointment / hasil approach' },
@@ -18,6 +18,24 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
     const [dragId, setDragId] = useState(null);
     const [hover, setHover] = useState(null);
     const [error, setError] = useState('');
+    const [batalKartu, setBatalKartu] = useState(null);
+    const [alasan, setAlasan] = useState('');
+    const [submitBatal, setSubmitBatal] = useState(false);
+
+    const kirimBatal = () => {
+        if (!batalKartu) return;
+        setSubmitBatal(true);
+        router.put(
+            route(routes.batal, batalKartu.id_event),
+            { alasan },
+            {
+                preserveScroll: true,
+                onSuccess: () => { setBatalKartu(null); setAlasan(''); },
+                onError: (err) => setError(err.alasan || 'Gagal menandai prospek tidak jadi.'),
+                onFinish: () => setSubmitBatal(false),
+            },
+        );
+    };
 
     const jatuhkan = (statusTujuan) => {
         setHover(null);
@@ -175,6 +193,17 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                                     )}
                                                 </div>
                                             )}
+
+                                            {/* Prospek yang belum Deal boleh ditandai tidak jadi */}
+                                            {canEdit && routes.batal && (k.key === 'Lead' || k.key === 'Negotiation') && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setError(''); setAlasan(''); setBatalKartu(e); }}
+                                                    className="flex items-center gap-1 mt-2.5 px-2 py-1 text-[10px] font-bold text-rose-600 transition-colors rounded-md bg-rose-50 hover:bg-rose-100"
+                                                >
+                                                    <XCircle size={11} /> Tidak jadi
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -183,6 +212,68 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                     );
                 })}
             </div>
+
+            {batalKartu && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                    onClick={() => !submitBatal && setBatalKartu(null)}
+                >
+                    <div
+                        className="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl"
+                        onClick={(ev) => ev.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <XCircle size={20} className="text-rose-600" />
+                                <h3 className="text-lg font-extrabold text-gray-900">Tandai tidak jadi</h3>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => !submitBatal && setBatalKartu(null)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <p className="mt-3 text-sm text-gray-600">
+                            Prospek <span className="font-bold text-gray-900">"{batalKartu.nama_event}"</span> akan
+                            dikeluarkan dari pipeline dan jadwalnya dilepas. Riwayatnya tetap tersimpan.
+                        </p>
+
+                        <label className="block mt-4 mb-1.5 text-xs font-bold tracking-wide text-gray-500 uppercase">
+                            Alasan <span className="font-medium normal-case text-gray-400">(opsional)</span>
+                        </label>
+                        <textarea
+                            value={alasan}
+                            onChange={(ev) => setAlasan(ev.target.value)}
+                            rows={3}
+                            maxLength={500}
+                            placeholder="Mis. klien memilih vendor lain, budget tidak cocok, tanggal bentrok…"
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none focus:ring-2 focus:ring-[#FF2D55]/20"
+                        />
+
+                        <div className="flex justify-end gap-2 mt-5">
+                            <button
+                                type="button"
+                                onClick={() => setBatalKartu(null)}
+                                disabled={submitBatal}
+                                className="px-4 py-2 text-sm font-bold text-gray-600 transition-colors bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-60"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={kirimBatal}
+                                disabled={submitBatal}
+                                className="px-4 py-2 text-sm font-bold text-white transition-colors bg-rose-600 rounded-xl hover:bg-rose-700 disabled:opacity-60"
+                            >
+                                {submitBatal ? 'Menyimpan…' : 'Ya, tidak jadi'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 }

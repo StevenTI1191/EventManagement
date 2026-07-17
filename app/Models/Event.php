@@ -53,6 +53,13 @@ class Event extends Model
     public const STATUS_UPCOMING    = 'Upcoming';
     public const STATUS_DONE        = 'Done';
 
+    /**
+     * Prospek yang tidak jadi. Event tetap disimpan (bukan dihapus) agar riwayat
+     * dan alasan gagalnya bisa ditelusuri, tetapi ia keluar dari papan pipeline,
+     * tidak muncul di kalender, dan tidak lagi mengunci jadwal.
+     */
+    public const STATUS_BATAL       = 'Batal';
+
     /** Kolom kanban pipeline (hanya untuk event eksternal). */
     public const PIPELINE_STATUSES = [self::STATUS_LEAD, self::STATUS_NEGOTIATION, self::STATUS_DEAL];
 
@@ -103,7 +110,9 @@ class Event extends Model
             ->where('area_event', $area)
             ->where('jam_mulai', '<', $jam_selesai)
             ->where('jam_selesai', '>', $jam_mulai)
-            ->where('status_event', '!=', 'Done'); // event yang sudah selesai tidak dihitung bentrok
+            // Event selesai tidak dihitung bentrok. Begitu pula prospek yang tidak
+            // jadi — jadwalnya harus dilepas agar tanggal & area bisa dipakai lagi.
+            ->whereNotIn('status_event', [self::STATUS_DONE, self::STATUS_BATAL]);
 
         if ($exclude_id) {
             $query->where('id_event', '!=', $exclude_id);

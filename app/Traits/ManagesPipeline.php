@@ -134,4 +134,35 @@ trait ManagesPipeline
 
         return back()->with('success', "Event \"{$event->nama_event}\" dipindahkan ke tahap {$baru}.");
     }
+
+    /**
+     * Tandai prospek "tidak jadi" (batal). Hanya berlaku selama event masih di
+     * tahap awal pipeline (Lead/Negotiation) — setelah Deal, event sudah
+     * ditangani Finance lewat invoice, sehingga pembatalannya bukan di papan ini.
+     *
+     * Event tidak dihapus: statusnya jadi Batal agar riwayat tetap ada, dan
+     * alasan gagalnya dicatat di note_event untuk bahan evaluasi prospek.
+     */
+    protected function handlePipelineBatal(Request $request, $id_event)
+    {
+        $data = $request->validate([
+            'alasan' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $event = Event::eksternal()
+            ->whereIn('status_event', [Event::STATUS_LEAD, Event::STATUS_NEGOTIATION])
+            ->findOrFail($id_event);
+
+        $jejak = 'Tidak jadi (' . now()->translatedFormat('d M Y') . ')'
+            . (filled($data['alasan'] ?? null) ? ': ' . trim($data['alasan']) : '.');
+
+        $event->update([
+            'status_event' => Event::STATUS_BATAL,
+            'note_event'   => $event->note_event
+                ? $event->note_event . ' | ' . $jejak
+                : $jejak,
+        ]);
+
+        return back()->with('success', "Prospek \"{$event->nama_event}\" ditandai tidak jadi.");
+    }
 }
