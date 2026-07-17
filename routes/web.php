@@ -181,6 +181,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_event')->name('manajemen.pipeline.penawaran');
         Route::put('/manajemen/pipeline/{id_event}/batal', [\App\Http\Controllers\Manajemen\PipelineController::class, 'batal'])
             ->whereNumber('id_event')->name('manajemen.pipeline.batal');
+        Route::get('/manajemen/task-divisi', [\App\Http\Controllers\Manajemen\TaskDivisiController::class, 'index'])
+            ->name('manajemen.task-divisi.index');
 
         // --- CLIENT ---
         Route::get('/manajemen/client', [ClientController::class, 'index'])
@@ -323,6 +325,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_event')->name('em.pipeline.penawaran');
         Route::put('/event-marketing/pipeline/{id_event}/batal', [\App\Http\Controllers\EventMarketing\PipelineController::class, 'batal'])
             ->whereNumber('id_event')->name('em.pipeline.batal');
+        Route::get('/event-marketing/task-divisi', [\App\Http\Controllers\EventMarketing\TaskDivisiController::class, 'index'])
+            ->name('em.task-divisi.index');
 
         Route::get('/event-marketing/transaksi', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'index'])
         ->name('em.transaksi.index');

@@ -10,6 +10,7 @@ import {
     ChevronLeft,
     ChevronRight,
     ClipboardList,
+    ListChecks,
     GitBranch,
     Users,
     StickyNote,
@@ -55,6 +56,12 @@ export default function EventMarketingLayout({ children }) {
             icon: ClipboardList,
             href: route('em.planning.index'),
             active: currentPath.includes('/event-marketing/planning'),
+        },
+        {
+            name: 'Task Divisi',
+            icon: ListChecks,
+            href: route('em.task-divisi.index'),
+            active: currentPath.includes('/event-marketing/task-divisi'),
         },
         {
             name: 'Client',

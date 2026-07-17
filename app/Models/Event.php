@@ -85,6 +85,22 @@ class Event extends Model
     /** Event yang sudah masuk ranah Finance — mulai dari Deal (proses DP 50%). */
     public function scopeUntukFinance($q) { return $q->whereIn('status_event', [self::STATUS_DEAL, self::STATUS_UPCOMING, self::STATUS_DONE]); }
 
+    /**
+     * Event yang butuh dikerjakan divisi (papan Task Divisi): event internal yang
+     * sedang direncanakan (Planning) dan event yang sudah berjalan (Upcoming, baik
+     * internal maupun eksternal setelah DP lunas). Deal/Done/pipeline dikecualikan.
+     */
+    public function scopeTaskDivisi($q)
+    {
+        return $q->where(function ($w) {
+            $w->where('status_event', self::STATUS_UPCOMING)
+              ->orWhere(function ($i) {
+                  $i->where('tipe_event', self::TIPE_INTERNAL)
+                    ->where('status_event', self::STATUS_PLANNING);
+              });
+        });
+    }
+
     public function invoices()
     {
         return $this->hasMany(Invoice::class, 'id_event', 'id_event');

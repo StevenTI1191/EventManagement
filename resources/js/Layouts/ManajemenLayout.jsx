@@ -11,6 +11,7 @@ import {
     Star,
     CalendarCheck,
     ClipboardList,
+    ListChecks,
     GitBranch,
     Menu,
     X,
@@ -61,6 +62,12 @@ export default function ManajemenLayout({ children }) {
             icon: ClipboardList,
             href: route('manajemen.planning.index'),
             active: currentPath.includes('/manajemen/planning'),
+        },
+        {
+            name: 'Task Divisi',
+            icon: ListChecks,
+            href: route('manajemen.task-divisi.index'),
+            active: currentPath.includes('/manajemen/task-divisi'),
         },
         {
             name: 'Client',
