@@ -2,7 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     ChevronDown, Phone, Mail, MapPin, Menu, X,
-    Home as HomeIcon, Calendar, LogOut, Star,
+    Home as HomeIcon, Calendar, LogOut,
     CheckCircle, Users, Award, Layers, ArrowRight,
     Clock, MapPinned
 } from 'lucide-react';
@@ -58,14 +58,6 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
         { icon: <Users size={20} />,       title: 'Tim Profesional',   desc: 'Didukung oleh tim berpengalaman di bidangnya.' },
         { icon: <Award size={20} />,       title: 'Terpercaya',        desc: 'Kepuasan client adalah prioritas utama kami.' },
         { icon: <Layers size={20} />,      title: 'One-Stop Solution', desc: 'Semua kebutuhan event Anda kami handle dari A–Z.' },
-    ];
-
-    const testimoni = [
-        { nama: 'Rina Susanti',    perusahaan: 'PT. Maju Bersama',    bintang: 5, pesan: 'Event corporate kami berlangsung sangat lancar. Tim Laksamana Muda benar-benar profesional dan responsif!', kategori: 'Corporate Event' },
-        { nama: 'Budi Hartono',    perusahaan: 'Keluarga Hartono',    bintang: 5, pesan: 'Wedding kami jadi momen yang tak terlupakan. Dekorasi, catering, semua sempurna. Sangat rekomendasikan!', kategori: 'Wedding' },
-        { nama: 'Dewi Anggraini',  perusahaan: 'Komunitas Musik RJ',  bintang: 5, pesan: 'Konser musik kami berjalan mulus. Sound system dan stage setup luar biasa. Penonton puas semua!', kategori: 'Music & Concert' },
-        { nama: 'Ahmad Fauzi',     perusahaan: 'CV. Fauzi Group',     bintang: 5, pesan: 'Pameran produk kami sukses besar. Banyak leads masuk. Tim EO-nya sangat membantu dan kreatif.', kategori: 'Exhibition' },
-        { nama: 'Sarah Ramadhani', perusahaan: 'Pribadi',             bintang: 5, pesan: 'Birthday party saya jadi luar biasa! Dekorasi sesuai tema, entertainmentnya seru, tamu semua happy!', kategori: 'Private Party' },
     ];
 
     const kategoriPortfolio = ['all', ...Array.from(new Set(portfolio.map(e => e.kategori_event).filter(Boolean)))];
@@ -497,40 +489,8 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                 </div>
             )}
 
-            {/* ── TESTIMONI ──────────────────────────────────────── */}
-            <section className="py-24 bg-paper bg-paper-glow">
-                <div className="px-6 mx-auto max-w-7xl">
-                    <div className="mb-16 text-center">
-                        <p className="mb-4 text-sm font-bold tracking-widest text-gold uppercase">Apa Kata Mereka</p>
-                        <h2 className="text-4xl font-black text-ink md:text-5xl">Testimoni <span className="text-gold">Client</span></h2>
-                    </div>
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {testimoni.map((t, i) => (
-                            <div key={i} className="p-6 bg-surface border border-line rounded-2xl hover:border-gold-2 transition-colors">
-                                {/* Bintang */}
-                                <div className="flex gap-1 mb-4">
-                                    {[...Array(t.bintang)].map((_, j) => (
-                                        <Star key={j} size={14} className="fill-yellow-400 text-gold-dim" />
-                                    ))}
-                                </div>
-                                <p className="mb-5 text-sm leading-relaxed text-muted italic">"{t.pesan}"</p>
-                                <div className="flex items-center gap-3 pt-4 border-t border-line">
-                                    <div className="flex items-center justify-center w-10 h-10 text-sm font-black text-white bg-gold rounded-full shrink-0">
-                                        {t.nama.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-ink">{t.nama}</p>
-                                        <p className="text-xs text-muted">{t.perusahaan} · {t.kategori}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             {/* ── KONTAK ─────────────────────────────────────────── */}
-            <section id="kontak" className="py-24 bg-surface">
+            <section id="kontak" className="py-24 bg-paper bg-paper-glow">
                 <div className="px-6 mx-auto max-w-7xl">
                     <div className="mb-16 text-center">
                         <p className="mb-4 text-sm font-bold tracking-widest text-gold uppercase">Hubungi Kami</p>
