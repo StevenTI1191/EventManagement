@@ -49,6 +49,7 @@ export default function EventDetail({ auth, event, tugas }) {
                     <thead>
                         <tr className="bg-[#FF2D55]">
                             <th className="w-12 px-6 py-3 text-xs font-bold text-left text-white uppercase">No</th>
+                            <th className="px-6 py-3 text-xs font-bold text-left text-white uppercase">Jobdesk</th>
                             <th className="px-6 py-3 text-xs font-bold text-left text-white uppercase">To Do List</th>
                             <th className="px-6 py-3 text-xs font-bold text-left text-white uppercase">Status</th>
                             <th className="px-6 py-3 text-xs font-bold text-left text-white uppercase">Start</th>
@@ -61,16 +62,25 @@ export default function EventDetail({ auth, event, tugas }) {
                         {tugas.length > 0 ? tugas.map((t, i) => (
                             <tr key={t.id_tugas} className="transition-colors hover:bg-gray-50/60">
                                 <td className="px-6 py-4 text-sm text-gray-500">{i + 1}</td>
+                                <td className="px-6 py-4 text-sm">
+                                    {t.kategori
+                                        ? <span className="inline-block px-2.5 py-1 text-xs font-bold text-gray-600 bg-gray-100 rounded-full">{t.kategori}</span>
+                                        : <span className="text-gray-300">—</span>}
+                                </td>
                                 <td className="px-6 py-4 text-sm font-medium text-gray-800">{t.nama_tugas}</td>
                                 <td className={`px-6 py-4 text-sm ${getStatusColor(t.status_tugas)}`}>{t.status_tugas}</td>
                                 <td className="px-6 py-4 text-sm text-gray-500">{formatDate(t.created_at)}</td>
                                 <td className="px-6 py-4 text-sm text-gray-500">{formatDate(t.deadline_tugas)}</td>
                                 <td className="px-6 py-4 text-sm text-gray-500">{t.status_tugas === 'Done' ? formatDate(t.updated_at) : '-'}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500">{event.pic ? event.pic.nama_pegawai.split(' ')[0] : '-'}</td>
+                                <td className="px-6 py-4 text-sm">
+                                    {t.pegawai
+                                        ? <span className="font-medium text-gray-700">{t.pegawai.nama_pegawai}</span>
+                                        : <span className="italic text-gray-400">Belum ditugaskan</span>}
+                                </td>
                             </tr>
                         )) : (
                             <tr>
-                                <td colSpan={7} className="px-6 py-16 text-center text-gray-400">
+                                <td colSpan={8} className="px-6 py-16 text-center text-gray-400">
                                     <p className="font-bold">Belum ada to-do list untuk event ini.</p>
                                 </td>
                             </tr>

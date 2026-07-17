@@ -118,9 +118,12 @@ class EvaluasiController extends Controller
 
         $event = Event::with(['pic', 'client'])->findOrFail($id);
 
-        $tugas = Tugas::with('event')
+        // Muat PIC asli tiap tugas (pegawai penanggung jawab jobdesk), bukan hanya
+        // PIC event. Urutkan per kategori lalu urutan agar jobdesk terkelompok jelas.
+        $tugas = Tugas::with(['event', 'pegawai:id_pegawai,nama_pegawai,posisi_pegawai'])
             ->where('id_event', $id)
-            ->latest()
+            ->orderBy('kategori')
+            ->orderBy('urutan')
             ->take(500)
             ->get();
 
