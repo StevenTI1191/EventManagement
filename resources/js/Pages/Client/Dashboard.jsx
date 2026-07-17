@@ -99,21 +99,21 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
     // Status untuk Appointment
     const getStatusColor = (status) => {
-        if (status === 'Dikonfirmasi') return 'bg-green-500/10 text-green-400 border-green-500/30';
-        if (status === 'Pending')      return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30';
-        if (status === 'Reschedule')   return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
-        if (status === 'Selesai')      return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
-        if (status === 'Dibatalkan')   return 'bg-red-500/10 text-red-400 border-red-500/30';
-        return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
+        if (status === 'Dikonfirmasi') return 'bg-ok-bg text-ok border-ok/30';
+        if (status === 'Pending')      return 'bg-gold-soft text-gold-dim border-gold-2';
+        if (status === 'Reschedule')   return 'bg-blue-500/10 text-info border-blue-500/30';
+        if (status === 'Selesai')      return 'bg-paper text-muted border-line';
+        if (status === 'Dibatalkan')   return 'bg-danger-bg text-danger border-danger/30';
+        return 'bg-paper text-muted border-line';
     };
 
     // Status untuk Event
     const getEventStatusColor = (status) => {
         if (status === 'Upcoming')    return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-        if (status === 'Done')      return 'bg-green-500/20 text-green-300 border-green-500/30';
-        if (status === 'Pending')   return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
-        if (status === 'Cancelled') return 'bg-red-500/20 text-red-300 border-red-500/30';
-        return 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+        if (status === 'Done')      return 'bg-green-500/20 text-green-300 border-ok/30';
+        if (status === 'Pending')   return 'bg-gold-soft text-gold border-gold-2';
+        if (status === 'Cancelled') return 'bg-red-500/20 text-red-300 border-danger/30';
+        return 'bg-paper text-muted border-line';
     };
 
     const getEventStatusLabel = (status) => {
@@ -130,9 +130,9 @@ export default function ClientDashboard({ appointments, events, totalAppointment
     };
 
     const getBuktiStatusColor = (status) => {
-        if (status === 'Diverifikasi') return 'bg-green-500/10 text-green-400 border-green-500/30';
-        if (status === 'Menunggu') return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30';
-        if (status === 'Ditolak') return 'bg-red-500/10 text-red-400 border-red-500/30';
+        if (status === 'Diverifikasi') return 'bg-ok-bg text-ok border-ok/30';
+        if (status === 'Menunggu') return 'bg-gold-soft text-gold-dim border-gold-2';
+        if (status === 'Ditolak') return 'bg-danger-bg text-danger border-danger/30';
         return '';
     };
 
@@ -228,22 +228,22 @@ export default function ClientDashboard({ appointments, events, totalAppointment
     return (
         <>
             <Head title="Dashboard - Laksamana Muda" />
-            <div className="min-h-screen bg-black">
+            <div className="min-h-screen bg-paper">
 
                 {/* Navbar */}
-                <nav className="sticky top-0 z-40 px-6 py-3 bg-gray-900/95 backdrop-blur-md border-b border-yellow-500/20">
+                <nav className="sticky top-0 z-40 px-6 py-3 bg-surface/95 backdrop-blur-md border-b border-line">
                     <div className="flex items-center justify-between max-w-6xl mx-auto">
 
                         {/* ── Left: Brand ── */}
                         <a href={BASE_URL} className="flex items-center gap-2.5 group">
-                            <div className="flex items-center justify-center w-8 h-8 overflow-hidden bg-black border border-yellow-500 rounded-full transition-transform group-hover:scale-110">
+                            <div className="flex items-center justify-center w-8 h-8 overflow-hidden bg-surface border border-gold rounded-full transition-transform group-hover:scale-110">
                                 <img src="/images/LaksamanaLogo.png" alt="Logo" className="object-contain w-6 h-6" />
                             </div>
                             <div>
-                                <span className="text-sm font-black text-white leading-none">
-                                    Laksamana <span className="text-yellow-500">Muda</span>
+                                <span className="text-sm font-black text-ink leading-none">
+                                    Laksamana <span className="text-gold">Muda</span>
                                 </span>
-                                <p className="text-[10px] text-gray-600 leading-none mt-0.5">Dashboard Client</p>
+                                <p className="text-[10px] text-muted-2 leading-none mt-0.5">Dashboard Client</p>
                             </div>
                         </a>
 
@@ -252,7 +252,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
                             {/* Home link */}
                             <a href={BASE_URL}
-                                className="hidden sm:flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all"
+                                className="hidden sm:flex items-center justify-center w-9 h-9 rounded-xl text-muted hover:text-gold-dim hover:bg-gold-soft transition-all"
                                 title="Beranda">
                                 <Home size={17} />
                             </a>
@@ -260,53 +260,53 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                             {/* Bell Notifikasi */}
                             <div className="relative" ref={notifRef}>
                                 <button onClick={() => { setShowNotif(p => !p); if (!showNotif) fetchNotif(); }}
-                                    className="relative flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all">
+                                    className="relative flex items-center justify-center w-9 h-9 rounded-xl text-muted hover:text-gold-dim hover:bg-gold-soft transition-all">
                                     <Bell size={17} />
                                     {unread > 0 && (
-                                        <span className="absolute flex items-center justify-center w-4 h-4 text-[9px] font-black text-black bg-yellow-400 rounded-full -top-0.5 -right-0.5">
+                                        <span className="absolute flex items-center justify-center w-4 h-4 text-[9px] font-black text-white bg-gold-2 rounded-full -top-0.5 -right-0.5">
                                             {unread > 9 ? '9+' : unread}
                                         </span>
                                     )}
                                 </button>
 
                                 {showNotif && (
-                                    <div className="absolute right-0 z-50 overflow-hidden bg-gray-900 border border-gray-700 shadow-2xl top-10 w-80 rounded-2xl">
-                                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+                                    <div className="absolute right-0 z-50 overflow-hidden bg-surface border border-line shadow-2xl top-10 w-80 rounded-2xl">
+                                        <div className="flex items-center justify-between px-4 py-3 border-b border-line">
                                             <div className="flex items-center gap-2">
-                                                <p className="text-sm font-extrabold text-white">Notifikasi</p>
+                                                <p className="text-sm font-extrabold text-ink">Notifikasi</p>
                                                 {unread > 0 && (
-                                                    <span className="px-1.5 py-0.5 text-[10px] font-black text-black bg-yellow-400 rounded-full">
+                                                    <span className="px-1.5 py-0.5 text-[10px] font-black text-white bg-gold-2 rounded-full">
                                                         {unread} baru
                                                     </span>
                                                 )}
                                             </div>
                                             {unread > 0 && (
                                                 <button onClick={markAllRead}
-                                                    className="flex items-center gap-1 text-[10px] font-bold text-gray-400 hover:text-yellow-400 transition-colors">
+                                                    className="flex items-center gap-1 text-[10px] font-bold text-muted hover:text-gold-dim transition-colors">
                                                     <CheckCheck size={11} /> Baca semua
                                                 </button>
                                             )}
                                         </div>
 
-                                        <div className="overflow-y-auto divide-y divide-gray-800 max-h-72">
+                                        <div className="overflow-y-auto divide-y divide-line max-h-72">
                                             {notifs.length > 0 ? notifs.map(n => (
                                                 <div key={n.id}
-                                                    className={`flex items-start gap-3 px-4 py-3 transition-colors ${!n.is_read ? 'bg-yellow-500/5' : 'hover:bg-gray-800/50'}`}>
-                                                    <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 mt-0.5 bg-gray-800 rounded-full text-base">
+                                                    className={`flex items-start gap-3 px-4 py-3 transition-colors ${!n.is_read ? 'bg-gold/5' : 'hover:bg-paper/50'}`}>
+                                                    <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 mt-0.5 bg-paper rounded-full text-base">
                                                         {getNotifIcon(n.tipe)}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-xs font-extrabold text-white">{n.judul}</p>
-                                                        <p className="mt-0.5 text-xs leading-relaxed text-gray-400 line-clamp-2">{n.pesan}</p>
-                                                        <p className="mt-1 text-[10px] text-gray-600">{formatNotifTime(n.created_at)}</p>
+                                                        <p className="text-xs font-extrabold text-ink">{n.judul}</p>
+                                                        <p className="mt-0.5 text-xs leading-relaxed text-muted line-clamp-2">{n.pesan}</p>
+                                                        <p className="mt-1 text-[10px] text-muted-2">{formatNotifTime(n.created_at)}</p>
                                                     </div>
                                                     <button onClick={() => removeNotif(n.id)}
-                                                        className="flex-shrink-0 mt-0.5 text-gray-600 hover:text-red-400 transition-colors">
+                                                        className="flex-shrink-0 mt-0.5 text-muted-2 hover:text-danger transition-colors">
                                                         <Trash2 size={12} />
                                                     </button>
                                                 </div>
                                             )) : (
-                                                <div className="py-10 text-center text-gray-600">
+                                                <div className="py-10 text-center text-muted-2">
                                                     <Bell size={28} className="mx-auto mb-2 opacity-30" />
                                                     <p className="text-sm font-bold">Tidak ada notifikasi</p>
                                                 </div>
@@ -322,47 +322,47 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                     onClick={() => setUserMenuOpen(p => !p)}
                                     className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl border transition-all ${
                                         userMenuOpen
-                                            ? 'bg-yellow-500/15 border-yellow-500/50'
-                                            : 'bg-gray-800 border-gray-700 hover:border-yellow-500/40 hover:bg-yellow-500/10'
+                                            ? 'bg-gold/15 border-gold-2'
+                                            : 'bg-paper border-line hover:border-gold/40 hover:bg-gold-soft'
                                     }`}>
-                                    <div className="flex items-center justify-center w-6 h-6 text-[11px] font-black text-black bg-yellow-500 rounded-lg flex-shrink-0">
+                                    <div className="flex items-center justify-center w-6 h-6 text-[11px] font-black text-white bg-gold rounded-lg flex-shrink-0">
                                         {user?.nama_client?.substring(0, 1).toUpperCase() ?? 'C'}
                                     </div>
-                                    <span className="hidden sm:block text-xs font-bold text-gray-200 max-w-[80px] truncate">
+                                    <span className="hidden sm:block text-xs font-bold text-ink max-w-[80px] truncate">
                                         {user?.nama_client?.split(' ')[0] ?? 'Client'}
                                     </span>
-                                    <ChevronDown size={13} className={`text-gray-500 transition-transform flex-shrink-0 ${userMenuOpen ? 'rotate-180' : ''}`} />
+                                    <ChevronDown size={13} className={`text-muted transition-transform flex-shrink-0 ${userMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
 
                                 {userMenuOpen && (
-                                    <div className="absolute right-0 top-11 w-52 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden z-50">
+                                    <div className="absolute right-0 top-11 w-52 bg-surface border border-line rounded-2xl shadow-2xl overflow-hidden z-50">
                                         {/* User info header */}
-                                        <div className="px-4 py-3 border-b border-gray-800">
-                                            <p className="text-xs font-bold text-white truncate">{user?.nama_client}</p>
-                                            <p className="text-[10px] text-gray-500 truncate mt-0.5">{user?.email_client}</p>
+                                        <div className="px-4 py-3 border-b border-line">
+                                            <p className="text-xs font-bold text-ink truncate">{user?.nama_client}</p>
+                                            <p className="text-[10px] text-muted truncate mt-0.5">{user?.email_client}</p>
                                         </div>
 
                                         {/* Menu items */}
                                         <div className="py-1">
                                             <Link href={route('client.profile')}
                                                 onClick={() => setUserMenuOpen(false)}
-                                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-yellow-500/10 hover:text-yellow-400 transition-colors">
+                                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted hover:bg-gold-soft hover:text-gold-dim transition-colors">
                                                 <User size={14} className="flex-shrink-0" />
                                                 Profil Saya
                                             </Link>
                                             <Link href={route('client.appointment.create')}
                                                 onClick={() => setUserMenuOpen(false)}
-                                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:bg-yellow-500/10 hover:text-yellow-400 transition-colors">
+                                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted hover:bg-gold-soft hover:text-gold-dim transition-colors">
                                                 <Calendar size={14} className="flex-shrink-0" />
                                                 Buat Appointment
                                             </Link>
                                         </div>
 
                                         {/* Logout */}
-                                        <div className="border-t border-gray-800 py-1">
+                                        <div className="border-t border-line py-1">
                                             <Link href={route('client.logout')} method="post" as="button"
                                                 onClick={() => setUserMenuOpen(false)}
-                                                className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
+                                                className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-danger hover:bg-danger-bg transition-colors">
                                                 <LogOut size={14} className="flex-shrink-0" />
                                                 Keluar
                                             </Link>
@@ -379,13 +379,13 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                     {/* Header */}
                     <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h1 className="text-2xl font-black text-white sm:text-3xl">
-                                Halo, <span className="text-yellow-500">{user?.nama_client?.split(' ')[0] || user?.email_client?.split('@')[0] || 'Client'}</span>! 👋
+                            <h1 className="text-2xl font-black text-ink sm:text-3xl">
+                                Halo, <span className="text-gold">{user?.nama_client?.split(' ')[0] || user?.email_client?.split('@')[0] || 'Client'}</span>! 👋
                             </h1>
-                            <p className="mt-1 text-sm text-gray-400">Kelola appointment dan event Anda di sini.</p>
+                            <p className="mt-1 text-sm text-muted">Kelola appointment dan event Anda di sini.</p>
                         </div>
                         <Link href={route('client.appointment.create')}
-                            className="self-start sm:self-auto flex items-center gap-2 px-5 py-2.5 bg-yellow-500 text-black font-black rounded-xl hover:bg-yellow-400 transition-all text-sm">
+                            className="self-start sm:self-auto flex items-center gap-2 px-5 py-2.5 bg-gold text-white font-black rounded-xl hover:bg-gold-2 transition-all text-sm">
                             <Plus size={16} strokeWidth={3} />
                             Buat Appointment
                         </Link>
@@ -393,7 +393,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
                     {/* Flash */}
                     {flash?.success && (
-                        <div className="p-4 mb-6 font-bold text-yellow-400 border bg-yellow-500/10 border-yellow-500/30 rounded-xl">
+                        <div className="p-4 mb-6 font-bold text-gold-dim border bg-gold-soft border-gold-2 rounded-xl">
                             ✅ {flash.success}
                         </div>
                     )}
@@ -405,7 +405,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                 <span className="text-xl flex-shrink-0">📋</span>
                                 <div className="min-w-0">
                                     <p className="text-sm font-bold text-blue-300">Lengkapi profil Anda</p>
-                                    <p className="text-xs text-blue-400/70 mt-0.5 leading-relaxed">
+                                    <p className="text-xs text-info/70 mt-0.5 leading-relaxed">
                                         {!user?.perusahaan_client && !user?.no_telp_client
                                             ? 'Nama perusahaan & nomor HP belum diisi — wajib untuk membuat appointment.'
                                             : !user?.perusahaan_client
@@ -446,7 +446,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                 value:   totalAppointments ?? appointments.length,
                                 label:   'Appointment',
                                 badge:   aptAktif > 0
-                                    ? { text: `${aptAktif} aktif`, cls: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' }
+                                    ? { text: `${aptAktif} aktif`, cls: 'bg-gold-soft text-gold-dim border-gold-2' }
                                     : null,
                                 sub:     aptAktif === 0 ? 'Tidak ada yang aktif' : null,
                             },
@@ -456,9 +456,9 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                 value:   totalEvents ?? evList.length,
                                 label:   'Event Saya',
                                 badge:   eventAktif > 0
-                                    ? { text: `${eventAktif} upcoming`, cls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' }
+                                    ? { text: `${eventAktif} upcoming`, cls: 'bg-blue-500/20 text-info border-blue-500/30' }
                                     : eventSelesai > 0
-                                        ? { text: `${eventSelesai} selesai`, cls: 'bg-green-500/20 text-green-400 border-green-500/30' }
+                                        ? { text: `${eventSelesai} selesai`, cls: 'bg-green-500/20 text-ok border-ok/30' }
                                         : null,
                                 sub:     evList.length === 0 ? 'Belum ada event' : null,
                             },
@@ -480,13 +480,13 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                     const isActive = activeTab === card.id;
                                     const accentMap = {
                                         orange: 'bg-orange-500/10 border-orange-500/40 hover:shadow-orange-500/10',
-                                        green:  'bg-green-500/10 border-green-500/30 hover:shadow-green-500/10',
+                                        green:  'bg-ok-bg border-ok/30 hover:shadow-green-500/10',
                                     };
                                     const valueCls = card.accent === 'orange'
                                         ? 'text-orange-400'
                                         : card.accent === 'green'
-                                            ? 'text-green-400'
-                                            : 'text-white';
+                                            ? 'text-ok'
+                                            : 'text-ink';
 
                                     return (
                                         <button key={i}
@@ -495,9 +495,9 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                 card.accent
                                                     ? accentMap[card.accent]
                                                     : isActive
-                                                        ? 'bg-yellow-500/15 border-yellow-500/50 shadow-lg shadow-yellow-500/10'
-                                                        : 'bg-gray-900 border-gray-800 hover:border-yellow-500/30'
-                                            } ${isActive ? 'ring-2 ring-yellow-500/40' : ''}`}>
+                                                        ? 'bg-gold/15 border-gold-2 shadow-lg shadow-yellow-500/10'
+                                                        : 'bg-surface border-line hover:border-gold-2'
+                                            } ${isActive ? 'ring-2 ring-gold/40' : ''}`}>
                                             <div className="flex items-start justify-between mb-3">
                                                 <span className="text-2xl leading-none">{card.icon}</span>
                                                 {card.badge && (
@@ -509,9 +509,9 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                             <p className={`text-3xl font-black leading-none mb-1 ${valueCls}`}>
                                                 {card.value}
                                             </p>
-                                            <p className="text-xs text-gray-500">
+                                            <p className="text-xs text-muted">
                                                 {card.label}
-                                                {card.sub && <span className="ml-1 text-gray-600">— {card.sub}</span>}
+                                                {card.sub && <span className="ml-1 text-muted-2">— {card.sub}</span>}
                                             </p>
                                         </button>
                                     );
@@ -527,17 +527,17 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                             {/* Search bar */}
                             {appointments.length > 0 && (
                                 <div className="relative">
-                                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeWidth="2" strokeLinecap="round"/></svg>
+                                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeWidth="2" strokeLinecap="round"/></svg>
                                     <input
                                         type="text"
                                         placeholder="Cari jenis event..."
                                         value={aptSearch}
                                         onChange={e => setAptSearch(e.target.value)}
-                                        className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-900 border border-gray-800 rounded-xl text-gray-300 placeholder-gray-600 focus:border-yellow-500/50 focus:outline-none transition-colors"
+                                        className="w-full pl-9 pr-4 py-2.5 text-sm bg-surface border border-line rounded-xl text-muted placeholder-muted-2 focus:border-gold-2 focus:outline-none transition-colors"
                                     />
                                     {aptSearch && (
                                         <button onClick={() => setAptSearch('')}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors">
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-2 hover:text-muted transition-colors">
                                             <X size={14} />
                                         </button>
                                     )}
@@ -562,12 +562,12 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                             <button key={p.key} onClick={() => setAptFilter(p.key)}
                                                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
                                                     aptFilter === p.key
-                                                        ? 'bg-yellow-500 text-black border-yellow-500'
-                                                        : 'bg-gray-900 text-gray-400 border-gray-800 hover:border-yellow-500/40 hover:text-yellow-400'
+                                                        ? 'bg-gold text-white border-gold'
+                                                        : 'bg-surface text-muted border-line hover:border-gold/40 hover:text-gold-dim'
                                                 }`}>
                                                 {p.label}
                                                 <span className={`px-1.5 py-0.5 text-[10px] rounded-full ${
-                                                    aptFilter === p.key ? 'bg-black/20 text-black' : 'bg-gray-700 text-gray-400'
+                                                    aptFilter === p.key ? 'bg-ink/40 text-white' : 'bg-gold-soft text-muted'
                                                 }`}>{p.count}</span>
                                             </button>
                                         ))}
@@ -584,11 +584,11 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                         a.jenis_event?.toLowerCase().includes(q) ||
                                         a.deskripsi_event?.toLowerCase().includes(q));
                                 return filtered.length > 0 ? filtered.map(apt => (
-                                <div key={apt.id} className="p-6 transition-colors bg-gray-900 border border-gray-800 rounded-2xl hover:border-yellow-500/30">
+                                <div key={apt.id} className="p-6 transition-colors bg-surface border border-line rounded-2xl hover:border-gold-2">
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-3 mb-3 flex-wrap">
-                                                <h3 className="text-base font-black text-white sm:text-lg">{apt.jenis_event}</h3>
+                                                <h3 className="text-base font-black text-ink sm:text-lg">{apt.jenis_event}</h3>
                                                 <span className={`flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full border ${getStatusColor(apt.status)}`}>
                                                     {getStatusIcon(apt.status)}
                                                     {getAptStatusLabel(apt.status)}
@@ -601,19 +601,19 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                         <div className="flex flex-col items-center gap-1">
                                                             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-all ${
                                                                 step.cancelled
-                                                                    ? 'bg-red-500/20 border-red-500 text-red-400'
+                                                                    ? 'bg-red-500/20 border-red-500 text-danger'
                                                                     : step.done
-                                                                        ? 'bg-yellow-500 border-yellow-500 text-black'
-                                                                        : 'bg-gray-800 border-gray-600 text-gray-600'
+                                                                        ? 'bg-gold border-gold text-white'
+                                                                        : 'bg-paper border-line text-muted-2'
                                                             }`}>
                                                                 {step.cancelled ? '✕' : step.done ? '✓' : i + 1}
                                                             </div>
                                                             <span className={`text-[9px] font-bold whitespace-nowrap ${
-                                                                step.cancelled ? 'text-red-400' : step.done ? 'text-yellow-400' : 'text-gray-600'
+                                                                step.cancelled ? 'text-danger' : step.done ? 'text-gold-dim' : 'text-muted-2'
                                                             }`}>{step.label}</span>
                                                         </div>
                                                         {i < arr.length - 1 && (
-                                                            <div className={`h-px w-8 mb-3.5 ${step.done && !arr[i+1]?.cancelled ? 'bg-yellow-500' : 'bg-gray-700'}`} />
+                                                            <div className={`h-px w-8 mb-3.5 ${step.done && !arr[i+1]?.cancelled ? 'bg-gold' : 'bg-gold-soft'}`} />
                                                         )}
                                                     </div>
                                                 ))}
@@ -621,61 +621,61 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
                                             <div className="grid grid-cols-2 gap-4 mb-3 md:grid-cols-4">
                                                 <div>
-                                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Tanggal Request</p>
-                                                    <p className="text-sm font-bold text-gray-300">{formatTanggal(apt.tgl_request)}</p>
+                                                    <p className="text-[10px] text-muted uppercase tracking-wider">Tanggal Request</p>
+                                                    <p className="text-sm font-bold text-muted">{formatTanggal(apt.tgl_request)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Jam</p>
-                                                    <p className="text-sm font-bold text-gray-300">{apt.jam_request || '-'}</p>
+                                                    <p className="text-[10px] text-muted uppercase tracking-wider">Jam</p>
+                                                    <p className="text-sm font-bold text-muted">{apt.jam_request || '-'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Jumlah Tamu</p>
-                                                    <p className="text-sm font-bold text-gray-300">{apt.jumlah_tamu ? apt.jumlah_tamu + ' orang' : '-'}</p>
+                                                    <p className="text-[10px] text-muted uppercase tracking-wider">Jumlah Tamu</p>
+                                                    <p className="text-sm font-bold text-muted">{apt.jumlah_tamu ? apt.jumlah_tamu + ' orang' : '-'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Est. Budget</p>
-                                                    <p className="text-sm font-bold text-gray-300">{formatBudget(apt.estimasi_budget)}</p>
+                                                    <p className="text-[10px] text-muted uppercase tracking-wider">Est. Budget</p>
+                                                    <p className="text-sm font-bold text-muted">{formatBudget(apt.estimasi_budget)}</p>
                                                 </div>
                                             </div>
-                                            {apt.deskripsi_event && <p className="mb-3 text-sm text-gray-500">{apt.deskripsi_event}</p>}
+                                            {apt.deskripsi_event && <p className="mb-3 text-sm text-muted">{apt.deskripsi_event}</p>}
                                             {apt.status === 'Dikonfirmasi' && apt.tgl_konfirmasi && (
-                                                <div className="p-3 border bg-green-500/10 border-green-500/20 rounded-xl">
-                                                    <p className="mb-1 text-xs font-bold text-green-400">✅ Meeting Dikonfirmasi</p>
+                                                <div className="p-3 border bg-ok-bg border-green-500/20 rounded-xl">
+                                                    <p className="mb-1 text-xs font-bold text-ok">✅ Meeting Dikonfirmasi</p>
                                                     <p className="text-sm text-green-300">{formatTanggal(apt.tgl_konfirmasi)} {apt.jam_konfirmasi && `pukul ${apt.jam_konfirmasi}`}</p>
                                                     {apt.pegawai && (
                                                         <p className="mt-1 text-xs text-green-500/70">
-                                                            👤 Dikonfirmasi oleh: <span className="font-bold text-green-400">{apt.pegawai.nama_pegawai}</span>
+                                                            👤 Dikonfirmasi oleh: <span className="font-bold text-ok">{apt.pegawai.nama_pegawai}</span>
                                                         </p>
                                                     )}
                                                 </div>
                                             )}
                                             {apt.status === 'Reschedule' && apt.tgl_konfirmasi && (
                                                 <div className="p-3 border bg-blue-500/10 border-blue-500/20 rounded-xl">
-                                                    <p className="mb-1 text-xs font-bold text-blue-400">🔄 Jadwal Diubah</p>
+                                                    <p className="mb-1 text-xs font-bold text-info">🔄 Jadwal Diubah</p>
                                                     <p className="text-sm text-blue-300">{formatTanggal(apt.tgl_konfirmasi)} {apt.jam_konfirmasi && `pukul ${apt.jam_konfirmasi}`}</p>
                                                     {apt.pegawai && (
                                                         <p className="mt-1 text-xs text-blue-500/70">
-                                                            👤 Di-reschedule oleh: <span className="font-bold text-blue-400">{apt.pegawai.nama_pegawai}</span>
+                                                            👤 Di-reschedule oleh: <span className="font-bold text-info">{apt.pegawai.nama_pegawai}</span>
                                                         </p>
                                                     )}
                                                 </div>
                                             )}
                                             {apt.catatan_em && (
-                                                <div className="p-3 mt-3 bg-gray-800 rounded-xl">
-                                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Catatan dari Tim</p>
-                                                    <p className="text-sm text-gray-300">{apt.catatan_em}</p>
+                                                <div className="p-3 mt-3 bg-paper rounded-xl">
+                                                    <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Catatan dari Tim</p>
+                                                    <p className="text-sm text-muted">{apt.catatan_em}</p>
                                                 </div>
                                             )}
                                             {apt.status === 'Dibatalkan' && apt.alasan_batal_client && (
-                                                <div className="p-3 mt-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                                                    <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider mb-1">Alasan Pembatalan (dari kamu)</p>
+                                                <div className="p-3 mt-3 bg-danger-bg border border-red-500/20 rounded-xl">
+                                                    <p className="text-[10px] text-danger font-bold uppercase tracking-wider mb-1">Alasan Pembatalan (dari kamu)</p>
                                                     <p className="text-sm text-red-300">{apt.alasan_batal_client}</p>
                                                 </div>
                                             )}
                                         </div>
                                         {['Pending', 'Dikonfirmasi', 'Reschedule'].includes(apt.status) && (
                                             <button onClick={() => handleCancel(apt)}
-                                                className="self-start sm:self-auto px-3 py-1.5 text-xs font-bold text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/10 transition-colors flex-shrink-0">
+                                                className="self-start sm:self-auto px-3 py-1.5 text-xs font-bold text-danger border border-danger/30 rounded-lg hover:bg-danger-bg transition-colors flex-shrink-0">
                                                 Batalkan
                                             </button>
                                         )}
@@ -683,10 +683,10 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                 </div>
                             )) : (
                                 // Filter ada hasil tapi kosong
-                                <div className="py-12 text-center border border-gray-800 border-dashed rounded-2xl">
-                                    <p className="font-bold text-gray-500">Tidak ada appointment berstatus <span className="text-yellow-500">"{aptFilter}"</span>.</p>
+                                <div className="py-12 text-center border border-line border-dashed rounded-2xl">
+                                    <p className="font-bold text-muted">Tidak ada appointment berstatus <span className="text-gold">"{aptFilter}"</span>.</p>
                                     <button onClick={() => setAptFilter('Semua')}
-                                        className="mt-3 text-xs font-bold text-yellow-400 hover:text-yellow-300 transition-colors">
+                                        className="mt-3 text-xs font-bold text-gold-dim hover:text-gold transition-colors">
                                         Lihat semua →
                                     </button>
                                 </div>
@@ -695,12 +695,12 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
                             {/* Empty state: belum ada appointment sama sekali */}
                             {appointments.length === 0 && (
-                                <div className="py-20 text-center border-2 border-gray-800 border-dashed rounded-3xl">
-                                    <Calendar size={48} className="mx-auto mb-4 text-gray-700" />
-                                    <p className="text-lg font-bold text-gray-500">Belum ada appointment</p>
-                                    <p className="mt-1 mb-6 text-sm text-gray-600">Buat appointment untuk diskusi event Anda bersama tim kami.</p>
+                                <div className="py-20 text-center border-2 border-line border-dashed rounded-3xl">
+                                    <Calendar size={48} className="mx-auto mb-4 text-muted-2" />
+                                    <p className="text-lg font-bold text-muted">Belum ada appointment</p>
+                                    <p className="mt-1 mb-6 text-sm text-muted-2">Buat appointment untuk diskusi event Anda bersama tim kami.</p>
                                     <Link href={route('client.appointment.create')}
-                                        className="inline-flex items-center gap-2 px-6 py-3 font-black text-black transition-all bg-yellow-500 rounded-xl hover:bg-yellow-400">
+                                        className="inline-flex items-center gap-2 px-6 py-3 font-black text-white transition-all bg-gold rounded-xl hover:bg-gold-2">
                                         <Plus size={18} />
                                         Buat Appointment Pertama
                                     </Link>
@@ -729,7 +729,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                         <Fragment key={event.id_event}>
 
                                         {/* ── Card ── */}
-                                        <div className="flex flex-col overflow-hidden bg-gray-900 border border-gray-800 rounded-2xl hover:border-yellow-500/30 transition-colors">
+                                        <div className="flex flex-col overflow-hidden bg-surface border border-line rounded-2xl hover:border-gold-2 transition-colors">
 
                                             {/* Poster */}
                                             <div className="relative h-36 overflow-hidden flex-shrink-0">
@@ -737,13 +737,13 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                     <img src={`/${event.poster_event}`} alt={event.nama_event}
                                                         className="object-cover w-full h-full" />
                                                 ) : (
-                                                    <div className="w-full h-full bg-gradient-to-br from-yellow-500/20 via-gray-800 to-gray-900 flex items-center justify-center">
-                                                        <span className="text-4xl font-black text-yellow-500/20 select-none">
+                                                    <div className="w-full h-full bg-gradient-to-br from-gold-soft via-paper to-surface flex items-center justify-center">
+                                                        <span className="text-4xl font-black text-gold/20 select-none">
                                                             {event.nama_event.substring(0, 2).toUpperCase()}
                                                         </span>
                                                     </div>
                                                 )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/20 to-transparent" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-surface/90 via-surface/20 to-transparent" />
 
                                                 {/* Status badge */}
                                                 <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
@@ -752,20 +752,20 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                     </span>
                                                     {event.status_event === 'Upcoming' && days !== null && days >= 0 && (
                                                         days === 0
-                                                            ? <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-orange-500/90 text-white backdrop-blur-sm animate-pulse">🎉 Hari ini!</span>
+                                                            ? <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-orange-500/90 text-ink backdrop-blur-sm animate-pulse">🎉 Hari ini!</span>
                                                             : days <= 7
-                                                                ? <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-black rounded-full bg-red-500/90 text-white backdrop-blur-sm"><Timer size={9} />{days}h lagi</span>
+                                                                ? <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-black rounded-full bg-red-500/90 text-ink backdrop-blur-sm"><Timer size={9} />{days}h lagi</span>
                                                                 : days <= 30
-                                                                    ? <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-yellow-500/90 text-black backdrop-blur-sm"><Timer size={9} />{days}h lagi</span>
+                                                                    ? <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-gold/90 text-white backdrop-blur-sm"><Timer size={9} />{days}h lagi</span>
                                                                     : null
                                                     )}
                                                 </div>
 
                                                 {/* Event name */}
                                                 <div className="absolute bottom-0 left-0 right-0 px-3 pb-2.5">
-                                                    <p className="text-sm font-black text-white leading-tight line-clamp-2 drop-shadow">{event.nama_event}</p>
+                                                    <p className="text-sm font-black text-ink leading-tight line-clamp-2 drop-shadow">{event.nama_event}</p>
                                                     {event.kategori_event && (
-                                                        <span className="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-yellow-500/90 text-black rounded-full">
+                                                        <span className="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-gold/90 text-white rounded-full">
                                                             {event.kategori_event}
                                                         </span>
                                                     )}
@@ -777,19 +777,19 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
                                                 {/* Quick info — 2 kolom, 2 baris */}
                                                 <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                                                    <div className="flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0">
+                                                    <div className="flex items-center gap-1.5 text-[11px] text-muted min-w-0">
                                                         <span className="flex-shrink-0">📅</span>
                                                         <span className="font-medium truncate">{formatTanggal(event.tgl_mulai_event)}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0">
+                                                    <div className="flex items-center gap-1.5 text-[11px] text-muted min-w-0">
                                                         <span className="flex-shrink-0">📍</span>
                                                         <span className="truncate">{event.area_event || '-'}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0">
+                                                    <div className="flex items-center gap-1.5 text-[11px] text-muted min-w-0">
                                                         <span className="flex-shrink-0">👥</span>
                                                         <span className="truncate">{event.jumlah_pax ? event.jumlah_pax + ' orang' : '-'}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0">
+                                                    <div className="flex items-center gap-1.5 text-[11px] text-muted min-w-0">
                                                         <span className="flex-shrink-0">👤</span>
                                                         <span className="truncate">{event.pic?.nama_pegawai || '-'}</span>
                                                     </div>
@@ -797,9 +797,9 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
                                                 {/* Note pill */}
                                                 {event.note_event && (
-                                                    <div className="flex items-start gap-1.5 px-2 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                                                    <div className="flex items-start gap-1.5 px-2 py-1.5 bg-gold-soft border border-line rounded-lg">
                                                         <span className="text-xs flex-shrink-0">📝</span>
-                                                        <p className="text-[10px] text-yellow-300/80 line-clamp-2 leading-relaxed">{event.note_event}</p>
+                                                        <p className="text-[10px] text-gold/80 line-clamp-2 leading-relaxed">{event.note_event}</p>
                                                     </div>
                                                 )}
 
@@ -807,14 +807,14 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                 {dealHarga > 0 && (
                                                     <div className="mt-auto pt-1">
                                                         <div className="flex items-center justify-between mb-1">
-                                                            <span className="text-[11px] font-black text-yellow-400">{formatBudget(dealHarga)}</span>
+                                                            <span className="text-[11px] font-black text-gold-dim">{formatBudget(dealHarga)}</span>
                                                             {lunas ? (
-                                                                <span className="px-1.5 py-0.5 text-[9px] font-black text-green-400 bg-green-500/10 border border-green-500/30 rounded-full">✓ Lunas</span>
+                                                                <span className="px-1.5 py-0.5 text-[9px] font-black text-ok bg-ok-bg border border-ok/30 rounded-full">✓ Lunas</span>
                                                             ) : (
-                                                                <span className="text-[9px] font-bold text-yellow-500">{pct}%</span>
+                                                                <span className="text-[9px] font-bold text-gold">{pct}%</span>
                                                             )}
                                                         </div>
-                                                        <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                                        <div className="w-full h-1.5 bg-paper rounded-full overflow-hidden">
                                                             <div className="h-1.5 rounded-full transition-all duration-700"
                                                                 style={{ width: `${pct}%`, background: lunas ? '#22c55e' : pct >= 50 ? '#eab308' : '#f97316' }} />
                                                         </div>
@@ -829,15 +829,15 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                 {/* Buttons: Bukti */}
                                                 <div className="flex gap-1.5 mt-auto pt-1">
                                                     <button onClick={() => openUpload(event)}
-                                                        className="flex-1 flex items-center justify-center gap-1 py-2 bg-yellow-500/10 text-yellow-400 text-[11px] font-bold rounded-xl hover:bg-yellow-500/20 transition-colors border border-yellow-500/30">
+                                                        className="flex-1 flex items-center justify-center gap-1 py-2 bg-gold-soft text-gold-dim text-[11px] font-bold rounded-xl hover:bg-gold-soft transition-colors border border-gold-2">
                                                         <Upload size={12} />
                                                         Bukti
                                                     </button>
                                                     <button onClick={() => setExpandedEvent(isExpanded ? null : event.id_event)}
                                                         className={`flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-bold rounded-xl transition-colors border ${
                                                             isExpanded
-                                                                ? 'bg-gray-700 text-gray-200 border-gray-600'
-                                                                : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
+                                                                ? 'bg-gold-soft text-ink border-line'
+                                                                : 'bg-paper text-muted border-line hover:bg-gold-soft'
                                                         }`}>
                                                         {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                                                         {event.bukti_pembayaran?.length ?? 0} Bukti
@@ -848,7 +848,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                 {event.kontrak_file && (
                                                     <div className="flex gap-1.5 mt-1.5">
                                                         <a href={`/kontrak/${event.kontrak_file}`}
-                                                            className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-500/10 text-blue-400 text-[11px] font-bold rounded-xl hover:bg-blue-500/20 transition-colors border border-blue-500/30">
+                                                            className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-500/10 text-info text-[11px] font-bold rounded-xl hover:bg-blue-500/20 transition-colors border border-blue-500/30">
                                                             <FileText size={12} />
                                                             Kontrak
                                                         </a>
@@ -859,14 +859,14 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
                                         {/* ── Expanded: Riwayat Bukti (col-span-full) ── */}
                                         {isExpanded && (
-                                            <div className="col-span-full bg-gray-900 border border-gray-700 rounded-2xl p-5">
+                                            <div className="col-span-full bg-surface border border-line rounded-2xl p-5">
                                                 <div className="flex items-center justify-between mb-4">
-                                                    <h4 className="text-sm font-extrabold text-white">
+                                                    <h4 className="text-sm font-extrabold text-ink">
                                                         Riwayat Bukti Pembayaran
-                                                        <span className="ml-2 text-xs font-normal text-gray-400">— {event.nama_event}</span>
+                                                        <span className="ml-2 text-xs font-normal text-muted">— {event.nama_event}</span>
                                                     </h4>
                                                     <button onClick={() => setExpandedEvent(null)}
-                                                        className="p-1 text-gray-500 hover:text-gray-300 transition-colors">
+                                                        className="p-1 text-muted hover:text-muted transition-colors">
                                                         <X size={16} />
                                                     </button>
                                                 </div>
@@ -875,27 +875,27 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
                                                     {dealHarga > 0 && (
                                                         <>
-                                                            <div className="p-3 bg-gray-800 rounded-xl">
-                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Total Deal</p>
-                                                                <p className="text-sm font-black text-yellow-400">{formatBudget(dealHarga)}</p>
+                                                            <div className="p-3 bg-paper rounded-xl">
+                                                                <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Total Deal</p>
+                                                                <p className="text-sm font-black text-gold-dim">{formatBudget(dealHarga)}</p>
                                                             </div>
-                                                            <div className="p-3 bg-gray-800 rounded-xl">
-                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Terbayar</p>
-                                                                <p className="text-sm font-black text-green-400">{formatBudget(dibayar)}</p>
+                                                            <div className="p-3 bg-paper rounded-xl">
+                                                                <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Terbayar</p>
+                                                                <p className="text-sm font-black text-ok">{formatBudget(dibayar)}</p>
                                                             </div>
-                                                            <div className="p-3 bg-gray-800 rounded-xl">
-                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Sisa</p>
-                                                                <p className={`text-sm font-black ${lunas ? 'text-green-400' : 'text-orange-400'}`}>
+                                                            <div className="p-3 bg-paper rounded-xl">
+                                                                <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Sisa</p>
+                                                                <p className={`text-sm font-black ${lunas ? 'text-ok' : 'text-orange-400'}`}>
                                                                     {lunas ? '✓ Lunas' : formatBudget(sisa)}
                                                                 </p>
                                                             </div>
-                                                            <div className="p-3 bg-gray-800 rounded-xl">
-                                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Progress</p>
-                                                                <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                                                            <div className="p-3 bg-paper rounded-xl">
+                                                                <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Progress</p>
+                                                                <div className="w-full h-1.5 bg-gold-soft rounded-full overflow-hidden">
                                                                     <div className="h-1.5 rounded-full"
                                                                         style={{ width: `${pct}%`, background: lunas ? '#22c55e' : pct >= 50 ? '#eab308' : '#f97316' }} />
                                                                 </div>
-                                                                <p className="text-[10px] font-black text-yellow-400 mt-0.5">{pct}%</p>
+                                                                <p className="text-[10px] font-black text-gold-dim mt-0.5">{pct}%</p>
                                                             </div>
                                                         </>
                                                     )}
@@ -905,19 +905,19 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                 {event.bukti_pembayaran && event.bukti_pembayaran.length > 0 ? (
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                                         {event.bukti_pembayaran.map(bukti => (
-                                                            <div key={bukti.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-xl">
+                                                            <div key={bukti.id} className="flex items-center justify-between p-3 bg-paper rounded-xl">
                                                                 <div className="flex items-center gap-2 min-w-0">
-                                                                    <div className="flex items-center justify-center w-8 h-8 bg-gray-700 rounded-lg flex-shrink-0">
-                                                                        <FileText size={14} className="text-gray-400" />
+                                                                    <div className="flex items-center justify-center w-8 h-8 bg-gold-soft rounded-lg flex-shrink-0">
+                                                                        <FileText size={14} className="text-muted" />
                                                                     </div>
                                                                     <div className="min-w-0">
-                                                                        <p className="text-xs font-bold text-white truncate">
+                                                                        <p className="text-xs font-bold text-ink truncate">
                                                                             {bukti.nominal ? formatBudget(bukti.nominal) : 'Bukti Pembayaran'}
                                                                         </p>
-                                                                        <p className="text-[10px] text-gray-500">
+                                                                        <p className="text-[10px] text-muted">
                                                                             {new Date(bukti.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                                         </p>
-                                                                        {bukti.keterangan && <p className="text-[10px] text-gray-400 truncate">{bukti.keterangan}</p>}
+                                                                        {bukti.keterangan && <p className="text-[10px] text-muted truncate">{bukti.keterangan}</p>}
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
@@ -925,12 +925,12 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                                         {bukti.status}
                                                                     </span>
                                                                     <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer"
-                                                                        className="p-1 text-gray-400 hover:text-yellow-400 transition-colors">
+                                                                        className="p-1 text-muted hover:text-gold-dim transition-colors">
                                                                         <Eye size={13} />
                                                                     </a>
                                                                     {bukti.status === 'Menunggu' && (
                                                                         <button onClick={() => handleDeleteBukti(bukti.id)}
-                                                                            className="p-1 text-gray-400 hover:text-red-400 transition-colors">
+                                                                            className="p-1 text-muted hover:text-danger transition-colors">
                                                                             <X size={13} />
                                                                         </button>
                                                                     )}
@@ -939,7 +939,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                         ))}
                                                     </div>
                                                 ) : (
-                                                    <div className="py-8 text-center text-gray-600">
+                                                    <div className="py-8 text-center text-muted-2">
                                                         <FileText size={28} className="mx-auto mb-2 opacity-30" />
                                                         <p className="text-sm font-bold">Belum ada bukti pembayaran</p>
                                                     </div>
@@ -947,14 +947,14 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
                                                 {/* Ditolak warning */}
                                                 {event.bukti_pembayaran?.some(b => b.status === 'Ditolak') && (
-                                                    <div className="p-3 mt-3 border bg-red-500/10 border-red-500/20 rounded-xl">
-                                                        <p className="mb-1 text-xs font-bold text-red-400">⚠️ Ada Bukti Ditolak</p>
+                                                    <div className="p-3 mt-3 border bg-danger-bg border-red-500/20 rounded-xl">
+                                                        <p className="mb-1 text-xs font-bold text-danger">⚠️ Ada Bukti Ditolak</p>
                                                         {event.bukti_pembayaran.filter(b => b.status === 'Ditolak').map(b => (
                                                             <div key={b.id}>
                                                                 {b.catatan_finance && <p className="text-xs text-red-300 mb-1">Alasan: {b.catatan_finance}</p>}
                                                             </div>
                                                         ))}
-                                                        <p className="text-xs text-yellow-400 mt-1">💡 Hapus bukti yang ditolak lalu upload ulang.</p>
+                                                        <p className="text-xs text-gold-dim mt-1">💡 Hapus bukti yang ditolak lalu upload ulang.</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -965,10 +965,10 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                     })}
                                 </div>
                             ) : (
-                                <div className="py-20 text-center border-2 border-gray-800 border-dashed rounded-3xl">
-                                    <Calendar size={48} className="mx-auto mb-4 text-gray-700" />
-                                    <p className="text-lg font-bold text-gray-500">Belum ada event</p>
-                                    <p className="mt-1 text-sm text-gray-600">Event yang sudah di-deal akan muncul di sini.</p>
+                                <div className="py-20 text-center border-2 border-line border-dashed rounded-3xl">
+                                    <Calendar size={48} className="mx-auto mb-4 text-muted-2" />
+                                    <p className="text-lg font-bold text-muted">Belum ada event</p>
+                                    <p className="mt-1 text-sm text-muted-2">Event yang sudah di-deal akan muncul di sini.</p>
                                 </div>
                             )}
                         </div>
@@ -986,10 +986,10 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
                         if (payEvents.length === 0) {
                             return (
-                                <div className="py-20 text-center border-2 border-gray-800 border-dashed rounded-3xl">
+                                <div className="py-20 text-center border-2 border-line border-dashed rounded-3xl">
                                     <span className="block mb-4 text-5xl">💳</span>
-                                    <p className="text-lg font-bold text-gray-500">Belum ada tagihan</p>
-                                    <p className="mt-1 text-sm text-gray-600">Tagihan muncul setelah event Anda memiliki harga deal.</p>
+                                    <p className="text-lg font-bold text-muted">Belum ada tagihan</p>
+                                    <p className="mt-1 text-sm text-muted-2">Tagihan muncul setelah event Anda memiliki harga deal.</p>
                                 </div>
                             );
                         }
@@ -998,16 +998,16 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                             <div className="space-y-4">
                                 {/* Ringkasan keuangan */}
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                                    <div className="p-5 bg-gray-900 border border-gray-800 rounded-2xl">
-                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Total Tagihan</p>
-                                        <p className="text-xl font-black text-yellow-400">{formatBudget(totalTagihan)}</p>
+                                    <div className="p-5 bg-surface border border-line rounded-2xl">
+                                        <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Total Tagihan</p>
+                                        <p className="text-xl font-black text-gold-dim">{formatBudget(totalTagihan)}</p>
                                     </div>
                                     <div className="p-5 bg-green-500/5 border border-green-500/20 rounded-2xl">
-                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Total Terbayar</p>
-                                        <p className="text-xl font-black text-green-400">{formatBudget(totalTerbayar)}</p>
+                                        <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Total Terbayar</p>
+                                        <p className="text-xl font-black text-ok">{formatBudget(totalTerbayar)}</p>
                                     </div>
                                     <div className="p-5 bg-orange-500/5 border border-orange-500/20 rounded-2xl">
-                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Sisa</p>
+                                        <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Sisa</p>
                                         <p className="text-xl font-black text-orange-400">{totalSisa === 0 ? '✓ Lunas' : formatBudget(totalSisa)}</p>
                                     </div>
                                 </div>
@@ -1023,75 +1023,75 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                     const buktiList  = event.bukti_pembayaran || [];
 
                                     return (
-                                    <div key={event.id_event} className="p-5 bg-gray-900 border border-gray-800 rounded-2xl">
+                                    <div key={event.id_event} className="p-5 bg-surface border border-line rounded-2xl">
                                         <div className="flex items-start justify-between gap-3 mb-3">
                                             <div className="min-w-0">
-                                                <h3 className="text-base font-black text-white truncate">{event.nama_event}</h3>
-                                                <p className="text-xs text-gray-500 mt-0.5">{formatTanggal(event.tgl_mulai_event)}</p>
+                                                <h3 className="text-base font-black text-ink truncate">{event.nama_event}</h3>
+                                                <p className="text-xs text-muted mt-0.5">{formatTanggal(event.tgl_mulai_event)}</p>
                                             </div>
                                             {lunas
-                                                ? <span className="px-2 py-1 text-[10px] font-black text-green-400 bg-green-500/10 border border-green-500/30 rounded-full flex-shrink-0">✓ LUNAS</span>
+                                                ? <span className="px-2 py-1 text-[10px] font-black text-ok bg-ok-bg border border-ok/30 rounded-full flex-shrink-0">✓ LUNAS</span>
                                                 : <span className="px-2 py-1 text-[10px] font-black text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-full flex-shrink-0">{pct}%</span>
                                             }
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-2 mb-3">
                                             <div>
-                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Total</p>
-                                                <p className="text-sm font-bold text-yellow-400">{formatBudget(dealHarga)}</p>
+                                                <p className="text-[10px] text-muted uppercase tracking-wider">Total</p>
+                                                <p className="text-sm font-bold text-gold-dim">{formatBudget(dealHarga)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Terbayar</p>
-                                                <p className="text-sm font-bold text-green-400">{formatBudget(dibayar)}</p>
+                                                <p className="text-[10px] text-muted uppercase tracking-wider">Terbayar</p>
+                                                <p className="text-sm font-bold text-ok">{formatBudget(dibayar)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Sisa</p>
-                                                <p className={`text-sm font-bold ${lunas ? 'text-green-400' : 'text-orange-400'}`}>{lunas ? '✓' : formatBudget(sisa)}</p>
+                                                <p className="text-[10px] text-muted uppercase tracking-wider">Sisa</p>
+                                                <p className={`text-sm font-bold ${lunas ? 'text-ok' : 'text-orange-400'}`}>{lunas ? '✓' : formatBudget(sisa)}</p>
                                             </div>
                                         </div>
 
-                                        <div className="w-full h-2 mb-3 overflow-hidden bg-gray-800 rounded-full">
+                                        <div className="w-full h-2 mb-3 overflow-hidden bg-paper rounded-full">
                                             <div className="h-2 rounded-full transition-all duration-700"
                                                 style={{ width: `${pct}%`, background: lunas ? '#22c55e' : pct >= 50 ? '#eab308' : '#f97316' }} />
                                         </div>
 
                                         <div className="flex gap-2">
                                             <button onClick={() => openUpload(event)}
-                                                className="flex items-center justify-center gap-1 px-4 py-2 text-xs font-bold text-yellow-400 transition-colors border bg-yellow-500/10 rounded-xl hover:bg-yellow-500/20 border-yellow-500/30">
+                                                className="flex items-center justify-center gap-1 px-4 py-2 text-xs font-bold text-gold-dim transition-colors border bg-gold-soft rounded-xl hover:bg-gold-soft border-gold-2">
                                                 <Upload size={13} /> Upload Bukti
                                             </button>
                                             <button onClick={() => setExpandedEvent(isExpanded ? null : event.id_event)}
-                                                className="flex items-center justify-center gap-1 px-4 py-2 text-xs font-bold text-gray-300 transition-colors bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700">
+                                                className="flex items-center justify-center gap-1 px-4 py-2 text-xs font-bold text-muted transition-colors bg-paper border border-line rounded-xl hover:bg-gold-soft">
                                                 {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                                                 {buktiList.length} Bukti
                                             </button>
                                         </div>
 
                                         {isExpanded && (
-                                            <div className="pt-3 mt-3 border-t border-gray-800">
+                                            <div className="pt-3 mt-3 border-t border-line">
                                                 {buktiList.length > 0 ? (
                                                     <div className="space-y-2">
                                                         {buktiList.map(bukti => (
-                                                            <div key={bukti.id} className="flex items-center justify-between p-2.5 bg-gray-800 rounded-xl">
+                                                            <div key={bukti.id} className="flex items-center justify-between p-2.5 bg-paper rounded-xl">
                                                                 <div className="flex items-center gap-2 min-w-0">
-                                                                    <FileText size={14} className="flex-shrink-0 text-gray-400" />
+                                                                    <FileText size={14} className="flex-shrink-0 text-muted" />
                                                                     <div className="min-w-0">
-                                                                        <p className="text-xs font-bold text-white truncate">{bukti.nominal ? formatBudget(bukti.nominal) : 'Bukti'}</p>
-                                                                        <p className="text-[10px] text-gray-500">{new Date(bukti.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                                                        <p className="text-xs font-bold text-ink truncate">{bukti.nominal ? formatBudget(bukti.nominal) : 'Bukti'}</p>
+                                                                        <p className="text-[10px] text-muted">{new Date(bukti.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center gap-1.5 flex-shrink-0">
                                                                     <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full border ${getBuktiStatusColor(bukti.status)}`}>{bukti.status}</span>
-                                                                    <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer" className="p-1 text-gray-400 transition-colors hover:text-yellow-400"><Eye size={13} /></a>
+                                                                    <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer" className="p-1 text-muted transition-colors hover:text-gold-dim"><Eye size={13} /></a>
                                                                     {bukti.status === 'Menunggu' && (
-                                                                        <button onClick={() => handleDeleteBukti(bukti.id)} className="p-1 text-gray-400 transition-colors hover:text-red-400"><X size={13} /></button>
+                                                                        <button onClick={() => handleDeleteBukti(bukti.id)} className="p-1 text-muted transition-colors hover:text-danger"><X size={13} /></button>
                                                                     )}
                                                                 </div>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 ) : (
-                                                    <p className="py-4 text-sm text-center text-gray-600">Belum ada bukti pembayaran</p>
+                                                    <p className="py-4 text-sm text-center text-muted-2">Belum ada bukti pembayaran</p>
                                                 )}
                                             </div>
                                         )}
@@ -1106,53 +1106,53 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
             {/* Modal Cancel Appointment */}
             {cancelModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-md p-6 bg-gray-900 border border-gray-700 shadow-xl rounded-2xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm">
+                    <div className="w-full max-w-md p-6 bg-surface border border-line shadow-xl rounded-2xl">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h2 className="text-lg font-extrabold text-white">Batalkan Appointment</h2>
-                                <p className="text-xs text-gray-400 mt-0.5">{cancelModal.jenis_event}</p>
+                                <h2 className="text-lg font-extrabold text-ink">Batalkan Appointment</h2>
+                                <p className="text-xs text-muted mt-0.5">{cancelModal.jenis_event}</p>
                             </div>
                             <button onClick={() => setCancelModal(null)}
-                                className="p-1.5 text-gray-400 hover:bg-gray-800 rounded-lg">
+                                className="p-1.5 text-muted hover:bg-paper rounded-lg">
                                 <X size={18} />
                             </button>
                         </div>
 
-                        <div className="p-3 mb-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                            <p className="text-xs text-red-400 font-bold">⚠️ Perhatian</p>
+                        <div className="p-3 mb-4 bg-danger-bg border border-red-500/20 rounded-xl">
+                            <p className="text-xs text-danger font-bold">⚠️ Perhatian</p>
                             <p className="text-xs text-red-300 mt-1">Appointment yang dibatalkan tidak dapat dikembalikan. Tim kami akan menerima notifikasi pembatalan ini.</p>
                         </div>
 
                         <div className="mb-4">
-                            <label className="block mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">
-                                Alasan Pembatalan <span className="text-red-400 normal-case font-normal">* wajib isi</span>
+                            <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">
+                                Alasan Pembatalan <span className="text-danger normal-case font-normal">* wajib isi</span>
                             </label>
                             <textarea
                                 rows={3}
                                 value={alasanBatal}
                                 onChange={e => setAlasanBatal(e.target.value)}
                                 placeholder="Jelaskan alasan pembatalan (min. 5 karakter)..."
-                                className="w-full px-4 py-3 text-sm text-white placeholder-gray-600 bg-black border border-gray-700 resize-none rounded-xl focus:border-red-500 focus:outline-none"
+                                className="w-full px-4 py-3 text-sm text-ink placeholder-muted-2 bg-surface border border-line resize-none rounded-xl focus:border-red-500 focus:outline-none"
                             />
                             <div className="flex items-center justify-between mt-1">
                                 {alasanBatal.trim().length > 0 && alasanBatal.trim().length < 5
-                                    ? <p className="text-[10px] text-red-400">⚠ Minimal 5 karakter</p>
+                                    ? <p className="text-[10px] text-danger">⚠ Minimal 5 karakter</p>
                                     : <span />
                                 }
-                                <p className="text-[10px] text-gray-600">{alasanBatal.length}/500</p>
+                                <p className="text-[10px] text-muted-2">{alasanBatal.length}/500</p>
                             </div>
                         </div>
 
                         <div className="flex gap-3">
                             <button onClick={() => setCancelModal(null)}
-                                className="flex-1 py-2.5 border border-gray-700 text-gray-400 font-bold rounded-xl hover:bg-gray-800 transition-colors text-sm">
+                                className="flex-1 py-2.5 border border-line text-muted font-bold rounded-xl hover:bg-paper transition-colors text-sm">
                                 Kembali
                             </button>
                             <button
                                 onClick={submitCancel}
                                 disabled={cancelLoading || !alasanBatal.trim() || alasanBatal.trim().length < 5}
-                                className="flex-1 py-2.5 bg-red-500 text-white font-black rounded-xl hover:bg-red-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                className="flex-1 py-2.5 bg-red-500 text-ink font-black rounded-xl hover:bg-red-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 {cancelLoading ? 'Memproses...' : 'Ya, Batalkan'}
                             </button>
                         </div>
@@ -1162,49 +1162,49 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
             {/* Modal Upload Bukti */}
             {uploadModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-md p-6 bg-gray-900 border border-gray-700 shadow-xl rounded-2xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm">
+                    <div className="w-full max-w-md p-6 bg-surface border border-line shadow-xl rounded-2xl">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h2 className="text-lg font-extrabold text-white">Upload Bukti Pembayaran</h2>
-                                <p className="text-xs text-gray-400 mt-0.5">{uploadModal.nama_event}</p>
+                                <h2 className="text-lg font-extrabold text-ink">Upload Bukti Pembayaran</h2>
+                                <p className="text-xs text-muted mt-0.5">{uploadModal.nama_event}</p>
                             </div>
                             <button onClick={() => { setUploadModal(null); reset(); }}
-                                className="p-1.5 text-gray-400 hover:bg-gray-800 rounded-lg">
+                                className="p-1.5 text-muted hover:bg-paper rounded-lg">
                                 <X size={18} />
                             </button>
                         </div>
                         <form onSubmit={handleUpload} className="space-y-4">
                             <div>
-                                <label className="block mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">
+                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">
                                     File Bukti * (JPG, PNG, PDF — max 5MB)
                                 </label>
                                 <input type="file" accept=".jpg,.jpeg,.png,.pdf"
                                     onChange={e => setData('file_bukti', e.target.files[0])}
-                                    className="w-full px-4 py-3 text-sm text-white bg-black border border-gray-700 rounded-xl file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-yellow-500 file:text-black" />
-                                {errors.file_bukti && <p className="mt-1 text-xs text-red-400">{errors.file_bukti}</p>}
+                                    className="w-full px-4 py-3 text-sm text-ink bg-surface border border-line rounded-xl file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gold file:text-white" />
+                                {errors.file_bukti && <p className="mt-1 text-xs text-danger">{errors.file_bukti}</p>}
                             </div>
                             <div>
-                                <label className="block mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">Nominal Pembayaran</label>
+                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Nominal Pembayaran</label>
                                 <RupiahInput value={data.nominal}
                                     onChange={v => setData('nominal', v)}
                                     placeholder="Contoh: 5.000.000"
-                                    className="w-full px-4 py-3 text-sm text-white placeholder-gray-600 bg-black border border-gray-700 rounded-xl focus:border-yellow-500" />
+                                    className="w-full px-4 py-3 text-sm text-ink placeholder-muted-2 bg-surface border border-line rounded-xl focus:border-gold" />
                             </div>
                             <div>
-                                <label className="block mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">Keterangan</label>
+                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Keterangan</label>
                                 <textarea rows={3} value={data.keterangan}
                                     onChange={e => setData('keterangan', e.target.value)}
                                     placeholder="Contoh: DP 50%, transfer BCA"
-                                    className="w-full px-4 py-3 text-sm text-white placeholder-gray-600 bg-black border border-gray-700 resize-none rounded-xl focus:border-yellow-500" />
+                                    className="w-full px-4 py-3 text-sm text-ink placeholder-muted-2 bg-surface border border-line resize-none rounded-xl focus:border-gold" />
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => { setUploadModal(null); reset(); }}
-                                    className="flex-1 py-2.5 border border-gray-700 text-gray-400 font-bold rounded-xl hover:bg-gray-800">
+                                    className="flex-1 py-2.5 border border-line text-muted font-bold rounded-xl hover:bg-paper">
                                     Batal
                                 </button>
                                 <button type="submit" disabled={processing}
-                                    className="flex-1 py-2.5 bg-yellow-500 text-black font-black rounded-xl hover:bg-yellow-400 disabled:opacity-60">
+                                    className="flex-1 py-2.5 bg-gold text-white font-black rounded-xl hover:bg-gold-2 disabled:opacity-60">
                                     {processing ? 'Mengupload...' : '📤 Upload'}
                                 </button>
                             </div>
@@ -1215,20 +1215,20 @@ export default function ClientDashboard({ appointments, events, totalAppointment
 
             {/* Modal Konfirmasi Hapus Bukti */}
             {deleteBuktiId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-sm p-6 bg-gray-900 border border-gray-700 shadow-2xl rounded-2xl">
-                        <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-full bg-red-500/10">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm">
+                    <div className="w-full max-w-sm p-6 bg-surface border border-line shadow-2xl rounded-2xl">
+                        <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-full bg-danger-bg">
                             <span className="text-3xl">🗑️</span>
                         </div>
-                        <h2 className="mb-2 text-lg font-extrabold text-center text-white">Hapus Bukti Pembayaran?</h2>
-                        <p className="mb-6 text-sm text-center text-gray-400">Bukti yang dihapus tidak bisa dikembalikan.</p>
+                        <h2 className="mb-2 text-lg font-extrabold text-center text-ink">Hapus Bukti Pembayaran?</h2>
+                        <p className="mb-6 text-sm text-center text-muted">Bukti yang dihapus tidak bisa dikembalikan.</p>
                         <div className="flex gap-3">
                             <button onClick={() => setDeleteBuktiId(null)}
-                                className="flex-1 py-2.5 border border-gray-600 text-gray-300 font-bold rounded-xl hover:bg-gray-800 transition-colors">
+                                className="flex-1 py-2.5 border border-line text-muted font-bold rounded-xl hover:bg-paper transition-colors">
                                 Batal
                             </button>
                             <button onClick={confirmDeleteBukti} disabled={deletingBukti}
-                                className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors disabled:opacity-60">
+                                className="flex-1 py-2.5 bg-red-500 text-ink font-bold rounded-xl hover:bg-red-600 transition-colors disabled:opacity-60">
                                 {deletingBukti ? 'Menghapus...' : 'Hapus'}
                             </button>
                         </div>

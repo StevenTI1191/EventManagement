@@ -11,9 +11,9 @@ const getPasswordStrength = (password) => {
     if (/[A-Z]/.test(password))         score++;
     if (/[0-9]/.test(password))         score++;
     if (/[^A-Za-z0-9]/.test(password))  score++;
-    if (score <= 1) return { label: 'Lemah',  bars: 1, bar: 'bg-red-500',   text: 'text-red-400'   };
-    if (score <= 3) return { label: 'Sedang', bars: 2, bar: 'bg-yellow-500', text: 'text-yellow-400' };
-    return             { label: 'Kuat',   bars: 3, bar: 'bg-green-500',  text: 'text-green-400'  };
+    if (score <= 1) return { label: 'Lemah',  bars: 1, bar: 'bg-red-500',   text: 'text-danger'   };
+    if (score <= 3) return { label: 'Sedang', bars: 2, bar: 'bg-gold', text: 'text-gold-dim' };
+    return             { label: 'Kuat',   bars: 3, bar: 'bg-green-500',  text: 'text-ok'  };
 };
 
 const PasswordStrengthBar = ({ password }) => {
@@ -23,7 +23,7 @@ const PasswordStrengthBar = ({ password }) => {
         <div className="mt-2 flex items-center gap-2">
             <div className="flex gap-1 flex-1">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= s.bars ? s.bar : 'bg-gray-700'}`} />
+                    <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= s.bars ? s.bar : 'bg-gold-soft'}`} />
                 ))}
             </div>
             <span className={`text-[10px] font-bold tracking-wide ${s.text}`}>{s.label}</span>
@@ -57,17 +57,17 @@ export default function Register() {
         post(route('client.register'));
     };
 
-    const inputClass = "w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white text-sm focus:border-yellow-500 focus:outline-none placeholder-gray-600 transition-colors";
-    const labelClass = "block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2";
+    const inputClass = "w-full px-4 py-3 bg-surface border border-line rounded-xl text-ink text-sm focus:border-gold focus:outline-none placeholder-muted-2 transition-colors";
+    const labelClass = "block text-xs font-bold text-muted uppercase tracking-wider mb-2";
 
     return (
         <>
             <Head title="Daftar - Laksamana Muda" />
-            <div className="flex items-center justify-center min-h-screen px-6 py-12 bg-black">
+            <div className="flex items-center justify-center min-h-screen px-6 py-12 bg-surface">
                 {/* Tombol kembali ke homepage — mengambang pojok kiri atas */}
                 <Link
                     href={route('client.home')}
-                    className="fixed z-50 flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold text-gray-300 border rounded-full top-5 left-5 bg-gray-900/80 border-gray-700 backdrop-blur hover:text-yellow-400 hover:border-yellow-500/50 transition-all"
+                    className="fixed z-50 flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold text-muted border rounded-full top-5 left-5 bg-surface/80 border-line backdrop-blur hover:text-gold-dim hover:border-gold-2 transition-all"
                 >
                     <ArrowLeft size={16} />
                     Kembali
@@ -76,29 +76,29 @@ export default function Register() {
 
                     {/* Logo */}
                     <div className="mb-8 text-center">
-                        <a href={route('client.home')} className="inline-flex items-center justify-center w-16 h-16 mx-auto mb-4 overflow-hidden bg-black border-2 border-yellow-500 rounded-full hover:scale-105 transition-transform">
+                        <a href={route('client.home')} className="inline-flex items-center justify-center w-16 h-16 mx-auto mb-4 overflow-hidden bg-surface border-2 border-gold rounded-full hover:scale-105 transition-transform">
                             <img src="/images/LaksamanaLogo.png" alt="Logo" className="object-contain w-12 h-12" />
                         </a>
-                        <h1 className="text-2xl font-black text-white">
-                            Laksamana <span className="text-yellow-500">Muda</span>
+                        <h1 className="text-2xl font-black text-ink">
+                            Laksamana <span className="text-gold">Muda</span>
                         </h1>
-                        <p className="mt-1 text-sm text-gray-400">Buat akun baru</p>
+                        <p className="mt-1 text-sm text-muted">Buat akun baru</p>
                     </div>
 
-                    <div className="p-8 bg-gray-900 border border-gray-800 rounded-2xl">
+                    <div className="p-8 bg-surface border border-line rounded-2xl">
 
                         {/* Google Register */}
                         <a href={route('client.google.redirect')}
-                            className="flex items-center justify-center w-full gap-3 px-4 py-3 mb-5 font-bold text-sm text-gray-200 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700 hover:border-gray-600 transition-all">
+                            className="flex items-center justify-center w-full gap-3 px-4 py-3 mb-5 font-bold text-sm text-ink bg-paper border border-line rounded-xl hover:bg-gold-soft hover:border-line transition-all">
                             <GoogleIcon />
                             Daftar dengan Google
                         </a>
 
                         {/* Divider */}
                         <div className="flex items-center gap-3 mb-5">
-                            <div className="flex-1 h-px bg-gray-800" />
-                            <span className="text-xs text-gray-600 font-medium">atau isi form di bawah</span>
-                            <div className="flex-1 h-px bg-gray-800" />
+                            <div className="flex-1 h-px bg-paper" />
+                            <span className="text-xs text-muted-2 font-medium">atau isi form di bawah</span>
+                            <div className="flex-1 h-px bg-paper" />
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -107,7 +107,7 @@ export default function Register() {
                                 <input type="text" value={data.nama_client}
                                     onChange={e => setData('nama_client', e.target.value)}
                                     placeholder="John Doe" className={inputClass} />
-                                {errors.nama_client && <p className="mt-1 text-xs text-red-400">{errors.nama_client}</p>}
+                                {errors.nama_client && <p className="mt-1 text-xs text-danger">{errors.nama_client}</p>}
                             </div>
 
                             <div>
@@ -115,7 +115,7 @@ export default function Register() {
                                 <input type="text" value={data.perusahaan_client}
                                     onChange={e => setData('perusahaan_client', e.target.value)}
                                     placeholder="PT. Example" className={inputClass} />
-                                {errors.perusahaan_client && <p className="mt-1 text-xs text-red-400">{errors.perusahaan_client}</p>}
+                                {errors.perusahaan_client && <p className="mt-1 text-xs text-danger">{errors.perusahaan_client}</p>}
                             </div>
 
                             <div>
@@ -123,7 +123,7 @@ export default function Register() {
                                 <input type="email" value={data.email_client}
                                     onChange={e => setData('email_client', e.target.value)}
                                     placeholder="email@example.com" className={inputClass} />
-                                {errors.email_client && <p className="mt-1 text-xs text-red-400">{errors.email_client}</p>}
+                                {errors.email_client && <p className="mt-1 text-xs text-danger">{errors.email_client}</p>}
                             </div>
 
                             <div>
@@ -131,7 +131,7 @@ export default function Register() {
                                 <input type="tel" value={data.no_telp_client}
                                     onChange={e => setData('no_telp_client', e.target.value.replace(/[^0-9+\-\s()]/g, ''))}
                                     placeholder="08123456789" className={inputClass} />
-                                {errors.no_telp_client && <p className="mt-1 text-xs text-red-400">{errors.no_telp_client}</p>}
+                                {errors.no_telp_client && <p className="mt-1 text-xs text-danger">{errors.no_telp_client}</p>}
                             </div>
 
                             <div>
@@ -142,13 +142,13 @@ export default function Register() {
                                         placeholder="Minimal 6 karakter"
                                         className={inputClass + ' pr-11'} />
                                     <button type="button" onClick={() => setShowPass(!showPass)}
-                                        className="absolute right-3 top-3 text-gray-500 hover:text-gray-300 transition-colors">
+                                        className="absolute right-3 top-3 text-muted hover:text-muted transition-colors">
                                         {showPass ? <EyeOff size={16}/> : <Eye size={16}/>}
                                     </button>
                                 </div>
                                 {/* Strength bar */}
                                 <PasswordStrengthBar password={data.password} />
-                                {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password}</p>}
+                                {errors.password && <p className="mt-1 text-xs text-danger">{errors.password}</p>}
                             </div>
 
                             <div>
@@ -159,7 +159,7 @@ export default function Register() {
                                         placeholder="Ulangi password"
                                         className={inputClass + ' pr-11'} />
                                     <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                                        className="absolute right-3 top-3 text-gray-500 hover:text-gray-300 transition-colors">
+                                        className="absolute right-3 top-3 text-muted hover:text-muted transition-colors">
                                         {showConfirm ? <EyeOff size={16}/> : <Eye size={16}/>}
                                     </button>
                                 </div>
@@ -167,7 +167,7 @@ export default function Register() {
                                 {data.password_confirmation && data.password && (
                                     <p className={`mt-1.5 text-[10px] font-bold ${
                                         data.password === data.password_confirmation
-                                            ? 'text-green-400' : 'text-red-400'
+                                            ? 'text-ok' : 'text-danger'
                                     }`}>
                                         {data.password === data.password_confirmation
                                             ? '✓ Password cocok'
@@ -177,20 +177,20 @@ export default function Register() {
                             </div>
 
                             <button type="submit" disabled={processing}
-                                className="w-full py-3 font-black text-black transition-all bg-yellow-500 rounded-xl hover:bg-yellow-400 disabled:opacity-60 mt-2">
+                                className="w-full py-3 font-black text-white transition-all bg-gold rounded-xl hover:bg-gold-2 disabled:opacity-60 mt-2">
                                 {processing ? 'Mendaftar...' : 'Daftar Sekarang'}
                             </button>
                         </form>
 
-                        <p className="mt-6 text-sm text-center text-gray-500">
+                        <p className="mt-6 text-sm text-center text-muted">
                             Sudah punya akun?{' '}
-                            <Link href={route('client.login')} className="font-bold text-yellow-400 hover:text-yellow-300">
+                            <Link href={route('client.login')} className="font-bold text-gold-dim hover:text-gold">
                                 Masuk di sini
                             </Link>
                         </p>
 
                         <div className="mt-3 text-center">
-                            <Link href={route('client.home')} className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
+                            <Link href={route('client.home')} className="text-xs text-muted-2 hover:text-muted transition-colors">
                                 ← Kembali ke Homepage
                             </Link>
                         </div>

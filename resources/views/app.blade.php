@@ -81,8 +81,9 @@
         @endif
 
         <!-- Fonts -->
+        {{-- Figtree: backstage. Inter + Plus Jakarta Sans: portal klien (design system Office). --}}
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600|inter:400,500,600,700|plus-jakarta-sans:600,700,800&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
         @routes

@@ -28,11 +28,11 @@ export default function Login() {
     return (
         <>
             <Head title="Login - Laksamana Muda" />
-            <div className="flex items-center justify-center min-h-screen px-6 bg-black">
+            <div className="flex items-center justify-center min-h-screen px-6 bg-paper">
                 {/* Tombol kembali ke homepage — mengambang pojok kiri atas */}
                 <Link
                     href={route('client.home')}
-                    className="fixed z-50 flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold text-gray-300 border rounded-full top-5 left-5 bg-gray-900/80 border-gray-700 backdrop-blur hover:text-yellow-400 hover:border-yellow-500/50 transition-all"
+                    className="fixed z-50 flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold text-muted border rounded-full top-5 left-5 bg-surface/80 border-line backdrop-blur hover:text-gold-dim hover:border-gold-2 transition-all"
                 >
                     <ArrowLeft size={16} />
                     Kembali
@@ -41,71 +41,71 @@ export default function Login() {
 
                     {/* Logo */}
                     <div className="mb-8 text-center">
-                        <a href={route('client.home')} className="inline-flex items-center justify-center w-16 h-16 mx-auto mb-4 overflow-hidden bg-black border-2 border-yellow-500 rounded-full hover:scale-105 transition-transform">
+                        <a href={route('client.home')} className="inline-flex items-center justify-center w-16 h-16 mx-auto mb-4 overflow-hidden border-2 rounded-full bg-surface border-gold hover:scale-105 transition-transform">
                             <img src="/images/LaksamanaLogo.png" alt="Logo" className="object-contain w-12 h-12" />
                         </a>
-                        <h1 className="text-2xl font-black text-white">
-                            Laksamana <span className="text-yellow-500">Muda</span>
+                        <h1 className="text-2xl font-black text-ink">
+                            Laksamana <span className="text-gold">Muda</span>
                         </h1>
-                        <p className="mt-1 text-sm text-gray-400">Masuk ke akun Anda</p>
+                        <p className="mt-1 text-sm text-muted">Masuk ke akun Anda</p>
                     </div>
 
-                    <div className="p-8 bg-gray-900 border border-gray-800 rounded-2xl">
+                    <div className="p-8 border bg-surface border-line rounded-2xl">
 
                         {/* Google Login */}
                         <a href={route('client.google.redirect')}
-                            className="flex items-center justify-center w-full gap-3 px-4 py-3 mb-5 font-bold text-sm text-gray-200 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700 hover:border-gray-600 transition-all">
+                            className="flex items-center justify-center w-full gap-3 px-4 py-3 mb-5 font-bold text-sm text-ink bg-surface border border-line rounded-xl hover:bg-gold-soft hover:border-gold-2 transition-all">
                             <GoogleIcon />
                             Masuk dengan Google
                         </a>
 
                         {/* Flash: password berhasil direset */}
                         {flash?.success && (
-                            <div className="flex items-center gap-3 p-3 mb-5 bg-green-500/10 border border-green-500/30 rounded-xl">
-                                <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
-                                <p className="text-sm font-bold text-green-400">{flash.success}</p>
+                            <div className="flex items-center gap-3 p-3 mb-5 bg-ok-bg border border-ok/30 rounded-xl">
+                                <CheckCircle size={16} className="text-ok flex-shrink-0" />
+                                <p className="text-sm font-bold text-ok">{flash.success}</p>
                             </div>
                         )}
 
                         {/* Divider */}
                         <div className="flex items-center gap-3 mb-5">
-                            <div className="flex-1 h-px bg-gray-800" />
-                            <span className="text-xs text-gray-600 font-medium">atau dengan email</span>
-                            <div className="flex-1 h-px bg-gray-800" />
+                            <div className="flex-1 h-px bg-line" />
+                            <span className="text-xs text-muted-2 font-medium">atau dengan email</span>
+                            <div className="flex-1 h-px bg-line" />
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div>
-                                <label className="block mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">Email</label>
+                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Email</label>
                                 <input
                                     type="email"
                                     value={data.email}
                                     onChange={e => setData('email', e.target.value)}
                                     placeholder="email@example.com"
-                                    className="w-full px-4 py-3 text-sm text-white placeholder-gray-600 bg-black border border-gray-700 rounded-xl focus:border-yellow-500 focus:outline-none transition-colors"
+                                    className="w-full px-4 py-3 text-sm text-ink placeholder-muted-2 bg-surface border border-line rounded-xl focus:border-gold focus:outline-none transition-colors"
                                 />
-                                {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
+                                {errors.email && <p className="mt-1 text-xs text-danger">{errors.email}</p>}
                             </div>
 
                             <div>
-                                <label className="block mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">Password</label>
+                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Password</label>
                                 <div className="relative">
                                     <input
                                         type={showPass ? 'text' : 'password'}
                                         value={data.password}
                                         onChange={e => setData('password', e.target.value)}
                                         placeholder="••••••••"
-                                        className="w-full px-4 py-3 pr-11 text-sm text-white placeholder-gray-600 bg-black border border-gray-700 rounded-xl focus:border-yellow-500 focus:outline-none transition-colors"
+                                        className="w-full px-4 py-3 pr-11 text-sm text-ink placeholder-muted-2 bg-surface border border-line rounded-xl focus:border-gold focus:outline-none transition-colors"
                                     />
                                     <button type="button" onClick={() => setShowPass(!showPass)}
-                                        className="absolute right-3 top-3 text-gray-500 hover:text-gray-300 transition-colors">
+                                        className="absolute right-3 top-3 text-muted-2 hover:text-gold-dim transition-colors">
                                         {showPass ? <EyeOff size={16}/> : <Eye size={16}/>}
                                     </button>
                                 </div>
-                                {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password}</p>}
+                                {errors.password && <p className="mt-1 text-xs text-danger">{errors.password}</p>}
                                 <div className="mt-1.5 text-right">
                                     <Link href={route('client.forgot-password')}
-                                        className="text-xs text-gray-500 hover:text-yellow-400 transition-colors">
+                                        className="text-xs text-muted hover:text-gold-dim transition-colors">
                                         Lupa password?
                                     </Link>
                                 </div>
@@ -117,34 +117,34 @@ export default function Login() {
                                     <input type="checkbox" checked={data.remember}
                                         onChange={e => setData('remember', e.target.checked)}
                                         className="sr-only peer" />
-                                    <div className="w-4 h-4 rounded border border-gray-600 bg-black peer-checked:bg-yellow-500 peer-checked:border-yellow-500 transition-all" />
+                                    <div className="w-4 h-4 rounded border border-line bg-surface peer-checked:bg-gold peer-checked:border-gold transition-all" />
                                     {data.remember && (
-                                        <svg className="absolute inset-0 w-4 h-4 text-black pointer-events-none" viewBox="0 0 16 16" fill="none">
+                                        <svg className="absolute inset-0 w-4 h-4 text-white pointer-events-none" viewBox="0 0 16 16" fill="none">
                                             <path d="M3 8l3.5 3.5L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                         </svg>
                                     )}
                                 </div>
-                                <span className="text-xs text-gray-400">Ingat saya selama 30 hari</span>
+                                <span className="text-xs text-muted">Ingat saya selama 30 hari</span>
                             </label>
 
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="w-full py-3 font-black text-black transition-all bg-yellow-500 rounded-xl hover:bg-yellow-400 disabled:opacity-60"
+                                className="w-full py-3 font-black text-white transition-all bg-gold rounded-xl hover:bg-gold-2 disabled:opacity-60"
                             >
                                 {processing ? 'Masuk...' : 'Masuk'}
                             </button>
                         </form>
 
-                        <p className="mt-6 text-sm text-center text-gray-500">
+                        <p className="mt-6 text-sm text-center text-muted">
                             Belum punya akun?{' '}
-                            <Link href={route('client.register')} className="font-bold text-yellow-400 hover:text-yellow-300">
+                            <Link href={route('client.register')} className="font-bold text-gold-dim hover:text-gold">
                                 Daftar sekarang
                             </Link>
                         </p>
 
                         <div className="mt-3 text-center">
-                            <Link href={route('client.home')} className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
+                            <Link href={route('client.home')} className="text-xs text-muted-2 hover:text-muted transition-colors">
                                 ← Kembali ke Homepage
                             </Link>
                         </div>
