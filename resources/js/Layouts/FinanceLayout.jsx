@@ -5,7 +5,7 @@ import {
     LayoutDashboard, Calendar, CalendarDays, CreditCard,
     LogOut, ChevronLeft, ChevronRight, Users, Receipt,
     Bell, Trash2, CheckCheck, Upload, FileBarChart, StickyNote,
-    Menu, X,
+    GitBranch, FileText, Menu, X,
 } from 'lucide-react';
 
 export default function FinanceLayout({ children }) {
@@ -24,8 +24,10 @@ export default function FinanceLayout({ children }) {
         { name: 'Dashboard',        icon: LayoutDashboard, href: route('finance.dashboard'),       active: currentPath === '/finance/dashboard' },
         { name: 'Kalender',         icon: CalendarDays,    href: route('finance.jadwal.index'),    active: currentPath.includes('/finance/jadwal') },
         { name: 'Event',            icon: Calendar,        href: route('finance.event.index'),     active: currentPath.includes('/finance/event') },
+        { name: 'Pipeline',         icon: GitBranch,       href: route('finance.pipeline.index'),  active: currentPath.includes('/finance/pipeline') },
         { name: 'Client',           icon: Users,           href: route('finance.client.index'),    active: currentPath.includes('/finance/client') },
         { name: 'Transaksi',        icon: CreditCard,      href: route('finance.transaksi.index'), active: currentPath.includes('/finance/transaksi') },
+        { name: 'Invoice',          icon: FileText,        href: route('finance.invoice.index'),   active: currentPath.includes('/finance/invoice') },
         { name: 'Bukti Pembayaran', icon: Receipt,         href: route('finance.bukti.index'),     active: currentPath.includes('/finance/bukti-pembayaran') },
         { name: 'Laporan',          icon: FileBarChart,    href: route('finance.laporan.index'),   active: currentPath.includes('/finance/laporan') },
     ];

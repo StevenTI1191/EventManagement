@@ -29,7 +29,7 @@ class TransaksiController extends Controller
         ]);
 
         $query = Event::with(['client', 'pic', 'transaksis.pegawai', 'transaksiItems'])
-            ->where('status_event', '!=', 'Planning');
+            ->untukFinance();
 
         // Filter by bulan
         if ($request->filled('bulan')) {

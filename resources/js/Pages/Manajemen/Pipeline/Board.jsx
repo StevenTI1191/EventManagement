@@ -1,0 +1,13 @@
+import ManajemenLayout from '@/Layouts/ManajemenLayout';
+import PipelineBoard from '@/Pages/Pipeline/Board';
+
+export default function Board({ kolom, canEdit }) {
+    return (
+        <PipelineBoard
+            Layout={ManajemenLayout}
+            kolom={kolom}
+            canEdit={canEdit}
+            routes={{ updateStatus: 'manajemen.pipeline.update-status', penawaran: 'manajemen.pipeline.penawaran' }}
+        />
+    );
+}

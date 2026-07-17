@@ -97,6 +97,8 @@ trait ManagesPlanning
             'target_omset'     => $request->target_omset,
             'id_pegawai'       => Auth::guard('pegawai')->id(),
             'status_event'     => 'Planning',
+            // Acara milik LMB sendiri → tidak melewati pipeline (langsung Upcoming saat difinalisasi).
+            'tipe_event'       => Event::TIPE_INTERNAL,
             'is_public'        => false,
             'jumlah_pax'       => 0,
             'deal_harga_event' => 0,

@@ -11,6 +11,7 @@ import {
     Star,
     CalendarCheck,
     ClipboardList,
+    GitBranch,
     Menu,
     X,
 } from 'lucide-react';
@@ -48,6 +49,12 @@ export default function ManajemenLayout({ children }) {
             icon: Calendar,
             href: route('manajemen.event.index'),
             active: currentPath.includes('/manajemen/event'),
+        },
+        {
+            name: 'Pipeline',
+            icon: GitBranch,
+            href: route('manajemen.pipeline.index'),
+            active: currentPath.includes('/manajemen/pipeline'),
         },
         {
             name: 'Planning Event',

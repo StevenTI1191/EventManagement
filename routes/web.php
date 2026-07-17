@@ -172,6 +172,14 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         Route::delete('/manajemen/planning/{id}', [\App\Http\Controllers\Manajemen\PlanningController::class, 'destroy'])
             ->whereNumber('id')->name('manajemen.planning.destroy');
 
+        // --- PIPELINE (Lead -> Negotiation -> Deal) ---
+        Route::get('/manajemen/pipeline', [\App\Http\Controllers\Manajemen\PipelineController::class, 'index'])
+            ->name('manajemen.pipeline.index');
+        Route::put('/manajemen/pipeline/{id_event}/status', [\App\Http\Controllers\Manajemen\PipelineController::class, 'updateStatus'])
+            ->whereNumber('id_event')->name('manajemen.pipeline.update-status');
+        Route::get('/manajemen/pipeline/{id_event}/penawaran', [\App\Http\Controllers\Manajemen\PipelineController::class, 'penawaran'])
+            ->whereNumber('id_event')->name('manajemen.pipeline.penawaran');
+
         // --- CLIENT ---
         Route::get('/manajemen/client', [ClientController::class, 'index'])
             ->name('manajemen.client.index');
@@ -303,6 +311,15 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id')->name('em.planning.update');
         Route::delete('/event-marketing/planning/{id}', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'destroy'])
             ->whereNumber('id')->name('em.planning.destroy');
+
+        // --- PIPELINE (Lead -> Negotiation -> Deal) ---
+        Route::get('/event-marketing/pipeline', [\App\Http\Controllers\EventMarketing\PipelineController::class, 'index'])
+            ->name('em.pipeline.index');
+        Route::put('/event-marketing/pipeline/{id_event}/status', [\App\Http\Controllers\EventMarketing\PipelineController::class, 'updateStatus'])
+            ->whereNumber('id_event')->name('em.pipeline.update-status');
+        Route::get('/event-marketing/pipeline/{id_event}/penawaran', [\App\Http\Controllers\EventMarketing\PipelineController::class, 'penawaran'])
+            ->whereNumber('id_event')->name('em.pipeline.penawaran');
+
         Route::get('/event-marketing/transaksi', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'index'])
         ->name('em.transaksi.index');
         // --- EVENT MARKETING: TODO / TUGAS ---
@@ -341,6 +358,20 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('finance.transaksi.item.update');
         Route::delete('/finance/transaksi/item/{id}', [\App\Http\Controllers\Finance\TransaksiController::class, 'destroyItem'])
             ->name('finance.transaksi.item.destroy');
+        // --- PIPELINE (hanya lihat — Finance tidak boleh menggeser kartu) ---
+        Route::get('/finance/pipeline', [\App\Http\Controllers\Finance\PipelineController::class, 'index'])
+            ->name('finance.pipeline.index');
+
+        // --- INVOICE (DP 50% & Pelunasan 50%) ---
+        Route::get('/finance/invoice', [\App\Http\Controllers\Finance\InvoiceController::class, 'index'])
+            ->name('finance.invoice.index');
+        Route::post('/finance/invoice/event/{id_event}', [\App\Http\Controllers\Finance\InvoiceController::class, 'store'])
+            ->whereNumber('id_event')->name('finance.invoice.store');
+        Route::get('/finance/invoice/{id_invoice}/pdf', [\App\Http\Controllers\Finance\InvoiceController::class, 'download'])
+            ->whereNumber('id_invoice')->name('finance.invoice.pdf');
+        Route::patch('/finance/invoice/{id_invoice}/lunas', [\App\Http\Controllers\Finance\InvoiceController::class, 'lunas'])
+            ->whereNumber('id_invoice')->name('finance.invoice.lunas');
+
         Route::get('/finance/event', [\App\Http\Controllers\Finance\EventController::class, 'index'])
             ->name('finance.event.index');
         Route::get('/finance/client', [\App\Http\Controllers\Finance\ClientController::class, 'index'])

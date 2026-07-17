@@ -34,6 +34,7 @@ class Event extends Model
         'technical_meeting',
         'gladi_resik',
         'status_event',
+        'tipe_event',       // Internal (dari Planning Event) | Eksternal (dari klien)
         'is_public',
         'deal_harga_event',
     ];
@@ -41,6 +42,46 @@ class Event extends Model
     protected $casts = [
         'is_public' => 'boolean',
     ];
+
+    // ── Status ────────────────────────────────────────────────────────────────
+    // Pipeline event EKSTERNAL: Lead -> Negotiation -> Deal -> (DP 50%) -> Upcoming -> Done
+    public const STATUS_LEAD        = 'Lead';
+    public const STATUS_NEGOTIATION = 'Negotiation';
+    public const STATUS_DEAL        = 'Deal';
+    // Event INTERNAL: Planning -> (finalisasi) -> Upcoming -> Done
+    public const STATUS_PLANNING    = 'Planning';
+    public const STATUS_UPCOMING    = 'Upcoming';
+    public const STATUS_DONE        = 'Done';
+
+    /** Kolom kanban pipeline (hanya untuk event eksternal). */
+    public const PIPELINE_STATUSES = [self::STATUS_LEAD, self::STATUS_NEGOTIATION, self::STATUS_DEAL];
+
+    public const TIPE_INTERNAL  = 'Internal';
+    public const TIPE_EKSTERNAL = 'Eksternal';
+
+    /** Event milik LMB sendiri (berasal dari Planning Event). */
+    public function scopeInternal($q) { return $q->where('tipe_event', self::TIPE_INTERNAL); }
+
+    /** Event dari klien (masuk lewat pipeline). */
+    public function scopeEksternal($q) { return $q->where('tipe_event', self::TIPE_EKSTERNAL); }
+
+    /** Event yang masih berada di papan pipeline (Lead/Negotiation/Deal). */
+    public function scopePipeline($q) { return $q->whereIn('status_event', self::PIPELINE_STATUSES); }
+
+    /**
+     * Event "nyata" yang sudah lolos pipeline — dipakai daftar Event, dashboard,
+     * dan Task Divisi. Planning (draft internal) dan pipeline (Lead/Negotiation/Deal)
+     * sengaja dikecualikan agar calon event tidak bocor ke halaman operasional.
+     */
+    public function scopeTerkonfirmasi($q) { return $q->whereIn('status_event', [self::STATUS_UPCOMING, self::STATUS_DONE]); }
+
+    /** Event yang sudah masuk ranah Finance — mulai dari Deal (proses DP 50%). */
+    public function scopeUntukFinance($q) { return $q->whereIn('status_event', [self::STATUS_DEAL, self::STATUS_UPCOMING, self::STATUS_DONE]); }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'id_event', 'id_event');
+    }
 
     public function client(): BelongsTo
     {

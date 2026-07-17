@@ -38,3 +38,33 @@ Schedule::call(function () {
         }
     }
 })->dailyAt('08:00')->name('event-reminder')->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Auto-batal Appointment — jalan setiap hari jam 01:00
+| Appointment yang sudah dikonfirmasi/di-reschedule tetapi jadwal meeting-nya
+| sudah lewat lebih dari 2 hari dan belum ditandai "Selesai" oleh Event
+| Marketing, dianggap tidak terjadi dan otomatis dibatalkan.
+|--------------------------------------------------------------------------
+*/
+Schedule::call(function () {
+    $batas = now()->subDays(2)->toDateString();
+
+    $terlewat = \App\Models\Appointment::whereIn('status', ['Dikonfirmasi', 'Reschedule'])
+        ->whereNotNull('tgl_konfirmasi')
+        ->whereDate('tgl_konfirmasi', '<', $batas)
+        ->get();
+
+    foreach ($terlewat as $appointment) {
+        $catatan = 'Dibatalkan otomatis: lewat 2 hari dari jadwal meeting dan belum ditandai selesai.';
+
+        $appointment->update([
+            'status'     => 'Dibatalkan',
+            'catatan_em' => $appointment->catatan_em
+                ? $appointment->catatan_em . ' | ' . $catatan
+                : $catatan,
+        ]);
+
+        \Log::info("Appointment #{$appointment->id} dibatalkan otomatis (lewat 2 hari dari jadwal meeting).");
+    }
+})->dailyAt('01:00')->name('appointment-auto-batal')->withoutOverlapping();

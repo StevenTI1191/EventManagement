@@ -26,7 +26,9 @@ class EventController extends Controller
             'search'     => 'nullable|string|max:255',
         ]);
 
-        $query = Event::query()->where('status_event', '!=', 'Planning');
+        // Hanya event nyata (Upcoming/Done). Planning & pipeline (Lead/Negotiation/Deal)
+        // punya halamannya sendiri, jadi tidak ditampilkan di daftar Event.
+        $query = Event::query()->terkonfirmasi();
 
         if ($request->tgl_awal && $request->tgl_akhir) {
             $query->whereBetween('tgl_mulai_event', [$request->tgl_awal, $request->tgl_akhir]);
@@ -140,6 +142,12 @@ class EventController extends Controller
             Storage::disk('local')->putFileAs('kontrak', $file, $filename);
             $data['kontrak_file'] = $filename;
         }
+
+        // Event baru dari klien selalu masuk pipeline pada tahap Lead.
+        // Naik ke Negotiation/Deal lewat papan Pipeline; menjadi Upcoming hanya
+        // setelah DP 50% diverifikasi Finance.
+        $data['status_event'] = Event::STATUS_LEAD;
+        $data['tipe_event']   = Event::TIPE_EKSTERNAL;
 
         Event::create($data);
 

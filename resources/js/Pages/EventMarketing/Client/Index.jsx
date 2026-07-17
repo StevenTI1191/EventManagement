@@ -5,16 +5,28 @@ import { useState } from 'react';
 import { Search, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useDebounced } from '@/hooks/useDebounced';
 
-export default function EMClientIndex({ clients, filters }) {
+const TABS = [
+    { key: 'Mandiri',  label: 'Daftar Sendiri', ket: 'Klien yang mendaftar sendiri lewat website.' },
+    { key: 'Internal', label: 'Di-input Tim',   ket: 'Klien hasil approach & input tim Event Marketing.' },
+];
+
+export default function EMClientIndex({ clients, filters, sumber = 'Mandiri', jumlah = {} }) {
     const [searchTerm, setSearchTerm]     = useState(filters?.search || '');
     const [deleteClient, setDeleteClient] = useState(null);
     const [deleting, setDeleting]         = useState(false);
 
     const debouncedSearch = useDebounced((value) => {
-        router.get(route('em.client.index'), { search: value }, {
+        router.get(route('em.client.index'), { search: value, sumber }, {
             preserveState: true, replace: true,
         });
     });
+
+    const gantiTab = (key) => {
+        setSearchTerm('');
+        router.get(route('em.client.index'), { sumber: key }, { preserveState: true, replace: true });
+    };
+
+    const tabAktif = TABS.find((t) => t.key === sumber) || TABS[0];
 
     const handleSearch = (value) => {
         setSearchTerm(value);
@@ -35,9 +47,32 @@ export default function EMClientIndex({ clients, filters }) {
         <EventMarketingLayout>
             <Head title="Client - Event Marketing" />
 
-            <div className="mb-8">
+            <div className="mb-5">
                 <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Client</h1>
-                <p className="mt-1 text-gray-400">Daftar client yang terdaftar.</p>
+                <p className="mt-1 text-gray-400">{tabAktif.ket}</p>
+            </div>
+
+            {/* Tab pemisah asal client */}
+            <div className="flex flex-wrap gap-2 mb-5">
+                {TABS.map((t) => {
+                    const aktif = sumber === t.key;
+                    return (
+                        <button
+                            key={t.key}
+                            onClick={() => gantiTab(t.key)}
+                            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl border transition-all ${
+                                aktif
+                                    ? 'bg-[#FF2D55] text-white border-[#FF2D55] shadow-md shadow-[#FF2D55]/20'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                            }`}
+                        >
+                            {t.label}
+                            <span className={`px-2 py-0.5 text-xs rounded-full ${aktif ? 'bg-white/25' : 'bg-gray-100 text-gray-500'}`}>
+                                {jumlah[t.key] ?? 0}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Filter */}

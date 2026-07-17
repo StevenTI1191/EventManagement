@@ -10,6 +10,7 @@ import {
     ChevronLeft,
     ChevronRight,
     ClipboardList,
+    GitBranch,
     Users,
     StickyNote,
     Menu,
@@ -42,6 +43,12 @@ export default function EventMarketingLayout({ children }) {
             icon: Calendar,
             href: route('em.event.index'),
             active: currentPath.includes('/event-marketing/event'),
+        },
+        {
+            name: 'Pipeline',
+            icon: GitBranch,
+            href: route('em.pipeline.index'),
+            active: currentPath.includes('/event-marketing/pipeline'),
         },
         {
             name: 'Planning Event',

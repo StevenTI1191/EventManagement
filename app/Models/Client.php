@@ -15,9 +15,19 @@ class Client extends Authenticatable
         'perusahaan_client',
         'no_telp_client',
         'email_client',
+        'sumber',           // Mandiri = daftar sendiri | Internal = di-input/di-approach EM
         'google_id',
         'password',
     ];
+
+    public const SUMBER_MANDIRI  = 'Mandiri';
+    public const SUMBER_INTERNAL = 'Internal';
+
+    /** Klien yang mendaftar sendiri lewat halaman registrasi. */
+    public function scopeMandiri($q) { return $q->where('sumber', self::SUMBER_MANDIRI); }
+
+    /** Klien yang di-input & di-approach sendiri oleh tim Event Marketing. */
+    public function scopeInternal($q) { return $q->where('sumber', self::SUMBER_INTERNAL); }
 
     protected $hidden = [
         'password',

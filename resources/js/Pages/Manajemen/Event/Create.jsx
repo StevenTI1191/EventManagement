@@ -228,10 +228,14 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'manajem
                             {!planning && (
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">Status Event</label>
-                                    <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50" value={data.status_event} onChange={e => setData('status_event', e.target.value)}>
-                                        <option value="Upcoming">Upcoming</option>
-                                        <option value="Done">Done</option>
-                                    </select>
+                                    <div className="flex items-start gap-2.5 p-3 border border-gray-200 rounded-xl bg-gray-50">
+                                        <span className="px-2 py-0.5 text-xs font-bold text-white bg-slate-500 rounded-full shrink-0">Lead</span>
+                                        <p className="text-xs leading-relaxed text-gray-500">
+                                            Event baru otomatis masuk papan <b>Pipeline</b> pada tahap Lead. Naikkan ke
+                                            Negotiation/Deal lewat Pipeline; status menjadi <b>Upcoming</b> setelah DP 50%
+                                            diverifikasi Finance.
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 

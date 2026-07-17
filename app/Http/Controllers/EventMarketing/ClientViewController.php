@@ -19,7 +19,12 @@ class ClientViewController extends Controller
     {
         $this->checkEventMarketing();
 
-        $query = Client::withCount('events');
+        // Dipisah 2 tab: klien yang mendaftar sendiri (Mandiri) vs yang di-input & di-approach tim (Internal).
+        $sumber = $request->sumber === Client::SUMBER_INTERNAL
+            ? Client::SUMBER_INTERNAL
+            : Client::SUMBER_MANDIRI;
+
+        $query = Client::withCount('events')->where('sumber', $sumber);
 
         if ($request->search) {
             $query->where(function($q) use ($request) {
@@ -33,7 +38,12 @@ class ClientViewController extends Controller
 
         return Inertia::render('EventMarketing/Client/Index', [
             'clients' => $clients,
-            'filters' => $request->only('search'),
+            'filters' => $request->only('search', 'sumber'),
+            'sumber'  => $sumber,
+            'jumlah'  => [
+                'Mandiri'  => Client::mandiri()->count(),
+                'Internal' => Client::internal()->count(),
+            ],
         ]);
     }
 
@@ -99,11 +109,12 @@ class ClientViewController extends Controller
             'email_client'      => 'nullable|email|unique:clients,email_client',
         ]);
 
+        // Client yang di-input tim EM = hasil approach sendiri (bukan daftar mandiri).
         Client::create($request->only([
             'nama_client', 'perusahaan_client', 'no_telp_client', 'email_client',
-        ]));
+        ]) + ['sumber' => Client::SUMBER_INTERNAL]);
 
-        return redirect()->route('em.client.index')
+        return redirect()->route('em.client.index', ['sumber' => Client::SUMBER_INTERNAL])
             ->with('success', 'Client berhasil ditambahkan.');
     }
 

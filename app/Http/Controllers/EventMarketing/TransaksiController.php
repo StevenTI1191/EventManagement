@@ -16,7 +16,7 @@ class TransaksiController extends Controller
         $this->checkEventMarketing();
 
         $events = Event::with(['client', 'pic', 'transaksis', 'transaksiItems'])
-            ->where('status_event', '!=', 'Planning')
+            ->untukFinance()
             ->orderByDesc('tgl_mulai_event')
             ->take(100) // Batasi 100 event terbaru agar tidak OOM
             ->get()

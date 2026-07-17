@@ -16,7 +16,12 @@ class ClientController extends Controller
     {
         $this->checkManajemen();
 
-        $query = Client::withCount('events'); // ← ubah dari Client::query()
+        // Dipisah 2 tab: klien yang mendaftar sendiri (Mandiri) vs yang di-input & di-approach tim (Internal).
+        $sumber = $request->sumber === Client::SUMBER_INTERNAL
+            ? Client::SUMBER_INTERNAL
+            : Client::SUMBER_MANDIRI;
+
+        $query = Client::withCount('events')->where('sumber', $sumber);
 
         if ($request->search) {
             $query->where(function($q) use ($request) {
@@ -30,7 +35,12 @@ class ClientController extends Controller
 
         return Inertia::render('Manajemen/Client/ClientIndex', [
             'clients' => $clients,
-            'filters' => $request->only('search'),
+            'filters' => $request->only('search', 'sumber'),
+            'sumber'  => $sumber,
+            'jumlah'  => [
+                'Mandiri'  => Client::mandiri()->count(),
+                'Internal' => Client::internal()->count(),
+            ],
         ]);
     }
 
@@ -105,11 +115,12 @@ class ClientController extends Controller
             'email_client'      => 'nullable|email|unique:clients,email_client',
         ]);
 
+        // Client yang di-input tim internal = hasil approach sendiri (bukan daftar mandiri).
         Client::create($request->only([
             'nama_client', 'perusahaan_client', 'no_telp_client', 'email_client',
-        ]));
+        ]) + ['sumber' => Client::SUMBER_INTERNAL]);
 
-        return redirect()->route('manajemen.client.index')
+        return redirect()->route('manajemen.client.index', ['sumber' => Client::SUMBER_INTERNAL])
             ->with('success', 'Client berhasil ditambahkan.');
     }
 
