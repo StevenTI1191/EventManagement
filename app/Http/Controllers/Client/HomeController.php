@@ -12,12 +12,17 @@ class HomeController extends Controller
 {
     public function index()
     {
-        // Portfolio — event Done terbaru (hanya yang Publik)
+        // Portfolio — event Done terbaru (hanya yang Publik). Ambil detail lengkap
+        // agar modal portfolio bisa menampilkan skala & isi acara untuk menarik klien.
         $portfolio = Event::where('status_event', 'Done')
             ->where('is_public', true)
             ->latest('tgl_mulai_event')
             ->take(6)
-            ->get(['id_event', 'nama_event', 'kategori_event', 'tgl_mulai_event', 'poster_event', 'status_event', 'area_event']);
+            ->get([
+                'id_event', 'nama_event', 'kategori_event', 'tgl_mulai_event', 'tgl_selesai_event',
+                'jam_mulai', 'jam_selesai', 'area_event', 'jumlah_pax', 'poster_event', 'status_event',
+                'deskripsi_event', 'entairtainment_event', 'food_beverage_event',
+            ]);
 
         // Upcoming events — urut terdekat (hanya yang Publik)
         $upcoming = Event::where('status_event', 'Upcoming')

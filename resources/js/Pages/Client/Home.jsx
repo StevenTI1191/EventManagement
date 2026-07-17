@@ -4,7 +4,7 @@ import {
     ChevronDown, Phone, Mail, MapPin, Menu, X,
     Home as HomeIcon, Calendar, LogOut,
     CheckCircle, Users, Award, Layers, ArrowRight,
-    Clock, MapPinned
+    Clock, MapPinned, Music, Utensils
 } from 'lucide-react';
 
 const IconInstagram = () => (
@@ -69,6 +69,9 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
         if (!tgl) return '-';
         return new Date(tgl).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
     };
+
+    // "10:00:00" → "10:00"; kembalikan null bila kosong
+    const formatJam = (jam) => (jam ? String(jam).slice(0, 5) : null);
 
     const formatTanggalShort = (tgl) => {
         if (!tgl) return '-';
@@ -426,6 +429,14 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                                     <div className="p-5">
                                         <p className="font-bold text-ink truncate group-hover:text-gold-dim transition-colors">{event.nama_event}</p>
                                         <p className="mt-1 text-xs text-muted">{formatTanggal(event.tgl_mulai_event)}</p>
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted">
+                                            {event.area_event && (
+                                                <span className="flex items-center gap-1"><MapPin size={11} className="text-gold" /> {event.area_event}</span>
+                                            )}
+                                            {event.jumlah_pax > 0 && (
+                                                <span className="flex items-center gap-1"><Users size={11} className="text-gold" /> {Number(event.jumlah_pax).toLocaleString('id-ID')} tamu</span>
+                                            )}
+                                        </div>
                                         {event.kategori_event && (
                                             <span className="mt-2 inline-block px-2 py-0.5 text-xs font-bold bg-gold-soft text-gold-dim rounded-full">
                                                 {event.kategori_event}
@@ -454,9 +465,9 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             {selectedEvent && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm"
                     onClick={() => setSelectedEvent(null)}>
-                    <div className="bg-surface rounded-3xl w-full max-w-md shadow-2xl border border-line"
+                    <div className="bg-surface rounded-3xl w-full max-w-lg max-h-[88vh] overflow-y-auto shadow-2xl border border-line"
                         onClick={e => e.stopPropagation()}>
-                        <div className="relative h-48 overflow-hidden rounded-t-3xl">
+                        <div className="relative h-56 overflow-hidden rounded-t-3xl">
                             {selectedEvent.poster_event ? (
                                 <img src={`/${selectedEvent.poster_event}`} className="object-cover w-full h-full" />
                             ) : (
@@ -464,24 +475,81 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                                     <span className="text-5xl font-black text-gold/30">{selectedEvent.nama_event.substring(0,2).toUpperCase()}</span>
                                 </div>
                             )}
+                            {/* Gradasi bawah agar badge kategori terbaca di atas poster */}
+                            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-ink/60 to-transparent" />
+                            {selectedEvent.kategori_event && (
+                                <span className="absolute bottom-4 left-5 px-3 py-1 bg-gold text-white text-[10px] font-black uppercase tracking-wide rounded-full shadow-gold">
+                                    {selectedEvent.kategori_event}
+                                </span>
+                            )}
                             <button onClick={() => setSelectedEvent(null)}
                                 className="absolute flex items-center justify-center w-9 h-9 bg-surface/90 backdrop-blur-sm border border-line rounded-full top-4 right-4 hover:bg-surface hover:border-gold-2 transition-colors">
                                 <X size={16} className="text-ink" />
                             </button>
                         </div>
                         <div className="p-6">
-                            <h3 className="mb-1 text-xl font-extrabold text-ink">{selectedEvent.nama_event}</h3>
-                            {selectedEvent.kategori_event && (
-                                <span className="inline-block mb-4 px-2.5 py-0.5 bg-gold-soft text-gold-dim text-[10px] font-black uppercase rounded-full">
-                                    {selectedEvent.kategori_event}
-                                </span>
-                            )}
-                            <div className="space-y-2 mb-6">
-                                <p className="flex items-center gap-2 text-sm text-muted"><Calendar size={14} className="text-gold" /> {formatTanggal(selectedEvent.tgl_mulai_event)}</p>
-                                {selectedEvent.area_event && <p className="flex items-center gap-2 text-sm text-muted"><MapPin size={14} className="text-gold" /> {selectedEvent.area_event}</p>}
+                            <h3 className="mb-4 text-2xl font-extrabold leading-tight text-ink">{selectedEvent.nama_event}</h3>
+
+                            {/* Grid ringkas: skala & waktu acara */}
+                            <div className="grid grid-cols-2 gap-3 mb-5">
+                                <div className="p-3 border bg-paper border-line rounded-xl">
+                                    <p className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-muted-2 uppercase"><Calendar size={12} className="text-gold" /> Tanggal</p>
+                                    <p className="mt-1 text-sm font-bold text-ink">{formatTanggal(selectedEvent.tgl_mulai_event)}</p>
+                                </div>
+                                {formatJam(selectedEvent.jam_mulai) && (
+                                    <div className="p-3 border bg-paper border-line rounded-xl">
+                                        <p className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-muted-2 uppercase"><Clock size={12} className="text-gold" /> Waktu</p>
+                                        <p className="mt-1 text-sm font-bold text-ink">{formatJam(selectedEvent.jam_mulai)}{formatJam(selectedEvent.jam_selesai) ? ` – ${formatJam(selectedEvent.jam_selesai)}` : ''} WIB</p>
+                                    </div>
+                                )}
+                                {selectedEvent.area_event && (
+                                    <div className="p-3 border bg-paper border-line rounded-xl">
+                                        <p className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-muted-2 uppercase"><MapPin size={12} className="text-gold" /> Lokasi</p>
+                                        <p className="mt-1 text-sm font-bold text-ink">{selectedEvent.area_event}</p>
+                                    </div>
+                                )}
+                                {selectedEvent.jumlah_pax > 0 && (
+                                    <div className="p-3 border bg-paper border-line rounded-xl">
+                                        <p className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-muted-2 uppercase"><Users size={12} className="text-gold" /> Skala</p>
+                                        <p className="mt-1 text-sm font-bold text-ink">{Number(selectedEvent.jumlah_pax).toLocaleString('id-ID')} tamu</p>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Deskripsi acara */}
+                            {selectedEvent.deskripsi_event && (
+                                <div className="mb-5">
+                                    <p className="mb-1.5 text-xs font-black tracking-wide text-gold uppercase">Tentang Acara</p>
+                                    <p className="text-sm leading-relaxed text-muted whitespace-pre-line">{selectedEvent.deskripsi_event}</p>
+                                </div>
+                            )}
+
+                            {/* Sorotan: entertainment & F&B */}
+                            {(selectedEvent.entairtainment_event || selectedEvent.food_beverage_event) && (
+                                <div className="grid grid-cols-1 gap-3 mb-6">
+                                    {selectedEvent.entairtainment_event && (
+                                        <div className="flex items-start gap-3 p-3 border bg-gold-soft/50 border-line rounded-xl">
+                                            <Music size={16} className="mt-0.5 text-gold shrink-0" />
+                                            <div>
+                                                <p className="text-xs font-black text-gold-dim">Entertainment</p>
+                                                <p className="text-sm text-muted">{selectedEvent.entairtainment_event}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {selectedEvent.food_beverage_event && (
+                                        <div className="flex items-start gap-3 p-3 border bg-gold-soft/50 border-line rounded-xl">
+                                            <Utensils size={16} className="mt-0.5 text-gold shrink-0" />
+                                            <div>
+                                                <p className="text-xs font-black text-gold-dim">Food &amp; Beverage</p>
+                                                <p className="text-sm text-muted">{selectedEvent.food_beverage_event}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <a href={isLoggedIn ? `${BASE_URL}/appointment/create` : `${BASE_URL}/register`}
-                                className="block w-full py-3 text-sm font-black text-center text-white bg-gold rounded-2xl hover:bg-gold-2 transition-colors">
+                                className="block w-full py-3.5 text-sm font-black text-center text-white rounded-2xl bg-gold-grad shadow-gold hover:brightness-110 transition-all">
                                 🗓️ Buat Appointment Serupa
                             </a>
                         </div>
