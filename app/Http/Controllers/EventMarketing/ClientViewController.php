@@ -84,7 +84,7 @@ class ClientViewController extends Controller
 
         // Log follow-up (terbaru dulu) + link WhatsApp siap-pakai untuk follow-up.
         $followUps = $client->followUps()
-            ->with('pegawai:id_pegawai,nama_pegawai')
+            ->with(['pegawai:id_pegawai,nama_pegawai', 'event:id_event,nama_event,status_event'])
             ->latest()
             ->take(100)
             ->get();
@@ -111,17 +111,26 @@ class ClientViewController extends Controller
         $this->checkEventMarketing();
 
         $data = $request->validate([
-            'catatan' => 'required|string|max:2000',
+            'catatan'        => 'required|string|max:2000',
+            // Event yang di-follow-up harus milik client ini
+            'id_event'       => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('events', 'id_event')->where('id_client', $id)],
+            'tgl_berikutnya' => 'nullable|date|after_or_equal:today',
         ]);
 
         $client = Client::findOrFail($id);
 
         $client->followUps()->create([
-            'id_pegawai' => Auth::guard('pegawai')->id(),
-            'catatan'    => $data['catatan'],
+            'id_pegawai'     => Auth::guard('pegawai')->id(),
+            'id_event'       => $data['id_event'] ?? null,
+            'catatan'        => $data['catatan'],
+            'tgl_berikutnya' => $data['tgl_berikutnya'] ?? null,
         ]);
 
-        return back()->with('success', 'Catatan follow-up tersimpan.');
+        $pesan = filled($data['tgl_berikutnya'] ?? null)
+            ? 'Catatan follow-up tersimpan. Pengingat dijadwalkan pada ' . \Illuminate\Support\Carbon::parse($data['tgl_berikutnya'])->translatedFormat('d F Y') . '.'
+            : 'Catatan follow-up tersimpan.';
+
+        return back()->with('success', $pesan);
     }
 
     /** Hapus satu catatan follow-up. */

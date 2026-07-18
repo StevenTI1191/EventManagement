@@ -5,15 +5,21 @@ import { ChevronLeft, Search, Download, X, MessageCircle, Plus, Trash2 } from 'l
 
 export default function EMClientShow({ client, events, pics, kategoris, filters, followUps = [], waFollowUp }) {
     const [catatanFollowUp, setCatatanFollowUp] = useState('');
-    const [prosesFollowUp, setProsesFollowUp] = useState(false);
+    const [eventFollowUp, setEventFollowUp]     = useState('');
+    const [tglBerikutnya, setTglBerikutnya]     = useState('');
+    const [prosesFollowUp, setProsesFollowUp]   = useState(false);
 
     const tambahFollowUp = (e) => {
         e.preventDefault();
         if (!catatanFollowUp.trim() || prosesFollowUp) return;
         setProsesFollowUp(true);
-        router.post(route('em.client.follow-up.store', client.id), { catatan: catatanFollowUp }, {
+        router.post(route('em.client.follow-up.store', client.id), {
+            catatan: catatanFollowUp,
+            id_event: eventFollowUp || null,
+            tgl_berikutnya: tglBerikutnya || null,
+        }, {
             preserveScroll: true,
-            onSuccess: () => setCatatanFollowUp(''),
+            onSuccess: () => { setCatatanFollowUp(''); setEventFollowUp(''); setTglBerikutnya(''); },
             onFinish: () => setProsesFollowUp(false),
         });
     };
@@ -199,14 +205,37 @@ export default function EMClientShow({ client, events, pics, kategoris, filters,
                     )}
                 </div>
 
-                <form onSubmit={tambahFollowUp} className="flex flex-col gap-2 sm:flex-row">
+                <form onSubmit={tambahFollowUp} className="space-y-2">
                     <input type="text" value={catatanFollowUp} onChange={(e) => setCatatanFollowUp(e.target.value)} maxLength={2000}
-                        placeholder="Catat hasil follow-up… (mis. sudah di-WA, minta penawaran ulang, follow up lagi Jumat)"
-                        className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none" />
-                    <button type="submit" disabled={prosesFollowUp || !catatanFollowUp.trim()}
-                        className="flex items-center justify-center gap-1 px-4 py-2 text-sm font-bold text-white bg-[#FF2D55] rounded-xl hover:bg-[#e02249] disabled:opacity-50">
-                        <Plus size={14} /> Catat
-                    </button>
+                        placeholder="Catat hasil follow-up… (mis. sudah di-WA, minta revisi penawaran, tunggu keputusan direksi)"
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none" />
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                        <div className="flex-1">
+                            <label className="block mb-1 text-[11px] font-bold text-gray-500">Untuk event / prospek <span className="font-normal text-gray-400">(opsional)</span></label>
+                            <select value={eventFollowUp} onChange={(e) => setEventFollowUp(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none">
+                                <option value="">— Follow-up umum —</option>
+                                {events.map((ev) => (
+                                    <option key={ev.id_event} value={ev.id_event}>
+                                        {ev.nama_event} ({ev.status_event})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="sm:w-52">
+                            <label className="block mb-1 text-[11px] font-bold text-gray-500">Follow-up lagi tanggal <span className="font-normal text-gray-400">(opsional)</span></label>
+                            <input type="date" value={tglBerikutnya} onChange={(e) => setTglBerikutnya(e.target.value)}
+                                min={new Date().toISOString().slice(0, 10)}
+                                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none" />
+                        </div>
+                        <div className="flex items-end">
+                            <button type="submit" disabled={prosesFollowUp || !catatanFollowUp.trim()}
+                                className="flex items-center justify-center w-full gap-1 px-4 py-2 text-sm font-bold text-white bg-[#FF2D55] rounded-xl hover:bg-[#e02249] disabled:opacity-50 sm:w-auto">
+                                <Plus size={14} /> Catat
+                            </button>
+                        </div>
+                    </div>
+                    <p className="text-[11px] text-gray-400">Isi tanggal untuk dapat pengingat otomatis lewat email saat waktunya follow-up lagi.</p>
                 </form>
 
                 {followUps.length > 0 ? (
@@ -214,11 +243,21 @@ export default function EMClientShow({ client, events, pics, kategoris, filters,
                         {followUps.map((f) => (
                             <div key={f.id} className="flex items-start justify-between gap-3 p-3 bg-gray-50 rounded-xl">
                                 <div className="min-w-0">
+                                    {f.event && (
+                                        <span className="inline-block mb-1 px-2 py-0.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-full">
+                                            {f.event.nama_event} · {f.event.status_event}
+                                        </span>
+                                    )}
                                     <p className="text-sm text-gray-800">{f.catatan}</p>
                                     <p className="text-[11px] text-gray-400 mt-0.5">
                                         {new Date(f.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                         {f.pegawai?.nama_pegawai ? ` · ${f.pegawai.nama_pegawai}` : ''}
                                     </p>
+                                    {f.tgl_berikutnya && (
+                                        <p className="text-[11px] font-bold text-[#FF2D55] mt-0.5">
+                                            ⏰ Follow-up lagi: {new Date(f.tgl_berikutnya).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </p>
+                                    )}
                                 </div>
                                 <button onClick={() => hapusFollowUp(f.id)} className="p-1 text-gray-300 hover:text-red-500 shrink-0" title="Hapus">
                                     <Trash2 size={14} />

@@ -226,3 +226,46 @@ Schedule::call(function () {
         }
     }
 })->dailyAt('07:30')->name('tugas-deadline')->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Pengingat Follow-up Klien — jalan setiap hari jam 08:00
+| Catatan follow-up yang dijadwalkan ulang (tgl_berikutnya) mengingatkan
+| pegawai yang mencatatnya. Flag reminder_terkirim memastikan sekali kirim
+| saja, dan tetap terkirim walau schedulernya sempat tidak jalan sehari.
+|--------------------------------------------------------------------------
+*/
+Schedule::call(function () {
+    $daftar = \App\Models\ClientFollowUp::with(['pegawai', 'client', 'event'])
+        ->where('reminder_terkirim', false)
+        ->whereNotNull('tgl_berikutnya')
+        ->whereDate('tgl_berikutnya', '<=', now()->toDateString())
+        ->get();
+
+    foreach ($daftar as $f) {
+        $email = $f->pegawai?->email_pegawai;
+        $klien = $f->client?->nama_client ?? 'klien';
+
+        if ($email) {
+            $konteks = $f->event
+                ? " untuk event \"{$f->event->nama_event}\" (tahap {$f->event->status_event})"
+                : '';
+
+            $pesan = "Waktunya follow-up {$klien}{$konteks}.\n\n"
+                   . "Catatan terakhir Anda:\n\"{$f->catatan}\"\n\n"
+                   . ($f->client?->no_telp_client ? "No. WhatsApp: {$f->client->no_telp_client}\n\n" : '')
+                   . "— Sistem Laksamana Muda";
+
+            try {
+                Mail::raw($pesan, function ($m) use ($email, $klien) {
+                    $m->to($email)->subject("🔔 Waktunya follow-up — {$klien}");
+                });
+            } catch (\Exception $e) {
+                \Log::warning('Email pengingat follow-up gagal: ' . $e->getMessage());
+            }
+        }
+
+        // Tandai terkirim walau email gagal, agar tidak menumpuk percobaan tiap hari.
+        $f->update(['reminder_terkirim' => true]);
+    }
+})->dailyAt('08:00')->name('followup-reminder')->withoutOverlapping();
