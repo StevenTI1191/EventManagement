@@ -151,6 +151,31 @@ class InvoiceController extends Controller
         return back()->with('success', $pesan);
     }
 
+    /**
+     * Ubah nominal, jatuh tempo, atau keterangan invoice yang belum lunas.
+     * Invoice yang sudah Lunas tidak bisa diubah agar riwayat pembayaran konsisten.
+     */
+    public function update(Request $request, $id_invoice)
+    {
+        $this->checkFinance();
+
+        $invoice = Invoice::findOrFail($id_invoice);
+
+        if ($invoice->status === Invoice::STATUS_LUNAS) {
+            return back()->with('error', 'Invoice yang sudah lunas tidak bisa diubah.');
+        }
+
+        $data = $request->validate([
+            'nominal'         => 'required|numeric|min:1|max:9999999999999',
+            'tgl_jatuh_tempo' => 'required|date',
+            'keterangan'      => 'nullable|string|max:500',
+        ]);
+
+        $invoice->update($data);
+
+        return back()->with('success', 'Invoice berhasil diperbarui.');
+    }
+
     /** Susun PDF invoice dari data invoice. */
     private function pdfInvoice(Invoice $invoice)
     {

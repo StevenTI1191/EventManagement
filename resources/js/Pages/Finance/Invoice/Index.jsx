@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import FinanceLayout from '@/Layouts/FinanceLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Receipt, FileDown, MessageCircle, CheckCircle2, Building2, CalendarDays, Plus } from 'lucide-react';
+import { Receipt, FileDown, MessageCircle, CheckCircle2, Building2, CalendarDays, Plus, Pencil, X } from 'lucide-react';
 
 const rupiah = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
 const tanggal = (d) =>
@@ -29,6 +29,28 @@ export default function FinanceInvoiceIndex({ events = [] }) {
     };
 
     const cariInvoice = (ev, tipe) => (ev.invoices || []).find((i) => i.tipe === tipe);
+
+    const [editInv, setEditInv] = useState(null); // invoice yang sedang diedit
+    const [editForm, setEditForm] = useState({ nominal: '', tgl_jatuh_tempo: '', keterangan: '' });
+
+    const bukaEdit = (inv) => {
+        setEditForm({
+            nominal: inv.nominal ?? '',
+            tgl_jatuh_tempo: (inv.tgl_jatuh_tempo || '').slice(0, 10),
+            keterangan: inv.keterangan ?? '',
+        });
+        setEditInv(inv);
+    };
+
+    const simpanEdit = () => {
+        if (proses) return;
+        setProses(`edit-${editInv.id_invoice}`);
+        router.put(route('finance.invoice.update', editInv.id_invoice), editForm, {
+            preserveScroll: true,
+            onSuccess: () => setEditInv(null),
+            onFinish: () => setProses(null),
+        });
+    };
 
     return (
         <FinanceLayout>
@@ -129,11 +151,17 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                                                         </span>
                                                     )}
                                                     {t.inv.status !== 'Lunas' && (
-                                                        <button onClick={() => tandaiLunas(t.inv.id_invoice)}
-                                                                disabled={proses === `lunas-${t.inv.id_invoice}`}
-                                                                className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold text-white bg-[#FF2D55] rounded-lg hover:bg-[#e02249] disabled:opacity-60">
-                                                            <CheckCircle2 size={12} /> Tandai Lunas
-                                                        </button>
+                                                        <>
+                                                            <button onClick={() => bukaEdit(t.inv)}
+                                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                                                <Pencil size={12} /> Edit
+                                                            </button>
+                                                            <button onClick={() => tandaiLunas(t.inv.id_invoice)}
+                                                                    disabled={proses === `lunas-${t.inv.id_invoice}`}
+                                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold text-white bg-[#FF2D55] rounded-lg hover:bg-[#e02249] disabled:opacity-60">
+                                                                <CheckCircle2 size={12} /> Tandai Lunas
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </div>
                                             </>
@@ -154,6 +182,47 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                     );
                 })}
             </div>
+
+            {/* Modal edit invoice */}
+            {editInv && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                     onClick={() => proses || setEditInv(null)}>
+                    <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Pencil size={18} className="text-[#FF2D55]" />
+                                <h3 className="text-lg font-extrabold text-gray-900">Edit Invoice {editInv.tipe}</h3>
+                            </div>
+                            <button onClick={() => setEditInv(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                        </div>
+                        <p className="mb-4 text-xs text-gray-400">No. {editInv.nomor_invoice}</p>
+
+                        <label className="block mb-1 text-xs font-bold text-gray-600">Nominal (Rp)</label>
+                        <input type="number" min="1" value={editForm.nominal}
+                               onChange={(e) => setEditForm({ ...editForm, nominal: e.target.value })}
+                               className="w-full p-3 mb-4 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none" />
+
+                        <label className="block mb-1 text-xs font-bold text-gray-600">Jatuh Tempo</label>
+                        <input type="date" value={editForm.tgl_jatuh_tempo}
+                               onChange={(e) => setEditForm({ ...editForm, tgl_jatuh_tempo: e.target.value })}
+                               className="w-full p-3 mb-4 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none" />
+
+                        <label className="block mb-1 text-xs font-bold text-gray-600">Keterangan <span className="font-normal text-gray-400">(opsional)</span></label>
+                        <input type="text" maxLength={500} value={editForm.keterangan}
+                               onChange={(e) => setEditForm({ ...editForm, keterangan: e.target.value })}
+                               className="w-full p-3 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none" />
+
+                        <div className="flex justify-end gap-2 mt-5">
+                            <button onClick={() => setEditInv(null)} disabled={!!proses}
+                                    className="px-4 py-2 text-sm font-bold text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-60">Batal</button>
+                            <button onClick={simpanEdit} disabled={!!proses}
+                                    className="px-4 py-2 text-sm font-bold text-white bg-[#FF2D55] rounded-xl hover:bg-[#e02249] disabled:opacity-60">
+                                {proses === `edit-${editInv.id_invoice}` ? 'Menyimpan…' : 'Simpan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </FinanceLayout>
     );
 }

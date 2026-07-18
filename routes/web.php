@@ -377,6 +377,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_event')->name('finance.invoice.store');
         Route::get('/finance/invoice/{id_invoice}/pdf', [\App\Http\Controllers\Finance\InvoiceController::class, 'download'])
             ->whereNumber('id_invoice')->name('finance.invoice.pdf');
+        Route::put('/finance/invoice/{id_invoice}', [\App\Http\Controllers\Finance\InvoiceController::class, 'update'])
+            ->whereNumber('id_invoice')->name('finance.invoice.update');
         Route::patch('/finance/invoice/{id_invoice}/lunas', [\App\Http\Controllers\Finance\InvoiceController::class, 'lunas'])
             ->whereNumber('id_invoice')->name('finance.invoice.lunas');
 
