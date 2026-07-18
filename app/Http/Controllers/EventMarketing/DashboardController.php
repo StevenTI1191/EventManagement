@@ -18,7 +18,7 @@ class DashboardController extends Controller
         $this->checkEventMarketing();
 
         $totalEvent  = Event::terkonfirmasi()->count();
-        $eventActive = Event::where('status_event', 'Upcoming')->count();
+        $eventActive = Event::whereIn('status_event', [Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])->count();
         $eventDone   = Event::where('status_event', 'Done')->count();
         $recentEvents = Event::terkonfirmasi()->latest()->take(5)->get();
 

@@ -34,7 +34,9 @@ class InvoiceController extends Controller
         $this->checkFinance();
 
         $events = Event::eksternal()
-            ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING])
+            // Penyelesaian ikut: acara sudah lewat tapi sering justru di situlah
+            // pelunasan belum beres — jangan sampai hilang dari halaman Invoice.
+            ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
             ->with(['client:id,nama_client,perusahaan_client,no_telp_client', 'invoices'])
             ->orderByDesc('updated_at')
             ->get()

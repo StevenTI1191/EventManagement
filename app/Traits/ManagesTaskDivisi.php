@@ -21,7 +21,8 @@ trait ManagesTaskDivisi
                 'tugas as done_tugas' => fn ($q) => $q->where('status_tugas', 'Done'),
             ])
             ->withAvg('tugas as avg_progress', 'progress')
-            ->orderByRaw("FIELD(status_event, 'Upcoming', 'Planning')")
+            // Penyelesaian paling atas: acara sudah lewat, sisa pekerjaannya paling mendesak.
+            ->orderByRaw("FIELD(status_event, 'Penyelesaian', 'Upcoming', 'Planning')")
             ->orderBy('tgl_mulai_event')
             ->get()
             ->map(fn (Event $e) => [
