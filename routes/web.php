@@ -349,6 +349,10 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         Route::get('/event-marketing/client/{id}/edit', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'edit'])->name('em.client.edit');
         Route::put('/event-marketing/client/{id}', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'update'])->name('em.client.update');
         Route::delete('/event-marketing/client/{id}', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'destroy'])->name('em.client.destroy');
+        Route::post('/event-marketing/client/{id}/follow-up', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'storeFollowUp'])
+            ->whereNumber('id')->name('em.client.follow-up.store');
+        Route::delete('/event-marketing/client/{id}/follow-up/{followUpId}', [\App\Http\Controllers\EventMarketing\ClientViewController::class, 'destroyFollowUp'])
+            ->whereNumber('id')->whereNumber('followUpId')->name('em.client.follow-up.destroy');
         // --- ROLE: FINANCE ---
         Route::get('/finance/dashboard', [\App\Http\Controllers\Finance\DashboardController::class, 'index'])
             ->name('finance.dashboard');

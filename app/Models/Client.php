@@ -60,6 +60,11 @@ class Client extends Authenticatable
     {
         return $this->hasMany(\App\Models\Appointment::class, 'client_id');
     }
+    public function followUps()
+    {
+        return $this->hasMany(ClientFollowUp::class, 'id_client', 'id');
+    }
+
     public function buktiPembayaran()
     {
         return $this->hasMany(BuktiPembayaran::class, 'client_id');

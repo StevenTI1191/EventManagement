@@ -82,13 +82,59 @@ class ClientViewController extends Controller
         // Scope ke client ini — jangan expose kategori event milik client lain
         $kategoris = Event::where('id_client', $id)->distinct()->pluck('kategori_event')->filter()->values();
 
+        // Log follow-up (terbaru dulu) + link WhatsApp siap-pakai untuk follow-up.
+        $followUps = $client->followUps()
+            ->with('pegawai:id_pegawai,nama_pegawai')
+            ->latest()
+            ->take(100)
+            ->get();
+
+        $waFollowUp = \App\Support\Wa::link(
+            $client->no_telp_client,
+            "Halo {$client->nama_client}, dari tim Laksamana Muda. Kami ingin menindaklanjuti kebutuhan acara Anda. Apakah ada yang bisa kami bantu?"
+        );
+
         return Inertia::render('EventMarketing/Client/Show', [
-            'client'   => $client,
-            'events'   => $events,
-            'pics'     => $pics,
+            'client'    => $client,
+            'events'    => $events,
+            'pics'      => $pics,
             'kategoris' => $kategoris,
-            'filters'  => request()->only(['tgl_awal', 'tgl_akhir', 'kategori', 'pic', 'search']),
+            'followUps' => $followUps,
+            'waFollowUp'=> $waFollowUp,
+            'filters'   => request()->only(['tgl_awal', 'tgl_akhir', 'kategori', 'pic', 'search']),
         ]);
+    }
+
+    /** Tambah satu catatan follow-up untuk client. */
+    public function storeFollowUp(Request $request, $id)
+    {
+        $this->checkEventMarketing();
+
+        $data = $request->validate([
+            'catatan' => 'required|string|max:2000',
+        ]);
+
+        $client = Client::findOrFail($id);
+
+        $client->followUps()->create([
+            'id_pegawai' => Auth::guard('pegawai')->id(),
+            'catatan'    => $data['catatan'],
+        ]);
+
+        return back()->with('success', 'Catatan follow-up tersimpan.');
+    }
+
+    /** Hapus satu catatan follow-up. */
+    public function destroyFollowUp($id, $followUpId)
+    {
+        $this->checkEventMarketing();
+
+        \App\Models\ClientFollowUp::where('id_client', $id)
+            ->where('id', $followUpId)
+            ->firstOrFail()
+            ->delete();
+
+        return back()->with('success', 'Catatan follow-up dihapus.');
     }
 
     public function create()

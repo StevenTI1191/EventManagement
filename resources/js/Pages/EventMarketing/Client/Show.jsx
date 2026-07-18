@@ -1,9 +1,27 @@
 import EventMarketingLayout from '@/Layouts/EventMarketingLayout';
 import { Head, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
-import { ChevronLeft, Search, Download, X } from 'lucide-react';
+import { ChevronLeft, Search, Download, X, MessageCircle, Plus, Trash2 } from 'lucide-react';
 
-export default function EMClientShow({ client, events, pics, kategoris, filters }) {
+export default function EMClientShow({ client, events, pics, kategoris, filters, followUps = [], waFollowUp }) {
+    const [catatanFollowUp, setCatatanFollowUp] = useState('');
+    const [prosesFollowUp, setProsesFollowUp] = useState(false);
+
+    const tambahFollowUp = (e) => {
+        e.preventDefault();
+        if (!catatanFollowUp.trim() || prosesFollowUp) return;
+        setProsesFollowUp(true);
+        router.post(route('em.client.follow-up.store', client.id), { catatan: catatanFollowUp }, {
+            preserveScroll: true,
+            onSuccess: () => setCatatanFollowUp(''),
+            onFinish: () => setProsesFollowUp(false),
+        });
+    };
+
+    const hapusFollowUp = (followUpId) => {
+        router.delete(route('em.client.follow-up.destroy', [client.id, followUpId]), { preserveScroll: true });
+    };
+
     const [form, setForm] = useState({
         tgl_awal: filters?.tgl_awal || '',
         tgl_akhir: filters?.tgl_akhir || '',
@@ -157,6 +175,60 @@ export default function EMClientShow({ client, events, pics, kategoris, filters 
                         Kembali
                     </Link>
                 </div>
+            </div>
+
+            {/* Follow-up klien */}
+            <div className="p-5 mb-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h2 className="font-extrabold text-gray-900">Follow-up{client.nama_client ? ` — ${client.nama_client}` : ''}</h2>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                            {client.no_telp_client ? client.no_telp_client : 'Nomor WhatsApp belum diisi'}
+                            {client.sumber === 'Internal' && <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 rounded-full">Di-approach tim</span>}
+                        </p>
+                    </div>
+                    {waFollowUp ? (
+                        <a href={waFollowUp} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100">
+                            <MessageCircle size={15} /> Follow-up via WhatsApp
+                        </a>
+                    ) : (
+                        <span className="px-4 py-2 text-sm font-bold text-gray-400 bg-gray-50 rounded-xl" title="Nomor WhatsApp klien belum diisi">
+                            No. WA kosong
+                        </span>
+                    )}
+                </div>
+
+                <form onSubmit={tambahFollowUp} className="flex flex-col gap-2 sm:flex-row">
+                    <input type="text" value={catatanFollowUp} onChange={(e) => setCatatanFollowUp(e.target.value)} maxLength={2000}
+                        placeholder="Catat hasil follow-up… (mis. sudah di-WA, minta penawaran ulang, follow up lagi Jumat)"
+                        className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none" />
+                    <button type="submit" disabled={prosesFollowUp || !catatanFollowUp.trim()}
+                        className="flex items-center justify-center gap-1 px-4 py-2 text-sm font-bold text-white bg-[#FF2D55] rounded-xl hover:bg-[#e02249] disabled:opacity-50">
+                        <Plus size={14} /> Catat
+                    </button>
+                </form>
+
+                {followUps.length > 0 ? (
+                    <div className="mt-4 space-y-2">
+                        {followUps.map((f) => (
+                            <div key={f.id} className="flex items-start justify-between gap-3 p-3 bg-gray-50 rounded-xl">
+                                <div className="min-w-0">
+                                    <p className="text-sm text-gray-800">{f.catatan}</p>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">
+                                        {new Date(f.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        {f.pegawai?.nama_pegawai ? ` · ${f.pegawai.nama_pegawai}` : ''}
+                                    </p>
+                                </div>
+                                <button onClick={() => hapusFollowUp(f.id)} className="p-1 text-gray-300 hover:text-red-500 shrink-0" title="Hapus">
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="mt-4 text-sm text-center text-gray-400">Belum ada catatan follow-up.</p>
+                )}
             </div>
 
             <div className="p-5 mb-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
