@@ -15,6 +15,7 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
         status_event: 'Upcoming',
         is_public: false,
         tgl_mulai_event: '',
+        tgl_selesai_event: '',
         jam_mulai: '09:00',
         jam_selesai: '13:00',
         area_event: 'Lantai 1',
@@ -184,10 +185,21 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
                             </div>
 
                             <div>
-                                <label className="block mb-1 text-sm font-bold text-gray-700">Tanggal Event</label>
+                                <label className="block mb-1 text-sm font-bold text-gray-700">Tanggal Mulai</label>
                                 <input type="date" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
                                     value={data.tgl_mulai_event} onChange={e => setData('tgl_mulai_event', e.target.value)} />
                                 {errors.tgl_mulai_event && <span className="text-xs text-red-500">{errors.tgl_mulai_event}</span>}
+
+                                <label className="block mt-4 mb-1 text-sm font-bold text-gray-700">
+                                    Tanggal Selesai <span className="font-normal text-gray-400">— isi bila acara lebih dari 1 hari</span>
+                                </label>
+                                <input type="date" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                    min={data.tgl_mulai_event || undefined}
+                                    value={data.tgl_selesai_event} onChange={e => setData('tgl_selesai_event', e.target.value)} />
+                                <p className="mt-1 text-xs text-gray-400">
+                                    Kosongkan untuk acara satu hari. Jam mulai &amp; selesai di bawah berlaku sebagai waktu acara.
+                                </p>
+                                {errors.tgl_selesai_event && <span className="text-xs text-red-500">{errors.tgl_selesai_event}</span>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

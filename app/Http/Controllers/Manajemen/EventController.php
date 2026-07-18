@@ -19,7 +19,7 @@ class EventController extends Controller
         $request->validate([
             'tgl_awal'   => 'nullable|date',
             'tgl_akhir'  => 'nullable|date|after_or_equal:tgl_awal',
-            'status'     => 'nullable|in:Upcoming,Done',
+            'status'     => 'nullable|in:Upcoming,Penyelesaian,Done',
             'kategori'   => 'nullable|string|max:255',
             'id_client'  => 'nullable|integer|min:1',
             'id_pegawai' => 'nullable|integer|min:1',
@@ -88,7 +88,7 @@ class EventController extends Controller
             'area_event'        => 'required|string|max:255',
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
-            'status_event'      => 'nullable|in:Upcoming,Done',
+            'status_event'      => 'nullable|in:Upcoming,Penyelesaian,Done',
             'is_public'         => 'nullable|boolean',
             'poster_event'      => 'nullable|file|image|max:10240',
             'kontrak_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
@@ -99,7 +99,9 @@ class EventController extends Controller
             $request->tgl_mulai_event,
             $request->jam_mulai,
             $request->jam_selesai,
-            $request->area_event
+            $request->area_event,
+            null,
+            $request->tgl_selesai_event
         );
 
         if ($bentrok) {
@@ -188,7 +190,7 @@ class EventController extends Controller
             'area_event'        => 'required|string|max:255',
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
-            'status_event'      => 'nullable|in:Upcoming,Done',
+            'status_event'      => 'nullable|in:Upcoming,Penyelesaian,Done',
             'is_public'         => 'nullable|boolean',
             'poster_event'      => 'nullable|file|image|max:10240',
             'kontrak_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
@@ -200,7 +202,8 @@ class EventController extends Controller
             $request->jam_mulai,
             $request->jam_selesai,
             $request->area_event,
-            $id
+            $id,
+            $request->tgl_selesai_event
         );
 
         if ($bentrok) {

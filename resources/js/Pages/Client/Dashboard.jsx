@@ -133,6 +133,7 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
     const getEventStatusColor = (status) => {
         if (status === 'Deal')      return 'bg-gold-soft text-gold-dim border-gold-2';
         if (status === 'Upcoming')    return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+        if (status === 'Penyelesaian') return 'bg-warn-bg text-warn border-warn/30';
         if (status === 'Done')      return 'bg-green-500/20 text-green-300 border-ok/30';
         if (status === 'Pending')   return 'bg-gold-soft text-gold border-gold-2';
         if (status === 'Cancelled') return 'bg-red-500/20 text-red-300 border-danger/30';
@@ -142,6 +143,7 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
     const getEventStatusLabel = (status) => {
         if (status === 'Deal')      return 'Menunggu DP';
         if (status === 'Upcoming')    return 'Upcoming';
+        if (status === 'Penyelesaian') return 'Sedang dituntaskan';
         if (status === 'Done')      return 'Selesai';
         if (status === 'Pending')   return 'Pending';
         if (status === 'Cancelled') return 'Dibatalkan';

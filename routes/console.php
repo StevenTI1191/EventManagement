@@ -81,17 +81,61 @@ Schedule::call(function () {
 |--------------------------------------------------------------------------
 */
 Schedule::call(function () {
-    $hariIni = now()->toDateString();
+    // Jeda 1 hari setelah acara berakhir: beri waktu bongkar & konfirmasi
+    // lapangan sebelum sistem menyimpulkan apa pun.
+    $batas = now()->subDay()->toDateString();
 
-    $selesai = Event::where('status_event', Event::STATUS_UPCOMING)
-        ->whereRaw('COALESCE(tgl_selesai_event, tgl_mulai_event) < ?', [$hariIni])
+    $lewat = Event::with('pic')
+        ->whereIn('status_event', [Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
+        ->whereRaw('COALESCE(tgl_selesai_event, tgl_mulai_event) < ?', [$batas])
         ->get();
 
-    foreach ($selesai as $event) {
-        $event->update(['status_event' => Event::STATUS_DONE]);
+    foreach ($lewat as $event) {
+        $tugasTuntas = $event->tugasTuntas();
+        $lunas       = $event->pembayaranLunas();
+        $tglAkhir    = $event->tgl_selesai_event ?? $event->tgl_mulai_event;
 
-        $tglAkhir = $event->tgl_selesai_event ?? $event->tgl_mulai_event;
-        \Log::info("Event auto-Done: {$event->nama_event} (berakhir {$tglAkhir}).");
+        // Benar-benar kelar → baru ditutup.
+        if ($tugasTuntas && $lunas) {
+            $event->update(['status_event' => Event::STATUS_DONE]);
+            \Log::info("Event auto-Done: {$event->nama_event} (berakhir {$tglAkhir}, tugas & pembayaran tuntas).");
+            continue;
+        }
+
+        // Belum tuntas → masuk/tetap di Penyelesaian, JANGAN ditutup.
+        $baruMasuk = $event->status_event !== Event::STATUS_PENYELESAIAN;
+        if ($baruMasuk) {
+            $event->update(['status_event' => Event::STATUS_PENYELESAIAN]);
+        }
+
+        $sisaTugas = $event->tugas()->where('status_tugas', '!=', 'Done')->count();
+        $kurang    = [];
+        if (! $tugasTuntas) $kurang[] = "{$sisaTugas} tugas belum selesai";
+        if (! $lunas)       $kurang[] = 'pembayaran belum lunas';
+
+        \Log::info("Event masuk Penyelesaian: {$event->nama_event} — " . implode(', ', $kurang) . '.');
+
+        // Beri tahu PIC sekali saat pertama masuk Penyelesaian, dan ulangi tiap
+        // 7 hari selama masih menggantung agar tidak terlupakan.
+        $hariLewat = (int) \Illuminate\Support\Carbon::parse($tglAkhir)->diffInDays(now());
+        if ($baruMasuk || $hariLewat % 7 === 0) {
+            if ($email = $event->pic?->email_pegawai) {
+                $pesan = "Acara \"{$event->nama_event}\" sudah berakhir pada "
+                       . \Illuminate\Support\Carbon::parse($tglAkhir)->translatedFormat('d F Y')
+                       . ", tetapi belum bisa ditutup karena: " . implode(' dan ', $kurang) . ".\n\n"
+                       . "Event ditandai PENYELESAIAN — masih tampil di To-Do-List dan jadwalnya "
+                       . "belum dilepas. Mohon dituntaskan; setelah semuanya beres, event otomatis "
+                       . "berstatus Done.\n\n— Sistem Laksamana Muda";
+
+                try {
+                    Mail::raw($pesan, function ($m) use ($email, $event) {
+                        $m->to($email)->subject("🔧 Belum tuntas — {$event->nama_event}");
+                    });
+                } catch (\Exception $e) {
+                    \Log::warning('Email event penyelesaian gagal: ' . $e->getMessage());
+                }
+            }
+        }
     }
 })->dailyAt('02:00')->name('event-auto-done')->withoutOverlapping();
 

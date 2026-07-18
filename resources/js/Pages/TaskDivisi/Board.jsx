@@ -97,6 +97,14 @@ export default function TaskDivisiBoard({ Layout, events = [], routes = {} }) {
                                     </span>
                                 </div>
 
+                                {/* Acara sudah lewat tapi belum tuntas — jangan sampai luput dari radar */}
+                                {e.status_event === 'Penyelesaian' && (
+                                    <div className="flex items-start gap-1.5 px-2.5 py-1.5 mb-3 text-[11px] font-bold border rounded-lg text-amber-700 bg-amber-50 border-amber-200">
+                                        <span>⚠️</span>
+                                        <span>Acara sudah lewat — masih ada yang perlu dituntaskan</span>
+                                    </div>
+                                )}
+
                                 <div className="space-y-1.5 text-xs text-gray-500 mb-4">
                                     {!internal && (
                                         <p className="flex items-center gap-1.5">

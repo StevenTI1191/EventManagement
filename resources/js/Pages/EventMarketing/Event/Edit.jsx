@@ -17,6 +17,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
         status_event:         event.status_event || 'Upcoming',
         is_public:            event.is_public ?? false,
         tgl_mulai_event:      event.tgl_mulai_event || '',
+        tgl_selesai_event:    event.tgl_selesai_event || '',
         jam_mulai:            event.jam_mulai || '09:00',
         jam_selesai:          event.jam_selesai || '13:00',
         area_event:           event.area_event || 'Lantai 1',
@@ -134,9 +135,17 @@ export default function Edit({ auth, event, clients, pegawais }) {
                             </div>
 
                             <div>
-                                <label className="block mb-1 text-sm font-bold text-gray-700">Tanggal Event</label>
+                                <label className="block mb-1 text-sm font-bold text-gray-700">Tanggal Mulai</label>
                                 <input type="date" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
                                     value={data.tgl_mulai_event} onChange={e => setData('tgl_mulai_event', e.target.value)} />
+
+                                <label className="block mt-4 mb-1 text-sm font-bold text-gray-700">
+                                    Tanggal Selesai <span className="font-normal text-gray-400">— isi bila acara lebih dari 1 hari</span>
+                                </label>
+                                <input type="date" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                    min={data.tgl_mulai_event || undefined}
+                                    value={data.tgl_selesai_event} onChange={e => setData('tgl_selesai_event', e.target.value)} />
+                                {errors.tgl_selesai_event && <span className="text-xs text-red-500">{errors.tgl_selesai_event}</span>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

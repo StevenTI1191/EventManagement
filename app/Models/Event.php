@@ -68,6 +68,12 @@ class Event extends Model
     public const STATUS_DEAL        = 'Deal';
     // Event INTERNAL: Planning -> (finalisasi) -> Upcoming -> Done
     public const STATUS_PLANNING    = 'Planning';
+    /**
+     * Acara sudah berlangsung/lewat tanggalnya, tetapi belum tuntas — masih ada
+     * tugas divisi berjalan (mis. bongkar) atau pelunasan belum masuk. Dibedakan
+     * dari Upcoming (belum terjadi) maupun Done (benar-benar kelar).
+     */
+    public const STATUS_PENYELESAIAN = 'Penyelesaian';
     public const STATUS_UPCOMING    = 'Upcoming';
     public const STATUS_DONE        = 'Done';
 
@@ -98,10 +104,10 @@ class Event extends Model
      * dan Task Divisi. Planning (draft internal) dan pipeline (Lead/Negotiation/Deal)
      * sengaja dikecualikan agar calon event tidak bocor ke halaman operasional.
      */
-    public function scopeTerkonfirmasi($q) { return $q->whereIn('status_event', [self::STATUS_UPCOMING, self::STATUS_DONE]); }
+    public function scopeTerkonfirmasi($q) { return $q->whereIn('status_event', [self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE]); }
 
     /** Event yang sudah masuk ranah Finance — mulai dari Deal (proses DP 50%). */
-    public function scopeUntukFinance($q) { return $q->whereIn('status_event', [self::STATUS_DEAL, self::STATUS_UPCOMING, self::STATUS_DONE]); }
+    public function scopeUntukFinance($q) { return $q->whereIn('status_event', [self::STATUS_DEAL, self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE]); }
 
     /**
      * Event yang butuh dikerjakan divisi (papan Task Divisi): event internal yang
@@ -111,12 +117,29 @@ class Event extends Model
     public function scopeTaskDivisi($q)
     {
         return $q->where(function ($w) {
-            $w->where('status_event', self::STATUS_UPCOMING)
+            // Penyelesaian ikut tampil: acara sudah lewat tapi pekerjaan divisi
+            // belum kelar — jangan sampai sisa pekerjaan hilang dari papan.
+            $w->whereIn('status_event', [self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN])
               ->orWhere(function ($i) {
                   $i->where('tipe_event', self::TIPE_INTERNAL)
                     ->where('status_event', self::STATUS_PLANNING);
               });
         });
+    }
+
+    /** Semua tugas event ini sudah Done (dipakai untuk menutup event). */
+    public function tugasTuntas(): bool
+    {
+        return ! $this->tugas()->where('status_tugas', '!=', 'Done')->exists();
+    }
+
+    /** Pembayaran sudah menutup nilai kesepakatan. */
+    public function pembayaranLunas(): bool
+    {
+        $deal = (float) ($this->deal_harga_event ?? 0);
+
+        return $deal <= 0
+            || (float) $this->transaksis()->sum('nominal') >= $deal;
     }
 
     public function invoices()
@@ -138,15 +161,46 @@ class Event extends Model
         // 'id_pegawai' adalah foreign key di tabel events
         return $this->belongsTo(Pegawai::class, 'id_pegawai');
     }
-    public static function checkBentrok($tgl, $jam_mulai, $jam_selesai, $area, $exclude_id = null): ?self
+    /**
+     * Jeda wajib (menit) sebelum & sesudah acara di area yang sama, untuk
+     * setup dan bongkar. Mencegah dua acara dijadwalkan mepet sehingga
+     * mustahil dikerjakan tim di lapangan.
+     */
+    public const BUFFER_JADWAL_MENIT = 180;
+
+    /**
+     * Cek bentrok jadwal pada satu area.
+     *
+     * Memperhitungkan acara MULTI-HARI (tgl_selesai_event) — bukan hanya tanggal
+     * mulai — dan menambahkan buffer setup/bongkar di kedua ujung rentang.
+     * Dua acara dianggap bentrok bila rentang waktunya (plus buffer) beririsan.
+     *
+     * Event Done & Batal dikecualikan: jadwalnya dilepas agar slot bisa dipakai
+     * lagi. Penyelesaian TETAP memblokir karena tim mungkin masih di lokasi.
+     */
+    public static function checkBentrok($tgl, $jam_mulai, $jam_selesai, $area, $exclude_id = null, $tgl_selesai = null): ?self
     {
-        $query = self::where('tgl_mulai_event', $tgl)
-            ->where('area_event', $area)
-            ->where('jam_mulai', '<', $jam_selesai)
-            ->where('jam_selesai', '>', $jam_mulai)
-            // Event selesai tidak dihitung bentrok. Begitu pula prospek yang tidak
-            // jadi — jadwalnya harus dilepas agar tanggal & area bisa dipakai lagi.
-            ->whereNotIn('status_event', [self::STATUS_DONE, self::STATUS_BATAL]);
+        $mulai   = \Illuminate\Support\Carbon::parse($tgl . ' ' . $jam_mulai);
+        $selesai = \Illuminate\Support\Carbon::parse(($tgl_selesai ?: $tgl) . ' ' . $jam_selesai);
+
+        // Acara lintas tengah malam (mis. 20:00–02:00) — akhir dianggap besoknya.
+        if ($selesai->lessThanOrEqualTo($mulai)) {
+            $selesai->addDay();
+        }
+
+        $batasAwal  = $mulai->copy()->subMinutes(self::BUFFER_JADWAL_MENIT);
+        $batasAkhir = $selesai->copy()->addMinutes(self::BUFFER_JADWAL_MENIT);
+
+        $query = self::where('area_event', $area)
+            ->whereNotIn('status_event', [self::STATUS_DONE, self::STATUS_BATAL])
+            ->whereRaw(
+                "CAST(CONCAT(tgl_mulai_event, ' ', jam_mulai) AS DATETIME) < ?",
+                [$batasAkhir->toDateTimeString()]
+            )
+            ->whereRaw(
+                "CAST(CONCAT(COALESCE(tgl_selesai_event, tgl_mulai_event), ' ', jam_selesai) AS DATETIME) > ?",
+                [$batasAwal->toDateTimeString()]
+            );
 
         if ($exclude_id) {
             $query->where('id_event', '!=', $exclude_id);
