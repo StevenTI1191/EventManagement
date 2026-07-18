@@ -6,7 +6,7 @@ import {
     Plus, Calendar, Clock, CheckCircle, XCircle,
     AlertCircle, LogOut, Home, Upload, FileText,
     ChevronDown, ChevronUp, X, Eye, Bell, Trash2, CheckCheck,
-    User, Timer, Download
+    User, Timer, Download, Music, Utensils
 } from 'lucide-react';
 
 export default function ClientDashboard({ appointments, events, totalAppointments, totalEvents }) {
@@ -864,7 +864,7 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                             <div className="col-span-full bg-surface border border-line rounded-2xl p-5">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <h4 className="text-sm font-extrabold text-ink">
-                                                        Riwayat Bukti Pembayaran
+                                                        Detail Acara &amp; Pembayaran
                                                         <span className="ml-2 text-xs font-normal text-muted">— {event.nama_event}</span>
                                                     </h4>
                                                     <button onClick={() => setExpandedEvent(null)}
@@ -872,6 +872,44 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                         <X size={16} />
                                                     </button>
                                                 </div>
+
+                                                {/* Detail acara lengkap */}
+                                                {(event.deskripsi_event || event.entairtainment_event || event.food_beverage_event || event.technical_meeting || event.gladi_resik) && (
+                                                    <div className="mb-4 space-y-3">
+                                                        {event.deskripsi_event && (
+                                                            <div>
+                                                                <p className="text-[10px] font-black text-gold uppercase tracking-wider mb-1">Tentang Acara</p>
+                                                                <p className="text-sm text-muted leading-relaxed whitespace-pre-line">{event.deskripsi_event}</p>
+                                                            </div>
+                                                        )}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                            {event.entairtainment_event && (
+                                                                <div className="flex items-start gap-2 p-3 bg-paper rounded-xl">
+                                                                    <Music size={14} className="text-gold mt-0.5 shrink-0" />
+                                                                    <div className="min-w-0"><p className="text-[10px] font-black text-gold-dim">Entertainment</p><p className="text-xs text-muted">{event.entairtainment_event}</p></div>
+                                                                </div>
+                                                            )}
+                                                            {event.food_beverage_event && (
+                                                                <div className="flex items-start gap-2 p-3 bg-paper rounded-xl">
+                                                                    <Utensils size={14} className="text-gold mt-0.5 shrink-0" />
+                                                                    <div className="min-w-0"><p className="text-[10px] font-black text-gold-dim">Food &amp; Beverage</p><p className="text-xs text-muted">{event.food_beverage_event}</p></div>
+                                                                </div>
+                                                            )}
+                                                            {event.technical_meeting && (
+                                                                <div className="flex items-start gap-2 p-3 bg-paper rounded-xl">
+                                                                    <Calendar size={14} className="text-gold mt-0.5 shrink-0" />
+                                                                    <div className="min-w-0"><p className="text-[10px] font-black text-gold-dim">Technical Meeting</p><p className="text-xs text-muted">{event.technical_meeting}</p></div>
+                                                                </div>
+                                                            )}
+                                                            {event.gladi_resik && (
+                                                                <div className="flex items-start gap-2 p-3 bg-paper rounded-xl">
+                                                                    <Calendar size={14} className="text-gold mt-0.5 shrink-0" />
+                                                                    <div className="min-w-0"><p className="text-[10px] font-black text-gold-dim">Gladi Resik</p><p className="text-xs text-muted">{event.gladi_resik}</p></div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
 
                                                 {/* Detail info row */}
                                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
@@ -1068,7 +1106,12 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                                                                 <p className="text-xs font-bold text-ink truncate">
                                                                     Invoice {inv.tipe} · {formatBudget(inv.nominal)}
                                                                 </p>
-                                                                <p className="text-[10px] text-muted truncate">{inv.nomor_invoice}</p>
+                                                                <p className="text-[10px] text-muted truncate">
+                                                                    {inv.nomor_invoice}
+                                                                    {inv.tgl_jatuh_tempo && inv.status !== 'Lunas' && (
+                                                                        <span className="ml-1 text-orange-400">· jatuh tempo {new Date(inv.tgl_jatuh_tempo).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 flex-shrink-0">
