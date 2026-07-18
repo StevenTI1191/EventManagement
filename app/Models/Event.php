@@ -34,6 +34,8 @@ class Event extends Model
         'technical_meeting',
         'gladi_resik',
         'status_event',
+        'respon_klien',     // Diterima | Ditolak — respon klien atas penawaran
+        'tgl_respon_klien',
         'tipe_event',       // Internal (dari Planning Event) | Eksternal (dari klien)
         'is_public',
         'deal_harga_event',
