@@ -9,7 +9,7 @@ import {
     User, Timer, Download, Music, Utensils
 } from 'lucide-react';
 
-export default function ClientDashboard({ appointments, events, totalAppointments, totalEvents }) {
+export default function ClientDashboard({ appointments, events, penawaran = [], totalAppointments, totalEvents }) {
     const { auth, flash } = usePage().props;
 
     // ── NOTIFIKASI ──────────────────────────────────────────
@@ -79,6 +79,28 @@ export default function ClientDashboard({ appointments, events, totalAppointment
     const [alasanBatal, setAlasanBatal]     = useState('');
     const [deleteBuktiId, setDeleteBuktiId] = useState(null);
     const [deletingBukti, setDeletingBukti] = useState(false);
+    const [tolakModal, setTolakModal]       = useState(null); // event penawaran yang ditolak
+    const [alasanTolak, setAlasanTolak]     = useState('');
+    const [prosesPenawaran, setProsesPenawaran] = useState(null); // id_event yang sedang diproses
+
+    const terimaPenawaran = (id_event) => {
+        if (prosesPenawaran) return;
+        setProsesPenawaran(id_event);
+        router.post(route('client.penawaran.terima', id_event), {}, {
+            preserveScroll: true,
+            onFinish: () => setProsesPenawaran(null),
+        });
+    };
+
+    const submitTolakPenawaran = () => {
+        if (!tolakModal || prosesPenawaran) return;
+        setProsesPenawaran(tolakModal.id_event);
+        router.post(route('client.penawaran.tolak', tolakModal.id_event), { alasan: alasanTolak }, {
+            preserveScroll: true,
+            onSuccess: () => { setTolakModal(null); setAlasanTolak(''); },
+            onFinish: () => setProsesPenawaran(null),
+        });
+    };
 
     const { data, setData, post, processing, reset, errors } = useForm({
         id_event: '',
@@ -521,6 +543,52 @@ export default function ClientDashboard({ appointments, events, totalAppointment
                             </div>
                         );
                     })()}
+
+                    {/* ── PENAWARAN (event tahap Negotiation) ── */}
+                    {penawaran.length > 0 && (
+                        <div className="mb-6 space-y-3">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-lg font-black text-ink">Penawaran untuk Anda</h2>
+                                <span className="px-2 py-0.5 text-[10px] font-black bg-gold text-white rounded-full">{penawaran.length}</span>
+                            </div>
+                            <p className="-mt-1 text-sm text-muted">Tim kami mengirimkan penawaran acara berikut. Tinjau detail &amp; harga, lalu terima atau tolak.</p>
+                            {penawaran.map(p => (
+                                <div key={p.id_event} className="p-5 border-2 shadow-lm bg-surface border-gold-2 rounded-2xl">
+                                    <div className="flex items-start justify-between gap-3 mb-3">
+                                        <div className="min-w-0">
+                                            <h3 className="text-base font-black truncate text-ink">{p.nama_event}</h3>
+                                            {p.kategori_event && <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-black uppercase bg-gold-soft text-gold-dim rounded-full">{p.kategori_event}</span>}
+                                        </div>
+                                        <span className="px-2.5 py-1 text-[10px] font-black text-gold-dim bg-gold-soft border border-gold-2 rounded-full shrink-0">PENAWARAN</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 mb-4 sm:grid-cols-4">
+                                        <div><p className="text-[10px] text-muted uppercase tracking-wider">Tanggal</p><p className="text-sm font-bold text-ink">{formatTanggal(p.tgl_mulai_event)}</p></div>
+                                        <div><p className="text-[10px] text-muted uppercase tracking-wider">Lokasi</p><p className="text-sm font-bold text-ink">{p.area_event || '-'}</p></div>
+                                        <div><p className="text-[10px] text-muted uppercase tracking-wider">Tamu</p><p className="text-sm font-bold text-ink">{p.jumlah_pax ? `${p.jumlah_pax} orang` : '-'}</p></div>
+                                        <div><p className="text-[10px] text-muted uppercase tracking-wider">Total</p><p className="text-sm font-black text-gold-dim">{formatBudget(p.deal_harga_event)}</p></div>
+                                    </div>
+
+                                    {p.deskripsi_event && <p className="mb-4 text-sm leading-relaxed text-muted whitespace-pre-line">{p.deskripsi_event}</p>}
+
+                                    <div className="flex flex-wrap gap-2">
+                                        <a href={route('client.penawaran.pdf', p.id_event)}
+                                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gold-dim bg-gold-soft border border-gold-2 rounded-xl hover:brightness-95 transition-all">
+                                            <Download size={14} /> Lihat Penawaran (PDF)
+                                        </a>
+                                        <button onClick={() => terimaPenawaran(p.id_event)} disabled={prosesPenawaran === p.id_event}
+                                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white rounded-xl bg-gold-grad shadow-gold hover:brightness-110 transition-all disabled:opacity-60">
+                                            <CheckCircle size={14} /> {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Penawaran'}
+                                        </button>
+                                        <button onClick={() => { setAlasanTolak(''); setTolakModal(p); }} disabled={prosesPenawaran === p.id_event}
+                                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-danger bg-danger-bg border border-danger/30 rounded-xl hover:brightness-95 transition-all disabled:opacity-60">
+                                            <XCircle size={14} /> Tolak
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     {/* TAB: APPOINTMENTS */}
                     {activeTab === 'appointments' && (
@@ -1180,6 +1248,44 @@ export default function ClientDashboard({ appointments, events, totalAppointment
             </div>
 
             {/* Modal Cancel Appointment */}
+            {/* Modal tolak penawaran */}
+            {tolakModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm"
+                    onClick={() => !prosesPenawaran && setTolakModal(null)}>
+                    <div className="w-full max-w-md p-6 border shadow-xl bg-surface border-line rounded-2xl"
+                        onClick={e => e.stopPropagation()}>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                            <div className="flex items-center gap-2">
+                                <XCircle size={20} className="text-danger" />
+                                <h2 className="text-lg font-extrabold text-ink">Tolak Penawaran</h2>
+                            </div>
+                            <button onClick={() => !prosesPenawaran && setTolakModal(null)}
+                                className="p-1.5 text-muted hover:bg-paper rounded-lg"><X size={18} /></button>
+                        </div>
+                        <p className="mb-4 text-sm text-muted">
+                            Menolak penawaran <span className="font-bold text-ink">"{tolakModal.nama_event}"</span>?
+                            Tim kami akan diberi tahu untuk menindaklanjuti.
+                        </p>
+                        <label className="block mb-1.5 text-xs font-bold tracking-wide text-muted uppercase">
+                            Alasan <span className="font-medium normal-case text-muted-2">(opsional)</span>
+                        </label>
+                        <textarea value={alasanTolak} onChange={e => setAlasanTolak(e.target.value)} rows={3} maxLength={500}
+                            placeholder="Mis. harga di atas budget, tanggal berubah, memilih vendor lain…"
+                            className="w-full px-3 py-2 text-sm border bg-surface border-line rounded-xl text-ink placeholder-muted-2 focus:border-gold-2 focus:outline-none" />
+                        <div className="flex justify-end gap-2 mt-5">
+                            <button onClick={() => setTolakModal(null)} disabled={prosesPenawaran}
+                                className="px-4 py-2 text-sm font-bold text-muted transition-colors bg-paper border border-line rounded-xl hover:bg-gold-soft disabled:opacity-60">
+                                Batal
+                            </button>
+                            <button onClick={submitTolakPenawaran} disabled={prosesPenawaran}
+                                className="px-4 py-2 text-sm font-bold text-white transition-colors bg-danger rounded-xl hover:brightness-110 disabled:opacity-60">
+                                {prosesPenawaran ? 'Menyimpan…' : 'Ya, tolak'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {cancelModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm">
                     <div className="w-full max-w-md p-6 bg-surface border border-line shadow-xl rounded-2xl">

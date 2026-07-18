@@ -550,5 +550,13 @@ Route::domain(config('app.domain'))->group(function () {
             ->name('client.bukti.delete');
         Route::get('/invoice/{id_invoice}/pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadInvoice'])
             ->whereNumber('id_invoice')->name('client.invoice.pdf');
+
+        // Penawaran (event tahap Negotiation): lihat PDF, terima, atau tolak.
+        Route::get('/penawaran/{id_event}/pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadPenawaran'])
+            ->whereNumber('id_event')->name('client.penawaran.pdf');
+        Route::post('/penawaran/{id_event}/terima', [\App\Http\Controllers\Client\AppointmentController::class, 'terimaPenawaran'])
+            ->whereNumber('id_event')->name('client.penawaran.terima');
+        Route::post('/penawaran/{id_event}/tolak', [\App\Http\Controllers\Client\AppointmentController::class, 'tolakPenawaran'])
+            ->whereNumber('id_event')->name('client.penawaran.tolak');
     }); // auth:client
 }); // domain

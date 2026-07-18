@@ -45,9 +45,19 @@ class AppointmentController extends Controller
             ->take(50)
             ->get();
 
+        // Penawaran = event eksternal milik client yang masih di tahap Negotiation.
+        // Klien bisa melihat detail ringkas + PDF harga, lalu menerima/menolak.
+        $penawaran = Event::where('id_client', $client->id)
+            ->eksternal()
+            ->where('status_event', Event::STATUS_NEGOTIATION)
+            ->with('pic:id_pegawai,nama_pegawai')
+            ->latest('updated_at')
+            ->get();
+
         return Inertia::render('Client/Dashboard', [
             'appointments'      => $appointments,
             'events'            => $events,
+            'penawaran'         => $penawaran,
             'totalAppointments' => $appointments->count(),
             'totalEvents'       => $events->count(),
         ]);
@@ -330,5 +340,107 @@ class AppointmentController extends Controller
             'Invoice-' . \Illuminate\Support\Str::slug($invoice->nomor_invoice)
             . '-' . \Illuminate\Support\Str::slug($event->nama_event) . '.pdf'
         );
+    }
+
+    /** Ambil event penawaran milik client sendiri (Negotiation/Deal), atau 404. */
+    private function penawaranMilikClient($id_event, array $status)
+    {
+        $client = Auth::guard('client')->user();
+
+        return Event::eksternal()
+            ->where('id_client', $client->id)
+            ->whereIn('status_event', $status)
+            ->with(['client', 'pic'])
+            ->findOrFail($id_event);
+    }
+
+    /** Unduh PDF penawaran (harga) milik client sendiri. */
+    public function downloadPenawaran($id_event)
+    {
+        $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION, Event::STATUS_DEAL]);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.penawaran', [
+            'event'    => $event,
+            'nomor'    => 'PNW/' . now()->format('Y/m') . '/' . str_pad((string) $event->id_event, 4, '0', STR_PAD_LEFT),
+            'tanggal'  => now()->translatedFormat('d F Y'),
+            'tglAcara' => \Carbon\Carbon::parse($event->tgl_mulai_event)->translatedFormat('d F Y'),
+            'jam'      => substr((string) $event->jam_mulai, 0, 5) . ' – ' . substr((string) $event->jam_selesai, 0, 5) . ' WIB',
+        ]);
+
+        return $pdf->download('Penawaran-' . \Illuminate\Support\Str::slug($event->nama_event) . '.pdf');
+    }
+
+    /** Klien MENERIMA penawaran → event otomatis pindah ke Deal + notifikasi PIC. */
+    public function terimaPenawaran($id_event)
+    {
+        $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
+
+        $jejak = '✅ Penawaran DITERIMA klien (' . now()->translatedFormat('d M Y H:i') . ') — otomatis pindah ke Deal.';
+
+        $event->update([
+            'status_event' => Event::STATUS_DEAL,
+            'note_event'   => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
+        ]);
+
+        // Konsisten dengan alur pipeline: appointment terkait ditandai Selesai.
+        Appointment::where('id_event', $event->id_event)
+            ->whereIn('status', ['Dikonfirmasi', 'Reschedule'])
+            ->update(['status' => 'Selesai']);
+
+        $this->kabariPicPenawaran($event, 'diterima');
+
+        return back()->with('success', 'Terima kasih! Penawaran telah Anda terima. Tim kami akan segera menindaklanjuti ke tahap berikutnya (uang muka).');
+    }
+
+    /** Klien MENOLAK penawaran → tetap Negotiation, PIC diberi tahu untuk tindak lanjut. */
+    public function tolakPenawaran(Request $request, $id_event)
+    {
+        $data = $request->validate(['alasan' => 'nullable|string|max:500']);
+
+        $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
+
+        $jejak = '❌ Penawaran DITOLAK klien (' . now()->translatedFormat('d M Y H:i') . ')'
+            . (filled($data['alasan'] ?? null) ? ': ' . trim($data['alasan']) : '.');
+
+        $event->update([
+            'note_event' => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
+        ]);
+
+        $this->kabariPicPenawaran($event, 'ditolak', $data['alasan'] ?? null);
+
+        return back()->with('success', 'Penawaran telah Anda tolak. Tim kami akan menindaklanjuti.');
+    }
+
+    /** Kirim email pemberitahuan jelas ke PIC/EM saat klien merespon penawaran. */
+    private function kabariPicPenawaran(Event $event, string $aksi, ?string $alasan = null): void
+    {
+        $email = $event->pic?->email_pegawai;
+        if (! $email) {
+            return;
+        }
+
+        $nama = $event->nama_event;
+
+        if ($aksi === 'diterima') {
+            $subjek = "✅ Penawaran DITERIMA klien — {$nama}";
+            $isi = "Kabar baik! Klien telah MENERIMA penawaran untuk event \"{$nama}\".\n\n"
+                 . "Event otomatis dipindahkan ke tahap DEAL. Silakan lanjutkan penerbitan invoice uang muka (DP) di modul Finance.\n\n"
+                 . "— Sistem Laksamana Muda";
+        } else {
+            $subjek = "❌ Penawaran DITOLAK klien — {$nama}";
+            $isi = "Klien MENOLAK penawaran untuk event \"{$nama}\"."
+                 . ($alasan ? "\n\nAlasan dari klien: {$alasan}" : '')
+                 . "\n\nEvent masih berada di tahap Negotiation. Silakan tindak lanjuti — negosiasi ulang, "
+                 . "atau tandai \"Tidak jadi\" di papan Pipeline bila prospek tidak dilanjutkan.\n\n"
+                 . "— Sistem Laksamana Muda";
+        }
+
+        try {
+            Mail::raw($isi, function ($m) use ($email, $subjek) {
+                $m->to($email)->subject($subjek);
+            });
+        } catch (\Exception $e) {
+            \Log::warning('Email respon penawaran ke PIC gagal: ' . $e->getMessage());
+        }
     }
 }
