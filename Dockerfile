@@ -77,7 +77,10 @@ COPY . .
 COPY --from=assets /app/public/build ./public/build
 
 # Set proper permissions
-RUN chown -R www-data:www-data /var/www/html \
+# Hanya storage & bootstrap/cache yang perlu ditulis www-data (PHP-FPM).
+# JANGAN chown -R seluruh /var/www/html: di overlayfs itu memaksa copy-up
+# puluhan ribu file vendor/ → build bisa macet berjam-jam di VPS disk lambat.
+RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 # Copy PHP production settings
