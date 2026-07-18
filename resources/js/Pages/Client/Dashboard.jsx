@@ -571,6 +571,18 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
 
                                     {p.deskripsi_event && <p className="mb-4 text-sm leading-relaxed text-muted whitespace-pre-line">{p.deskripsi_event}</p>}
 
+                                    {/* Status respon — agar klien tahu penolakannya tercatat, tidak terlihat polos */}
+                                    {p.respon_klien === 'Ditolak' && (
+                                        <div className="flex items-start gap-2 p-3 mb-4 border bg-danger-bg border-danger/30 rounded-xl">
+                                            <XCircle size={15} className="text-danger mt-0.5 shrink-0" />
+                                            <p className="text-xs text-muted">
+                                                <span className="font-bold text-danger">Anda menolak penawaran ini</span>
+                                                {p.tgl_respon_klien ? ` pada ${new Date(p.tgl_respon_klien).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}` : ''}.
+                                                Tim kami sudah diberi tahu dan akan menghubungi Anda. Bila berubah pikiran, Anda tetap bisa menerimanya.
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="flex flex-wrap gap-2">
                                         <a href={route('client.penawaran.pdf', p.id_event)}
                                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gold-dim bg-gold-soft border border-gold-2 rounded-xl hover:brightness-95 transition-all">
@@ -580,10 +592,12 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white rounded-xl bg-gold-grad shadow-gold hover:brightness-110 transition-all disabled:opacity-60">
                                             <CheckCircle size={14} /> {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Penawaran'}
                                         </button>
-                                        <button onClick={() => { setAlasanTolak(''); setTolakModal(p); }} disabled={prosesPenawaran === p.id_event}
-                                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-danger bg-danger-bg border border-danger/30 rounded-xl hover:brightness-95 transition-all disabled:opacity-60">
-                                            <XCircle size={14} /> Tolak
-                                        </button>
+                                        {p.respon_klien !== 'Ditolak' && (
+                                            <button onClick={() => { setAlasanTolak(''); setTolakModal(p); }} disabled={prosesPenawaran === p.id_event}
+                                                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-danger bg-danger-bg border border-danger/30 rounded-xl hover:brightness-95 transition-all disabled:opacity-60">
+                                                <XCircle size={14} /> Tolak
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -914,16 +928,21 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                                                     </button>
                                                 </div>
 
-                                                {/* Kontrak (download saja — upload dikelola tim internal) */}
-                                                {event.kontrak_file && (
-                                                    <div className="flex gap-1.5 mt-1.5">
+                                                {/* Detail event (PDF: informasi acara + tagihan) & kontrak */}
+                                                <div className="flex gap-1.5 mt-1.5">
+                                                    <a href={route('client.event.detail-pdf', event.id_event)}
+                                                        className="flex-1 flex items-center justify-center gap-1 py-2 bg-gold-soft text-gold-dim text-[11px] font-bold rounded-xl hover:brightness-95 transition-all border border-gold-2">
+                                                        <Download size={12} />
+                                                        Detail Event
+                                                    </a>
+                                                    {event.kontrak_file && (
                                                         <a href={`/kontrak/${event.kontrak_file}`}
                                                             className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-500/10 text-info text-[11px] font-bold rounded-xl hover:bg-blue-500/20 transition-colors border border-blue-500/30">
                                                             <FileText size={12} />
                                                             Kontrak
                                                         </a>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -1195,6 +1214,17 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                                                         </div>
                                                     </div>
                                                 ))}
+                                            </div>
+                                        )}
+
+                                        {/* Sudah Deal tapi invoice belum terbit — beri kejelasan, jangan biarkan menggantung */}
+                                        {(event.invoices || []).length === 0 && event.status_event === 'Deal' && (
+                                            <div className="flex items-start gap-2 p-3 mb-3 border bg-gold-soft/50 border-gold-2 rounded-xl">
+                                                <Clock size={14} className="text-gold-dim mt-0.5 shrink-0" />
+                                                <p className="text-xs text-muted">
+                                                    <span className="font-bold text-gold-dim">Penawaran Anda sudah kami terima.</span> Tim Finance sedang menyiapkan
+                                                    invoice uang muka (DP 50%). Invoice akan muncul di sini begitu diterbitkan.
+                                                </p>
                                             </div>
                                         )}
 

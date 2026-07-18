@@ -559,6 +559,9 @@ Route::domain(config('app.domain'))->group(function () {
         Route::get('/invoice/{id_invoice}/pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadInvoice'])
             ->whereNumber('id_invoice')->name('client.invoice.pdf');
 
+        Route::get('/event/{id_event}/detail-pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadDetailEvent'])
+            ->whereNumber('id_event')->name('client.event.detail-pdf');
+
         // Penawaran (event tahap Negotiation): lihat PDF, terima, atau tolak.
         Route::get('/penawaran/{id_event}/pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadPenawaran'])
             ->whereNumber('id_event')->name('client.penawaran.pdf');

@@ -342,6 +342,40 @@ class AppointmentController extends Controller
         );
     }
 
+    /**
+     * Unduh PDF "Detail Event" milik client sendiri — informasi acara lengkap
+     * sekaligus ringkasan tagihan (invoice, sudah dibayar, sisa).
+     */
+    public function downloadDetailEvent($id_event)
+    {
+        $client = Auth::guard('client')->user();
+
+        $event = Event::where('id_client', $client->id)
+            ->untukFinance()
+            ->with(['client', 'pic', 'invoices' => fn($q) => $q->orderBy('tgl_terbit'), 'transaksis'])
+            ->findOrFail($id_event);
+
+        $totalDibayar = (float) $event->transaksis->sum('nominal');
+        $sisa         = max((float) $event->deal_harga_event - $totalDibayar, 0);
+
+        $jamMulai   = substr((string) $event->jam_mulai, 0, 5);
+        $jamSelesai = substr((string) $event->jam_selesai, 0, 5);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.detail-event', [
+            'event'        => $event,
+            'invoices'     => $event->invoices,
+            'totalDibayar' => $totalDibayar,
+            'sisa'         => $sisa,
+            'tglCetak'     => now()->translatedFormat('d F Y'),
+            'tglAcara'     => $event->tgl_mulai_event
+                ? \Carbon\Carbon::parse($event->tgl_mulai_event)->translatedFormat('l, d F Y')
+                : '—',
+            'jam'          => $jamMulai ? ($jamSelesai ? "{$jamMulai} – {$jamSelesai} WIB" : "{$jamMulai} WIB") : null,
+        ]);
+
+        return $pdf->download('Detail-Event-' . \Illuminate\Support\Str::slug($event->nama_event) . '.pdf');
+    }
+
     /** Ambil event penawaran milik client sendiri (Negotiation/Deal), atau 404. */
     private function penawaranMilikClient($id_event, array $status)
     {
@@ -378,8 +412,10 @@ class AppointmentController extends Controller
         $jejak = '✅ Penawaran DITERIMA klien (' . now()->translatedFormat('d M Y H:i') . ') — otomatis pindah ke Deal.';
 
         $event->update([
-            'status_event' => Event::STATUS_DEAL,
-            'note_event'   => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
+            'status_event'     => Event::STATUS_DEAL,
+            'respon_klien'     => 'Diterima',
+            'tgl_respon_klien' => now(),
+            'note_event'       => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
         ]);
 
         // Konsisten dengan alur pipeline: appointment terkait ditandai Selesai.
@@ -403,7 +439,9 @@ class AppointmentController extends Controller
             . (filled($data['alasan'] ?? null) ? ': ' . trim($data['alasan']) : '.');
 
         $event->update([
-            'note_event' => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
+            'respon_klien'     => 'Ditolak',
+            'tgl_respon_klien' => now(),
+            'note_event'       => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
         ]);
 
         $this->kabariPicPenawaran($event, 'ditolak', $data['alasan'] ?? null);
