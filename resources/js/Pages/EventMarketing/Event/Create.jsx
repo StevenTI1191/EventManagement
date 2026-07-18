@@ -7,7 +7,7 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
         nama_event: dariAppointment?.jenis_event ?? '',
         jumlah_pax: dariAppointment?.jumlah_tamu ?? '',
         harga_per_pax: '',
-        deskripsi_event: '',
+        deskripsi_event: dariAppointment?.deskripsi_event ?? '',
         deal_harga_event: '',
         id_client: dariAppointment?.client_id ? String(dariAppointment.client_id) : '',
         kategori_event: '',
@@ -22,7 +22,7 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
         food_beverage_event: '',
         technical_meeting: '',
         gladi_resik: '',
-        note_event: '',
+        note_event: dariAppointment?.catatan_meeting ?? '',
         jam_keluar_makanan: '',
         poster_event: null,
         kontrak_file: null,
@@ -101,10 +101,21 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
                     {dariAppointment && (
                         <div className="flex items-start gap-3 p-4 mb-6 border border-[#FF2D55]/20 bg-[#FF2D55]/5 rounded-2xl">
                             <span className="text-lg leading-none">📅</span>
-                            <p className="text-sm text-gray-700">
-                                Event ini dibuat dari appointment{dariAppointment.nama_client ? <> <span className="font-bold">{dariAppointment.nama_client}</span></> : ''}.
-                                Setelah tersimpan, event masuk pipeline (Lead) dan appointment akan otomatis ditandai <span className="font-bold">Selesai</span> begitu event mencapai tahap Deal.
-                            </p>
+                            <div className="text-sm text-gray-700">
+                                <p>
+                                    Event ini dibuat dari appointment{dariAppointment.nama_client ? <> <span className="font-bold">{dariAppointment.nama_client}</span></> : ''}.
+                                    Nama, jumlah tamu, deskripsi{dariAppointment.catatan_meeting ? ', dan hasil meeting' : ''} sudah terisi otomatis — silakan periksa &amp; lengkapi.
+                                </p>
+                                {dariAppointment.estimasi_budget > 0 && (
+                                    <p className="mt-1.5 text-xs text-gray-500">
+                                        Estimasi budget dari klien: <span className="font-bold text-gray-700">Rp {Number(dariAppointment.estimasi_budget).toLocaleString('id-ID')}</span>
+                                        {' '}— sebagai acuan saja, isi <span className="font-bold">Deal Total</span> dengan harga final hasil negosiasi.
+                                    </p>
+                                )}
+                                <p className="mt-1.5 text-xs text-gray-500">
+                                    Setelah tersimpan, event masuk pipeline (Lead) dan appointment otomatis ditandai <span className="font-bold">Selesai</span> begitu event mencapai Deal.
+                                </p>
+                            </div>
                         </div>
                     )}
                     {Object.keys(errors).length > 0 && (

@@ -77,11 +77,17 @@ class EventController extends Controller
 
             if ($apt) {
                 $dariAppointment = [
-                    'id'           => $apt->id,
-                    'client_id'    => $apt->client_id,
-                    'jenis_event'  => $apt->jenis_event,
-                    'jumlah_tamu'  => $apt->jumlah_tamu,
-                    'nama_client'  => $apt->client?->nama_client,
+                    'id'              => $apt->id,
+                    'client_id'       => $apt->client_id,
+                    'jenis_event'     => $apt->jenis_event,
+                    'jumlah_tamu'     => $apt->jumlah_tamu,
+                    'nama_client'     => $apt->client?->nama_client,
+                    'deskripsi_event' => $apt->deskripsi_event,
+                    // Hasil meeting ikut terbawa jadi catatan/special request event.
+                    'catatan_meeting' => $apt->catatan_meeting,
+                    // Ditampilkan sebagai referensi saja — deal harga TIDAK diisi
+                    // otomatis karena estimasi klien belum tentu harga final.
+                    'estimasi_budget' => $apt->estimasi_budget,
                 ];
             }
         }
