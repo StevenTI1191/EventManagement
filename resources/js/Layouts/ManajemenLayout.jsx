@@ -64,7 +64,7 @@ export default function ManajemenLayout({ children }) {
             active: currentPath.includes('/manajemen/planning'),
         },
         {
-            name: 'Task Divisi',
+            name: 'To-Do-List',
             icon: ListChecks,
             href: route('manajemen.task-divisi.index'),
             active: currentPath.includes('/manajemen/task-divisi'),

@@ -1,4 +1,4 @@
-import { Head, router, Link } from '@inertiajs/react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Plus, Trash2, Check, Flag, ListChecks, Pencil } from 'lucide-react';
 
@@ -47,6 +47,13 @@ function ProgressBar({ value }) {
 }
 
 export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, routes }) {
+    // Kalau papan dibuka dari To-Do-List, query ?back= membawa URL asal supaya
+    // tombol "Kembali" mengarah balik ke sana, bukan ke Events/Planning.
+    const { url: pageUrl } = usePage();
+    const qs = new URLSearchParams(pageUrl.split('?')[1] || '');
+    const backUrl = qs.get('back');
+    const backLabel = qs.get('backLabel');
+
     const [items, setItems] = useState(tugas || []);
     const [adding, setAdding] = useState({}); // { [kategori]: 'nama...' }
     const [newCat, setNewCat] = useState({ kategori: '', nama_tugas: '' });
@@ -112,8 +119,8 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
 
             {/* HEADER */}
             <div className="mb-6">
-                <Link href={route(routes.back)} className="inline-flex items-center gap-1 mb-4 text-sm text-gray-400 hover:text-gray-600">
-                    <ChevronLeft size={16} /> {isPlanning ? 'Kembali ke Planning' : 'Kembali ke Events'}
+                <Link href={backUrl || route(routes.back)} className="inline-flex items-center gap-1 mb-4 text-sm text-gray-400 hover:text-gray-600">
+                    <ChevronLeft size={16} /> {backUrl ? `Kembali ke ${backLabel || 'To-Do-List'}` : (isPlanning ? 'Kembali ke Planning' : 'Kembali ke Events')}
                 </Link>
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>

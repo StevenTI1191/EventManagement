@@ -58,7 +58,7 @@ export default function EventMarketingLayout({ children }) {
             active: currentPath.includes('/event-marketing/planning'),
         },
         {
-            name: 'Task Divisi',
+            name: 'To-Do-List',
             icon: ListChecks,
             href: route('em.task-divisi.index'),
             active: currentPath.includes('/event-marketing/task-divisi'),

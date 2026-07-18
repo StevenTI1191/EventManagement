@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { ClipboardList, Building2, CalendarDays, MapPin, Users, User, ArrowRight } from 'lucide-react';
 
 const tanggal = (d) =>
@@ -13,26 +13,30 @@ const TABS = [
 
 export default function TaskDivisiBoard({ Layout, events = [], routes = {} }) {
     const [tab, setTab] = useState('all');
+    const { url: currentUrl } = usePage();
 
     const terfilter = tab === 'all' ? events : events.filter((e) => e.tipe_event === tab);
 
     // Kartu internal yang masih Planning diarahkan ke papan Planning (punya
-    // template), selain itu ke papan To-Do event.
-    const linkPapan = (e) =>
-        e.tipe_event === 'Internal' && e.status_event === 'Planning' && routes.planning
+    // template), selain itu ke papan To-Do event. Sematkan URL To-Do-List ini
+    // di query ?back= agar tombol "Kembali" papan mengarah balik ke sini.
+    const linkPapan = (e) => {
+        const dasar = e.tipe_event === 'Internal' && e.status_event === 'Planning' && routes.planning
             ? route(routes.planning, e.id_event)
             : route(routes.todo, e.id_event);
+        return `${dasar}?back=${encodeURIComponent(currentUrl)}&backLabel=${encodeURIComponent('To-Do-List')}`;
+    };
 
     const hitung = (key) => (key === 'all' ? events.length : events.filter((e) => e.tipe_event === key).length);
 
     return (
         <Layout>
-            <Head title="Task Divisi — Laksamana Muda" />
+            <Head title="To-Do-List — Laksamana Muda" />
 
             <div className="mb-6">
                 <div className="flex items-center gap-2">
                     <ClipboardList size={24} className="text-[#FF2D55]" />
-                    <h1 className="text-3xl font-extrabold text-gray-900">Task Divisi</h1>
+                    <h1 className="text-3xl font-extrabold text-gray-900">To-Do-List</h1>
                     <span className="px-3 py-1 text-xs font-bold text-gray-500 bg-gray-100 rounded-full">
                         {events.length} event
                     </span>
