@@ -43,6 +43,22 @@ class Event extends Model
         'is_public' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        // Event klien yang baru masuk Upcoming (DP lunas / bukti terverifikasi)
+        // otomatis mendapat template to-do per divisi, supaya papan To-Do-List
+        // tidak kosong saat divisi mulai bekerja. Dipasang di model agar berlaku
+        // lewat jalur mana pun (invoice lunas, verifikasi bukti, ubah manual).
+        static::updated(function (self $event) {
+            if ($event->wasChanged('status_event')
+                && $event->status_event === self::STATUS_UPCOMING
+                && $event->tipe_event === self::TIPE_EKSTERNAL
+                && ! $event->tugas()->exists()) {
+                \App\Support\TugasTemplate::generate($event);
+            }
+        });
+    }
+
     // ── Status ────────────────────────────────────────────────────────────────
     // Pipeline event EKSTERNAL: Lead -> Negotiation -> Deal -> (DP 50%) -> Upcoming -> Done
     public const STATUS_LEAD        = 'Lead';

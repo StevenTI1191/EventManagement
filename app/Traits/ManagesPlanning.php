@@ -44,31 +44,9 @@ trait ManagesPlanning
     /** Buat item to-do template untuk kategori terpilih (null = semua kategori). */
     protected function generateTemplate(Event $event, ?array $categories = null): void
     {
-        $now  = now();
-        $rows = [];
-        foreach (PlanningTemplate::items() as $kategori => $items) {
-            if ($categories !== null && ! in_array($kategori, $categories, true)) {
-                continue;
-            }
-            $urutan = 0;
-            foreach ($items as [$nama, $timeline]) {
-                $rows[] = [
-                    'id_event'       => $event->id_event,
-                    'nama_tugas'     => $nama,
-                    'kategori'       => $kategori,
-                    'timeline'       => $timeline,
-                    'deadline_tugas' => $this->deadlineFromTimeline($event->tgl_mulai_event, $timeline),
-                    'status_tugas'   => 'Ongoing',
-                    'progress'       => 0,
-                    'urutan'         => $urutan++,
-                    'created_at'     => $now,
-                    'updated_at'     => $now,
-                ];
-            }
-        }
-        if ($rows) {
-            Tugas::insert($rows);
-        }
+        // Logika sesungguhnya ada di TugasTemplate agar bisa dipakai bersama
+        // dengan pembuatan otomatis saat event klien masuk Upcoming.
+        \App\Support\TugasTemplate::generate($event, $categories);
     }
 
     /**
@@ -113,18 +91,7 @@ trait ManagesPlanning
     /** Hitung deadline dari timeline H-x relatif ke tanggal acara. */
     protected function deadlineFromTimeline($eventStart, ?string $timeline): ?string
     {
-        if (! $eventStart || ! $timeline) {
-            return null;
-        }
-        $start = \Illuminate\Support\Carbon::parse($eventStart);
-        if (preg_match('/H\s*-\s*(\d+)/i', $timeline, $m)) {
-            return $start->copy()->subDays((int) $m[1])->toDateString();
-        }
-        // Timeline "H" atau "H (Hari - H)" tanpa angka dianggap hari-H
-        if (preg_match('/\bH\b/i', $timeline) && ! preg_match('/\d/', $timeline)) {
-            return $start->toDateString();
-        }
-        return null;
+        return \App\Support\TugasTemplate::deadlineDariTimeline($eventStart, $timeline);
     }
 
     /** Update field ringkas event Planning (dari halaman edit). */
