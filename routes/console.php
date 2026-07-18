@@ -94,3 +94,135 @@ Schedule::call(function () {
         \Log::info("Event auto-Done: {$event->nama_event} (berakhir {$tglAkhir}).");
     }
 })->dailyAt('02:00')->name('event-auto-done')->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Reminder Pembayaran Invoice — jalan setiap hari jam 08:30
+| Mengingatkan klien H-3, H-1, dan hari-H jatuh tempo; lalu sekali lagi pada
+| H+1 dan H+7 bila sudah lewat tempo (dibatasi agar tidak mengirim tiap hari).
+| Dikirim lewat email + notifikasi in-app di dashboard klien.
+|--------------------------------------------------------------------------
+*/
+Schedule::call(function () {
+    foreach ([3, 1, 0, -1, -7] as $offset) {
+        $invoices = \App\Models\Invoice::with('event.client')
+            ->where('status', \App\Models\Invoice::STATUS_BELUM)
+            ->whereDate('tgl_jatuh_tempo', now()->addDays($offset)->toDateString())
+            ->get();
+
+        foreach ($invoices as $inv) {
+            $client  = $inv->event?->client;
+            $nama    = $inv->event?->nama_event ?? 'acara Anda';
+            $nominal = 'Rp ' . number_format((float) $inv->nominal, 0, ',', '.');
+            $tempo   = optional($inv->tgl_jatuh_tempo)->translatedFormat('d F Y');
+            $lewat   = $offset < 0;
+
+            $judul = $lewat ? '⏰ Tagihan Lewat Jatuh Tempo' : '💳 Pengingat Pembayaran';
+            $pesan = $lewat
+                ? "Invoice {$inv->tipe} untuk \"{$nama}\" sebesar {$nominal} sudah lewat jatuh tempo ({$tempo}). Mohon segera diselesaikan."
+                : "Invoice {$inv->tipe} untuk \"{$nama}\" sebesar {$nominal} jatuh tempo pada {$tempo}. Mohon diselesaikan sebelum tanggal tersebut.";
+
+            if ($email = $client?->email_client) {
+                try {
+                    Mail::raw($pesan . "\n\nTerima kasih.\n— PT Laksamana Muda Bersatu", function ($m) use ($email, $judul) {
+                        $m->to($email)->subject($judul . ' — Laksamana Muda');
+                    });
+                } catch (\Exception $e) {
+                    \Log::warning('Email reminder invoice gagal: ' . $e->getMessage());
+                }
+            }
+
+            if ($client?->id) {
+                \App\Models\Notifikasi::create([
+                    'judul'        => $judul,
+                    'pesan'        => $pesan,
+                    'tipe'         => 'invoice',
+                    'reference_id' => $inv->id_invoice,
+                    'client_id'    => $client->id,
+                    'is_read'      => false,
+                ]);
+            }
+        }
+    }
+})->dailyAt('08:30')->name('invoice-reminder')->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Prospek Mandek — jalan setiap hari jam 08:15
+| Event eksternal yang masih di pipeline (Lead/Negotiation) dan tidak ada
+| pergerakan selama 14 atau 30 hari mengingatkan PIC-nya untuk follow up.
+|--------------------------------------------------------------------------
+*/
+Schedule::call(function () {
+    foreach ([14, 30] as $hari) {
+        $events = Event::with('pic')
+            ->eksternal()
+            ->pipeline()
+            ->whereDate('updated_at', now()->subDays($hari)->toDateString())
+            ->get();
+
+        foreach ($events as $event) {
+            $email = $event->pic?->email_pegawai;
+            if (! $email) {
+                continue;
+            }
+
+            $pesan = "Prospek \"{$event->nama_event}\" sudah {$hari} hari tanpa pergerakan "
+                   . "(masih di tahap {$event->status_event}).\n\n"
+                   . "Mohon ditindaklanjuti — hubungi klien, perbarui penawaran, atau tandai \"Tidak jadi\" "
+                   . "di papan Pipeline bila prospek tidak dilanjutkan.\n\n— Sistem Laksamana Muda";
+
+            try {
+                Mail::raw($pesan, function ($m) use ($email, $event) {
+                    $m->to($email)->subject("⏳ Prospek mandek — {$event->nama_event}");
+                });
+                \Log::info("Reminder prospek mandek: {$event->nama_event} ({$hari} hari).");
+            } catch (\Exception $e) {
+                \Log::warning('Email prospek mandek gagal: ' . $e->getMessage());
+            }
+        }
+    }
+})->dailyAt('08:15')->name('prospek-mandek')->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Reminder Deadline Tugas — jalan setiap hari jam 07:30
+| Tugas to-do yang belum Done dan deadline-nya besok / hari ini / lewat
+| kemarin mengingatkan PIC tugas tersebut.
+|--------------------------------------------------------------------------
+*/
+Schedule::call(function () {
+    foreach ([1, 0, -1] as $offset) {
+        $daftar = \App\Models\Tugas::with(['pegawai', 'event'])
+            ->where('status_tugas', '!=', 'Done')
+            ->whereNotNull('id_pegawai')
+            ->whereDate('deadline_tugas', now()->addDays($offset)->toDateString())
+            ->get();
+
+        foreach ($daftar as $t) {
+            $email = $t->pegawai?->email_pegawai;
+            if (! $email) {
+                continue;
+            }
+
+            $kapan = match (true) {
+                $offset < 0  => 'sudah LEWAT deadline (kemarin)',
+                $offset === 0 => 'jatuh tempo HARI INI',
+                default       => 'jatuh tempo BESOK',
+            };
+
+            $pesan = "Tugas \"{$t->nama_tugas}\"" . ($t->kategori ? " ({$t->kategori})" : '')
+                   . " untuk event \"" . ($t->event?->nama_event ?? '-') . "\" {$kapan}.\n\n"
+                   . "Status saat ini: {$t->status_tugas}. Mohon diselesaikan atau perbarui progresnya "
+                   . "di papan To-Do.\n\n— Sistem Laksamana Muda";
+
+            try {
+                Mail::raw($pesan, function ($m) use ($email, $t) {
+                    $m->to($email)->subject("📌 Deadline tugas — {$t->nama_tugas}");
+                });
+            } catch (\Exception $e) {
+                \Log::warning('Email deadline tugas gagal: ' . $e->getMessage());
+            }
+        }
+    }
+})->dailyAt('07:30')->name('tugas-deadline')->withoutOverlapping();
