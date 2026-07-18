@@ -260,13 +260,45 @@ class AppointmentController extends Controller
         Storage::disk('local')->putFileAs('bukti-pembayaran', $file, $filename);
         $path = 'bukti-pembayaran/' . $filename;
 
+        // ── Pembacaan otomatis bukti transfer (OCR, berjalan di server sendiri) ──
+        // Perannya menyaring & membantu, bukan memutuskan. Verifikasi akhir tetap
+        // di Finance; OCR tidak pernah meloloskan pembayaran secara otomatis.
+        $ocr = \App\Support\OcrBukti::baca(Storage::disk('local')->path($path));
+
+        // Konservatif: hanya ditolak bila tidak ada satu pun tanda transaksi
+        // (tanpa nominal, tanpa kata kunci transfer). Pesannya mengarahkan
+        // klien mengunggah ulang, bukan menuduh.
+        if (\App\Support\OcrBukti::bukanBuktiTransfer($ocr)) {
+            Storage::disk('local')->delete($path);
+
+            return back()->withErrors([
+                'file_bukti' => 'Kami tidak menemukan keterangan transaksi pada gambar ini. '
+                    . 'Mohon unggah tangkapan layar atau foto bukti transfer yang jelas — '
+                    . 'pastikan nominal dan keterangan transaksinya terbaca.',
+            ]);
+        }
+
+        $nominalDiisi = $request->nominal ? (float) $request->nominal : null;
+        $cocok        = \App\Support\OcrBukti::cocokkanNominal($ocr, $nominalDiisi);
+        $ocrNominal   = \App\Support\OcrBukti::nominalUtama($ocr);
+
+        $ocrStatus = match (true) {
+            ! $ocr['didukung'] => 'Tidak Dinilai',
+            $cocok === true    => 'Cocok',
+            $cocok === false   => 'Selisih',
+            default            => 'Tidak Terbaca',
+        };
+
         BuktiPembayaran::create([
-            'id_event'   => $request->id_event,
-            'client_id'  => $client->id,
-            'file_bukti' => $path,
-            'nominal'    => $request->nominal,
-            'keterangan' => $request->keterangan,
-            'status'     => 'Menunggu',
+            'id_event'    => $request->id_event,
+            'client_id'   => $client->id,
+            'file_bukti'  => $path,
+            'nominal'     => $request->nominal,
+            'keterangan'  => $request->keterangan,
+            'status'      => 'Menunggu',
+            'ocr_nominal' => $ocrNominal,
+            'ocr_status'  => $ocrStatus,
+            'ocr_teks'    => $ocr['teks'] ?: null,
         ]);
 
         // Kirim notifikasi ke Finance + broadcast WebSocket
@@ -285,7 +317,18 @@ class AppointmentController extends Controller
             \Log::warning('Broadcast BuktiPembayaranUploaded gagal: ' . $e->getMessage());
         }
 
-        return back()->with('success', 'Bukti pembayaran berhasil diupload.');
+        // Pesan disesuaikan dengan hasil pembacaan — tetap menegaskan bahwa
+        // verifikasi Finance yang menentukan.
+        $pesan = match ($ocrStatus) {
+            'Cocok' => 'Bukti terbaca Rp ' . number_format((float) $ocrNominal, 0, ',', '.')
+                     . ' dan cocok dengan nominal yang Anda isi. Menunggu verifikasi Finance.',
+            'Selisih' => 'Bukti berhasil diupload. Catatan: nominal yang terbaca sistem Rp '
+                     . number_format((float) $ocrNominal, 0, ',', '.')
+                     . ' berbeda dari yang Anda isi. Tim Finance akan memeriksanya.',
+            default => 'Bukti pembayaran berhasil diupload. Menunggu verifikasi Finance.',
+        };
+
+        return back()->with('success', $pesan);
     }
 
     public function deleteBukti($id)

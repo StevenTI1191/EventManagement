@@ -27,6 +27,9 @@ RUN npm run build
 FROM php:8.2-fpm-alpine AS app
 
 # Install system dependencies
+# tesseract-ocr + data bahasa Indonesia dipakai untuk membaca bukti transfer
+# yang diunggah klien (deteksi nominal & penyaringan gambar yang jelas bukan
+# bukti transfer). Berjalan lokal — bukti pembayaran tidak dikirim ke pihak ketiga.
 RUN apk add --no-cache \
     git \
     curl \
@@ -36,7 +39,9 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     icu-dev \
-    linux-headers
+    linux-headers \
+    tesseract-ocr \
+    tesseract-ocr-data-ind
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \

@@ -11,6 +11,7 @@ class BuktiPembayaran extends Model
     protected $fillable = [
         'id_event', 'client_id', 'file_bukti',
         'nominal', 'keterangan', 'status', 'catatan_finance', 'transaksi_id',
+        'ocr_nominal', 'ocr_status', 'ocr_teks',
     ];
 
     public function event()

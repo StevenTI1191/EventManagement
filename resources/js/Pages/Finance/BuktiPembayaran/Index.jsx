@@ -153,7 +153,22 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
                                         <p className="text-sm font-semibold text-gray-800 max-w-[180px] truncate">{b.nama_event}</p>
                                         <p className="text-xs text-gray-400">{fmtTgl(b.tgl_event)}</p>
                                     </td>
-                                    <td className="px-4 py-4 text-sm font-bold text-green-600">{fmt(b.nominal)}</td>
+                                    <td className="px-4 py-4 text-sm font-bold text-green-600">
+                                        {fmt(b.nominal)}
+                                        {/* Hasil baca otomatis — bantu Finance, keputusan tetap manual */}
+                                        {b.ocr_status === 'Selisih' && (
+                                            <span className="block mt-1 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded"
+                                                title="Nominal yang terbaca sistem berbeda dari yang diisi klien">
+                                                ⚠ terbaca {fmt(b.ocr_nominal)}
+                                            </span>
+                                        )}
+                                        {b.ocr_status === 'Cocok' && (
+                                            <span className="block mt-1 text-[10px] font-bold text-emerald-600"
+                                                title="Nominal terbaca sistem cocok dengan yang diisi klien">
+                                                ✓ terbaca cocok
+                                            </span>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-4 text-sm text-gray-500 max-w-[140px] truncate">{b.keterangan || '-'}</td>
                                     <td className="px-4 py-4 text-xs text-gray-400">{fmtTgl(b.created_at)}</td>
 

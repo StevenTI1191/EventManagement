@@ -56,6 +56,9 @@ class BuktiPembayaranController extends Controller
             'status'          => $b->status,
             'catatan_finance' => $b->catatan_finance,
             'created_at'      => $b->created_at,
+            // Hasil pembacaan otomatis — pembantu verifikasi, bukan penentu.
+            'ocr_nominal'     => $b->ocr_nominal,
+            'ocr_status'      => $b->ocr_status,
         ]);
 
         $stats = [
