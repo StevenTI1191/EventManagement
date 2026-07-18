@@ -22,6 +22,13 @@ export default function AppointmentShow({ appointment }) {
 
     const batalForm = useForm({ catatan_em: '' });
 
+    // Catatan meeting internal (poin/hasil pembahasan)
+    const catatanForm = useForm({ catatan_meeting: appointment.catatan_meeting ?? '' });
+    const simpanCatatanMeeting = (e) => {
+        e.preventDefault();
+        catatanForm.patch(route('em.appointment.catatan-meeting', appointment.id), { preserveScroll: true });
+    };
+
     const formatTanggal = (tgl) => {
         if (!tgl) return '-';
         return new Date(tgl).toLocaleDateString('id-ID', {
@@ -305,6 +312,33 @@ export default function AppointmentShow({ appointment }) {
                     )}
                 </div>
             </div>
+
+            {/* Catatan Meeting internal (poin/hasil pembahasan) */}
+            {['Dikonfirmasi', 'Reschedule', 'Selesai'].includes(appointment.status) && (
+                <div className="max-w-3xl p-6 mx-auto mt-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+                    <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-extrabold text-gray-900">Catatan Meeting</h3>
+                        <span className="px-2 py-0.5 text-[10px] font-bold text-gray-500 bg-gray-100 rounded-full">Internal</span>
+                    </div>
+                    <p className="mb-3 text-xs text-gray-400">Poin/hasil pembahasan saat meeting. Hanya untuk tim, tidak tampil ke client.</p>
+                    <form onSubmit={simpanCatatanMeeting}>
+                        <textarea
+                            value={catatanForm.data.catatan_meeting}
+                            onChange={(e) => catatanForm.setData('catatan_meeting', e.target.value)}
+                            rows={4} maxLength={5000}
+                            placeholder="Mis. klien tertarik paket B, minta revisi dekorasi, budget fleksibel sampai 60jt, follow up minggu depan…"
+                            className="w-full p-3 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none"
+                        />
+                        <div className="flex items-center justify-end gap-3 mt-3">
+                            {catatanForm.recentlySuccessful && <span className="text-xs font-bold text-green-600">✓ Tersimpan</span>}
+                            <button type="submit" disabled={catatanForm.processing}
+                                className="px-4 py-2 text-sm font-bold text-white bg-[#FF2D55] rounded-xl hover:bg-[#e02249] disabled:opacity-60">
+                                {catatanForm.processing ? 'Menyimpan…' : 'Simpan Catatan'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
             {/* Modal Konfirmasi Sesuai Jadwal */}
             {showKonfirmModal && (

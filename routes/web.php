@@ -283,6 +283,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('em.appointment.selesai');
         Route::patch('/event-marketing/appointments/{id}/batal', [\App\Http\Controllers\EventMarketing\AppointmentController::class, 'batal'])
             ->name('em.appointment.batal');
+        Route::patch('/event-marketing/appointments/{id}/catatan-meeting', [\App\Http\Controllers\EventMarketing\AppointmentController::class, 'simpanCatatanMeeting'])
+            ->name('em.appointment.catatan-meeting');
 
         // --- EVENT MARKETING: EVENT CRUD ---
         Route::get('/event-marketing/event', [EMEventController::class, 'index'])

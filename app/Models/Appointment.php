@@ -11,7 +11,7 @@ class Appointment extends Model
         'client_id', 'jenis_event', 'deskripsi_event',
         'jumlah_tamu', 'estimasi_budget', 'tgl_request', 'jam_request',
         'tgl_konfirmasi', 'jam_konfirmasi', 'status', 'catatan_em',
-        'id_pegawai', 'alasan_batal_client', 'id_event',
+        'id_pegawai', 'alasan_batal_client', 'id_event', 'catatan_meeting',
     ];
 
     public function client()

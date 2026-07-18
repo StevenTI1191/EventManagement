@@ -127,6 +127,26 @@ class AppointmentController extends Controller
         return back()->with('success', 'Appointment ditandai selesai.');
     }
 
+    /**
+     * Simpan catatan meeting internal (poin/hasil pembahasan). Bisa diisi saat
+     * meeting sudah dijadwalkan (Dikonfirmasi/Reschedule) maupun setelah Selesai.
+     */
+    public function simpanCatatanMeeting(Request $request, $id)
+    {
+        $this->checkEventMarketing();
+
+        $data = $request->validate([
+            'catatan_meeting' => 'nullable|string|max:5000',
+        ]);
+
+        $appointment = Appointment::whereIn('status', ['Dikonfirmasi', 'Reschedule', 'Selesai'])
+            ->findOrFail($id);
+
+        $appointment->update(['catatan_meeting' => $data['catatan_meeting']]);
+
+        return back()->with('success', 'Catatan meeting tersimpan.');
+    }
+
     public function batal(Request $request, $id)
     {
         $this->checkEventMarketing();
