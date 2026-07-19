@@ -411,7 +411,7 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                             <p className="mt-1 text-sm text-muted">Kelola appointment dan event Anda di sini.</p>
                         </div>
                         <Link href={route('client.appointment.create')}
-                            className="self-start sm:self-auto flex items-center gap-2 px-5 py-2.5 bg-gold text-white font-black rounded-xl hover:bg-gold-2 transition-all text-sm">
+                            className="self-start sm:self-auto flex items-center gap-2 px-5 py-2.5 bg-gold-grad shadow-gold text-white font-black rounded-xl hover:brightness-110 transition-all text-sm">
                             <Plus size={16} strokeWidth={3} />
                             Buat Appointment
                         </Link>
@@ -648,7 +648,7 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                                             <button key={p.key} onClick={() => setAptFilter(p.key)}
                                                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
                                                     aptFilter === p.key
-                                                        ? 'bg-gold text-white border-gold'
+                                                        ? 'bg-gold-grad text-white border-gold-dim'
                                                         : 'bg-surface text-muted border-line hover:border-gold/40 hover:text-gold-dim'
                                                 }`}>
                                                 {p.label}
@@ -786,7 +786,7 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                                     <p className="text-lg font-bold text-muted">Belum ada appointment</p>
                                     <p className="mt-1 mb-6 text-sm text-muted-2">Buat appointment untuk diskusi event Anda bersama tim kami.</p>
                                     <Link href={route('client.appointment.create')}
-                                        className="inline-flex items-center gap-2 px-6 py-3 font-black text-white transition-all bg-gold rounded-xl hover:bg-gold-2">
+                                        className="inline-flex items-center gap-2 px-6 py-3 font-black text-white transition-all bg-gold-grad shadow-gold rounded-xl hover:brightness-110">
                                         <Plus size={18} />
                                         Buat Appointment Pertama
                                     </Link>
@@ -1410,7 +1410,7 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                                     Batal
                                 </button>
                                 <button type="submit" disabled={processing}
-                                    className="flex-1 py-2.5 bg-gold text-white font-black rounded-xl hover:bg-gold-2 disabled:opacity-60">
+                                    className="flex-1 py-2.5 bg-gold-grad shadow-gold text-white font-black rounded-xl hover:brightness-110 disabled:opacity-60">
                                     {processing ? 'Mengupload...' : '📤 Upload'}
                                 </button>
                             </div>

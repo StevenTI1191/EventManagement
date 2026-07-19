@@ -177,7 +177,7 @@ export default function Register() {
                             </div>
 
                             <button type="submit" disabled={processing}
-                                className="w-full py-3 font-black text-white transition-all bg-gold rounded-xl hover:bg-gold-2 disabled:opacity-60 mt-2">
+                                className="w-full py-3 font-black text-white transition-all bg-gold-grad shadow-gold rounded-xl hover:brightness-110 disabled:opacity-60 mt-2">
                                 {processing ? 'Mendaftar...' : 'Daftar Sekarang'}
                             </button>
                         </form>

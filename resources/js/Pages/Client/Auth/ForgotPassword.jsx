@@ -78,7 +78,7 @@ export default function ForgotPassword() {
                                     <button
                                         type="submit"
                                         disabled={processing || !data.email}
-                                        className="w-full py-3 font-black text-white transition-all bg-gold rounded-xl hover:bg-gold-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        className="w-full py-3 font-black text-white transition-all bg-gold-grad shadow-gold rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
                                         {processing ? 'Mengirim...' : 'Kirim Link Reset'}
                                     </button>
                                 </form>

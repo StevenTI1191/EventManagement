@@ -400,7 +400,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                             <button key={k} onClick={() => setPortfolioFilter(k)}
                                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
                                     portfolioFilter === k
-                                        ? 'bg-gold text-white border-gold'
+                                        ? 'bg-gold-grad text-white border-gold-dim'
                                         : 'text-muted border-line hover:border-gold-2 hover:text-gold-dim'
                                 }`}>
                                 {k === 'all' ? 'Semua' : k}

@@ -131,7 +131,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                         ) : (
                             <>
                                 <a href={`${BASE_URL}/login`} className="px-4 py-2 text-sm font-bold text-gold-dim transition-colors border rounded-full border-gold-2 hover:bg-gold-soft">Masuk</a>
-                                <a href={`${BASE_URL}/register`} className="px-5 py-2 text-sm font-black text-white transition-colors bg-gold rounded-full hover:bg-gold-2">Daftar</a>
+                                <a href={`${BASE_URL}/register`} className="px-5 py-2 text-sm font-black text-white transition-colors bg-gold-grad shadow-gold rounded-full hover:brightness-110">Daftar</a>
                             </>
                         )}
                     </div>
@@ -198,7 +198,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                                 <button key={tab.key} onClick={() => handleStatus(tab.key)}
                                     className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
                                         activeStatus === tab.key
-                                            ? 'bg-gold text-white border-gold shadow-sm shadow-yellow-500/20'
+                                            ? 'bg-gold-grad text-white border-gold-dim shadow-sm shadow-yellow-500/20'
                                             : 'text-muted border-line hover:border-gold-2 hover:text-gold-dim'
                                     }`}>
                                     {tab.label}
@@ -341,7 +341,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                                                 <a key={link.label + '-' + i} href={link.url}
                                                     className={`flex items-center justify-center w-9 h-9 text-xs font-bold rounded-xl border transition-all ${
                                                         link.active
-                                                            ? 'bg-gold text-white border-gold shadow-sm shadow-yellow-500/30'
+                                                            ? 'bg-gold-grad text-white border-gold-dim shadow-sm shadow-yellow-500/30'
                                                             : 'bg-surface text-muted border-line hover:bg-gold-soft hover:border-gold-2 hover:text-gold-dim'
                                                     }`}>
                                                     {link.label}
@@ -471,7 +471,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                             )}
 
                             <a href={isLoggedIn ? `${BASE_URL}/appointment/create` : `${BASE_URL}/register`}
-                                className="block w-full py-3.5 text-sm font-black text-center text-white transition-all bg-gold rounded-2xl hover:bg-gold-2 hover:shadow-lg hover:shadow-yellow-500/20 mt-4">
+                                className="block w-full py-3.5 text-sm font-black text-center text-white transition-all bg-gold-grad shadow-gold rounded-2xl hover:brightness-110 hover:shadow-lg hover:shadow-yellow-500/20 mt-4">
                                 🗓️ Buat Appointment
                             </a>
                         </div>

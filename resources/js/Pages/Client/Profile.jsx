@@ -281,7 +281,7 @@ export default function ClientProfile({ auth, has_password }) {
                                 Batal
                             </Link>
                             <button type="submit" disabled={processing}
-                                className="flex flex-1 items-center justify-center gap-2 py-3 font-black text-white transition-all bg-gold rounded-xl hover:bg-gold-2 disabled:opacity-60">
+                                className="flex flex-1 items-center justify-center gap-2 py-3 font-black text-white transition-all bg-gold-grad shadow-gold rounded-xl hover:brightness-110 disabled:opacity-60">
                                 <Save size={16} />
                                 {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                             </button>

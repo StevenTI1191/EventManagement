@@ -130,7 +130,7 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="w-full py-3 font-black text-white transition-all bg-gold rounded-xl hover:bg-gold-2 disabled:opacity-60"
+                                className="w-full py-3 font-black text-white transition-all bg-gold-grad shadow-gold rounded-xl hover:brightness-110 disabled:opacity-60"
                             >
                                 {processing ? 'Masuk...' : 'Masuk'}
                             </button>

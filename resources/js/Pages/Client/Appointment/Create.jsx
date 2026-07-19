@@ -315,7 +315,7 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                             </Link>
                             <button type="submit"
                                 disabled={processing || !data.jenis_event || !data.tgl_request || !data.jam_request || !!dateError || missingProfile}
-                                className="flex-1 py-3.5 font-black text-white transition-all bg-gold rounded-xl hover:bg-gold-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                                className="flex-1 py-3.5 font-black text-white transition-all bg-gold-grad shadow-gold rounded-xl hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed">
                                 {processing ? '⏳ Mengirim...' : '🚀 Kirim Appointment'}
                             </button>
                         </div>
