@@ -41,6 +41,18 @@ trait ManagesPlanning
             ]);
     }
 
+    /**
+     * Daftar klien untuk dropdown "klien sasaran" di Planning Event.
+     * Semua klien ditampilkan beserta sumbernya (Mandiri = daftar sendiri,
+     * Internal = di-input/di-approach tim) agar jelas mana calon yang digarap tim.
+     */
+    protected function daftarClientPlanning()
+    {
+        return \App\Models\Client::select('id', 'nama_client', 'perusahaan_client', 'sumber')
+            ->orderBy('nama_client')
+            ->get();
+    }
+
     /** Buat item to-do template untuk kategori terpilih (null = semua kategori). */
     protected function generateTemplate(Event $event, ?array $categories = null): void
     {
@@ -64,6 +76,8 @@ trait ManagesPlanning
             'target_omset'    => 'nullable|numeric|min:0|max:9999999999999',
             'categories'      => 'nullable|array',
             'categories.*'    => 'string|max:255',
+            // Klien sasaran — untuk rencana acara yang akan di-approach ke klien tertentu
+            'id_client'       => 'nullable|exists:clients,id',
         ]);
 
         $event = Event::create([
@@ -73,6 +87,7 @@ trait ManagesPlanning
             'tgl_mulai_event'  => $request->tgl_mulai_event,
             'target_pax'       => $request->target_pax,
             'target_omset'     => $request->target_omset,
+            'id_client'        => $request->id_client,
             'id_pegawai'       => Auth::guard('pegawai')->id(),
             'status_event'     => 'Planning',
             // Acara milik LMB sendiri → tidak melewati pipeline (langsung Upcoming saat difinalisasi).
@@ -104,11 +119,13 @@ trait ManagesPlanning
             'tgl_mulai_event' => 'required|date',
             'target_pax'      => 'nullable|integer|min:0|max:100000',
             'target_omset'    => 'nullable|numeric|min:0|max:9999999999999',
+            // Klien sasaran — untuk rencana acara yang akan di-approach ke klien tertentu
+            'id_client'       => 'nullable|exists:clients,id',
         ]);
 
         $event->update($request->only([
             'nama_event', 'deskripsi_event', 'kategori_event',
-            'tgl_mulai_event', 'target_pax', 'target_omset',
+            'tgl_mulai_event', 'target_pax', 'target_omset', 'id_client',
         ]));
     }
 }

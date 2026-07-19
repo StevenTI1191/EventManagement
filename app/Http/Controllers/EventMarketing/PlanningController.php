@@ -34,6 +34,7 @@ class PlanningController extends Controller
             'categories'  => collect(\App\Support\PlanningTemplate::items())
                 ->map(fn ($items, $name) => ['name' => $name, 'count' => count($items)])
                 ->values(),
+            'clients'     => $this->daftarClientPlanning(),
             'submitRoute' => 'em.planning.store',
             'indexRoute'  => 'em.planning.index',
         ]);
@@ -79,6 +80,7 @@ class PlanningController extends Controller
 
         return Inertia::render('EventMarketing/Planning/Create', [
             'event'       => $event,
+            'clients'     => $this->daftarClientPlanning(),
             'submitRoute' => 'em.planning.update',
             'indexRoute'  => 'em.planning.index',
         ]);

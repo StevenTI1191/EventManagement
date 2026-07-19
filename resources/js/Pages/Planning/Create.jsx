@@ -4,7 +4,7 @@ import RupiahInput from '@/Components/RupiahInput';
 
 const EVENT_CATEGORIES = ['Konser', 'Wedding', 'Corporate', 'Birthday', 'Seminar', 'Lainnya'];
 
-export default function PlanningCreate({ Layout, categories = [], submitRoute, indexRoute, event = null }) {
+export default function PlanningCreate({ Layout, categories = [], clients = [], submitRoute, indexRoute, event = null }) {
     const isEdit = !!event;
     const { data, setData, post, put, processing, errors, setError } = useForm({
         nama_event: event?.nama_event || '',
@@ -13,6 +13,7 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
         tgl_mulai_event: event?.tgl_mulai_event ? String(event.tgl_mulai_event).slice(0, 10) : '',
         target_pax: event?.target_pax ?? '',
         target_omset: event?.target_omset ?? '',
+        id_client: event?.id_client ? String(event.id_client) : '',
         categories: categories.map((c) => c.name), // default: semua kategori dipilih (mode buat)
     });
 
@@ -101,6 +102,29 @@ export default function PlanningCreate({ Layout, categories = [], submitRoute, i
                                 value={data.target_omset} onChange={(v) => setData('target_omset', v)} />
                             {errors.target_omset && <span className="text-xs text-red-500">{errors.target_omset}</span>}
                         </div>
+                    </div>
+
+                    {/* Klien sasaran — untuk rencana acara yang akan di-approach ke klien tertentu */}
+                    <div>
+                        <label className="block mb-1 text-sm font-bold text-gray-700">
+                            Klien Sasaran <span className="font-normal text-gray-400">(opsional)</span>
+                        </label>
+                        <select
+                            className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
+                            value={data.id_client} onChange={(e) => setData('id_client', e.target.value)}>
+                            <option value="">— Acara internal, tanpa klien —</option>
+                            {clients.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.nama_client}
+                                    {c.perusahaan_client ? ` — ${c.perusahaan_client}` : ''}
+                                    {c.sumber === 'Internal' ? ' (di-approach tim)' : ' (daftar sendiri)'}
+                                </option>
+                            ))}
+                        </select>
+                        <p className="mt-1 text-xs text-gray-400">
+                            Isi bila rencana ini disiapkan untuk ditawarkan ke klien tertentu — mis. konsep kontes gym untuk Alpha Fit Gym.
+                        </p>
+                        {errors.id_client && <span className="text-xs text-red-500">{errors.id_client}</span>}
                     </div>
 
                     <div>
