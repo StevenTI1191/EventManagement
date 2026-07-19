@@ -1,6 +1,6 @@
 import { Head, router, Link, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Plus, Trash2, Check, Flag, ListChecks, Pencil } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, Check, Flag, ListChecks, Pencil, Send } from 'lucide-react';
 
 const CATEGORY_ORDER = [
     'Talent',
@@ -67,6 +67,8 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
     useEffect(() => { setItems(tugas || []); }, [tugas]);
 
     const isPlanning = mode === 'planning';
+    // Rencana bertarget klien berakhir di pipeline, bukan langsung Upcoming.
+    const keKlien = isPlanning && !!event.id_client;
     const groups = groupItems(items);
     const overall = avg(items);
 
@@ -155,8 +157,14 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
                             )}
                             {routes.finalize && (
                                 <button onClick={() => setConfirmFinalize(true)}
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 shadow-lg shadow-green-600/20">
-                                    <Flag size={16} /> Finalisasi → Upcoming
+                                    className={`inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-lg ${
+                                        keKlien
+                                            ? 'bg-[#FF2D55] hover:bg-[#e02249] shadow-[#FF2D55]/20'
+                                            : 'bg-green-600 hover:bg-green-700 shadow-green-600/20'
+                                    }`}>
+                                    {keKlien
+                                        ? <><Send size={16} /> Ajukan ke Klien → Pipeline</>
+                                        : <><Flag size={16} /> Finalisasi → Upcoming</>}
                                 </button>
                             )}
                         </div>
@@ -313,15 +321,24 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
             {confirmFinalize && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                     <div className="w-full max-w-sm p-6 bg-white shadow-xl rounded-2xl">
-                        <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-green-50">
-                            <Flag size={20} className="text-green-600" />
+                        <div className={`flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full ${keKlien ? 'bg-pink-50' : 'bg-green-50'}`}>
+                            {keKlien ? <Send size={20} className="text-[#FF2D55]" /> : <Flag size={20} className="text-green-600" />}
                         </div>
-                        <h2 className="mb-1 text-base font-extrabold text-center text-gray-900">Finalisasi Event?</h2>
-                        <p className="mb-5 text-sm text-center text-gray-400">Event akan berubah status menjadi <b>Upcoming</b> dan pindah ke menu Events. To-do list tetap berlanjut.</p>
+                        <h2 className="mb-1 text-base font-extrabold text-center text-gray-900">
+                            {keKlien ? 'Ajukan ke Klien?' : 'Finalisasi Event?'}
+                        </h2>
+                        <p className="mb-5 text-sm text-center text-gray-400">
+                            {keKlien
+                                ? <>Rencana masuk pipeline di kolom <b>Lead</b> untuk ditawarkan ke <b>{event.client?.nama_client || 'klien sasaran'}</b>. Lanjutkan dengan mengirim penawaran.</>
+                                : <>Event akan berubah status menjadi <b>Upcoming</b> dan pindah ke menu Events. To-do list tetap berlanjut.</>}
+                        </p>
                         <div className="flex gap-3">
                             <button onClick={() => setConfirmFinalize(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50">Batal</button>
-                            <button onClick={doFinalize} disabled={finalizing} className="flex-1 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 disabled:opacity-60">
-                                {finalizing ? 'Memproses…' : 'Ya, Finalisasi'}
+                            <button onClick={doFinalize} disabled={finalizing}
+                                className={`flex-1 py-2.5 text-white font-bold rounded-xl disabled:opacity-60 ${
+                                    keKlien ? 'bg-[#FF2D55] hover:bg-[#e02249]' : 'bg-green-600 hover:bg-green-700'
+                                }`}>
+                                {finalizing ? 'Memproses…' : (keKlien ? 'Ya, Ajukan' : 'Ya, Finalisasi')}
                             </button>
                         </div>
                     </div>

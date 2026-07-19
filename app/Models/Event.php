@@ -113,6 +113,20 @@ class Event extends Model
     public const TIPE_INTERNAL  = 'Internal';
     public const TIPE_EKSTERNAL = 'Eksternal';
 
+    /**
+     * Dua jenis rencana di menu Planning Event. Pembedanya cuma satu:
+     * ada tidaknya klien sasaran.
+     *
+     *  - Internal → acara milik LMB sendiri, dijalankan sendiri, tidak lewat
+     *    pipeline (finalisasi langsung ke Upcoming).
+     *  - Ke klien → konsep yang disiapkan untuk ditawarkan ke klien tertentu.
+     *    Wajib lewat pipeline supaya penawaran, deal, dan invoice tidak
+     *    terlewat.
+     */
+    public const PLANNING_INTERNAL = 'internal';
+    public const PLANNING_KLIEN    = 'klien';
+    public const PLANNING_JENIS    = [self::PLANNING_INTERNAL, self::PLANNING_KLIEN];
+
     /** Event milik LMB sendiri (berasal dari Planning Event). */
     public function scopeInternal($q) { return $q->where('tipe_event', self::TIPE_INTERNAL); }
 
@@ -144,10 +158,53 @@ class Event extends Model
             // belum kelar — jangan sampai sisa pekerjaan hilang dari papan.
             $w->whereIn('status_event', [self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN])
               ->orWhere(function ($i) {
+                  // Hanya rencana internal. Rencana bertarget klien masih calon —
+                  // divisi baru mengerjakannya setelah deal dan jadi Upcoming,
+                  // supaya papan tidak penuh pekerjaan yang belum tentu terjadi.
                   $i->where('tipe_event', self::TIPE_INTERNAL)
-                    ->where('status_event', self::STATUS_PLANNING);
+                    ->where('status_event', self::STATUS_PLANNING)
+                    ->whereNull('id_client');
               });
         });
+    }
+
+    /**
+     * Detail yang wajib terisi sebelum event boleh naik ke Negotiation/Deal.
+     * Dikembalikan sebagai daftar label yang MASIH kosong — dipakai pipeline
+     * untuk memblokir perpindahan, dan halaman detail untuk menampilkan
+     * daftar periksa supaya jelas apa yang harus dilengkapi.
+     */
+    public const DETAIL_WAJIB = [
+        'tgl_mulai_event'  => 'Tanggal acara',
+        'jam_mulai'        => 'Jam mulai',
+        'jam_selesai'      => 'Jam selesai',
+        'area_event'       => 'Area acara',
+        'jumlah_pax'       => 'Jumlah pax',
+        'deal_harga_event' => 'Deal harga',
+    ];
+
+    /**
+     * Kolom angka yang tidak cukup sekadar "terisi": rencana selalu dibuat
+     * dengan nilai 0, dan blank(0) bernilai false — tanpa pengecualian ini
+     * keduanya dianggap lengkap sejak awal, sehingga event bisa naik ke Deal
+     * dengan harga Rp 0 dan invoice DP ikut terbit Rp 0.
+     */
+    private const DETAIL_HARUS_POSITIF = ['jumlah_pax', 'deal_harga_event'];
+
+    public function kelengkapan(): array
+    {
+        $kurang = [];
+        foreach (self::DETAIL_WAJIB as $kolom => $label) {
+            $kosong = in_array($kolom, self::DETAIL_HARUS_POSITIF, true)
+                ? (float) $this->{$kolom} <= 0
+                : blank($this->{$kolom});
+
+            if ($kosong) {
+                $kurang[] = $label;
+            }
+        }
+
+        return $kurang;
     }
 
     /** Semua tugas event ini sudah Done (dipakai untuk menutup event). */

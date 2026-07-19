@@ -124,23 +124,7 @@ trait ManagesPipeline
      */
     protected function kelengkapanEvent(Event $event): array
     {
-        $wajib = [
-            'tgl_mulai_event'  => 'Tanggal acara',
-            'jam_mulai'        => 'Jam mulai',
-            'jam_selesai'      => 'Jam selesai',
-            'area_event'       => 'Area acara',
-            'jumlah_pax'       => 'Jumlah pax',
-            'deal_harga_event' => 'Deal harga',
-        ];
-
-        $kurang = [];
-        foreach ($wajib as $kolom => $label) {
-            if (blank($event->{$kolom})) {
-                $kurang[] = $label;
-            }
-        }
-
-        return $kurang;
+        return $event->kelengkapan();
     }
 
     /** Pindahkan event antar kolom pipeline (dipakai saat kartu digeser). */

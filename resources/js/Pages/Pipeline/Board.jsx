@@ -39,9 +39,12 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
     // Kartu bisa diklik untuk membuka form event. Seretan tidak boleh ikut
     // memicu navigasi, jadi klik diabaikan bila baru saja terjadi drag.
     const [baruDigeser, setBaruDigeser] = useState(false);
+    // Menuju halaman detail event, bukan langsung form: di sana ada ringkasan,
+    // daftar periksa kelengkapan, dan follow-up — form editnya di bagian bawah.
+    // Penanda "dari" dipakai agar tombol kembali pulang ke papan ini.
     const bukaEvent = (e) => {
-        if (baruDigeser || !routes.edit) return;
-        router.visit(route(routes.edit, e.id_event));
+        if (baruDigeser || !routes.detail) return;
+        router.visit(route(routes.detail, { id: e.id_event, dari: 'pipeline' }));
     };
 
     const jatuhkan = (statusTujuan) => {
@@ -164,9 +167,9 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                                 setTimeout(() => setBaruDigeser(false), 100);
                                             }}
                                             onClick={() => bukaEvent(e)}
-                                            title={routes.edit ? 'Klik untuk membuka & melengkapi detail event' : undefined}
+                                            title={routes.detail ? 'Klik untuk membuka detail event' : undefined}
                                             className={`p-2.5 bg-white border rounded-lg shadow-sm transition-all hover:shadow-md hover:border-gray-300 ${
-                                                routes.edit ? 'cursor-pointer' : ''
+                                                routes.detail ? 'cursor-pointer' : ''
                                             } ${dragId === e.id_event ? 'opacity-50' : 'border-gray-100'}`}
                                         >
                                             <div className="flex items-start gap-1.5">
@@ -253,8 +256,8 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                 KOLOM.flatMap((k) => (kolom[k.key] || []).map((e) => ({ ...e, _kolom: k }))).map((e) => (
                                     <tr key={e.id_event}
                                         onClick={() => bukaEvent(e)}
-                                        title={routes.edit ? 'Klik untuk membuka & melengkapi detail event' : undefined}
-                                        className={`transition-colors hover:bg-gray-50/60 ${routes.edit ? 'cursor-pointer' : ''}`}>
+                                        title={routes.detail ? 'Klik untuk membuka detail event' : undefined}
+                                        className={`transition-colors hover:bg-gray-50/60 ${routes.detail ? 'cursor-pointer' : ''}`}>
                                         <td className="px-4 py-3">
                                             <span className="text-sm font-bold text-gray-900">{e.nama_event}</span>
                                             {e.dari_planning && (

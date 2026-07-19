@@ -7,7 +7,7 @@ export default function Board({ kolom, canEdit }) {
             Layout={ManajemenLayout}
             kolom={kolom}
             canEdit={canEdit}
-            routes={{ updateStatus: 'manajemen.pipeline.update-status', penawaran: 'manajemen.pipeline.penawaran', batal: 'manajemen.pipeline.batal', edit: 'manajemen.event.edit' }}
+            routes={{ updateStatus: 'manajemen.pipeline.update-status', penawaran: 'manajemen.pipeline.penawaran', batal: 'manajemen.pipeline.batal', detail: 'manajemen.event.show' }}
         />
     );
 }

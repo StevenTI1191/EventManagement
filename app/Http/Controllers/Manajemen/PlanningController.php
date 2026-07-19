@@ -17,16 +17,20 @@ class PlanningController extends Controller
 {
     use ChecksPegawaiRole, ManagesPlanning, ManagesTugas;
 
-    public function index()
+    public function index(Request $request)
     {
         $this->checkManajemen();
 
+        $jenis = $this->jenisPlanning($request);
+
         return Inertia::render('Manajemen/Planning/Index', [
-            'events' => $this->planningEvents(),
+            'events' => $this->planningEvents($jenis),
+            'jenis'  => $jenis,
+            'jumlah' => $this->jumlahPlanning(),
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->checkManajemen();
 
@@ -35,6 +39,8 @@ class PlanningController extends Controller
                 ->map(fn ($items, $name) => ['name' => $name, 'count' => count($items)])
                 ->values(),
             'clients'     => $this->daftarClientPlanning(),
+            // Jenis mengikuti tab yang sedang dibuka di daftar rencana.
+            'jenisAwal'   => $this->jenisPlanning($request),
             'submitRoute' => 'manajemen.planning.store',
             'indexRoute'  => 'manajemen.planning.index',
         ]);
@@ -112,9 +118,7 @@ class PlanningController extends Controller
         $this->checkManajemen();
 
         $event = Event::where('status_event', 'Planning')->findOrFail($id_event);
-        $event->update(['status_event' => 'Upcoming']);
 
-        return redirect()->route('manajemen.event.edit', $event->id_event)
-            ->with('success', 'Event difinalisasi ke Upcoming. Lengkapi detail (Client, PIC, jam, area).');
+        return $this->finalisasiPlanning($event, 'manajemen.event.edit', 'manajemen.pipeline.index');
     }
 }

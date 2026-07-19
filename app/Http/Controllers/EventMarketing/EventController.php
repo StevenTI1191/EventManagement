@@ -12,10 +12,28 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 use App\Traits\ChecksPegawaiRole;
+use App\Traits\ShowsEventDetail;
 
 class EventController extends Controller
 {
-    use ChecksPegawaiRole;
+    use ChecksPegawaiRole, ShowsEventDetail;
+
+    /** Halaman detail satu event — termasuk event yang masih di pipeline. */
+    public function show($id)
+    {
+        $this->checkEventMarketing();
+
+        return $this->halamanDetailEvent('EventMarketing/Event/Detail', $id, [
+            'update'   => 'em.event.update',
+            'destroy'  => 'em.event.destroy',
+            'index'    => 'em.event.index',
+            'pipeline' => 'em.pipeline.index',
+            'followUp' => 'em.client.follow-up.store',
+            'todo'     => 'em.todo.index',
+            'client'   => 'em.client.show',
+        ]);
+    }
+
     public function index(Request $request)
     {
         $this->checkEventMarketing();
@@ -214,19 +232,30 @@ class EventController extends Controller
 
         $event = Event::findOrFail($id);
 
+        // Event yang belum berjalan (masih Planning atau di pipeline) boleh
+        // disimpan setengah jadi — detailnya memang dilengkapi bertahap sambil
+        // prospek berjalan. Daftar periksa di halaman detail yang menunjukkan
+        // sisa isian sebelum boleh naik tahap. Begitu event sudah Upcoming,
+        // jadwalnya wajib utuh.
+        $belumJalan = in_array($event->status_event, [Event::STATUS_PLANNING, ...Event::PIPELINE_STATUSES], true);
+        $jadwal     = $belumJalan ? 'nullable' : 'required';
+
         $request->validate([
             'nama_event'        => 'required|string|max:255',
-            'id_client'         => 'required|exists:clients,id',
+            // Event internal (acara milik LMB sendiri) memang tidak punya klien.
+            'id_client'         => [$event->tipe_event === Event::TIPE_EKSTERNAL ? 'required' : 'nullable', 'exists:clients,id'],
             'id_pegawai'        => 'required|exists:pegawais,id_pegawai',
             'kategori_event'    => 'nullable|string|max:255',
             'jumlah_pax'        => 'nullable|integer|min:0|max:100000',
             'harga_per_pax'     => 'nullable|numeric|min:0|max:9999999999999',
             'deal_harga_event'  => 'nullable|numeric|min:0|max:9999999999999',
+            'target_pax'        => 'nullable|integer|min:0|max:100000',
+            'target_omset'      => 'nullable|numeric|min:0|max:9999999999999',
             'tgl_mulai_event'   => 'required|date',
             'tgl_selesai_event' => 'nullable|date|after_or_equal:tgl_mulai_event',
-            'jam_mulai'         => 'required|string|max:8',
-            'jam_selesai'       => 'required|string|max:8',
-            'area_event'        => 'required|string|max:255',
+            'jam_mulai'         => $jadwal . '|string|max:8',
+            'jam_selesai'       => $jadwal . '|string|max:8',
+            'area_event'        => $jadwal . '|string|max:255',
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
             'status_event'      => 'nullable|in:' . implode(',', Event::SEMUA_STATUS),
@@ -234,22 +263,26 @@ class EventController extends Controller
             'poster_event'      => 'nullable|file|image|max:10240',
         ]);
 
-        $bentrok = Event::checkBentrok(
-            $request->tgl_mulai_event,
-            $request->jam_mulai,
-            $request->jam_selesai,
-            $request->area_event,
-            $id,
-            $request->tgl_selesai_event
-        );
+        // Cek bentrok hanya bila jadwalnya sudah utuh. Event pipeline yang
+        // jadwalnya baru terisi sebagian belum bisa dibandingkan.
+        if ($request->filled(['tgl_mulai_event', 'jam_mulai', 'jam_selesai', 'area_event'])) {
+            $bentrok = Event::checkBentrok(
+                $request->tgl_mulai_event,
+                $request->jam_mulai,
+                $request->jam_selesai,
+                $request->area_event,
+                $id,
+                $request->tgl_selesai_event
+            );
 
-        if ($bentrok) {
-            return back()->withErrors([
-                'bentrok' => "Jadwal bentrok dengan event \"{$bentrok->nama_event}\"
-                            ({$bentrok->jam_mulai} - {$bentrok->jam_selesai})
-                            di area {$bentrok->area_event}
-                            pada tanggal {$bentrok->tgl_mulai_event}."
-            ])->withInput();
+            if ($bentrok) {
+                return back()->withErrors([
+                    'bentrok' => "Jadwal bentrok dengan event \"{$bentrok->nama_event}\"
+                                ({$bentrok->jam_mulai} - {$bentrok->jam_selesai})
+                                di area {$bentrok->area_event}
+                                pada tanggal {$bentrok->tgl_mulai_event}."
+                ])->withInput();
+            }
         }
 
         $data = $request->only([
@@ -258,6 +291,8 @@ class EventController extends Controller
             'jam_meeting', 'jam_keluar_makanan', 'area_event', 'jumlah_pax', 'harga_per_pax',
             'note_event', 'food_beverage_event', 'entairtainment_event',
             'technical_meeting', 'gladi_resik', 'deal_harga_event', 'status_event',
+            // Target tetap bisa dilihat & disunting setelah tahap Planning lewat.
+            'target_pax', 'target_omset',
         ]);
 
         $data['is_public'] = $request->boolean('is_public');
@@ -282,17 +317,21 @@ class EventController extends Controller
             $data['poster_event'] = 'posters/' . $filename;
         }
 
-        // Status event yang masih di pipeline (Lead/Negotiation/Deal) HANYA boleh
-        // diubah lewat papan Pipeline. Tanpa penjagaan ini, menyimpan form Edit
-        // akan mencabut event dari pipeline — padahal Edit justru dipakai untuk
-        // melengkapi detail agar event bisa naik tahap.
-        if (in_array($event->status_event, Event::PIPELINE_STATUSES, true)) {
+        // Status event yang masih Planning atau di pipeline HANYA boleh diubah
+        // lewat jalurnya sendiri (finalisasi Planning / papan Pipeline). Tanpa
+        // penjagaan ini, menyimpan form detail akan mencabut event dari alurnya
+        // — padahal form ini justru dipakai untuk melengkapinya agar naik tahap.
+        if (in_array($event->status_event, [Event::STATUS_PLANNING, ...Event::PIPELINE_STATUSES], true)) {
             unset($data['status_event']);
         }
 
         $event->update($data);
 
-        return redirect()->route('em.event.index');
+        // Kembali ke halaman detail, bukan daftar Event: daftar itu menyaring
+        // event terkonfirmasi saja, sehingga event pipeline akan terlihat
+        // "hilang" setelah disimpan.
+        return redirect()->route('em.event.show', $event->id_event)
+            ->with('success', 'Detail event tersimpan.');
     }
 
     public function destroy($id)

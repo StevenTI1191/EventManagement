@@ -7,7 +7,7 @@ export default function Board({ kolom, canEdit }) {
             Layout={EventMarketingLayout}
             kolom={kolom}
             canEdit={canEdit}
-            routes={{ updateStatus: 'em.pipeline.update-status', penawaran: 'em.pipeline.penawaran', batal: 'em.pipeline.batal', edit: 'em.event.edit' }}
+            routes={{ updateStatus: 'em.pipeline.update-status', penawaran: 'em.pipeline.penawaran', batal: 'em.pipeline.batal', detail: 'em.event.show' }}
         />
     );
 }

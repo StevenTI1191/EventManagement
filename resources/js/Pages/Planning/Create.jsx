@@ -1,11 +1,26 @@
 import { Head, useForm, Link } from '@inertiajs/react';
-import { ListChecks, Check } from 'lucide-react';
+import { ListChecks, Check, Building2, Target } from 'lucide-react';
 import RupiahInput from '@/Components/RupiahInput';
 import SearchableSelect from '@/Components/SearchableSelect';
 
 const EVENT_CATEGORIES = ['Konser', 'Wedding', 'Corporate', 'Birthday', 'Seminar', 'Lainnya'];
 
-export default function PlanningCreate({ Layout, categories = [], clients = [], submitRoute, indexRoute, event = null }) {
+const JENIS = [
+    {
+        key: 'internal',
+        label: 'Event Internal',
+        icon: Building2,
+        ket: 'Acara milik LM sendiri. Tidak lewat pipeline — setelah difinalisasi langsung jadi Upcoming.',
+    },
+    {
+        key: 'klien',
+        label: 'Diajukan ke Klien',
+        icon: Target,
+        ket: 'Konsep untuk ditawarkan ke klien tertentu. Saat diajukan, masuk pipeline di kolom Lead.',
+    },
+];
+
+export default function PlanningCreate({ Layout, categories = [], clients = [], submitRoute, indexRoute, event = null, jenisAwal = 'internal' }) {
     const isEdit = !!event;
     const { data, setData, post, put, processing, errors, setError } = useForm({
         nama_event: event?.nama_event || '',
@@ -14,9 +29,13 @@ export default function PlanningCreate({ Layout, categories = [], clients = [], 
         tgl_mulai_event: event?.tgl_mulai_event ? String(event.tgl_mulai_event).slice(0, 10) : '',
         target_pax: event?.target_pax ?? '',
         target_omset: event?.target_omset ?? '',
+        // Saat edit, jenis dibaca dari ada tidaknya klien sasaran.
+        jenis: isEdit ? (event?.id_client ? 'klien' : 'internal') : jenisAwal,
         id_client: event?.id_client ? String(event.id_client) : '',
         categories: categories.map((c) => c.name), // default: semua kategori dipilih (mode buat)
     });
+
+    const keKlien = data.jenis === 'klien';
 
     const toggleCat = (name) => {
         setData('categories', data.categories.includes(name)
@@ -31,6 +50,8 @@ export default function PlanningCreate({ Layout, categories = [], clients = [], 
         let bad = false;
         if (!data.nama_event.trim()) { setError('nama_event', 'Nama Event wajib diisi.'); bad = true; }
         if (!data.tgl_mulai_event) { setError('tgl_mulai_event', 'Tanggal Acara wajib diisi.'); bad = true; }
+        // Tanpa klien sasaran, rencana ini tidak akan pernah sampai ke pipeline.
+        if (keKlien && !data.id_client) { setError('id_client', 'Pilih klien sasaran untuk rencana yang diajukan ke klien.'); bad = true; }
         if (bad) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
         if (isEdit) put(route(submitRoute, event.id_event));
         else post(route(submitRoute));
@@ -105,29 +126,60 @@ export default function PlanningCreate({ Layout, categories = [], clients = [], 
                         </div>
                     </div>
 
-                    {/* Klien sasaran — untuk rencana acara yang akan di-approach ke klien tertentu */}
+                    {/* Jenis rencana — menentukan apakah nanti lewat pipeline atau tidak */}
                     <div>
-                        <label className="block mb-1 text-sm font-bold text-gray-700">
-                            Klien Sasaran <span className="font-normal text-gray-400">(opsional)</span>
-                        </label>
-                        <SearchableSelect
-                            options={clients.map((c) => ({
-                                value: c.id,
-                                label: c.nama_client + (c.perusahaan_client ? ` — ${c.perusahaan_client}` : ''),
-                                sub: c.sumber === 'Internal' ? 'Di-approach tim'
-                                    : c.sumber === 'Perusahaan Sendiri' ? 'Perusahaan LM sendiri'
-                                    : 'Daftar sendiri',
-                            }))}
-                            value={data.id_client}
-                            onChange={(v) => setData('id_client', v)}
-                            emptyOption="— Acara internal, tanpa klien —"
-                            searchPlaceholder="Cari nama klien / perusahaan…"
-                        />
-                        <p className="mt-1 text-xs text-gray-400">
-                            Isi bila rencana ini disiapkan untuk ditawarkan ke klien tertentu — mis. konsep kontes gym untuk Alpha Fit Gym.
-                        </p>
-                        {errors.id_client && <span className="text-xs text-red-500">{errors.id_client}</span>}
+                        <label className="block mb-2 text-sm font-bold text-gray-700">Jenis Rencana</label>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            {JENIS.map((j) => {
+                                const on = data.jenis === j.key;
+                                const Icon = j.icon;
+                                return (
+                                    <button type="button" key={j.key}
+                                        onClick={() => {
+                                            setData((d) => ({
+                                                ...d,
+                                                jenis: j.key,
+                                                // Rencana internal tidak menyimpan klien sasaran.
+                                                id_client: j.key === 'klien' ? d.id_client : '',
+                                            }));
+                                        }}
+                                        className={`p-4 rounded-2xl border text-left transition-all ${
+                                            on ? 'border-[#FF2D55] bg-pink-50/60 ring-1 ring-[#FF2D55]' : 'border-gray-200 hover:border-gray-300'
+                                        }`}>
+                                        <span className="flex items-center gap-2 mb-1">
+                                            <Icon size={16} className={on ? 'text-[#FF2D55]' : 'text-gray-400'} />
+                                            <span className="text-sm font-bold text-gray-800">{j.label}</span>
+                                        </span>
+                                        <span className="block text-xs leading-relaxed text-gray-500">{j.ket}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
+
+                    {/* Klien sasaran — hanya relevan untuk rencana yang diajukan ke klien */}
+                    {keKlien && (
+                        <div>
+                            <label className="block mb-1 text-sm font-bold text-gray-700">Klien Sasaran</label>
+                            <SearchableSelect
+                                options={clients.map((c) => ({
+                                    value: c.id,
+                                    label: c.nama_client + (c.perusahaan_client ? ` — ${c.perusahaan_client}` : ''),
+                                    sub: c.sumber === 'Internal' ? 'Di-approach tim'
+                                        : c.sumber === 'Perusahaan Sendiri' ? 'Perusahaan LM sendiri'
+                                        : 'Daftar sendiri',
+                                }))}
+                                value={data.id_client}
+                                onChange={(v) => setData('id_client', v)}
+                                emptyOption="— Pilih klien sasaran —"
+                                searchPlaceholder="Cari nama klien / perusahaan…"
+                            />
+                            <p className="mt-1 text-xs text-gray-400">
+                                Klien yang akan ditawari rencana ini — mis. konsep kontes gym untuk Alpha Fit Gym.
+                            </p>
+                            {errors.id_client && <span className="text-xs text-red-500">{errors.id_client}</span>}
+                        </div>
+                    )}
 
                     <div>
                         <label className="block mb-1 text-sm font-bold text-gray-700">Deskripsi Event</label>
