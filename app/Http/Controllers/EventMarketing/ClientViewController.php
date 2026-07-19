@@ -19,9 +19,10 @@ class ClientViewController extends Controller
     {
         $this->checkEventMarketing();
 
-        // Dipisah 2 tab: klien yang mendaftar sendiri (Mandiri) vs yang di-input & di-approach tim (Internal).
-        $sumber = $request->sumber === Client::SUMBER_INTERNAL
-            ? Client::SUMBER_INTERNAL
+        // Dipisah per sumber: mendaftar sendiri, di-approach tim, atau acara
+        // milik LM sendiri.
+        $sumber = in_array($request->sumber, Client::SEMUA_SUMBER, true)
+            ? $request->sumber
             : Client::SUMBER_MANDIRI;
 
         $query = Client::withCount('events')->where('sumber', $sumber);
@@ -41,8 +42,9 @@ class ClientViewController extends Controller
             'filters' => $request->only('search', 'sumber'),
             'sumber'  => $sumber,
             'jumlah'  => [
-                'Mandiri'  => Client::mandiri()->count(),
-                'Internal' => Client::internal()->count(),
+                Client::SUMBER_MANDIRI  => Client::mandiri()->count(),
+                Client::SUMBER_INTERNAL => Client::internal()->count(),
+                Client::SUMBER_LM       => Client::perusahaanSendiri()->count(),
             ],
         ]);
     }
@@ -158,18 +160,24 @@ class ClientViewController extends Controller
         $this->checkEventMarketing();
 
         $request->validate([
-            'nama_client'       => 'required|string|max:255',
-            'perusahaan_client' => 'nullable|string|max:255',
-            'no_telp_client'    => 'nullable|string|max:20',
-            'email_client'      => 'nullable|email|unique:clients,email_client',
+            'nama_client'        => 'required|string|max:255',
+            'perusahaan_client'  => 'nullable|string|max:255',
+            'no_telp_client'     => 'nullable|string|max:20',
+            'email_client'       => 'nullable|email|unique:clients,email_client',
+            'perusahaan_sendiri' => 'nullable|boolean',
         ]);
 
-        // Client yang di-input tim EM = hasil approach sendiri (bukan daftar mandiri).
+        // Ditandai "perusahaan sendiri" bila acara diselenggarakan LM sendiri;
+        // selain itu klien hasil approach tim EM.
+        $sumber = $request->boolean('perusahaan_sendiri')
+            ? Client::SUMBER_LM
+            : Client::SUMBER_INTERNAL;
+
         Client::create($request->only([
             'nama_client', 'perusahaan_client', 'no_telp_client', 'email_client',
-        ]) + ['sumber' => Client::SUMBER_INTERNAL]);
+        ]) + ['sumber' => $sumber]);
 
-        return redirect()->route('em.client.index', ['sumber' => Client::SUMBER_INTERNAL])
+        return redirect()->route('em.client.index', ['sumber' => $sumber])
             ->with('success', 'Client berhasil ditambahkan.');
     }
 

@@ -7,6 +7,7 @@ export default function EMCreateClient({ auth }) {
         perusahaan_client: '',
         no_telp_client:    '',
         email_client:      '',
+        perusahaan_sendiri: false,
     });
 
     const handleSubmit = (e) => {
@@ -81,6 +82,23 @@ export default function EMCreateClient({ auth }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Acara milik LM sendiri — bukan klien dari luar */}
+                    <label className="flex items-start gap-3 p-4 mt-8 transition-colors border cursor-pointer border-gray-200 rounded-2xl hover:border-gray-300 has-[:checked]:border-[#FF2D55] has-[:checked]:bg-[#FF2D55]/5">
+                        <input
+                            type="checkbox"
+                            checked={data.perusahaan_sendiri}
+                            onChange={e => setData('perusahaan_sendiri', e.target.checked)}
+                            className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#FF2D55] focus:ring-[#FF2D55]"
+                        />
+                        <span>
+                            <span className="block text-sm font-bold text-gray-800">Dari perusahaan LM sendiri</span>
+                            <span className="block mt-0.5 text-xs text-gray-500">
+                                Centang bila acaranya diselenggarakan PT Laksamana Muda sendiri, bukan pesanan klien dari luar.
+                                Data ini masuk tab <b>Perusahaan Sendiri</b> dan tidak dihitung sebagai prospek.
+                            </span>
+                        </span>
+                    </label>
 
                     {/* --- BUTTONS --- */}
                     <div className="flex justify-end gap-4 mt-12">
