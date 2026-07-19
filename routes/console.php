@@ -193,15 +193,16 @@ Schedule::call(function () {
 /*
 |--------------------------------------------------------------------------
 | Prospek Mandek — jalan setiap hari jam 08:15
-| Event eksternal yang masih di pipeline (Lead/Negotiation) dan tidak ada
-| pergerakan selama 14 atau 30 hari mengingatkan PIC-nya untuk follow up.
+| Semua kartu yang tampil di papan pipeline dan tidak ada pergerakan selama
+| 14 atau 30 hari mengingatkan PIC-nya untuk follow up. Termasuk rencana yang
+| sudah menyasar klien tapi belum diajukan — tanpa itu, kartu rencana bisa
+| mengendap di kolom Lead tanpa pernah ditegur sistem.
 |--------------------------------------------------------------------------
 */
 Schedule::call(function () {
     foreach ([14, 30] as $hari) {
         $events = Event::with('pic')
-            ->eksternal()
-            ->pipeline()
+            ->prospekAktif()
             ->whereDate('updated_at', now()->subDays($hari)->toDateString())
             ->get();
 
@@ -211,14 +212,23 @@ Schedule::call(function () {
                 continue;
             }
 
-            $pesan = "Prospek \"{$event->nama_event}\" sudah {$hari} hari tanpa pergerakan "
-                   . "(masih di tahap {$event->status_event}).\n\n"
-                   . "Mohon ditindaklanjuti — hubungi klien, perbarui penawaran, atau tandai \"Tidak jadi\" "
-                   . "di papan Pipeline bila prospek tidak dilanjutkan.\n\n— Sistem Laksamana Muda";
+            // Rencana yang belum diajukan butuh ajakan berbeda dari prospek
+            // yang penawarannya sudah berjalan.
+            $belumDiajukan = $event->status_event === Event::STATUS_PLANNING;
+
+            $pesan = $belumDiajukan
+                ? "Rencana \"{$event->nama_event}\" sudah {$hari} hari menyasar klien tapi belum diajukan.\n\n"
+                    . "Bila konsepnya sudah siap, ajukan ke klien dari halaman Planning Event agar masuk "
+                    . "pipeline sebagai prospek resmi.\n\n— Sistem Laksamana Muda"
+                : "Prospek \"{$event->nama_event}\" sudah {$hari} hari tanpa pergerakan "
+                    . "(masih di tahap {$event->status_event}).\n\n"
+                    . "Mohon ditindaklanjuti — hubungi klien, perbarui penawaran, atau tandai \"Tidak jadi\" "
+                    . "di papan Pipeline bila prospek tidak dilanjutkan.\n\n— Sistem Laksamana Muda";
 
             try {
-                Mail::raw($pesan, function ($m) use ($email, $event) {
-                    $m->to($email)->subject("⏳ Prospek mandek — {$event->nama_event}");
+                Mail::raw($pesan, function ($m) use ($email, $event, $belumDiajukan) {
+                    $awalan = $belumDiajukan ? '💡 Rencana belum diajukan' : '⏳ Prospek mandek';
+                    $m->to($email)->subject("{$awalan} — {$event->nama_event}");
                 });
                 \Log::info("Reminder prospek mandek: {$event->nama_event} ({$hari} hari).");
             } catch (\Exception $e) {

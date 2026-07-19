@@ -137,6 +137,30 @@ class Event extends Model
     public function scopePipeline($q) { return $q->whereIn('status_event', self::PIPELINE_STATUSES); }
 
     /**
+     * Prospek yang sedang digarap di papan pipeline: event klien di tahap
+     * Lead/Negotiation/Deal, ditambah rencana yang sudah menyasar klien
+     * tertentu — kartu "rencana" di kolom Lead.
+     *
+     * Satu definisi dipakai bersama papan, perpindahan tahap, dan penyapu
+     * prospek mandek. Sebelumnya predikatnya ditulis ulang di tiap tempat,
+     * sehingga rencana bertarget klien tampil di papan tapi tidak pernah
+     * ikut disapu — prospeknya bisa mengendap tanpa pengingat.
+     */
+    public function scopeProspekAktif($q)
+    {
+        return $q->where(function ($w) {
+            $w->where(function ($e) {
+                $e->where('tipe_event', self::TIPE_EKSTERNAL)
+                  ->whereIn('status_event', self::PIPELINE_STATUSES);
+            })->orWhere(function ($p) {
+                $p->where('tipe_event', self::TIPE_INTERNAL)
+                  ->where('status_event', self::STATUS_PLANNING)
+                  ->whereNotNull('id_client');
+            });
+        });
+    }
+
+    /**
      * Event "nyata" yang sudah lolos pipeline — dipakai daftar Event, dashboard,
      * dan Task Divisi. Planning (draft internal) dan pipeline (Lead/Negotiation/Deal)
      * sengaja dikecualikan agar calon event tidak bocor ke halaman operasional.

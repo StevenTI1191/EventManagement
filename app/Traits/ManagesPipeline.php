@@ -134,18 +134,9 @@ trait ManagesPipeline
             'status_event' => ['required', Rule::in(Event::PIPELINE_STATUSES)],
         ]);
 
-        // Kartu yang boleh digeser: prospek eksternal di pipeline, ATAU rencana
-        // (Planning) yang sudah menyasar klien tertentu.
-        $event = Event::where(function ($q) {
-            $q->where(function ($e) {
-                $e->where('tipe_event', Event::TIPE_EKSTERNAL)
-                  ->whereIn('status_event', Event::PIPELINE_STATUSES);
-            })->orWhere(function ($p) {
-                $p->where('tipe_event', Event::TIPE_INTERNAL)
-                  ->where('status_event', Event::STATUS_PLANNING)
-                  ->whereNotNull('id_client');
-            });
-        })->findOrFail($id_event);
+        // Kartu yang boleh digeser sama persis dengan yang tampil di papan —
+        // definisinya di Event::scopeProspekAktif().
+        $event = Event::prospekAktif()->findOrFail($id_event);
 
         $baru       = $request->status_event;
         $dariRencana = $event->status_event === Event::STATUS_PLANNING;
