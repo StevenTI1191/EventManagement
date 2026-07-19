@@ -21,10 +21,38 @@ use Illuminate\Validation\ValidationException;
  */
 trait ManagesPipeline
 {
-    /** Event eksternal yang masih berada di papan pipeline, dikelompokkan per status. */
+    /**
+     * Isi papan pipeline, dikelompokkan per kolom.
+     *
+     * Yang ditampilkan:
+     *  - Event eksternal di seluruh siklus hidup (Lead s/d Done).
+     *  - Event Planning yang punya klien sasaran — ikut kolom Lead, karena
+     *    rencana yang sudah menyasar klien pada dasarnya calon prospek.
+     *  - Event Done hanya sampai beberapa hari setelah ditutup, lalu hilang
+     *    dari papan supaya kolomnya tidak menumpuk selamanya.
+     */
     protected function pipelineColumns(): array
     {
-        $events = Event::eksternal()->pipeline()
+        $batasDone = now()->subDays(Event::PIPELINE_DONE_HARI);
+
+        $events = Event::query()
+            ->where(function ($q) use ($batasDone) {
+                // Event klien di seluruh tahap (Done dibatasi umurnya)
+                $q->where(function ($e) use ($batasDone) {
+                    $e->where('tipe_event', Event::TIPE_EKSTERNAL)
+                      ->whereIn('status_event', Event::PIPELINE_KOLOM)
+                      ->where(function ($d) use ($batasDone) {
+                          $d->where('status_event', '!=', Event::STATUS_DONE)
+                            ->orWhere('updated_at', '>=', $batasDone);
+                      });
+                })
+                // Rencana yang sudah menyasar klien tertentu
+                ->orWhere(function ($p) {
+                    $p->where('tipe_event', Event::TIPE_INTERNAL)
+                      ->where('status_event', Event::STATUS_PLANNING)
+                      ->whereNotNull('id_client');
+                });
+            })
             ->with([
                 'client:id,nama_client,perusahaan_client,no_telp_client,sumber',
                 'pic:id_pegawai,nama_pegawai',
@@ -32,17 +60,22 @@ trait ManagesPipeline
             ->orderByDesc('updated_at')
             ->get();
 
-        // Sisipkan link WhatsApp siap kirim (pesan penawaran) untuk tiap kartu.
         $events->each(function (Event $e) {
+            // Link WhatsApp penawaran hanya relevan untuk prospek yang digarap.
             $e->wa_penawaran = Wa::link(
                 $e->client->no_telp_client ?? null,
                 $this->pesanPenawaran($e),
             );
+            // Penanda kartu "rencana" agar dibedakan di papan.
+            $e->dari_planning = $e->status_event === Event::STATUS_PLANNING;
         });
 
         $kolom = [];
-        foreach (Event::PIPELINE_STATUSES as $status) {
-            $kolom[$status] = $events->where('status_event', $status)->values();
+        foreach (Event::PIPELINE_KOLOM as $status) {
+            $kolom[$status] = $status === Event::STATUS_LEAD
+                // Kolom Lead memuat prospek Lead + rencana bertarget klien
+                ? $events->filter(fn (Event $e) => in_array($e->status_event, [Event::STATUS_LEAD, Event::STATUS_PLANNING], true))->values()
+                : $events->where('status_event', $status)->values();
         }
 
         return $kolom;
@@ -117,8 +150,21 @@ trait ManagesPipeline
             'status_event' => ['required', Rule::in(Event::PIPELINE_STATUSES)],
         ]);
 
-        $event = Event::eksternal()->pipeline()->findOrFail($id_event);
-        $baru  = $request->status_event;
+        // Kartu yang boleh digeser: prospek eksternal di pipeline, ATAU rencana
+        // (Planning) yang sudah menyasar klien tertentu.
+        $event = Event::where(function ($q) {
+            $q->where(function ($e) {
+                $e->where('tipe_event', Event::TIPE_EKSTERNAL)
+                  ->whereIn('status_event', Event::PIPELINE_STATUSES);
+            })->orWhere(function ($p) {
+                $p->where('tipe_event', Event::TIPE_INTERNAL)
+                  ->where('status_event', Event::STATUS_PLANNING)
+                  ->whereNotNull('id_client');
+            });
+        })->findOrFail($id_event);
+
+        $baru       = $request->status_event;
+        $dariRencana = $event->status_event === Event::STATUS_PLANNING;
 
         // Negotiation & Deal hanya boleh bila detail acara sudah lengkap.
         if (in_array($baru, [Event::STATUS_NEGOTIATION, Event::STATUS_DEAL], true)) {
@@ -130,7 +176,15 @@ trait ManagesPipeline
             }
         }
 
-        $event->update(['status_event' => $baru]);
+        $ubah = ['status_event' => $baru];
+
+        // Rencana yang mulai digarap sebagai prospek resmi menjadi event klien,
+        // supaya masuk hitungan Finance & alur penawaran seperti prospek lain.
+        if ($dariRencana) {
+            $ubah['tipe_event'] = Event::TIPE_EKSTERNAL;
+        }
+
+        $event->update($ubah);
 
         // Deal tercapai → appointment asal (bila ada) otomatis ditandai Selesai,
         // sehingga tidak ikut terbatalkan scheduler auto-batal appointment.

@@ -87,6 +87,19 @@ class Event extends Model
     /** Kolom kanban pipeline (hanya untuk event eksternal). */
     public const PIPELINE_STATUSES = [self::STATUS_LEAD, self::STATUS_NEGOTIATION, self::STATUS_DEAL];
 
+    /**
+     * Kolom yang tampil di papan Pipeline — seluruh siklus hidup event klien.
+     * Hanya tiga tahap pertama (PIPELINE_STATUSES) yang boleh digeser manual;
+     * Upcoming ke atas ditentukan pembayaran & jadwal, bukan seretan kartu.
+     */
+    public const PIPELINE_KOLOM = [
+        self::STATUS_LEAD, self::STATUS_NEGOTIATION, self::STATUS_DEAL,
+        self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE,
+    ];
+
+    /** Berapa hari event Done masih ditampilkan di papan sebelum menghilang. */
+    public const PIPELINE_DONE_HARI = 3;
+
     /** Semua status yang sah — dipakai validasi agar status pipeline tidak ditolak. */
     public const SEMUA_STATUS = [
         self::STATUS_LEAD, self::STATUS_NEGOTIATION, self::STATUS_DEAL,
