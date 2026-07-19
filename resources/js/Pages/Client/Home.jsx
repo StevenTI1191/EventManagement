@@ -38,6 +38,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
         { label: 'Home',      href: '#home' },
         { label: 'About',     href: '#about' },
         { label: 'Layanan',   href: '#layanan' },
+        { label: 'Cara Kerja', href: '#cara-kerja' },
         { label: 'Upcoming',  href: '#upcoming' },
         { label: 'Portfolio', href: '#portfolio' },
         { label: 'Kontak',    href: '#kontak' },
@@ -307,8 +308,60 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                 </div>
             </section>
 
+            {/* ── CARA KERJA ─────────────────────────────────────── */}
+            {/* Panduan alur untuk klien: apa yang terjadi setelah mereka
+                mengajukan acara, dan apa yang perlu mereka lakukan di tiap tahap. */}
+            <section id="cara-kerja" className="py-24 bg-paper bg-paper-glow">
+                <div className="px-6 mx-auto max-w-5xl">
+                    <div className="mb-16 text-center">
+                        <p className="mb-4 text-sm font-bold tracking-widest text-gold uppercase">Panduan</p>
+                        <h2 className="text-4xl font-black text-ink md:text-5xl">Cara <span className="text-gold">Mendaftarkan Acara</span></h2>
+                        <p className="max-w-2xl mx-auto mt-4 text-muted">
+                            Dari konsultasi pertama sampai hari-H, setiap tahap bisa Anda pantau sendiri lewat portal.
+                        </p>
+                    </div>
+
+                    <ol className="space-y-4">
+                        {[
+                            { judul: 'Buat akun & masuk portal',
+                              isi: 'Daftar dengan email aktif. Semua penawaran, tagihan, dan perkembangan acara Anda akan muncul di sana.' },
+                            { judul: 'Ajukan jadwal konsultasi',
+                              isi: 'Pilih tanggal dan jam yang Anda inginkan. Tim kami mengonfirmasi jadwalnya, dan Anda akan menerima pemberitahuan.' },
+                            { judul: 'Meeting & penyusunan konsep',
+                              isi: 'Kami bahas kebutuhan acara Anda. Hasil pembahasannya langsung kami susun jadi rancangan acara.' },
+                            { judul: 'Terima penawaran',
+                              isi: 'Penawaran lengkap beserta rinciannya dikirim dalam bentuk PDF dan tampil di portal. Anda bisa menerima atau menolaknya di sana.' },
+                            { judul: 'Bayar uang muka 50%',
+                              isi: 'Setelah penawaran diterima, tagihan uang muka terbit. Unggah bukti transfernya di portal — pilih tagihan yang dibayar agar tercatat tepat.' },
+                            { judul: 'Persiapan berjalan',
+                              isi: 'Begitu pembayaran diverifikasi, acara Anda masuk tahap persiapan. Technical meeting dan gladi resik dijadwalkan dan bisa Anda lihat di portal.' },
+                            { judul: 'Hari-H & pelunasan',
+                              isi: 'Acara berlangsung sesuai rencana. Sisa pembayaran ditagihkan lewat invoice pelunasan.' },
+                        ].map((l, i) => (
+                            <li key={l.judul} className="flex gap-5 p-6 transition-all bg-surface border border-line rounded-2xl hover:border-gold-2">
+                                <span className="flex items-center justify-center w-10 h-10 text-sm font-black text-white rounded-full bg-gold-grad shadow-gold shrink-0">
+                                    {i + 1}
+                                </span>
+                                <div>
+                                    <h3 className="mb-1 text-lg font-bold text-ink">{l.judul}</h3>
+                                    <p className="text-sm leading-relaxed text-muted">{l.isi}</p>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+
+                    <div className="p-8 mt-12 text-center border bg-gradient-to-r from-gold-soft to-transparent border-line rounded-3xl">
+                        <p className="mb-5 text-muted">Siap memulai? Langkah pertamanya hanya butuh beberapa menit.</p>
+                        <a href={isLoggedIn ? `${BASE_URL}/appointment/create` : `${BASE_URL}/register`}
+                            className="inline-block px-8 py-3 font-black text-white transition-all rounded-full bg-gold-grad shadow-gold hover:brightness-110 hover:scale-105">
+                            {isLoggedIn ? '🗓️ Ajukan Konsultasi' : '✨ Buat Akun'}
+                        </a>
+                    </div>
+                </div>
+            </section>
+
             {/* ── UPCOMING EVENTS ────────────────────────────────── */}
-            <section id="upcoming" className="py-24 bg-paper bg-paper-glow">
+            <section id="upcoming" className="py-24 bg-surface">
                 <div className="px-6 mx-auto max-w-7xl">
                     <div className="flex items-end justify-between mb-12">
                         <div>
@@ -639,6 +692,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                                     { label: 'Home',       href: '#home' },
                                     { label: 'About',      href: '#about' },
                                     { label: 'Layanan',    href: '#layanan' },
+                                    { label: 'Cara Kerja', href: '#cara-kerja' },
                                     { label: 'Upcoming',   href: '#upcoming' },
                                     { label: 'Portfolio',  href: '#portfolio' },
                                     { label: 'All Events', href: `${BASE_URL}/events` },

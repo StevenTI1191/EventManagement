@@ -3,6 +3,7 @@ import FinanceLayout from '@/Layouts/FinanceLayout';
 import EventMarketingLayout from '@/Layouts/EventMarketingLayout';
 import { Head, usePage } from '@inertiajs/react';
 import { StickyNote, User, Mail, Phone, Briefcase, BadgeCheck } from 'lucide-react';
+import PanduanInternal from '@/Components/PanduanInternal';
 
 export default function Edit() {
     const { auth } = usePage().props;
@@ -73,6 +74,9 @@ export default function Edit() {
                         <p className="text-sm text-gray-400">Belum ada catatan dari Manajemen.</p>
                     </div>
                 )}
+
+                {/* Panduan alur & ketentuan sistem untuk tim internal */}
+                <PanduanInternal posisi={posisi} />
             </div>
         </Layout>
     );

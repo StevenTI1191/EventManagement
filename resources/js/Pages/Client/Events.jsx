@@ -1,5 +1,6 @@
 import { Head, router, Link } from '@inertiajs/react';
 import { useState, useEffect, useCallback } from 'react';
+import Countdown from '@/Components/Countdown';
 import {
     ChevronDown, Phone, Mail, MapPin, Menu, X,
     Home as HomeIcon, Calendar, LogOut, Search,
@@ -290,6 +291,10 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                                                                 {event.area_event}
                                                             </span>
                                                         )}
+                                                        {/* Hitung mundur menuju hari-H */}
+                                                        {event.status_event === 'Upcoming' && (
+                                                            <Countdown target={event.tgl_mulai_event} jam={event.jam_mulai} ringkas tema="klien" />
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -431,6 +436,14 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                         {/* Content */}
                         <div className="p-6">
                             <h2 className="mb-4 text-xl font-extrabold text-ink leading-snug">{selectedEvent.nama_event}</h2>
+
+                            {/* Hitung mundur menuju hari-H */}
+                            {selectedEvent.status_event === 'Upcoming' && (
+                                <div className="mb-4">
+                                    <p className="mb-2 text-[10px] font-bold tracking-wider text-muted uppercase">Menuju Hari-H</p>
+                                    <Countdown target={selectedEvent.tgl_mulai_event} jam={selectedEvent.jam_mulai} tema="klien" />
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-3 mb-4">
                                 {[

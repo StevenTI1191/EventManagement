@@ -22,7 +22,29 @@ function sisaWaktu(target) {
     };
 }
 
-export default function Countdown({ target, jam = null, ringkas = false, className = '' }) {
+/**
+ * Dua tema: halaman internal (putih–pink) dan portal klien (emas di atas
+ * permukaan gelap). Warnanya dipisah di sini supaya pemanggilnya tidak perlu
+ * menimpa kelas — urutan kelas Tailwind tidak menjamin penimpaan.
+ */
+const TEMA = {
+    internal: {
+        aksen: 'text-[#FF2D55]',
+        kotak: 'bg-white border-gray-100 text-gray-900',
+        label: 'text-gray-400',
+        lewat: 'text-gray-400',
+    },
+    klien: {
+        aksen: 'text-gold',
+        kotak: 'bg-paper border-line text-ink',
+        label: 'text-muted',
+        lewat: 'text-muted',
+    },
+};
+
+export default function Countdown({ target, jam = null, ringkas = false, tema = 'internal', className = '' }) {
+    const t = TEMA[tema] || TEMA.internal;
+
     // Jam acara ikut diperhitungkan bila ada, supaya hitungannya tidak
     // melompat ke nol sejak tengah malam di hari-H.
     const waktu = target ? `${String(target).slice(0, 10)}T${(jam || '00:00').slice(0, 5)}` : null;
@@ -46,7 +68,7 @@ export default function Countdown({ target, jam = null, ringkas = false, classNa
 
     if (sisa.lewat) {
         return (
-            <span className={`inline-flex items-center gap-1.5 text-sm font-bold text-gray-400 ${className}`}>
+            <span className={`inline-flex items-center gap-1.5 text-sm font-bold ${t.lewat} ${className}`}>
                 <CalendarClock size={15} /> Hari acara sudah lewat
             </span>
         );
@@ -54,7 +76,7 @@ export default function Countdown({ target, jam = null, ringkas = false, classNa
 
     if (ringkas) {
         return (
-            <span className={`inline-flex items-center gap-1.5 text-xs font-bold text-[#FF2D55] ${className}`}>
+            <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${t.aksen} ${className}`}>
                 <CalendarClock size={13} />
                 {sisa.hari > 0 ? `${sisa.hari} hari lagi` : `${sisa.jam} jam ${sisa.menit} menit lagi`}
             </span>
@@ -71,9 +93,9 @@ export default function Countdown({ target, jam = null, ringkas = false, classNa
     return (
         <div className={`flex items-center gap-2 ${className}`}>
             {kotak.map(([label, nilai]) => (
-                <div key={label} className="px-3 py-2 text-center bg-white border border-gray-100 shadow-sm rounded-xl min-w-[58px]">
-                    <div className="text-xl font-extrabold tabular-nums text-gray-900">{String(nilai).padStart(2, '0')}</div>
-                    <div className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">{label}</div>
+                <div key={label} className={`px-3 py-2 text-center border shadow-sm rounded-xl min-w-[58px] ${t.kotak}`}>
+                    <div className="text-xl font-extrabold tabular-nums">{String(nilai).padStart(2, '0')}</div>
+                    <div className={`text-[10px] font-bold tracking-wider uppercase ${t.label}`}>{label}</div>
                 </div>
             ))}
         </div>
