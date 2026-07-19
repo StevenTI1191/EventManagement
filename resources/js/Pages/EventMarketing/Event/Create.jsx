@@ -1,6 +1,7 @@
 import EventMarketingLayout from '@/Layouts/EventMarketingLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import RupiahInput from '@/Components/RupiahInput';
+import SearchableSelect from '@/Components/SearchableSelect';
 
 export default function Create({ auth, clients, pegawais, submitRoute = 'em.event.store', indexRoute = 'em.event.index', planning = false, dariAppointment = null }) {
     const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
@@ -164,11 +165,13 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">Client</label>
-                                    <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                        value={data.id_client} onChange={e => setData('id_client', e.target.value)}>
-                                        <option value="">Select</option>
-                                        {clients.map(c => <option key={c.id} value={c.id}>{c.nama_client}</option>)}
-                                    </select>
+                                    <SearchableSelect
+                                        options={clients.map(c => ({ value: c.id, label: c.nama_client, sub: c.perusahaan_client }))}
+                                        value={data.id_client}
+                                        onChange={v => setData('id_client', v)}
+                                        placeholder="Pilih client"
+                                        searchPlaceholder="Cari nama / perusahaan…"
+                                    />
                                     {errors.id_client && <span className="text-xs text-red-500">{errors.id_client}</span>}
                                 </div>
                                 <div>

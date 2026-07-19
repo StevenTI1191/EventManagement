@@ -1,6 +1,7 @@
 import { Head, useForm, Link } from '@inertiajs/react';
 import { ListChecks, Check } from 'lucide-react';
 import RupiahInput from '@/Components/RupiahInput';
+import SearchableSelect from '@/Components/SearchableSelect';
 
 const EVENT_CATEGORIES = ['Konser', 'Wedding', 'Corporate', 'Birthday', 'Seminar', 'Lainnya'];
 
@@ -109,18 +110,17 @@ export default function PlanningCreate({ Layout, categories = [], clients = [], 
                         <label className="block mb-1 text-sm font-bold text-gray-700">
                             Klien Sasaran <span className="font-normal text-gray-400">(opsional)</span>
                         </label>
-                        <select
-                            className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
-                            value={data.id_client} onChange={(e) => setData('id_client', e.target.value)}>
-                            <option value="">— Acara internal, tanpa klien —</option>
-                            {clients.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.nama_client}
-                                    {c.perusahaan_client ? ` — ${c.perusahaan_client}` : ''}
-                                    {c.sumber === 'Internal' ? ' (di-approach tim)' : ' (daftar sendiri)'}
-                                </option>
-                            ))}
-                        </select>
+                        <SearchableSelect
+                            options={clients.map((c) => ({
+                                value: c.id,
+                                label: c.nama_client + (c.perusahaan_client ? ` — ${c.perusahaan_client}` : ''),
+                                sub: c.sumber === 'Internal' ? 'Di-approach tim' : 'Daftar sendiri',
+                            }))}
+                            value={data.id_client}
+                            onChange={(v) => setData('id_client', v)}
+                            emptyOption="— Acara internal, tanpa klien —"
+                            searchPlaceholder="Cari nama klien / perusahaan…"
+                        />
                         <p className="mt-1 text-xs text-gray-400">
                             Isi bila rencana ini disiapkan untuk ditawarkan ke klien tertentu — mis. konsep kontes gym untuk Alpha Fit Gym.
                         </p>
