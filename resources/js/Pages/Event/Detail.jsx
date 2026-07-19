@@ -99,6 +99,8 @@ export default function EventDetail({
 
     const { data, setData, post, processing, errors } = useForm({
         _method: 'put',
+        // Ikut dikirim agar tombol kembali tetap pulang ke pipeline setelah simpan.
+        dari: dariPipeline ? 'pipeline' : '',
         nama_event: event.nama_event || '',
         kategori_event: event.kategori_event || '',
         deskripsi_event: event.deskripsi_event || '',
@@ -292,7 +294,7 @@ export default function EventDetail({
                 <Kartu
                     judul="Progres To-Do"
                     aksi={routes.todo && progres.total > 0 && (
-                        <Link href={route(routes.todo)} className="text-xs font-bold text-[#FF2D55] hover:underline">
+                        <Link href={route(routes.todo, event.id_event)} className="text-xs font-bold text-[#FF2D55] hover:underline">
                             Buka papan
                         </Link>
                     )}

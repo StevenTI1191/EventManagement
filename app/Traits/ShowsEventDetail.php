@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Event;
 use App\Models\Pegawai;
 use App\Support\Wa;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -65,6 +66,23 @@ trait ShowsEventDetail
                 ->orderBy('nama_pegawai')->get(),
             'routes'     => $routes,
         ]);
+    }
+
+    /**
+     * Parameter route halaman detail, membawa penanda asal bila ada.
+     * Tanpa ini, menyimpan form akan menghapus konteks "datang dari pipeline"
+     * sehingga tombol kembali mengarah ke daftar Event — padahal event yang
+     * baru saja dilengkapi justru tidak muncul di daftar itu.
+     */
+    protected function tujuanDetail(Request $request, Event $event): array
+    {
+        $params = ['id' => $event->id_event];
+
+        if ($request->input('dari') === 'pipeline') {
+            $params['dari'] = 'pipeline';
+        }
+
+        return $params;
     }
 
     /** Teks WhatsApp untuk menindaklanjuti event ini ke kliennya. */

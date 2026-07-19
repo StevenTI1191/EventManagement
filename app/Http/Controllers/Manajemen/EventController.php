@@ -285,7 +285,9 @@ class EventController extends Controller
 
         // Kembali ke halaman detail — daftar Event menyaring event terkonfirmasi
         // saja, jadi event pipeline akan terlihat "hilang" setelah disimpan.
-        return redirect()->route('manajemen.event.show', $event->id_event)
+        // Penanda asal ikut dibawa supaya tombol kembali tetap pulang ke papan
+        // Pipeline setelah menyimpan.
+        return redirect()->route('manajemen.event.show', $this->tujuanDetail($request, $event))
             ->with('success', 'Detail event tersimpan.');
     }
 

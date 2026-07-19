@@ -179,15 +179,25 @@ trait ManagesPlanning
     }
 
     /**
-     * Klien sasaran sesuai jenis rencana. Untuk rencana internal klien
-     * selalu dikosongkan, supaya sisa pilihan dropdown tidak ikut tersimpan
-     * dan diam-diam menyeret rencana itu ke pipeline.
+     * Klien sasaran sesuai jenis rencana.
+     *
+     * Rencana internal selalu dikosongkan, supaya sisa pilihan dropdown tidak
+     * ikut tersimpan dan diam-diam menyeret rencana itu ke pipeline.
+     *
+     * Bila "jenis" tidak dikirim sama sekali — mis. halaman lama yang masih
+     * terbuka tepat setelah deploy — nilainya dibiarkan apa adanya. Menganggap
+     * itu sebagai rencana internal akan menghapus klien sasaran tanpa diminta,
+     * dan rencananya lenyap dari pipeline tanpa jejak.
      */
     protected function clientSasaran(Request $request): ?int
     {
-        return $request->input('jenis') === Event::PLANNING_KLIEN
-            ? $request->id_client
-            : null;
+        $jenis = $request->input('jenis');
+
+        if ($jenis === Event::PLANNING_INTERNAL) {
+            return null;
+        }
+
+        return $request->id_client ?: null;
     }
 
     /**
