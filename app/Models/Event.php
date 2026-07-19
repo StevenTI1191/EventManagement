@@ -240,10 +240,32 @@ class Event extends Model
     /** Pembayaran sudah menutup nilai kesepakatan. */
     public function pembayaranLunas(): bool
     {
-        $deal = (float) ($this->deal_harga_event ?? 0);
+        return self::lunasKah(
+            (float) ($this->deal_harga_event ?? 0),
+            (float) $this->transaksis()->sum('nominal'),
+        );
+    }
 
-        return $deal <= 0
-            || (float) $this->transaksis()->sum('nominal') >= $deal;
+    /**
+     * Aturan tunggal "sudah lunas atau belum", dipakai model maupun layar
+     * ringkasan Finance/Transaksi/Laporan yang sudah menghitung angkanya
+     * sendiri.
+     *
+     * Acara tanpa nilai tagihan dianggap tidak punya sisa yang harus ditagih.
+     * Sebelumnya layar-layar itu menuliskan syaratnya ulang dengan tambahan
+     * "&& deal > 0", sehingga acara bernilai nol tampil "Belum Lunas" selamanya
+     * padahal penjadwal menganggapnya lunas dan menutupnya jadi Done — status
+     * di layar bertolak belakang dengan yang dilakukan sistem.
+     */
+    public static function lunasKah(float $deal, float $dibayar): bool
+    {
+        return $deal <= 0 || $dibayar >= $deal;
+    }
+
+    /** Label siap tampil dari aturan yang sama. */
+    public static function labelPembayaran(float $deal, float $dibayar): string
+    {
+        return self::lunasKah($deal, $dibayar) ? 'Lunas' : 'Belum Lunas';
     }
 
     public function invoices()

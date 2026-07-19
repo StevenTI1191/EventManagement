@@ -130,7 +130,7 @@ class LaporanController extends Controller
             $pemasukan   = $ev->transaksiItems->where('tipe', 'Pemasukan')->sum('total');
             $deal        = $ev->deal_harga_event;
             $laba        = $terbayar + $pemasukan - $pengeluaran;
-            $status      = $terbayar >= $deal && $deal > 0 ? 'Lunas' : 'Belum Lunas';
+            $status      = Event::labelPembayaran((float) $deal, (float) $terbayar);
 
             return [
                 'nama_event'      => $ev->nama_event,

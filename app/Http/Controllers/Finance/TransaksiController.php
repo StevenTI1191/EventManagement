@@ -56,14 +56,16 @@ class TransaksiController extends Controller
             $query->whereYear('tgl_mulai_event', $request->tahun);
         }
 
-        // Filter by status lunas (subquery agar bisa paginate)
+        // Filter by status lunas (subquery agar bisa paginate).
+        // Harus sejalan dengan Event::lunasKah(): acara tanpa nilai tagihan
+        // terhitung lunas. Sebelumnya syarat "deal > 0" membuat acara bernilai
+        // nol tidak masuk saringan Lunas maupun Belum Lunas — barisnya hilang
+        // begitu status disaring.
         if ($request->status === 'Lunas') {
-            $query->whereRaw('deal_harga_event > 0')
-                  ->whereRaw('(SELECT COALESCE(SUM(nominal),0) FROM transaksis WHERE transaksis.id_event = events.id_event) >= deal_harga_event');
+            $query->whereRaw('(deal_harga_event <= 0 OR (SELECT COALESCE(SUM(nominal),0) FROM transaksis WHERE transaksis.id_event = events.id_event) >= deal_harga_event)');
         } elseif ($request->status === 'Belum Lunas') {
-            $query->whereRaw(
-                '(SELECT COALESCE(SUM(nominal),0) FROM transaksis WHERE transaksis.id_event = events.id_event) < deal_harga_event'
-            );
+            $query->whereRaw('deal_harga_event > 0')
+                  ->whereRaw('(SELECT COALESCE(SUM(nominal),0) FROM transaksis WHERE transaksis.id_event = events.id_event) < deal_harga_event');
         }
 
         // Filter by search
@@ -96,7 +98,7 @@ class TransaksiController extends Controller
                 $sisa             = $deal - $totalDibayar;
                 // Laba bersih = pembayaran klien + pemasukan tambahan (sponsor, dll) - pengeluaran
                 $labaBersih       = $totalDibayar + $totalPemasukan - $totalPengeluaran;
-                $status           = $totalDibayar >= $deal && $deal > 0 ? 'Lunas' : 'Belum Lunas';
+                $status           = Event::labelPembayaran((float) $deal, (float) $totalDibayar);
 
                 return [
                     'id_event'          => $event->id_event,

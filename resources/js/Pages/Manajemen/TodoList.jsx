@@ -70,7 +70,7 @@ export default function TodoList({ event, tugas }) {
                         className="inline-flex items-center gap-1 mb-4 text-sm text-gray-400 hover:text-gray-600">
                         <ChevronLeft size={16} /> Kembali ke Event
                     </Link>
-                    <h1 className="text-3xl font-extrabold text-gray-900">To-Do List</h1>
+                    <h1 className="text-3xl font-extrabold text-gray-900">To-Do-List</h1>
                     <div className="flex items-center gap-2 mt-1">
                         <div className="w-2 h-2 rounded-full bg-[#FF2D55]" />
                         <p className="font-medium text-gray-500">{event.nama_event}</p>

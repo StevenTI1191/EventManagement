@@ -90,7 +90,7 @@ class DashboardController extends Controller
                     'deal'        => $e->deal_harga_event,
                     'dibayar'     => $dibayar,
                     'sisa'        => $e->deal_harga_event - $dibayar,
-                    'status'      => $dibayar >= $e->deal_harga_event && $e->deal_harga_event > 0 ? 'Lunas' : 'Belum Lunas',
+                    'status'      => Event::labelPembayaran((float) $e->deal_harga_event, (float) $dibayar),
                 ];
             });
 

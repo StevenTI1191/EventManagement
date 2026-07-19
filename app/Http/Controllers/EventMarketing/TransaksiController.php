@@ -26,7 +26,7 @@ class TransaksiController extends Controller
                 $deal             = $event->deal_harga_event;
                 $sisa             = $deal - $totalDibayar;
                 $labaBersih       = $totalDibayar - $totalPengeluaran;
-                $status           = $totalDibayar >= $deal && $deal > 0 ? 'Lunas' : 'Belum Lunas';
+                $status           = Event::labelPembayaran((float) $deal, (float) $totalDibayar);
 
                 return [
                     'id_event'          => $event->id_event,

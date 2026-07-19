@@ -40,7 +40,7 @@ export default function EventMarketingLayout({ children }) {
             active: currentPath.includes('/event-marketing/jadwal'),
         },
         {
-            name: 'Events',
+            name: 'Event',
             icon: Calendar,
             href: route('em.event.index'),
             active: currentPath.includes('/event-marketing/event'),

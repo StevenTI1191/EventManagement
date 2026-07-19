@@ -46,7 +46,7 @@ export default function ManajemenLayout({ children }) {
             active: currentPath.includes('jadwal-acara'),
         },
         {
-            name: 'Events',
+            name: 'Event',
             icon: Calendar,
             href: route('manajemen.event.index'),
             active: currentPath.includes('/manajemen/event'),
