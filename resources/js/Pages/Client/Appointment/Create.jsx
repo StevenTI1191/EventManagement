@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { Calendar, Clock, Users, Wallet, FileText, CheckCircle, LayoutDashboard, AlertTriangle, Phone } from 'lucide-react';
+import KalenderKetersediaan from '@/Components/KalenderKetersediaan';
 
 const EVENT_TYPES = [
     { value: 'Corporate Event',  icon: '🏢', desc: 'Seminar, gathering, konferensi' },
@@ -252,44 +253,63 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                                 <span className="flex items-center justify-center w-6 h-6 text-xs font-black text-white bg-gold rounded-full">3</span>
                                 Jadwal Meeting yang Diinginkan
                             </h2>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>
                                         <Calendar size={11} className="inline mr-1" />
-                                        Tanggal *
+                                        Pilih Tanggal *
                                     </label>
-                                    <input type="date" value={data.tgl_request}
-                                        min={minDate}
-                                        onChange={e => handleDateChange(e.target.value)}
-                                        onClick={e => e.target.showPicker?.()}
-                                        className={inputClass + ' input-dark cursor-pointer'} />
+                                    <KalenderKetersediaan
+                                        value={data.tgl_request}
+                                        onChange={handleDateChange}
+                                        totalSlot={slots.length}
+                                    />
                                     {dateError && <p className="mt-1 text-xs text-danger">⚠ {dateError}</p>}
                                     {errors.tgl_request && <p className="mt-1 text-xs text-danger">⚠ {errors.tgl_request}</p>}
                                 </div>
+
                                 <div>
                                     <label className={labelClass}>
                                         <Clock size={11} className="inline mr-1" />
-                                        Jam Mulai *
+                                        Pilih Jam *
                                     </label>
-                                    <select value={data.jam_request}
-                                        onChange={e => setData('jam_request', e.target.value)}
-                                        disabled={!data.tgl_request || !!dateError || slotLoading}
-                                        className={inputClass + ' cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'}>
-                                        <option value="">
-                                            {!data.tgl_request ? 'Pilih tanggal dulu'
-                                                : slotLoading ? 'Memuat slot...'
-                                                : '— Pilih jam —'}
-                                        </option>
-                                        {slots.map(s => {
-                                            const taken = bookedSlots.includes(s);
-                                            return (
-                                                <option key={s} value={s} disabled={taken}>
-                                                    {s} {taken ? '(sudah dipesan)' : ''}
-                                                </option>
-                                            );
-                                        })}
-                                    </select>
-                                    <p className="mt-1 text-[10px] text-muted-2">Meeting 30 menit · Senin–Sabtu 09:00–17:00</p>
+
+                                    {! data.tgl_request ? (
+                                        <div className="flex items-center justify-center h-32 text-xs border border-dashed border-line rounded-2xl text-muted-2">
+                                            Pilih tanggal dulu di kalender
+                                        </div>
+                                    ) : slotLoading ? (
+                                        <div className="flex items-center justify-center h-32 text-xs border border-line rounded-2xl text-muted">
+                                            Memuat slot…
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                                            {slots.map(s => {
+                                                const taken = bookedSlots.includes(s);
+                                                const aktif = data.jam_request === s;
+                                                return (
+                                                    <button
+                                                        key={s}
+                                                        type="button"
+                                                        disabled={taken}
+                                                        onClick={() => setData('jam_request', s)}
+                                                        title={taken ? 'Sudah dipesan' : `Meeting ${s}`}
+                                                        className={`py-2 text-xs font-bold border rounded-xl transition-all ${
+                                                            aktif
+                                                                ? 'bg-gold-grad text-white border-transparent shadow-gold'
+                                                                : taken
+                                                                    ? 'bg-paper border-line text-muted-2 line-through cursor-not-allowed'
+                                                                    : 'bg-surface border-line text-ink hover:border-gold-2'
+                                                        }`}
+                                                    >
+                                                        {s}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    <p className="mt-2 text-[10px] text-muted-2">Meeting 30 menit · Senin–Sabtu 09:00–17:00</p>
                                     {errors.jam_request && <p className="mt-1 text-xs text-danger">⚠ {errors.jam_request}</p>}
                                 </div>
                             </div>

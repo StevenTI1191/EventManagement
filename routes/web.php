@@ -550,6 +550,9 @@ Route::domain(config('app.domain'))->group(function () {
             ->name('client.appointment.create');
         Route::get('/appointment/slots', [\App\Http\Controllers\Client\AppointmentController::class, 'bookedSlots'])
             ->name('client.appointment.slots');
+        // Ketersediaan sebulan untuk kalender pemilih jadwal
+        Route::get('/appointment/ketersediaan', [\App\Http\Controllers\Client\AppointmentController::class, 'ketersediaan'])
+            ->name('client.appointment.ketersediaan');
         Route::post('/appointment', [\App\Http\Controllers\Client\AppointmentController::class, 'store'])
             ->name('client.appointment.store');
         Route::delete('/appointment/{id}', [\App\Http\Controllers\Client\AppointmentController::class, 'destroy'])

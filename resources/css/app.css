@@ -7,9 +7,8 @@
     color-scheme: light;
 }
 
-/* Input date/time bertema gelap: pakai color-scheme dark agar ikon picker
-   (kalender/jam) tampil putih & terlihat di background hitam. Tambahkan class
-   .input-dark pada input type=date/time yang ada di area gelap. */
-.input-dark {
-    color-scheme: dark;
-}
+/* Catatan: kelas .input-dark (color-scheme: dark) sudah dihapus. Kelas itu
+   peninggalan saat portal klien masih bertema gelap; setelah temanya berubah
+   jadi terang, ikon picker bawaan browser justru dirender putih di atas latar
+   putih sehingga tak terlihat. Pemilihan tanggal appointment kini memakai
+   KalenderKetersediaan, bukan input tanggal bawaan. */

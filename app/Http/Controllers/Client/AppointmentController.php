@@ -108,6 +108,39 @@ class AppointmentController extends Controller
     }
 
     /** JSON: daftar jam yang sudah dipesan pada satu tanggal (untuk disable di dropdown). */
+    /**
+     * Ketersediaan sebulan penuh: berapa slot sudah terpakai per tanggal.
+     *
+     * Dipakai kalender pemilih jadwal supaya klien langsung melihat hari mana
+     * yang masih longgar tanpa menebak-nebak — satu permintaan untuk sebulan,
+     * bukan satu per tanggal.
+     */
+    public function ketersediaan(Request $request)
+    {
+        $request->validate(['bulan' => 'required|date_format:Y-m']);
+
+        $awal  = \Illuminate\Support\Carbon::createFromFormat('Y-m', $request->bulan)->startOfMonth();
+        $akhir = $awal->copy()->endOfMonth();
+
+        $slotKerja = self::workingSlots();
+
+        $terpakai = Appointment::whereBetween('tgl_request', [$awal->toDateString(), $akhir->toDateString()])
+            ->whereIn('status', self::SLOT_BLOCKING_STATUS)
+            ->whereNotNull('jam_request')
+            ->get(['tgl_request', 'jam_request'])
+            // Data lama bisa menyimpan jam di luar jam kerja atau bukan kelipatan
+            // 30 menit. Jam seperti itu tidak punya slot yang bisa dipilih klien,
+            // jadi menghitungnya sebagai terpakai membuat kalender melaporkan
+            // sisa slot lebih sedikit daripada yang sebenarnya bisa dipesan.
+            ->filter(fn ($a) => in_array(substr((string) $a->jam_request, 0, 5), $slotKerja, true))
+            ->countBy(fn ($a) => \Illuminate\Support\Carbon::parse($a->tgl_request)->toDateString());
+
+        return response()->json([
+            'terpakai' => $terpakai,
+            'total'    => count(self::workingSlots()),
+        ]);
+    }
+
     public function bookedSlots(Request $request)
     {
         $request->validate(['tgl' => 'required|date']);
