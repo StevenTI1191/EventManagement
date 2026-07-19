@@ -54,12 +54,26 @@ class AppointmentController extends Controller
             ->latest('updated_at')
             ->get();
 
+        // Hitungan acara dipisah tegas. "Total event" sebelumnya menjumlahkan
+        // yang sudah selesai dengan yang baru disepakati, jadi angkanya tidak
+        // bisa dibaca. Dihitung dari query sendiri, bukan dari $events di atas,
+        // karena daftar itu disaring untukFinance() (Deal ke atas) dan dibatasi
+        // 50 baris — acara yang masih Lead/Negotiation tidak akan ikut terhitung.
+        $milikKlien = fn () => Event::where('id_client', $client->id);
+
+        $praDeal = [Event::STATUS_LEAD, Event::STATUS_NEGOTIATION];
+        $proses  = [Event::STATUS_LEAD, Event::STATUS_NEGOTIATION, Event::STATUS_DEAL,
+                    Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN];
+
         return Inertia::render('Client/Dashboard', [
             'appointments'      => $appointments,
             'events'            => $events,
             'penawaran'         => $penawaran,
             'totalAppointments' => $appointments->count(),
             'totalEvents'       => $events->count(),
+            'eventDone'         => $milikKlien()->where('status_event', Event::STATUS_DONE)->count(),
+            'eventProses'       => $milikKlien()->whereIn('status_event', $proses)->count(),
+            'eventPraDeal'      => $milikKlien()->whereIn('status_event', $praDeal)->count(),
         ]);
     }
 

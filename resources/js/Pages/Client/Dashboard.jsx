@@ -9,7 +9,10 @@ import {
     User, Timer, Download, Music, Utensils
 } from 'lucide-react';
 
-export default function ClientDashboard({ appointments, events, penawaran = [], totalAppointments, totalEvents }) {
+export default function ClientDashboard({
+    appointments, events, penawaran = [], totalAppointments, totalEvents,
+    eventDone, eventProses, eventPraDeal,
+}) {
     const { auth, flash } = usePage().props;
 
     // ── NOTIFIKASI ──────────────────────────────────────────
@@ -487,16 +490,25 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                                 sub:     aptAktif === 0 ? 'Tidak ada yang aktif' : null,
                             },
                             {
-                                id:      'events',
+                                id:      'events-done',
+                                icon:    '🏁',
+                                value:   eventDone ?? eventSelesai,
+                                label:   'Event Selesai',
+                                sub:     (eventDone ?? eventSelesai) === 0 ? 'Belum ada yang selesai' : 'Sudah terlaksana',
+                            },
+                            {
+                                id:      'events-proses',
                                 icon:    '🎪',
-                                value:   totalEvents ?? evList.length,
-                                label:   'Event Saya',
-                                badge:   eventAktif > 0
-                                    ? { text: `${eventAktif} upcoming`, cls: 'bg-blue-500/20 text-info border-blue-500/30' }
-                                    : eventSelesai > 0
-                                        ? { text: `${eventSelesai} selesai`, cls: 'bg-green-500/20 text-ok border-ok/30' }
+                                value:   eventProses ?? evList.length,
+                                label:   'Event Berjalan',
+                                // Yang belum deal ditonjolkan: di situlah klien
+                                // masih perlu mengambil keputusan.
+                                badge:   eventPraDeal > 0
+                                    ? { text: `${eventPraDeal} belum deal`, cls: 'bg-gold-soft text-gold-dim border-gold-2' }
+                                    : eventAktif > 0
+                                        ? { text: `${eventAktif} upcoming`, cls: 'bg-blue-500/20 text-info border-blue-500/30' }
                                         : null,
-                                sub:     evList.length === 0 ? 'Belum ada event' : null,
+                                sub:     (eventProses ?? 0) === 0 ? 'Tidak ada yang berjalan' : null,
                             },
                             {
                                 id:      'payments',
@@ -510,7 +522,7 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                         ];
 
                         return (
-                            <div className="grid grid-cols-1 gap-3 mb-6 sm:grid-cols-3">
+                            <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
                                 {cards.map((card, i) => {
                                     const effectiveTab = card.id;
                                     const isActive = activeTab === card.id;

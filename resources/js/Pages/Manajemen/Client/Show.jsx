@@ -2,6 +2,7 @@
 import { Head, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { ChevronLeft, Search, Download, Info, X } from 'lucide-react';
+import StatusEventBadge from '@/Components/StatusEventBadge';
 
 export default function ClientShow({ auth, client, events, pics, kategoris, filters }) {
     const [form, setForm] = useState({
@@ -251,6 +252,7 @@ export default function ClientShow({ auth, client, events, pics, kategoris, filt
                         <tr className="bg-[#FF2D55]">
                             <th className="w-12 px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">No</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Event</th>
+                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Status</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Tanggal</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Jam</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Pax</th>
@@ -263,6 +265,7 @@ export default function ClientShow({ auth, client, events, pics, kategoris, filt
                             <tr key={event.id_event} className="transition-colors hover:bg-gray-50/60">
                                 <td className="px-6 py-4 text-sm font-medium text-gray-500">{index + 1}</td>
                                 <td className="px-6 py-4 text-sm font-semibold text-gray-800">{event.nama_event}</td>
+                                <td className="px-6 py-4"><StatusEventBadge status={event.status_event} /></td>
                                 <td className="px-6 py-4 text-sm text-gray-600">{formatTanggal(event.tgl_mulai_event)}</td>
                                 <td className="px-6 py-4 text-sm text-gray-600">{event.jam_mulai} - {event.jam_selesai}</td>
                                 <td className="px-6 py-4 text-sm text-gray-800">{event.jumlah_pax ?? '-'}</td>
@@ -281,7 +284,7 @@ export default function ClientShow({ auth, client, events, pics, kategoris, filt
                             </tr>
                         )) : (
                             <tr>
-                                <td colSpan={7} className="px-6 py-16 text-center text-gray-400">
+                                <td colSpan={8} className="px-6 py-16 text-center text-gray-400">
                                     <p className="font-bold">Belum ada event untuk client ini.</p>
                                 </td>
                             </tr>
