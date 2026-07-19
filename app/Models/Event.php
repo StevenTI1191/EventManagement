@@ -87,6 +87,16 @@ class Event extends Model
     /** Kolom kanban pipeline (hanya untuk event eksternal). */
     public const PIPELINE_STATUSES = [self::STATUS_LEAD, self::STATUS_NEGOTIATION, self::STATUS_DEAL];
 
+    /** Semua status yang sah — dipakai validasi agar status pipeline tidak ditolak. */
+    public const SEMUA_STATUS = [
+        self::STATUS_LEAD, self::STATUS_NEGOTIATION, self::STATUS_DEAL,
+        self::STATUS_PLANNING, self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN,
+        self::STATUS_DONE, self::STATUS_BATAL,
+    ];
+
+    /** Status yang boleh diubah manual lewat form Event. */
+    public const STATUS_MANUAL = [self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE];
+
     public const TIPE_INTERNAL  = 'Internal';
     public const TIPE_EKSTERNAL = 'Eksternal';
 

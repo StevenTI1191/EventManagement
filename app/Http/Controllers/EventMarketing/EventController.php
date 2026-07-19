@@ -118,7 +118,7 @@ class EventController extends Controller
             'area_event'        => 'required|string|max:255',
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
-            'status_event'      => 'nullable|in:Upcoming,Penyelesaian,Done',
+            'status_event'      => 'nullable|in:' . implode(',', Event::SEMUA_STATUS),
             'is_public'         => 'nullable|boolean',
             'poster_event'      => 'nullable|file|image|max:10240',
         ]);
@@ -229,7 +229,7 @@ class EventController extends Controller
             'area_event'        => 'required|string|max:255',
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
-            'status_event'      => 'nullable|in:Upcoming,Penyelesaian,Done',
+            'status_event'      => 'nullable|in:' . implode(',', Event::SEMUA_STATUS),
             'is_public'         => 'nullable|boolean',
             'poster_event'      => 'nullable|file|image|max:10240',
         ]);
@@ -280,6 +280,14 @@ class EventController extends Controller
             if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
             $file->move($destinationPath, $filename);
             $data['poster_event'] = 'posters/' . $filename;
+        }
+
+        // Status event yang masih di pipeline (Lead/Negotiation/Deal) HANYA boleh
+        // diubah lewat papan Pipeline. Tanpa penjagaan ini, menyimpan form Edit
+        // akan mencabut event dari pipeline — padahal Edit justru dipakai untuk
+        // melengkapi detail agar event bisa naik tahap.
+        if (in_array($event->status_event, Event::PIPELINE_STATUSES, true)) {
+            unset($data['status_event']);
         }
 
         $event->update($data);

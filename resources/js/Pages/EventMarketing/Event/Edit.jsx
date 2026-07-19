@@ -2,8 +2,14 @@ import EventMarketingLayout from '@/Layouts/EventMarketingLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { Download } from 'lucide-react';
 import RupiahInput from '@/Components/RupiahInput';
+import SearchableSelect from '@/Components/SearchableSelect';
+
+const PIPELINE_STATUSES = ['Lead', 'Negotiation', 'Deal'];
 
 export default function Edit({ auth, event, clients, pegawais }) {
+    // Event di pipeline: statusnya diatur papan Pipeline, bukan form ini.
+    const DI_PIPELINE = PIPELINE_STATUSES.includes(event.status_event);
+
     const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
         _method:              'PUT',
         nama_event:           event.nama_event || '',
@@ -116,11 +122,13 @@ export default function Edit({ auth, event, clients, pegawais }) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">Client</label>
-                                    <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                        value={data.id_client} onChange={e => setData('id_client', e.target.value)}>
-                                        <option value="">Select</option>
-                                        {clients.map(c => <option key={c.id} value={c.id}>{c.nama_client}</option>)}
-                                    </select>
+                                    <SearchableSelect
+                                        options={clients.map(c => ({ value: c.id, label: c.nama_client, sub: c.perusahaan_client }))}
+                                        value={data.id_client}
+                                        onChange={v => setData('id_client', v)}
+                                        placeholder="Pilih client"
+                                        searchPlaceholder="Cari nama / perusahaan…"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">PIC Event</label>
@@ -206,11 +214,25 @@ export default function Edit({ auth, event, clients, pegawais }) {
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Status Event</label>
-                                <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                    value={data.status_event} onChange={e => setData('status_event', e.target.value)}>
-                                    <option value="Upcoming">Upcoming</option>
-                                    <option value="Done">Done</option>
-                                </select>
+                                {DI_PIPELINE ? (
+                                    <>
+                                        <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-xl bg-gray-50">
+                                            <span className="w-2 h-2 rounded-full bg-[#FF2D55]" />
+                                            <span className="text-sm font-bold text-gray-700">{event.status_event}</span>
+                                        </div>
+                                        <p className="mt-1 text-xs text-gray-400">
+                                            Event ini masih di pipeline. Perpindahan tahap dilakukan lewat papan <b>Pipeline</b>,
+                                            bukan dari sini — lengkapi dulu detail acaranya di form ini agar bisa dinaikkan ke Negotiation/Deal.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                        value={data.status_event} onChange={e => setData('status_event', e.target.value)}>
+                                        <option value="Upcoming">Upcoming</option>
+                                        <option value="Penyelesaian">Penyelesaian</option>
+                                        <option value="Done">Done</option>
+                                    </select>
+                                )}
                             </div>
 
                             <div>
