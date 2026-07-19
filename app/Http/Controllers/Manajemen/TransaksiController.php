@@ -147,7 +147,12 @@ class TransaksiController extends Controller
             $data['bukti_file'] = $filename;
         }
 
-        Transaksi::create($data);
+        $transaksi = Transaksi::create($data);
+
+        // Pembayaran yang dicatat langsung juga melunasi tagihannya — lihat
+        // catatan di Finance\TransaksiController.
+        \App\Support\PelunasanInvoice::sinkron($transaksi->id_event);
+
         return back();
     }
 
@@ -182,10 +187,16 @@ class TransaksiController extends Controller
         $this->checkManajemen();
 
         $transaksi = Transaksi::findOrFail($id);
+        $idEvent   = $transaksi->id_event;
+
         if ($transaksi->bukti_file) {
             Storage::disk('local')->delete('bukti-transaksi/' . $transaksi->bukti_file);
         }
         $transaksi->delete();
+
+        // Uang ditarik kembali → status tagihannya ikut dihitung ulang.
+        \App\Support\PelunasanInvoice::sinkron($idEvent);
+
         return back();
     }
 
@@ -221,6 +232,10 @@ class TransaksiController extends Controller
         }
 
         $transaksi->update($data);
+
+        // Nominalnya bisa berubah — status tagihannya dihitung ulang.
+        \App\Support\PelunasanInvoice::sinkron($transaksi->id_event);
+
         return back();
     }
 

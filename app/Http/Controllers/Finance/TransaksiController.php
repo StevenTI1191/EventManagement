@@ -165,7 +165,13 @@ class TransaksiController extends Controller
             $data['bukti_file'] = $filename;
         }
 
-        Transaksi::create($data);
+        $transaksi = Transaksi::create($data);
+
+        // Pembayaran yang dicatat langsung juga melunasi tagihannya — tanpa ini
+        // invoice tetap "Belum Dibayar" dan klien terus dikirimi pengingat
+        // jatuh tempo untuk uang yang sudah mereka bayar.
+        \App\Support\PelunasanInvoice::sinkron($transaksi->id_event);
+
         return back();
     }
 
@@ -193,7 +199,15 @@ class TransaksiController extends Controller
             $data['bukti_file'] = $filename;
         }
 
+        $lama = $transaksi->id_event;
         $transaksi->update($data);
+
+        // Nominal atau eventnya bisa berubah — hitung ulang keduanya.
+        \App\Support\PelunasanInvoice::sinkron($lama);
+        if ($transaksi->id_event !== $lama) {
+            \App\Support\PelunasanInvoice::sinkron($transaksi->id_event);
+        }
+
         return back();
     }
 
@@ -202,10 +216,16 @@ class TransaksiController extends Controller
         $this->checkFinance();
 
         $transaksi = Transaksi::findOrFail($id);
+        $idEvent   = $transaksi->id_event;
+
         if ($transaksi->bukti_file) {
             Storage::disk('local')->delete('bukti-transaksi/' . $transaksi->bukti_file);
         }
         $transaksi->delete();
+
+        // Uang ditarik kembali → status tagihannya ikut dihitung ulang.
+        \App\Support\PelunasanInvoice::sinkron($idEvent);
+
         return back();
     }
 

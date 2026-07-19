@@ -125,9 +125,6 @@ class BuktiPembayaranController extends Controller
                         'transaksi_id'    => $transaksi->id_transaksi,
                     ]);
 
-                    // Pembayaran klien terverifikasi → jika sudah menutup DP, event
-                    // Deal otomatis naik ke Upcoming (sejalan dengan Invoice::lunas).
-                    $this->promosikanJikaDpTerpenuhi($bukti->id_event);
                 } else {
                     $bukti->update([
                         'status'          => $statusBaru,
@@ -164,8 +161,9 @@ class BuktiPembayaranController extends Controller
                 ]);
             }
 
-            // Selaraskan status tagihan yang dibayar bukti ini.
-            $this->selaraskanInvoice($bukti->id_invoice);
+            // Satu aturan pelunasan untuk semua jalur uang masuk — lihat
+            // App\Support\PelunasanInvoice.
+            \App\Support\PelunasanInvoice::sinkron($bukti->id_event);
         });
 
         // Refresh object setelah transaction agar properti in-memory up-to-date
@@ -216,93 +214,4 @@ class BuktiPembayaranController extends Controller
         return back()->with('success', 'Status bukti pembayaran berhasil diperbarui.');
     }
 
-    /**
-     * Samakan status invoice dengan bukti terverifikasi yang menempel padanya.
-     * Idempotent: menaikkan ke Lunas saat nominalnya tertutup, dan menurunkan
-     * lagi bila verifikasinya dicabut.
-     *
-     * Kecuali invoice DP. Kelunasan DP ditentukan aturan tingkat event di
-     * promosikanJikaDpTerpenuhi() — di sana hitungannya dari seluruh transaksi
-     * event, bukan per invoice, jadi bisa lunas tanpa ada bukti yang menempel
-     * langsung. Karena itu DP hanya boleh dinaikkan di sini, tidak diturunkan.
-     */
-    private function selaraskanInvoice(?int $idInvoice): void
-    {
-        if (! $idInvoice) {
-            return;
-        }
-
-        $invoice = Invoice::find($idInvoice);
-        if (! $invoice) {
-            return;
-        }
-
-        $terbayar = (float) BuktiPembayaran::where('id_invoice', $idInvoice)
-            ->where('status', 'Diverifikasi')
-            ->sum('nominal');
-
-        $lunas = $terbayar >= (float) $invoice->nominal;
-
-        if ($invoice->tipe === Invoice::TIPE_DP && ! $lunas) {
-            return;
-        }
-
-        $invoice->update(['status' => $lunas ? Invoice::STATUS_LUNAS : Invoice::STATUS_BELUM]);
-    }
-
-    /**
-     * Jika total pembayaran terverifikasi sebuah event eksternal sudah menutup
-     * uang muka (DP 50%) dan event masih berstatus Deal, promosikan ke Upcoming
-     * dan tandai invoice DP-nya lunas. Idempotent — aman dipanggil berkali-kali.
-     *
-     * Dipanggil di dalam DB::transaction verifikasi(), setelah Transaksi dibuat.
-     */
-    private function promosikanJikaDpTerpenuhi($id_event): void
-    {
-        $event = Event::find($id_event);
-
-        if (! $event
-            || $event->tipe_event !== Event::TIPE_EKSTERNAL
-            || $event->status_event !== Event::STATUS_DEAL) {
-            return;
-        }
-
-        $totalDeal = (float) ($event->deal_harga_event ?? 0);
-        if ($totalDeal <= 0) {
-            return;
-        }
-
-        $totalDibayar = (float) Transaksi::where('id_event', $id_event)->sum('nominal');
-
-        if ($totalDibayar < Invoice::nominalDp($totalDeal)) {
-            return;
-        }
-
-        // Uang yang masuk sudah menutup uang muka → acara boleh berjalan.
-        $event->update(['status_event' => Event::STATUS_UPCOMING]);
-
-        // Invoice DP hanya ditandai lunas bila memang dibayar. Sebelum bukti
-        // punya atribusi invoice, kelunasan DP disimpulkan dari total transaksi
-        // event — akibatnya satu pembayaran yang klien tandai untuk Pelunasan
-        // ikut melunasi DP, sehingga dua tagihan tercatat lunas padahal uang
-        // yang masuk hanya cukup untuk satu. Bukti tanpa atribusi tetap
-        // diperhitungkan supaya bukti lama tidak menggantung.
-        $dp = Invoice::where('id_event', $id_event)
-            ->where('tipe', Invoice::TIPE_DP)
-            ->where('status', '!=', Invoice::STATUS_LUNAS)
-            ->first();
-
-        if (! $dp) {
-            return;
-        }
-
-        $dibayarUntukDp = (float) \App\Models\BuktiPembayaran::where('id_event', $id_event)
-            ->where('status', 'Diverifikasi')
-            ->where(fn ($q) => $q->where('id_invoice', $dp->id_invoice)->orWhereNull('id_invoice'))
-            ->sum('nominal');
-
-        if ($dibayarUntukDp >= (float) $dp->nominal) {
-            $dp->update(['status' => Invoice::STATUS_LUNAS]);
-        }
-    }
 }
