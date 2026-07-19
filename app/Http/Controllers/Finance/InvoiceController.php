@@ -34,9 +34,21 @@ class InvoiceController extends Controller
         $this->checkFinance();
 
         $events = Event::eksternal()
-            // Penyelesaian ikut: acara sudah lewat tapi sering justru di situlah
-            // pelunasan belum beres — jangan sampai hilang dari halaman Invoice.
-            ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
+            ->where(function ($q) {
+                // Penyelesaian ikut: acara sudah lewat tapi sering justru di situlah
+                // pelunasan belum beres — jangan sampai hilang dari halaman Invoice.
+                $q->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
+                  // Event Done yang masih menyimpan tagihan belum lunas ikut tampil.
+                  // Status Done bisa diset manual dari form, jadi event bisa ditutup
+                  // sementara tagihannya menggantung. Dashboard Finance menghitungnya
+                  // sebagai piutang lewat untukFinance() yang memang mencakup Done —
+                  // tanpa baris di sini, uang itu terlihat di angka tapi tak ada
+                  // tempat untuk menindaklanjutinya.
+                  ->orWhere(function ($d) {
+                      $d->where('status_event', Event::STATUS_DONE)
+                        ->whereHas('invoices', fn ($i) => $i->where('status', Invoice::STATUS_BELUM));
+                  });
+            })
             ->with(['client:id,nama_client,perusahaan_client,no_telp_client', 'invoices'])
             ->orderByDesc('updated_at')
             ->get()
