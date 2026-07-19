@@ -13,10 +13,23 @@ use Inertia\Inertia;
 
 use App\Traits\ChecksPegawaiRole;
 use App\Traits\ShowsEventDetail;
+use App\Traits\ShowsRiwayatEvent;
 
 class EventController extends Controller
 {
-    use ChecksPegawaiRole, ShowsEventDetail;
+    use ChecksPegawaiRole, ShowsEventDetail, ShowsRiwayatEvent;
+
+    /** Riwayat event yang sudah pernah dijalankan, target vs hasilnya. */
+    public function riwayat(Request $request)
+    {
+        $this->checkEventMarketing();
+
+        return $this->halamanRiwayatEvent('EventMarketing/Event/Riwayat', $request, [
+            'index'  => 'em.event.index',
+            'detail' => 'em.event.show',
+            'self'   => 'em.event.riwayat',
+        ]);
+    }
 
     /** Halaman detail satu event — termasuk event yang masih di pipeline. */
     public function show($id)

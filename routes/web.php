@@ -126,6 +126,10 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('manajemen.event.create');
         Route::post('/manajemen/event/store', [EventController::class, 'store'])
             ->name('manajemen.event.store');
+        // Riwayat acara yang sudah pernah dijalankan (target vs hasil).
+        // Didaftarkan sebelum rute detail agar "riwayat" tidak ditelan {id}.
+        Route::get('/manajemen/event/riwayat', [EventController::class, 'riwayat'])
+            ->name('manajemen.event.riwayat');
         // Detail satu event. Berlaku untuk semua status — termasuk yang masih
         // di pipeline, yang sengaja tidak muncul di daftar Event.
         Route::get('/manajemen/event/{id}', [EventController::class, 'show'])
@@ -297,6 +301,10 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('em.event.create');
         Route::post('/event-marketing/event/store', [EMEventController::class, 'store'])
             ->name('em.event.store');
+        // Riwayat acara yang sudah pernah dijalankan (target vs hasil).
+        // Didaftarkan sebelum rute detail agar "riwayat" tidak ditelan {id}.
+        Route::get('/event-marketing/event/riwayat', [EMEventController::class, 'riwayat'])
+            ->name('em.event.riwayat');
         // Detail satu event. Berlaku untuk semua status — termasuk yang masih
         // di pipeline, yang sengaja tidak muncul di daftar Event.
         Route::get('/event-marketing/event/{id}', [EMEventController::class, 'show'])
