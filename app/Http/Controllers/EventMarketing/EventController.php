@@ -121,7 +121,6 @@ class EventController extends Controller
             'status_event'      => 'nullable|in:Upcoming,Penyelesaian,Done',
             'is_public'         => 'nullable|boolean',
             'poster_event'      => 'nullable|file|image|max:10240',
-            'kontrak_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
         ]);
 
         $bentrok = Event::checkBentrok(
@@ -163,13 +162,6 @@ class EventController extends Controller
             if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
             $file->move($destinationPath, $filename);
             $data['poster_event'] = 'posters/' . $filename;
-        }
-
-        if ($request->hasFile('kontrak_file') && $request->file('kontrak_file')->isValid()) {
-            $file = $request->file('kontrak_file');
-            $filename = $file->hashName();
-            Storage::disk('local')->putFileAs('kontrak', $file, $filename);
-            $data['kontrak_file'] = $filename;
         }
 
         // Event baru dari klien selalu masuk pipeline pada tahap Lead.
@@ -240,7 +232,6 @@ class EventController extends Controller
             'status_event'      => 'nullable|in:Upcoming,Penyelesaian,Done',
             'is_public'         => 'nullable|boolean',
             'poster_event'      => 'nullable|file|image|max:10240',
-            'kontrak_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
         ]);
 
         $bentrok = Event::checkBentrok(
@@ -289,16 +280,6 @@ class EventController extends Controller
             if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
             $file->move($destinationPath, $filename);
             $data['poster_event'] = 'posters/' . $filename;
-        }
-
-        if ($request->hasFile('kontrak_file') && $request->file('kontrak_file')->isValid()) {
-            if ($event->kontrak_file) {
-                Storage::disk('local')->delete('kontrak/' . $event->kontrak_file);
-            }
-            $file = $request->file('kontrak_file');
-            $filename = $file->hashName();
-            Storage::disk('local')->putFileAs('kontrak', $file, $filename);
-            $data['kontrak_file'] = $filename;
         }
 
         $event->update($data);

@@ -26,7 +26,6 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
         note_event: dariAppointment?.catatan_meeting ?? '',
         jam_keluar_makanan: '',
         poster_event: null,
-        kontrak_file: null,
         dari_appointment: dariAppointment?.id ?? null,
     });
 
@@ -39,7 +38,6 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
     // Aturan file (samakan dgn validasi backend: poster max 2MB image, kontrak max 5MB pdf/doc)
     const FILE_RULES = {
         poster_event: { maxMB: 10, exts: ['jpg', 'jpeg', 'png', 'gif', 'webp'], accept: 'gambar (JPG/PNG)' },
-        kontrak_file: { maxMB: 5, exts: ['pdf', 'doc', 'docx'],               accept: 'PDF atau Word' },
     };
 
     const handleFile = (field, file, inputEl) => {
@@ -297,23 +295,6 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
                                     <p className="mt-1 text-xs text-gray-400">
                                         File dipilih: <span className="font-semibold text-gray-600">{data.poster_event.name}</span>
                                         {' '}({(data.poster_event.size / 1048576).toFixed(1)} MB)
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block mb-1 text-sm font-bold text-gray-700">
-                                    Upload Kontrak <span className="font-normal text-gray-400">(PDF / Word · maks 5 MB)</span>
-                                </label>
-                                <input type="file"
-                                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
-                                    onChange={e => handleFile('kontrak_file', e.target.files?.[0], e.target)} />
-                                {errors.kontrak_file && <span className="block mt-1 text-xs text-red-500">⚠ {errors.kontrak_file}</span>}
-                                {data.kontrak_file && (
-                                    <p className="mt-1 text-xs text-gray-400">
-                                        File dipilih: <span className="font-semibold text-gray-600">{data.kontrak_file.name}</span>
-                                        {' '}({(data.kontrak_file.size / 1048576).toFixed(1)} MB)
                                     </p>
                                 )}
                             </div>

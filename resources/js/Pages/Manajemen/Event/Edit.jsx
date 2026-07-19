@@ -27,7 +27,6 @@ export default function Edit({ auth, event, clients, pegawais }) {
         note_event:           event.note_event || '',
         jam_keluar_makanan:   event.jam_keluar_makanan || '',
         poster_event:         null,
-        kontrak_file:         null, // tambah ini
     });
 
     // Deal Total = Jumlah Pax x Harga per Pax (otomatis, tetap bisa diedit manual)
@@ -39,7 +38,6 @@ export default function Edit({ auth, event, clients, pegawais }) {
     // Aturan file (samakan dgn validasi backend: poster max 2MB image, kontrak max 5MB pdf/doc)
     const FILE_RULES = {
         poster_event: { maxMB: 10, exts: ['jpg', 'jpeg', 'png', 'gif', 'webp'], accept: 'gambar (JPG/PNG)' },
-        kontrak_file: { maxMB: 5, exts: ['pdf', 'doc', 'docx'],               accept: 'PDF atau Word' },
     };
 
     const handleFile = (field, file, inputEl) => {
@@ -247,7 +245,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
                             {/* GANTI KONTRAK FILE bagian baru */}
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">
-                                    Ganti Kontrak <span className="font-normal text-gray-400">(PDF / Word · maks 5 MB)</span>
+                                    Kontrak <span className="font-normal text-gray-400">(dokumen lama — hanya bisa dilihat)</span>
                                 </label>
                                 {event.kontrak_file && (
                                     <div className="flex items-center justify-between p-3 mb-2 border border-orange-200 bg-orange-50 rounded-xl">
@@ -272,18 +270,8 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                         </a>
                                     </div>
                                 )}
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
-                                    onChange={e => handleFile('kontrak_file', e.target.files?.[0], e.target)}
-                                />
-                                {errors.kontrak_file && <span className="block mt-1 text-xs text-red-500">⚠ {errors.kontrak_file}</span>}
-                                {data.kontrak_file && (
-                                    <p className="mt-1 text-xs text-gray-400">
-                                        File baru: <span className="font-semibold text-gray-600">{data.kontrak_file.name}</span>
-                                        {' '}({(data.kontrak_file.size / 1048576).toFixed(1)} MB)
-                                    </p>
+                                {! event.kontrak_file && (
+                                    <p className="text-xs text-gray-400">Tidak ada kontrak tersimpan.</p>
                                 )}
                             </div>
 

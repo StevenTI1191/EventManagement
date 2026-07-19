@@ -930,20 +930,13 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                                                     </button>
                                                 </div>
 
-                                                {/* Detail event (PDF: informasi acara + tagihan) & kontrak */}
+                                                {/* Detail event — PDF informasi acara + tagihan */}
                                                 <div className="flex gap-1.5 mt-1.5">
                                                     <a href={route('client.event.detail-pdf', event.id_event)}
                                                         className="flex-1 flex items-center justify-center gap-1 py-2 bg-gold-soft text-gold-dim text-[11px] font-bold rounded-xl hover:brightness-95 transition-all border border-gold-2">
                                                         <Download size={12} />
                                                         Detail Event
                                                     </a>
-                                                    {event.kontrak_file && (
-                                                        <a href={`/kontrak/${event.kontrak_file}`}
-                                                            className="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-500/10 text-info text-[11px] font-bold rounded-xl hover:bg-blue-500/20 transition-colors border border-blue-500/30">
-                                                            <FileText size={12} />
-                                                            Kontrak
-                                                        </a>
-                                                    )}
                                                 </div>
                                             </div>
                                         </div>
