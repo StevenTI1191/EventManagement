@@ -36,6 +36,14 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
 
     const bisaGeser = (key) => KOLOM.find((k) => k.key === key)?.geser;
 
+    // Kartu bisa diklik untuk membuka form event. Seretan tidak boleh ikut
+    // memicu navigasi, jadi klik diabaikan bila baru saja terjadi drag.
+    const [baruDigeser, setBaruDigeser] = useState(false);
+    const bukaEvent = (e) => {
+        if (baruDigeser || !routes.edit) return;
+        router.visit(route(routes.edit, e.id_event));
+    };
+
     const jatuhkan = (statusTujuan) => {
         setHover(null);
         if (!canEdit || !dragId || !bisaGeser(statusTujuan)) { setDragId(null); return; }
@@ -149,14 +157,23 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                         <div
                                             key={e.id_event}
                                             draggable={canEdit && k.geser}
-                                            onDragStart={() => setDragId(e.id_event)}
-                                            onDragEnd={() => { setDragId(null); setHover(null); }}
-                                            className={`p-2.5 bg-white border rounded-lg shadow-sm transition-all ${
-                                                canEdit && k.geser ? 'cursor-grab active:cursor-grabbing hover:shadow-md hover:border-gray-300' : ''
+                                            onDragStart={() => { setDragId(e.id_event); setBaruDigeser(true); }}
+                                            onDragEnd={() => {
+                                                setDragId(null); setHover(null);
+                                                // beri jeda singkat agar klik sisa seretan tidak ikut membuka event
+                                                setTimeout(() => setBaruDigeser(false), 100);
+                                            }}
+                                            onClick={() => bukaEvent(e)}
+                                            title={routes.edit ? 'Klik untuk membuka & melengkapi detail event' : undefined}
+                                            className={`p-2.5 bg-white border rounded-lg shadow-sm transition-all hover:shadow-md hover:border-gray-300 ${
+                                                routes.edit ? 'cursor-pointer' : ''
                                             } ${dragId === e.id_event ? 'opacity-50' : 'border-gray-100'}`}
                                         >
                                             <div className="flex items-start gap-1.5">
-                                                {canEdit && k.geser && <GripVertical size={13} className="mt-0.5 text-gray-300 shrink-0" />}
+                                                {canEdit && k.geser && (
+                                                    <GripVertical size={13} className="mt-0.5 text-gray-300 shrink-0 cursor-grab active:cursor-grabbing"
+                                                        title="Seret untuk memindahkan tahap" />
+                                                )}
                                                 <h3 className="flex-1 text-xs font-bold leading-snug text-gray-900 line-clamp-2">{e.nama_event}</h3>
                                             </div>
 
@@ -185,7 +202,7 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                             <p className="mt-2 text-xs font-extrabold text-[#FF2D55]">{rupiah(e.deal_harga_event)}</p>
 
                                             {canEdit && routes.penawaran && (k.key === 'Negotiation' || k.key === 'Deal') && (
-                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                <div className="flex flex-wrap gap-1 mt-2" onClick={(ev) => ev.stopPropagation()}>
                                                     <a href={route(routes.penawaran, e.id_event)} draggable={false}
                                                         className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-gray-600 bg-gray-100 rounded hover:bg-gray-200">
                                                         <FileDown size={10} /> PDF
@@ -206,7 +223,7 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
 
                                             {canEdit && routes.batal && (k.key === 'Lead' || k.key === 'Negotiation') && !e.dari_planning && (
                                                 <button type="button"
-                                                    onClick={() => { setError(''); setAlasan(''); setBatalKartu(e); }}
+                                                    onClick={(ev) => { ev.stopPropagation(); setError(''); setAlasan(''); setBatalKartu(e); }}
                                                     className="flex items-center gap-0.5 mt-1.5 px-1.5 py-1 text-[9px] font-bold text-rose-600 rounded bg-rose-50 hover:bg-rose-100">
                                                     <XCircle size={10} /> Tidak jadi
                                                 </button>
@@ -234,7 +251,10 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                 <tr><td colSpan={7} className="px-4 py-16 text-sm text-center text-gray-400">Belum ada event di pipeline.</td></tr>
                             ) : (
                                 KOLOM.flatMap((k) => (kolom[k.key] || []).map((e) => ({ ...e, _kolom: k }))).map((e) => (
-                                    <tr key={e.id_event} className="transition-colors hover:bg-gray-50/60">
+                                    <tr key={e.id_event}
+                                        onClick={() => bukaEvent(e)}
+                                        title={routes.edit ? 'Klik untuk membuka & melengkapi detail event' : undefined}
+                                        className={`transition-colors hover:bg-gray-50/60 ${routes.edit ? 'cursor-pointer' : ''}`}>
                                         <td className="px-4 py-3">
                                             <span className="text-sm font-bold text-gray-900">{e.nama_event}</span>
                                             {e.dari_planning && (
