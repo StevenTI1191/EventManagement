@@ -3,46 +3,72 @@
 namespace App\Http\Controllers\Manajemen;
 
 use App\Http\Controllers\Controller;
-use App\Models\Appointment;
-use App\Traits\ChecksPegawaiRole;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
+use App\Traits\ChecksPegawaiRole;
+use App\Traits\ManagesAppointment;
+
+/**
+ * Appointment sisi Manajemen. Logikanya di ManagesAppointment, dipakai bersama
+ * agar kedua peran tidak melenceng seperti yang sempat terjadi di Transaksi.
+ */
 class AppointmentController extends Controller
 {
-    use ChecksPegawaiRole;
+    use ChecksPegawaiRole, ManagesAppointment;
+
+    /** Rute yang dipakai halaman — dikirim agar komponennya bisa dipakai bersama. */
+    private function rute(): array
+    {
+        return [
+            'index'          => 'manajemen.appointment.index',
+            'show'           => 'manajemen.appointment.show',
+            'konfirmasi'     => 'manajemen.appointment.konfirmasi',
+            'selesai'        => 'manajemen.appointment.selesai',
+            'batal'          => 'manajemen.appointment.batal',
+            'catatanMeeting' => 'manajemen.appointment.catatan-meeting',
+            'buatEvent'      => 'manajemen.event.create',
+        ];
+    }
 
     public function index(Request $request)
     {
         $this->checkManajemen();
 
-        $query = Appointment::with(['client', 'pegawai']);
+        return $this->daftarAppointment($request, 'Manajemen/Appointment/Index', $this->rute());
+    }
 
-        if ($request->filled('status') && $request->status !== 'Semua') {
-            $query->where('status', $request->status);
-        }
+    public function show($id)
+    {
+        $this->checkManajemen();
 
-        if ($request->filled('search')) {
-            $query->whereHas('client', fn($q) =>
-                $q->where('nama_client', 'like', '%' . $request->search . '%')
-                  ->orWhere('perusahaan_client', 'like', '%' . $request->search . '%')
-            );
-        }
+        return $this->detailAppointment($id, 'Manajemen/Appointment/Show', $this->rute());
+    }
 
-        $appointments = $query->latest()->paginate(15)->withQueryString();
+    public function konfirmasi(Request $request, $id)
+    {
+        $this->checkManajemen();
 
-        $counts = [
-            'pending'      => Appointment::where('status', 'Pending')->count(),
-            'dikonfirmasi' => Appointment::where('status', 'Dikonfirmasi')->count(),
-            'reschedule'   => Appointment::where('status', 'Reschedule')->count(),
-            'selesai'      => Appointment::where('status', 'Selesai')->count(),
-            'dibatalkan'   => Appointment::where('status', 'Dibatalkan')->count(),
-        ];
+        return $this->konfirmasiAppointment($request, $id);
+    }
 
-        return Inertia::render('Manajemen/Appointment/Index', [
-            'appointments' => $appointments,
-            'counts'       => $counts,
-            'filters'      => $request->only(['status', 'search']),
-        ]);
+    public function selesai($id)
+    {
+        $this->checkManajemen();
+
+        return $this->selesaikanAppointment($id);
+    }
+
+    public function simpanCatatanMeeting(Request $request, $id)
+    {
+        $this->checkManajemen();
+
+        return $this->catatanMeetingAppointment($request, $id);
+    }
+
+    public function batal(Request $request, $id)
+    {
+        $this->checkManajemen();
+
+        return $this->batalkanAppointment($request, $id);
     }
 }

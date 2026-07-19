@@ -235,8 +235,22 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('manajemen.evaluasi.rehire');
 
         // --- MANAJEMEN APPOINTMENT ---
+        // Setara Event Marketing: bukan hanya melihat daftar, tapi juga membuka
+        // detail, mengonfirmasi/menjadwal ulang, membatalkan, dan mencatat hasil
+        // meeting. Penjagaan status ada di ManagesAppointment, jadi jadwal yang
+        // sudah disepakati tidak bisa ditimpa diam-diam dari dua peran sekaligus.
         Route::get('/manajemen/appointment', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'index'])
             ->name('manajemen.appointment.index');
+        Route::get('/manajemen/appointment/{id}', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'show'])
+            ->whereNumber('id')->name('manajemen.appointment.show');
+        Route::patch('/manajemen/appointment/{id}/konfirmasi', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'konfirmasi'])
+            ->whereNumber('id')->name('manajemen.appointment.konfirmasi');
+        Route::patch('/manajemen/appointment/{id}/selesai', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'selesai'])
+            ->whereNumber('id')->name('manajemen.appointment.selesai');
+        Route::patch('/manajemen/appointment/{id}/batal', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'batal'])
+            ->whereNumber('id')->name('manajemen.appointment.batal');
+        Route::patch('/manajemen/appointment/{id}/catatan-meeting', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'simpanCatatanMeeting'])
+            ->whereNumber('id')->name('manajemen.appointment.catatan-meeting');
 
         // --- MANAJEMEN PEGAWAI ---
         Route::get('/manajemen/pegawai', [\App\Http\Controllers\Manajemen\PegawaiController::class, 'index'])
