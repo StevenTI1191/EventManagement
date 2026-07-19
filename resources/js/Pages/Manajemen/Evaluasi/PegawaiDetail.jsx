@@ -2,9 +2,25 @@
 import StatCard from '@/Components/StatCard';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, Fragment } from 'react';
-import { ChevronLeft, ChevronDown, ChevronUp, Save, StickyNote, Users, TrendingUp, CheckCircle, Calendar, CalendarCheck, Layout } from 'lucide-react';
+import { ChevronLeft, ChevronDown, ChevronUp, Save, StickyNote, Users, TrendingUp, CheckCircle, Calendar, CalendarCheck, Layout, Wallet, Target } from 'lucide-react';
+import {
+    BarChart, Bar, LineChart, Line, Tooltip,
+    XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend,
+} from 'recharts';
 
-export default function PegawaiDetail({ auth, pegawai, events, stats, clients = [], isEM }) {
+const rupiah = (v) =>
+    'Rp ' + Number(v ?? 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
+
+// Sumbu Y ringkas: 1.500.000 -> 1,5jt
+const rupiahRingkas = (v) => {
+    const n = Number(v ?? 0);
+    if (n >= 1e9) return (n / 1e9).toFixed(1).replace('.', ',') + 'M';
+    if (n >= 1e6) return (n / 1e6).toFixed(1).replace('.', ',') + 'jt';
+    if (n >= 1e3) return Math.round(n / 1e3) + 'rb';
+    return String(n);
+};
+
+export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [], sebaran = [], clients = [], isEM }) {
     const { flash } = usePage().props;
     const [expanded, setExpanded] = useState({});
     const [rehire, setRehire] = useState(pegawai.rekomendasi_rehire);
@@ -109,6 +125,89 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, clients = 
                         <StatCard title="Appointment Selesai"   value={stats.appointment_selesai} icon={<CalendarCheck size={20} />} color="#FF2D55" />
                         <StatCard title="Event sebagai PIC"     value={stats.total_event_pic}     icon={<Layout size={20} />}        color="#FF2D55" />
                     </div>
+
+                    {/* ── KINERJA OMSET ────────────────────────────────────── */}
+                    <div className="p-6 mb-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Wallet size={18} className="text-[#FF2D55]" />
+                            <h2 className="text-base font-extrabold text-gray-800">Kinerja Omset</h2>
+                        </div>
+                        <p className="mb-5 text-xs text-gray-400">
+                            Nilai deal = kesepakatan event yang sudah terikat komitmen. Uang masuk = pembayaran yang benar-benar tercatat.
+                        </p>
+
+                        <div className="grid grid-cols-1 gap-3 mb-5 sm:grid-cols-3">
+                            <div className="p-4 bg-gray-50 rounded-xl">
+                                <p className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Nilai Deal</p>
+                                <p className="mt-1 text-lg font-extrabold text-gray-900">{rupiah(stats.nilai_deal)}</p>
+                            </div>
+                            <div className="p-4 rounded-xl bg-emerald-50">
+                                <p className="text-[10px] font-bold tracking-wider text-emerald-600 uppercase">Uang Masuk</p>
+                                <p className="mt-1 text-lg font-extrabold text-emerald-700">{rupiah(stats.uang_masuk)}</p>
+                            </div>
+                            <div className="p-4 rounded-xl bg-amber-50">
+                                <p className="text-[10px] font-bold tracking-wider text-amber-600 uppercase">Target Omset</p>
+                                <p className="mt-1 text-lg font-extrabold text-amber-700">
+                                    {stats.target_omset > 0 ? rupiah(stats.target_omset) : '—'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {stats.capaian_target !== null && stats.capaian_target !== undefined ? (
+                            <div className="mb-5">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <span className="text-xs font-bold text-gray-500">Capaian terhadap target</span>
+                                    <span className={`text-sm font-black ${stats.capaian_target >= 100 ? 'text-emerald-600' : 'text-[#FF2D55]'}`}>
+                                        {stats.capaian_target}%
+                                    </span>
+                                </div>
+                                <div className="w-full h-3 overflow-hidden bg-gray-100 rounded-full">
+                                    <div className="h-3 rounded-full transition-all"
+                                        style={{
+                                            width: `${Math.min(100, stats.capaian_target)}%`,
+                                            background: stats.capaian_target >= 100 ? '#10b981' : '#FF2D55',
+                                        }} />
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="mb-5 text-xs text-gray-400">
+                                Belum ada target omset yang dipasang pada event yang dipegang — isi Target Omset saat membuat Planning Event agar capaiannya terukur.
+                            </p>
+                        )}
+
+                        <p className="mb-2 text-xs font-bold text-gray-500">Tren 12 bulan terakhir</p>
+                        <ResponsiveContainer width="100%" height={230}>
+                            <LineChart data={tren}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                                <XAxis dataKey="bulan" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                <YAxis tickFormatter={rupiahRingkas} tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={55} />
+                                <Tooltip formatter={(v) => rupiah(v)} />
+                                <Legend wrapperStyle={{ fontSize: 11 }} />
+                                <Line type="monotone" dataKey="deal" name="Nilai deal" stroke="#FF2D55" strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="masuk" name="Uang masuk" stroke="#10b981" strokeWidth={2} dot={false} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    {/* ── SEBARAN EVENT PER STATUS ─────────────────────────── */}
+                    {sebaran.length > 0 && (
+                        <div className="p-6 mb-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Target size={18} className="text-[#FF2D55]" />
+                                <h2 className="text-base font-extrabold text-gray-800">Sebaran Event yang Dipegang</h2>
+                            </div>
+                            <p className="mb-4 text-xs text-gray-400">Jumlah event per tahap — melihat di mana beban kerjanya menumpuk.</p>
+                            <ResponsiveContainer width="100%" height={200}>
+                                <BarChart data={sebaran} barCategoryGap="35%">
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                                    <XAxis dataKey="status" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                    <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={30} />
+                                    <Tooltip />
+                                    <Bar dataKey="jumlah" name="Event" fill="#FF2D55" radius={[6, 6, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
 
                     <div className="mb-8 overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
                         <div className="px-6 py-4 border-b border-gray-100">

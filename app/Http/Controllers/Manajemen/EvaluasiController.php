@@ -80,6 +80,17 @@ class EvaluasiController extends Controller
 
         $closingRate = $klienDihandle > 0 ? (int) round($klienClosing / $klienDihandle * 100) : 0;
 
+        // ── Kinerja omset ──────────────────────────────────────────────────────
+        // Nilai deal  : nilai kesepakatan event yang sudah terikat komitmen.
+        // Uang masuk  : pembayaran yang benar-benar tercatat (lebih konservatif).
+        // Target      : akumulasi target_omset yang dipasang saat perencanaan.
+        $idEventPic = Event::where('id_pegawai', $id)->pluck('id_event');
+
+        $nilaiDeal = Event::where('id_pegawai', $id)->untukFinance()->sum('deal_harga_event');
+        $uangMasuk = $idEventPic->isEmpty() ? 0
+            : \App\Models\Transaksi::whereIn('id_event', $idEventPic)->sum('nominal');
+        $targetOmset = Event::where('id_pegawai', $id)->sum('target_omset');
+
         $stats = [
             'klien_dihandle'      => $klienDihandle,
             'klien_closing'       => $klienClosing,
@@ -87,7 +98,43 @@ class EvaluasiController extends Controller
             'total_appointment'   => \App\Models\Appointment::where('id_pegawai', $id)->count(),
             'appointment_selesai' => \App\Models\Appointment::where('id_pegawai', $id)->where('status', 'Selesai')->count(),
             'total_event_pic'     => Event::where('id_pegawai', $id)->count(),
+            'nilai_deal'          => (float) $nilaiDeal,
+            'uang_masuk'          => (float) $uangMasuk,
+            'target_omset'        => (float) $targetOmset,
+            'capaian_target'      => $targetOmset > 0 ? (int) round($nilaiDeal / $targetOmset * 100) : null,
         ];
+
+        // ── Tren 12 bulan terakhir: nilai deal & uang masuk per bulan ─────────
+        $tren = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $bulan = now()->subMonths($i);
+
+            $dealBulan = Event::where('id_pegawai', $id)
+                ->untukFinance()
+                ->whereYear('tgl_mulai_event', $bulan->year)
+                ->whereMonth('tgl_mulai_event', $bulan->month)
+                ->sum('deal_harga_event');
+
+            $masukBulan = $idEventPic->isEmpty() ? 0
+                : \App\Models\Transaksi::whereIn('id_event', $idEventPic)
+                    ->whereYear('tgl_bayar', $bulan->year)
+                    ->whereMonth('tgl_bayar', $bulan->month)
+                    ->sum('nominal');
+
+            $tren[] = [
+                'bulan' => $bulan->translatedFormat('M y'),
+                'deal'  => (float) $dealBulan,
+                'masuk' => (float) $masukBulan,
+            ];
+        }
+
+        // ── Sebaran event yang dipegang, per status ───────────────────────────
+        $sebaran = Event::where('id_pegawai', $id)
+            ->selectRaw('status_event, COUNT(*) as jumlah')
+            ->groupBy('status_event')
+            ->pluck('jumlah', 'status_event')
+            ->map(fn ($j, $s) => ['status' => $s, 'jumlah' => (int) $j])
+            ->values();
 
         // Rincian klien yang ditangani + status closing-nya
         $clients = \App\Models\Client::whereIn('id', $clientIds)
@@ -106,6 +153,8 @@ class EvaluasiController extends Controller
             'pegawai' => $pegawai,
             'events'  => $events,
             'stats'   => $stats,
+            'tren'    => $tren,
+            'sebaran' => $sebaran,
             'clients' => $clients,
             'isEM'    => in_array($pegawai->posisi_pegawai, ['EventMarketing', 'Event Marketing']),
         ]);
