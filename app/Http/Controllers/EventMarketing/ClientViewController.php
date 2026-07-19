@@ -10,101 +10,38 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Traits\ChecksPegawaiRole;
+use App\Traits\ShowsClient;
 
 class ClientViewController extends Controller
 {
-    use ChecksPegawaiRole;
+    use ChecksPegawaiRole, ShowsClient;
+
+    /** Rute yang dipakai halaman klien bersama. */
+    private function rute(): array
+    {
+        return [
+            'index'             => 'em.client.index',
+            'show'              => 'em.client.show',
+            'create'            => 'em.client.create',
+            'edit'              => 'em.client.edit',
+            'destroy'           => 'em.client.destroy',
+            'followUpStore'     => 'em.client.follow-up.store',
+            'followUpDestroy'   => 'em.client.follow-up.destroy',
+        ];
+    }
 
     public function index(Request $request)
     {
         $this->checkEventMarketing();
 
-        // Dipisah per sumber: mendaftar sendiri, di-approach tim, atau acara
-        // milik LM sendiri.
-        $sumber = in_array($request->sumber, Client::SEMUA_SUMBER, true)
-            ? $request->sumber
-            : Client::SUMBER_MANDIRI;
-
-        $query = Client::withCount('events')->where('sumber', $sumber);
-
-        if ($request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where('nama_client', 'like', '%' . $request->search . '%')
-                  ->orWhere('perusahaan_client', 'like', '%' . $request->search . '%')
-                  ->orWhere('email_client', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        $clients = $query->latest()->paginate(15)->withQueryString();
-
-        return Inertia::render('EventMarketing/Client/Index', [
-            'clients' => $clients,
-            'filters' => $request->only('search', 'sumber'),
-            'sumber'  => $sumber,
-            'jumlah'  => [
-                Client::SUMBER_MANDIRI  => Client::mandiri()->count(),
-                Client::SUMBER_INTERNAL => Client::internal()->count(),
-                Client::SUMBER_LM       => Client::perusahaanSendiri()->count(),
-            ],
-        ]);
+        return $this->daftarClient($request, 'EventMarketing/Client/Index', $this->rute(), canEdit: true);
     }
 
     public function show($id)
     {
         $this->checkEventMarketing();
 
-        $client = Client::findOrFail($id);
-
-        // Validasi input filter sebelum dipakai di query
-        request()->validate([
-            'tgl_awal'  => 'nullable|date',
-            'tgl_akhir' => 'nullable|date|after_or_equal:tgl_awal',
-            'search'    => 'nullable|string|max:255',
-            'pic'       => 'nullable|integer|min:1',
-            'kategori'  => 'nullable|string|max:255',
-        ]);
-
-        $query = Event::with('pic')->where('id_client', $id);
-
-        if (request('tgl_awal') && request('tgl_akhir')) {
-            $query->whereBetween('tgl_mulai_event', [request('tgl_awal'), request('tgl_akhir')]);
-        }
-        if (request('kategori')) {
-            $query->where('kategori_event', request('kategori'));
-        }
-        if (request('pic')) {
-            $query->where('id_pegawai', request('pic'));
-        }
-        if (request('search')) {
-            $query->where('nama_event', 'like', '%' . request('search') . '%');
-        }
-
-        $events = $query->latest('tgl_mulai_event')->take(200)->get();
-        $pics = Pegawai::select('id_pegawai', 'nama_pegawai', 'posisi_pegawai')->orderBy('nama_pegawai')->get();
-        // Scope ke client ini — jangan expose kategori event milik client lain
-        $kategoris = Event::where('id_client', $id)->distinct()->pluck('kategori_event')->filter()->values();
-
-        // Log follow-up (terbaru dulu) + link WhatsApp siap-pakai untuk follow-up.
-        $followUps = $client->followUps()
-            ->with(['pegawai:id_pegawai,nama_pegawai', 'event:id_event,nama_event,status_event'])
-            ->latest()
-            ->take(100)
-            ->get();
-
-        $waFollowUp = \App\Support\Wa::link(
-            $client->no_telp_client,
-            "Halo {$client->nama_client}, dari tim Laksamana Muda. Kami ingin menindaklanjuti kebutuhan acara Anda. Apakah ada yang bisa kami bantu?"
-        );
-
-        return Inertia::render('EventMarketing/Client/Show', [
-            'client'    => $client,
-            'events'    => $events,
-            'pics'      => $pics,
-            'kategoris' => $kategoris,
-            'followUps' => $followUps,
-            'waFollowUp'=> $waFollowUp,
-            'filters'   => request()->only(['tgl_awal', 'tgl_akhir', 'kategori', 'pic', 'search']),
-        ]);
+        return $this->detailClient($id, 'EventMarketing/Client/Show', $this->rute(), canEdit: true);
     }
 
     /** Tambah satu catatan follow-up untuk client. */
