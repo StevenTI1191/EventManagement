@@ -109,8 +109,10 @@ export default function JadwalAcara({ events }) {
                             </button>
                         ))}
                     </div>
-                    <div className="flex items-center gap-3 text-[11px] text-gray-500">
-                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-200"></span> Event</span>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-500">
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-200"></span> Event berjalan</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-200"></span> Selesai</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-teal-200"></span> TM &amp; Gladi Resik</span>
                         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-purple-200"></span> Appointment</span>
                         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-200"></span> Reschedule</span>
                     </div>

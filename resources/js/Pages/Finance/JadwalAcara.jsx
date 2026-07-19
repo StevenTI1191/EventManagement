@@ -88,13 +88,23 @@ export default function FinanceJadwalAcara({ events }) {
                     <button onClick={goToday} className="text-sm px-4 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">Hari ini</button>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {['all', 'Upcoming', 'Done', 'Persiapan'].map(f => (
-                        <button key={f} onClick={() => setActiveFilter(f)}
-                            className={`px-4 py-1 rounded-full text-xs font-medium border transition-all ${activeFilter === f ? 'bg-[#FF2D55] text-white border-[#FF2D55]' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
-                            {f === 'all' ? 'Semua' : f}
-                        </button>
-                    ))}
+                {/* Filter + legend — disamakan dengan kalender EM & Manajemen.
+                    Appointment tidak dimuat di kalender Finance, jadi warnanya
+                    tidak ikut dicantumkan. */}
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div className="flex flex-wrap gap-2">
+                        {['all', 'Upcoming', 'Done', 'Persiapan'].map(f => (
+                            <button key={f} onClick={() => setActiveFilter(f)}
+                                className={`px-4 py-1 rounded-full text-xs font-medium border transition-all ${activeFilter === f ? 'bg-[#FF2D55] text-white border-[#FF2D55]' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
+                                {f === 'all' ? 'Semua' : f}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-500">
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-200"></span> Event berjalan</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-200"></span> Selesai</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-teal-200"></span> TM &amp; Gladi Resik</span>
+                    </div>
                 </div>
 
                 <div className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-2xl">
@@ -117,7 +127,7 @@ export default function FinanceJadwalAcara({ events }) {
                                 {cell.dayEvents.slice(0, 2).map(ev => (
                                     <div key={ev.id} onClick={() => setSelectedEvent(ev)}
                                         className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate cursor-pointer font-medium ${getChipClass(ev.status)}`}>
-                                        {ev.time} {ev.title}
+                                        {ev.type === 'persiapan' ? '🛠 ' : ''}{ev.time} {ev.title}
                                     </div>
                                 ))}
                                 {cell.dayEvents.length > 2 && (

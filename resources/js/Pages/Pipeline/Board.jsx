@@ -7,14 +7,27 @@ import {
 
 // Tiga tahap pertama boleh digeser. Sisanya ditentukan pembayaran & jadwal,
 // jadi ditampilkan sebagai informasi saja — menyeret ke sana akan melompati DP.
+// Warnanya sengaja bergerak mengikuti perjalanan tahap — abu dingin saat masih
+// calon, menghangat ketika ditawar, hijau begitu disetujui, lalu biru saat
+// berjalan dan meredup ke abu setelah tuntas. Jadi posisi sebuah acara terbaca
+// dari warnanya saja, tanpa perlu membaca judul kolomnya.
 const KOLOM = [
-    { key: 'Lead',         judul: 'Lead',         warna: 'bg-slate-500',   tint: 'bg-slate-50',   ket: 'Calon & rencana bertarget klien', geser: true },
-    { key: 'Negotiation',  judul: 'Negotiation',  warna: 'bg-amber-500',   tint: 'bg-amber-50',   ket: 'Penawaran dikirim',                geser: true },
-    { key: 'Deal',         judul: 'Deal',         warna: 'bg-emerald-600', tint: 'bg-emerald-50', ket: 'Disetujui — menunggu DP',          geser: true },
-    { key: 'Upcoming',     judul: 'Upcoming',     warna: 'bg-blue-500',    tint: 'bg-blue-50',    ket: 'DP lunas — acara berjalan',        geser: false },
-    { key: 'Penyelesaian', judul: 'Penyelesaian', warna: 'bg-orange-500',  tint: 'bg-orange-50',  ket: 'Acara lewat, belum tuntas',        geser: false },
-    { key: 'Done',         judul: 'Done',         warna: 'bg-gray-500',    tint: 'bg-gray-50',    ket: 'Selesai (tampil 3 hari)',          geser: false },
+    { key: 'Lead',         judul: 'Lead',         grad: 'from-slate-400 to-slate-500',    aksen: 'bg-slate-400',   tint: 'bg-slate-50/60',   ket: 'Calon & rencana bertarget klien', geser: true },
+    { key: 'Negotiation',  judul: 'Negotiation',  grad: 'from-amber-400 to-orange-500',   aksen: 'bg-amber-400',   tint: 'bg-amber-50/60',   ket: 'Penawaran dikirim',                geser: true },
+    { key: 'Deal',         judul: 'Deal',         grad: 'from-emerald-400 to-emerald-600', aksen: 'bg-emerald-500', tint: 'bg-emerald-50/60', ket: 'Disetujui — menunggu DP',          geser: true },
+    { key: 'Upcoming',     judul: 'Upcoming',     grad: 'from-sky-400 to-blue-600',       aksen: 'bg-blue-500',    tint: 'bg-blue-50/60',    ket: 'DP lunas — acara berjalan',        geser: false },
+    { key: 'Penyelesaian', judul: 'Penyelesaian', grad: 'from-orange-400 to-rose-500',    aksen: 'bg-orange-500',  tint: 'bg-orange-50/60',  ket: 'Acara lewat, belum tuntas',        geser: false },
+    { key: 'Done',         judul: 'Done',         grad: 'from-gray-300 to-gray-500',      aksen: 'bg-gray-400',    tint: 'bg-gray-50/60',    ket: 'Selesai (tampil 3 hari)',          geser: false },
 ];
+
+/** Ringkas nilai kolom: 25.000.000 → 25 jt, 1.200.000.000 → 1,2 M */
+const ringkasRupiah = (n) => {
+    const v = Number(n || 0);
+    if (v >= 1e9) return (v / 1e9).toFixed(v % 1e9 === 0 ? 0 : 1).replace('.', ',') + ' M';
+    if (v >= 1e6) return Math.round(v / 1e6) + ' jt';
+    if (v >= 1e3) return Math.round(v / 1e3) + ' rb';
+    return String(v);
+};
 
 const rupiah = (n) =>
     n == null ? '—' : 'Rp ' + Number(n).toLocaleString('id-ID', { maximumFractionDigits: 0 });
@@ -33,6 +46,7 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
 
     const semua = Object.values(kolom).flat();
     const total = semua.length;
+    const nilaiPapan = semua.reduce((s, e) => s + Number(e.deal_harga_event || 0), 0);
 
     const bisaGeser = (key) => KOLOM.find((k) => k.key === key)?.geser;
 
@@ -93,6 +107,12 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                         </span>
                     )}
                     <span className="px-3 py-1 text-xs font-bold text-gray-500 bg-gray-100 rounded-full">{total} event</span>
+                    {/* Nilai seluruh papan — angka yang paling sering dicari saat membuka pipeline */}
+                    {nilaiPapan > 0 && (
+                        <span className="px-3 py-1 text-xs font-bold text-white rounded-full bg-gradient-to-r from-[#FF2D55] to-[#c81e42] shadow-sm shadow-[#FF2D55]/25">
+                            Rp {ringkasRupiah(nilaiPapan)}
+                        </span>
+                    )}
 
                     {/* Ganti tampilan papan / tabel */}
                     <div className="flex gap-1 p-1 ml-auto bg-gray-100 rounded-xl">
@@ -128,31 +148,43 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                     {KOLOM.map((k) => {
                         const kartu = kolom[k.key] || [];
                         const aktif = hover === k.key && canEdit && k.geser;
+                        const nilai = kartu.reduce((s, e) => s + Number(e.deal_harga_event || 0), 0);
                         return (
                             <div
                                 key={k.key}
                                 onDragOver={(e) => { if (canEdit && k.geser) { e.preventDefault(); setHover(k.key); } }}
                                 onDragLeave={() => setHover(null)}
                                 onDrop={() => jatuhkan(k.key)}
-                                className={`w-[248px] shrink-0 rounded-2xl border p-3 transition-all ${
-                                    aktif ? 'border-[#FF2D55] bg-pink-50/50 ring-2 ring-[#FF2D55]/20' : 'border-gray-100 ' + k.tint
+                                className={`w-[252px] shrink-0 overflow-hidden rounded-2xl border transition-all ${
+                                    aktif
+                                        ? 'border-[#FF2D55] bg-pink-50/60 ring-2 ring-[#FF2D55]/25 shadow-lg scale-[1.01]'
+                                        : 'border-gray-100 ' + k.tint
                                 }`}
                             >
-                                <div className="flex items-center justify-between mb-0.5">
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                        <span className={`w-2 h-2 rounded-full shrink-0 ${k.warna}`} />
+                                {/* Pita gradasi penanda tahap */}
+                                <div className={`h-1.5 bg-gradient-to-r ${k.grad}`} />
+
+                                <div className="p-3">
+                                    <div className="flex items-center justify-between mb-0.5">
                                         <h2 className="text-sm font-extrabold text-gray-900 truncate">{k.judul}</h2>
+                                        <span className="px-2 py-0.5 text-[10px] font-bold text-gray-600 bg-white border border-gray-200 rounded-full shrink-0">
+                                            {kartu.length}
+                                        </span>
                                     </div>
-                                    <span className="px-1.5 py-0.5 text-[10px] font-bold text-gray-600 bg-white border border-gray-200 rounded-full">
-                                        {kartu.length}
-                                    </span>
-                                </div>
-                                <p className="mb-3 text-[10px] leading-tight text-gray-400">{k.ket}</p>
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <p className="text-[10px] leading-tight text-gray-400">{k.ket}</p>
+                                        {/* Nilai kolom — berapa uang yang tertahan di tahap ini */}
+                                        {nilai > 0 && (
+                                            <span className="text-[10px] font-extrabold text-gray-600 whitespace-nowrap">
+                                                Rp {ringkasRupiah(nilai)}
+                                            </span>
+                                        )}
+                                    </div>
 
                                 <div className="space-y-2 min-h-[5rem]">
                                     {kartu.length === 0 && (
                                         <div className="flex items-center justify-center text-[10px] text-gray-400 border border-dashed border-gray-200 rounded-lg h-14">
-                                            Kosong
+                                            {aktif ? 'Lepas di sini' : 'Kosong'}
                                         </div>
                                     )}
 
@@ -168,10 +200,13 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                             }}
                                             onClick={() => bukaEvent(e)}
                                             title={routes.detail ? 'Klik untuk membuka detail event' : undefined}
-                                            className={`p-2.5 bg-white border rounded-lg shadow-sm transition-all hover:shadow-md hover:border-gray-300 ${
+                                            className={`relative overflow-hidden p-2.5 pl-3 bg-white border rounded-xl shadow-sm transition-all hover:shadow-lg hover:border-gray-200 hover:-translate-y-0.5 ${
                                                 routes.detail ? 'cursor-pointer' : ''
-                                            } ${dragId === e.id_event ? 'opacity-50' : 'border-gray-100'}`}
+                                            } ${dragId === e.id_event ? 'opacity-40 rotate-1' : 'border-gray-100'}`}
                                         >
+                                            {/* Garis tahap di tepi kartu — warnanya sama dengan pita kolom */}
+                                            <span className={`absolute inset-y-0 left-0 w-1 ${k.aksen}`} />
+
                                             <div className="flex items-start gap-1.5">
                                                 {canEdit && k.geser && (
                                                     <GripVertical size={13} className="mt-0.5 text-gray-300 shrink-0 cursor-grab active:cursor-grabbing"
@@ -242,6 +277,7 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                             )}
                                         </div>
                                     ))}
+                                </div>
                                 </div>
                             </div>
                         );
