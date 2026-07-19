@@ -7,6 +7,7 @@ import {
 import RupiahInput from '@/Components/RupiahInput';
 import SearchableSelect from '@/Components/SearchableSelect';
 import TimePicker from '@/Components/TimePicker';
+import DateTimePicker from '@/Components/DateTimePicker';
 import Countdown from '@/Components/Countdown';
 
 const EVENT_CATEGORIES = ['Konser', 'Wedding', 'Corporate', 'Birthday', 'Seminar', 'Lainnya'];
@@ -37,6 +38,16 @@ const LANGKAH = {
 const rp = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 const tanggal = (t) => (t ? new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—');
 const jamPendek = (j) => (j ? String(j).slice(0, 5) : '—');
+
+/** Format "YYYY-MM-DDTHH:MM" jadi "3 Jun 2026, 20:13". */
+const tglJam = (v) => {
+    if (! v) return '—';
+    const [t, j = ''] = String(v).split('T');
+    const d = new Date(t);
+    if (Number.isNaN(d.getTime())) return String(v);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        + (j ? `, ${j.slice(0, 5)}` : '');
+};
 
 function Baris({ icon: Icon, label, children }) {
     return (
@@ -103,8 +114,10 @@ export default function EventDetail({
         deal_harga_event: event.deal_harga_event ?? '',
         target_pax: event.target_pax ?? '',
         target_omset: event.target_omset ?? '',
-        technical_meeting: event.technical_meeting ? String(event.technical_meeting).slice(0, 5) : '',
-        gladi_resik: event.gladi_resik ? String(event.gladi_resik).slice(0, 5) : '',
+        // Keduanya datetime penuh (YYYY-MM-DDTHH:MM) — bisa jatuh di hari
+        // berbeda dari acaranya, jadi tidak boleh dipangkas jadi jam saja.
+        technical_meeting: event.technical_meeting || '',
+        gladi_resik: event.gladi_resik || '',
         note_event: event.note_event || '',
         food_beverage_event: event.food_beverage_event || '',
         entairtainment_event: event.entairtainment_event || '',
@@ -235,10 +248,11 @@ export default function EventDetail({
                             {jamPendek(event.jam_mulai)} – {jamPendek(event.jam_selesai)}
                         </Baris>
                         <Baris icon={MapPin} label="Area">{event.area_event || '—'}</Baris>
-                        {(event.technical_meeting || event.gladi_resik) && (
-                            <Baris icon={Clock} label="TM / Gladi Resik">
-                                {jamPendek(event.technical_meeting)} · {jamPendek(event.gladi_resik)}
-                            </Baris>
+                        {event.technical_meeting && (
+                            <Baris icon={Clock} label="Technical Meeting">{tglJam(event.technical_meeting)}</Baris>
+                        )}
+                        {event.gladi_resik && (
+                            <Baris icon={Clock} label="Gladi Resik">{tglJam(event.gladi_resik)}</Baris>
                         )}
                     </div>
                 </Kartu>
@@ -442,11 +456,13 @@ export default function EventDetail({
                     </Field>
 
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                        <Field label="Technical Meeting" error={errors.technical_meeting}>
-                            <TimePicker value={data.technical_meeting} onChange={(v) => setData('technical_meeting', v)} />
+                        <Field label="Technical Meeting" hint="Tanggal & jam — boleh berbeda dari hari acara."
+                            error={errors.technical_meeting}>
+                            <DateTimePicker value={data.technical_meeting} onChange={(v) => setData('technical_meeting', v)} />
                         </Field>
-                        <Field label="Gladi Resik" error={errors.gladi_resik}>
-                            <TimePicker value={data.gladi_resik} onChange={(v) => setData('gladi_resik', v)} />
+                        <Field label="Gladi Resik" hint="Tanggal & jam — boleh berbeda dari hari acara."
+                            error={errors.gladi_resik}>
+                            <DateTimePicker value={data.gladi_resik} onChange={(v) => setData('gladi_resik', v)} />
                         </Field>
                     </div>
 

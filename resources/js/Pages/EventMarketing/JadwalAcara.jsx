@@ -26,6 +26,7 @@ export default function JadwalAcara({ events }) {
     const filtered = events.filter(e => {
         if (activeFilter === 'all') return true;
         if (activeFilter === 'Meeting') return e.type === 'appointment';
+        if (activeFilter === 'Persiapan') return e.type === 'persiapan';
         if (activeFilter === 'Upcoming') return e.type !== 'appointment' && (e.status === 'Upcoming' || e.status === 'Active');
         if (activeFilter === 'Done') return e.type !== 'appointment' && e.status === 'Done';
         return e.status === activeFilter;
@@ -33,6 +34,8 @@ export default function JadwalAcara({ events }) {
 
     const getChipClass = (ev) => {
         if (ev.type === 'appointment') return ev.status === 'Reschedule' ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800';
+        // Technical meeting & gladi resik — persiapan menjelang acara
+        if (ev.type === 'persiapan') return 'bg-teal-100 text-teal-800';
         if (ev.status === 'Done') return 'bg-green-100 text-green-800';
         if (ev.status === 'Upcoming' || ev.status === 'Active') return 'bg-blue-100 text-blue-800';
         if (ev.status === 'Cancelled') return 'bg-red-100 text-red-800';
@@ -99,7 +102,7 @@ export default function JadwalAcara({ events }) {
                 {/* Filter + legend */}
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <div className="flex flex-wrap gap-2">
-                        {['all', 'Upcoming', 'Done', 'Meeting'].map(f => (
+                        {['all', 'Upcoming', 'Done', 'Meeting', 'Persiapan'].map(f => (
                             <button key={f} onClick={() => setActiveFilter(f)}
                                 className={`px-4 py-1 rounded-full text-xs font-medium border transition-all ${activeFilter === f ? 'bg-[#FF2D55] text-white border-[#FF2D55]' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
                                 {f === 'all' ? 'Semua' : f === 'Meeting' ? 'Appointment' : f}
@@ -136,7 +139,7 @@ export default function JadwalAcara({ events }) {
                                 {cell.dayEvents.slice(0, 2).map(ev => (
                                     <div key={ev.id} onClick={() => setSelectedEvent(ev)}
                                         className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate cursor-pointer font-medium ${getChipClass(ev)}`}>
-                                        {ev.type === 'appointment' ? '🤝 ' : ''}{fmtTime(ev.time)} {ev.title}
+                                        {ev.type === 'appointment' ? '🤝 ' : ev.type === 'persiapan' ? '🛠 ' : ''}{fmtTime(ev.time)} {ev.title}
                                     </div>
                                 ))}
                                 {cell.dayEvents.length > 2 && (

@@ -365,9 +365,10 @@ class EventController extends Controller
         $this->checkEventMarketing();
 
         // Filter ±1 tahun dari sekarang — mencegah load seluruh tabel events ke memori
-        $events = Event::with(['client:id,nama_client', 'pic:id_pegawai,nama_pegawai'])
+        $daftarEvent = Event::with(['client:id,nama_client', 'pic:id_pegawai,nama_pegawai'])
             ->select(['id_event', 'nama_event', 'tgl_mulai_event', 'tgl_selesai_event', 'status_event',
                       'jam_mulai', 'jam_selesai', 'poster_event', 'area_event', 'kategori_event',
+                      'technical_meeting', 'gladi_resik',
                       'jumlah_pax', 'deal_harga_event', 'id_client', 'id_pegawai'])
             ->whereBetween('tgl_mulai_event', [
                 now()->subYear()->startOfYear()->toDateString(),
@@ -375,7 +376,11 @@ class EventController extends Controller
             ])
             ->whereNotIn('status_event', ['Planning', Event::STATUS_BATAL])
             ->orderBy('tgl_mulai_event')
-            ->get()
+            ->get();
+
+        $persiapan = \App\Support\JadwalPersiapan::dari($daftarEvent);
+
+        $events = $daftarEvent
             ->map(function ($event) {
                 return [
                     'id'          => $event->id_event,
@@ -418,7 +423,9 @@ class EventController extends Controller
             ->values();
 
         return Inertia::render('EventMarketing/JadwalAcara', [
-            'events' => $events->concat($appointments)->values(),
+            // Technical meeting & gladi resik jadi entri sendiri — keduanya
+            // sering jatuh sebelum hari acara.
+            'events' => $events->concat($appointments)->concat($persiapan)->values(),
         ]);
     }
 }

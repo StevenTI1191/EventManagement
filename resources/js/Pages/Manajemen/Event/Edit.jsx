@@ -1,5 +1,7 @@
 import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
+import TimePicker from '@/Components/TimePicker';
+import DateTimePicker from '@/Components/DateTimePicker';
 import { Download } from 'lucide-react';
 import RupiahInput from '@/Components/RupiahInput';
 import SearchableSelect from '@/Components/SearchableSelect';
@@ -148,13 +150,11 @@ export default function Edit({ auth, event, clients, pegawais }) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">Acara Mulai</label>
-                                    <input type="time" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                        value={data.jam_mulai} onChange={e => setData('jam_mulai', e.target.value)} />
+                                    <TimePicker value={data.jam_mulai} onChange={v => setData('jam_mulai', v)} />
                                 </div>
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">Acara Selesai</label>
-                                    <input type="time" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                        value={data.jam_selesai} onChange={e => setData('jam_selesai', e.target.value)} />
+                                    <TimePicker value={data.jam_selesai} onChange={v => setData('jam_selesai', v)} />
                                 </div>
                             </div>
 
@@ -310,13 +310,11 @@ export default function Edit({ auth, event, clients, pegawais }) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">Technical Meeting</label>
-                                    <input type="datetime-local" className="w-full p-3 text-xs border-gray-200 rounded-xl bg-gray-50"
-                                        value={data.technical_meeting} onChange={e => setData('technical_meeting', e.target.value)} />
+                                    <DateTimePicker value={data.technical_meeting} onChange={v => setData('technical_meeting', v)} />
                                 </div>
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">Gladi Resik</label>
-                                    <input type="datetime-local" className="w-full p-3 text-xs border-gray-200 rounded-xl bg-gray-50"
-                                        value={data.gladi_resik} onChange={e => setData('gladi_resik', e.target.value)} />
+                                    <DateTimePicker value={data.gladi_resik} onChange={v => setData('gladi_resik', v)} />
                                 </div>
                             </div>
 
@@ -329,8 +327,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Jam Keluar Makanan</label>
-                                <input type="time" className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                    value={data.jam_keluar_makanan} onChange={e => setData('jam_keluar_makanan', e.target.value)} />
+                                <TimePicker value={data.jam_keluar_makanan} onChange={v => setData('jam_keluar_makanan', v)} />
                             </div>
                         </div>
                     </div>

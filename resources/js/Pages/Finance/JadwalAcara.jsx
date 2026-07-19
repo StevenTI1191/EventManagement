@@ -25,10 +25,13 @@ export default function FinanceJadwalAcara({ events }) {
 
     const filtered = events.filter(e =>
         activeFilter === 'all' ? true
-        : activeFilter === 'Upcoming' ? (e.status === 'Upcoming' || e.status === 'Active')
+        : activeFilter === 'Upcoming' ? (e.type !== 'persiapan' && (e.status === 'Upcoming' || e.status === 'Active'))
+        : activeFilter === 'Persiapan' ? e.type === 'persiapan'
         : e.status === activeFilter);
 
     const getChipClass = (status) => {
+        // Technical meeting & gladi resik — persiapan menjelang acara
+        if (status === 'Technical Meeting' || status === 'Gladi Resik') return 'bg-teal-100 text-teal-800';
         if (status === 'Done')      return 'bg-green-100 text-green-800';
         if (status === 'Upcoming' || status === 'Active') return 'bg-blue-100 text-blue-800';
         if (status === 'Cancelled') return 'bg-red-100 text-red-800';
@@ -86,7 +89,7 @@ export default function FinanceJadwalAcara({ events }) {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                    {['all', 'Upcoming', 'Done'].map(f => (
+                    {['all', 'Upcoming', 'Done', 'Persiapan'].map(f => (
                         <button key={f} onClick={() => setActiveFilter(f)}
                             className={`px-4 py-1 rounded-full text-xs font-medium border transition-all ${activeFilter === f ? 'bg-[#FF2D55] text-white border-[#FF2D55]' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
                             {f === 'all' ? 'Semua' : f}
