@@ -20,6 +20,7 @@ class TransaksiController extends Controller
         $this->checkManajemen();
 
         $request->validate([
+            'tipe'   => 'nullable|in:Internal,Eksternal',
             'bulan'  => 'nullable|integer|min:1|max:12',
             'tahun'  => 'nullable|integer|min:2000|max:2100',
             'status' => 'nullable|in:Lunas,Belum Lunas',
@@ -28,8 +29,19 @@ class TransaksiController extends Controller
             'search' => 'nullable|string|max:255',
         ]);
 
+        // Dipisah seperti di Finance: transaksi event klien (Eksternal) tidak
+        // dicampur dengan event internal perusahaan. Default Eksternal karena
+        // itu alur utamanya (deal → invoice).
+        $tipe = $request->tipe === Event::TIPE_INTERNAL ? Event::TIPE_INTERNAL : Event::TIPE_EKSTERNAL;
+
+        $counts = [
+            Event::TIPE_EKSTERNAL => Event::untukFinance()->eksternal()->count(),
+            Event::TIPE_INTERNAL  => Event::untukFinance()->internal()->count(),
+        ];
+
         $query = Event::with(['client', 'pic', 'transaksis.pegawai', 'transaksiItems'])
-            ->untukFinance();
+            ->untukFinance()
+            ->where('tipe_event', $tipe);
 
         // Filter by bulan
         if ($request->filled('bulan')) {
@@ -120,7 +132,11 @@ class TransaksiController extends Controller
 
         return Inertia::render('Manajemen/Transaksi/Index', [
             'events'  => $events,
-            'filters' => $request->only(['bulan', 'tahun', 'status', 'sort', 'dir', 'search']),
+            'filters' => array_merge(
+                $request->only(['bulan', 'tahun', 'status', 'sort', 'dir', 'search']),
+                ['tipe' => $tipe],
+            ),
+            'counts'  => $counts,
         ]);
     }
 
