@@ -317,7 +317,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                         <p className="mb-4 text-sm font-bold tracking-widest text-gold uppercase">Panduan</p>
                         <h2 className="text-4xl font-black text-ink md:text-5xl">Cara <span className="text-gold">Mendaftarkan Acara</span></h2>
                         <p className="max-w-2xl mx-auto mt-4 text-muted">
-                            Dari konsultasi pertama sampai hari-H, setiap tahap bisa Anda pantau sendiri lewat portal.
+                            Dari appointment pertama sampai hari-H, setiap tahap bisa Anda pantau sendiri lewat portal.
                         </p>
                     </div>
 
@@ -325,8 +325,8 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                         {[
                             { judul: 'Buat akun & masuk portal',
                               isi: 'Daftar dengan email aktif. Semua penawaran, tagihan, dan perkembangan acara Anda akan muncul di sana.' },
-                            { judul: 'Ajukan jadwal konsultasi',
-                              isi: 'Pilih tanggal dan jam yang Anda inginkan. Tim kami mengonfirmasi jadwalnya, dan Anda akan menerima pemberitahuan.' },
+                            { judul: 'Ajukan appointment',
+                              isi: 'Pilih tanggal dan jam pertemuan lewat kalender — hari yang masih longgar langsung terlihat. Tim kami mengonfirmasi jadwalnya, dan Anda menerima pemberitahuan.' },
                             { judul: 'Meeting & penyusunan konsep',
                               isi: 'Kami bahas kebutuhan acara Anda. Hasil pembahasannya langsung kami susun jadi rancangan acara.' },
                             { judul: 'Terima penawaran',
@@ -354,7 +354,7 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                         <p className="mb-5 text-muted">Siap memulai? Langkah pertamanya hanya butuh beberapa menit.</p>
                         <a href={isLoggedIn ? `${BASE_URL}/appointment/create` : `${BASE_URL}/register`}
                             className="inline-block px-8 py-3 font-black text-white transition-all rounded-full bg-gold-grad shadow-gold hover:brightness-110 hover:scale-105">
-                            {isLoggedIn ? '🗓️ Ajukan Konsultasi' : '✨ Buat Akun'}
+                            {isLoggedIn ? '🗓️ Buat Appointment' : '✨ Buat Akun'}
                         </a>
                     </div>
                 </div>
