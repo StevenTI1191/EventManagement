@@ -1,7 +1,7 @@
 import EventMarketingLayout from '@/Layouts/EventMarketingLayout';
 import Pagination from '@/Components/Pagination';
 import Countdown from '@/Components/Countdown';
-import { Search, Plus, Calendar as CalendarIcon, X, Pencil, Trash2 } from 'lucide-react';
+import { Search, Plus, Calendar as CalendarIcon, X, Pencil, Trash2, ListChecks } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 
@@ -411,14 +411,28 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
             </div>
             <Pagination meta={events} />
 
-            {/* FLOATING ACTION BUTTON */}
-            <Link
-                href={route('em.event.create')}
-                className="fixed bottom-10 right-10 bg-[#FF2D55] text-white px-8 py-4 rounded-full shadow-2xl shadow-[#FF2D55]/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 z-50"
-            >
-                <Plus size={24} strokeWidth={3} />
-                <span className="text-lg font-bold">Tambah Event</span>
-            </Link>
+            {/* Dua pintu masuk sesuai asal event. "Tambah Event" yang lama membuat
+                prospek Lead, tapi mengarah ke daftar ini yang menyaring event
+                terkonfirmasi — hasilnya seolah tidak jadi apa-apa. Sekarang
+                asalnya disebut tegas dan keduanya mengantar ke tempat kerjanya. */}
+            <div className="fixed z-50 flex flex-col items-end gap-3 bottom-10 right-10">
+                <Link
+                    href={route('em.planning.create')}
+                    title="Rencana acara yang disiapkan sendiri, dengan to-do list"
+                    className="flex items-center gap-2 px-6 py-3 font-bold text-gray-700 transition-all bg-white border border-gray-200 shadow-lg rounded-full hover:border-gray-300 hover:scale-105 active:scale-95"
+                >
+                    <ListChecks size={18} strokeWidth={2.5} />
+                    Rencana Baru
+                </Link>
+                <Link
+                    href={route('em.event.create')}
+                    title="Klien yang menghubungi langsung — masuk pipeline sebagai Lead"
+                    className="bg-[#FF2D55] text-white px-8 py-4 rounded-full shadow-2xl shadow-[#FF2D55]/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                >
+                    <Plus size={24} strokeWidth={3} />
+                    <span className="text-lg font-bold">Prospek Baru</span>
+                </Link>
+            </div>
 
             {deleteEvent && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">

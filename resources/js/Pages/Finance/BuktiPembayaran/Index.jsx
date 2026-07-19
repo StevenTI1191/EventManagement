@@ -131,6 +131,7 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
                             <th className="w-10 px-4 py-3 text-xs font-bold text-left text-white uppercase">No</th>
                             <th className="px-4 py-3 text-xs font-bold text-left text-white uppercase">Client</th>
                             <th className="px-4 py-3 text-xs font-bold text-left text-white uppercase">Event</th>
+                            <th className="px-4 py-3 text-xs font-bold text-left text-white uppercase">Tagihan</th>
                             <th className="px-4 py-3 text-xs font-bold text-left text-white uppercase">Nominal</th>
                             <th className="px-4 py-3 text-xs font-bold text-left text-white uppercase">Keterangan</th>
                             <th className="px-4 py-3 text-xs font-bold text-left text-white uppercase">Tanggal</th>
@@ -152,6 +153,32 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
                                     <td className="px-4 py-4">
                                         <p className="text-sm font-semibold text-gray-800 max-w-[180px] truncate">{b.nama_event}</p>
                                         <p className="text-xs text-gray-400">{fmtTgl(b.tgl_event)}</p>
+                                    </td>
+                                    {/* Tagihan yang dibayar — supaya jelas ini untuk invoice yang mana */}
+                                    <td className="px-4 py-4">
+                                        {b.invoice ? (
+                                            <>
+                                                <p className="text-xs font-bold text-gray-800">{b.invoice.nomor}</p>
+                                                <div className="flex items-center gap-1 mt-1">
+                                                    <span className={`px-1.5 py-0.5 text-[10px] font-black uppercase rounded ${
+                                                        b.invoice.tipe === 'DP' ? 'bg-blue-50 text-blue-600' : 'bg-violet-50 text-violet-600'
+                                                    }`}>
+                                                        {b.invoice.tipe}
+                                                    </span>
+                                                    <span className={`text-[10px] font-bold ${
+                                                        b.invoice.status === 'Lunas' ? 'text-green-600' : 'text-gray-400'
+                                                    }`}>
+                                                        {b.invoice.status}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 mt-0.5">tagihan {fmt(b.invoice.nominal)}</p>
+                                            </>
+                                        ) : (
+                                            <span className="px-2 py-1 text-[10px] font-bold text-amber-700 bg-amber-50 rounded"
+                                                title="Bukti lama yang belum bisa dipastikan untuk tagihan mana">
+                                                Belum terkait
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-4 py-4 text-sm font-bold text-green-600">
                                         {fmt(b.nominal)}
@@ -218,7 +245,7 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
                             );
                         }) : (
                             <tr>
-                                <td colSpan={9} className="px-6 py-20 text-center text-gray-400">
+                                <td colSpan={10} className="px-6 py-20 text-center text-gray-400">
                                     <AlertCircle size={36} className="mx-auto mb-3 opacity-30" />
                                     <p className="font-bold">Belum ada bukti pembayaran.</p>
                                 </td>

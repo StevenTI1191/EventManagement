@@ -9,7 +9,7 @@ class BuktiPembayaran extends Model
     protected $table = 'bukti_pembayaran';
 
     protected $fillable = [
-        'id_event', 'client_id', 'file_bukti',
+        'id_event', 'id_invoice', 'client_id', 'file_bukti',
         'nominal', 'keterangan', 'status', 'catatan_finance', 'transaksi_id',
         'ocr_nominal', 'ocr_status', 'ocr_teks',
     ];
@@ -17,6 +17,12 @@ class BuktiPembayaran extends Model
     public function event()
     {
         return $this->belongsTo(Event::class, 'id_event');
+    }
+
+    /** Tagihan yang dibayar oleh bukti ini. */
+    public function invoice()
+    {
+        return $this->belongsTo(Invoice::class, 'id_invoice', 'id_invoice');
     }
 
     public function client()

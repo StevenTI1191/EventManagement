@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import {
     GitBranch, Eye, Building2, CalendarDays, MapPin, User, GripVertical,
-    FileDown, MessageCircle, XCircle, X, LayoutGrid, Table2, Lightbulb,
+    FileDown, MessageCircle, XCircle, X, LayoutGrid, Table2, Lightbulb, Lock,
 } from 'lucide-react';
 
 // Tiga tahap pertama boleh digeser. Sisanya ditentukan pembayaran & jadwal,
@@ -180,11 +180,20 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                                 <h3 className="flex-1 text-xs font-bold leading-snug text-gray-900 line-clamp-2">{e.nama_event}</h3>
                                             </div>
 
-                                            {e.dari_planning && (
-                                                <span className="inline-flex items-center gap-1 mt-1.5 px-1.5 py-0.5 text-[9px] font-black text-indigo-600 bg-indigo-50 rounded">
-                                                    <Lightbulb size={9} /> RENCANA
-                                                </span>
-                                            )}
+                                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                                {e.dari_planning && (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black text-indigo-600 bg-indigo-50 rounded">
+                                                        <Lightbulb size={9} /> RENCANA
+                                                    </span>
+                                                )}
+                                                {/* Sudah diterima klien → tahapnya terkunci, tidak bisa mundur */}
+                                                {e.respon_klien === 'Diterima' && (
+                                                    <span title="Penawaran sudah diterima klien — tahap tidak bisa dimundurkan"
+                                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black text-emerald-700 bg-emerald-50 rounded">
+                                                        <Lock size={9} /> DITERIMA KLIEN
+                                                    </span>
+                                                )}
+                                            </div>
 
                                             <div className="mt-2 space-y-1 text-[10px] text-gray-500">
                                                 <p className="flex items-center gap-1">

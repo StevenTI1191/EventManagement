@@ -233,6 +233,19 @@ class AppointmentController extends Controller
         return back()->with('success', 'Appointment berhasil dibatalkan.');
     }
 
+    /**
+     * Tagihan yang sedang ditunggu pembayarannya untuk sebuah event.
+     * Dipakai sebagai cadangan bila klien mengunggah tanpa memilih invoice —
+     * mis. dari tautan lama — supaya buktinya tetap punya tujuan yang jelas.
+     */
+    private function invoiceTertagih($idEvent): ?int
+    {
+        return \App\Models\Invoice::where('id_event', $idEvent)
+            ->where('status', \App\Models\Invoice::STATUS_BELUM)
+            ->orderBy('id_invoice')
+            ->value('id_invoice');
+    }
+
     public function uploadBukti(Request $request)
     {
         $client = Auth::guard('client')->user();
@@ -250,6 +263,9 @@ class AppointmentController extends Controller
         $request->validate([
             // Pastikan event milik client yang login — cegah IDOR
             'id_event'    => ['required', Rule::exists('events', 'id_event')->where('id_client', $client->id)],
+            // Invoice yang dibayar harus milik event yang sama, supaya bukti
+            // tidak bisa dikaitkan ke tagihan event lain.
+            'id_invoice'  => ['nullable', Rule::exists('invoices', 'id_invoice')->where('id_event', $request->id_event)],
             'file_bukti'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'nominal'     => 'nullable|numeric|min:0|max:9999999999999',
             'keterangan'  => 'nullable|string|max:500',
@@ -291,6 +307,7 @@ class AppointmentController extends Controller
 
         BuktiPembayaran::create([
             'id_event'    => $request->id_event,
+            'id_invoice'  => $request->id_invoice ?: $this->invoiceTertagih($request->id_event),
             'client_id'   => $client->id,
             'file_bukti'  => $path,
             'nominal'     => $request->nominal,

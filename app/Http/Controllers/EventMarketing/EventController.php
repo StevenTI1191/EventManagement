@@ -210,7 +210,11 @@ class EventController extends Controller
             }
         }
 
-        return redirect()->route('em.event.index');
+        // Prospek baru lahir sebagai Lead, dan daftar Event menyaring event
+        // terkonfirmasi saja — mengarah ke sana membuat event yang baru dibuat
+        // seolah lenyap. Antar langsung ke halaman detailnya untuk dilengkapi.
+        return redirect()->route('em.event.show', $event->id_event)
+            ->with('success', 'Prospek baru dibuat di tahap Lead. Lengkapi detailnya untuk bisa naik ke Negotiation.');
     }
 
     public function edit($id)

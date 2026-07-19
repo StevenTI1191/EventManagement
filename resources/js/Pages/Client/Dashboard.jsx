@@ -104,6 +104,7 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
 
     const { data, setData, post, processing, reset, errors } = useForm({
         id_event: '',
+        id_invoice: '',
         file_bukti: null,
         nominal: '',
         keterangan: '',
@@ -200,7 +201,16 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
 
     const openUpload = (event) => {
         reset();
-        setData({ id_event: event.id_event, file_bukti: null, nominal: '', keterangan: '' });
+        // Tagihan yang masih tertunggak dipilih lebih dulu, beserta nominalnya —
+        // supaya bukti langsung menempel ke tagihan yang benar.
+        const tertunggak = (event.invoices || []).find(i => i.status !== 'Lunas');
+        setData({
+            id_event: event.id_event,
+            id_invoice: tertunggak ? String(tertunggak.id_invoice) : '',
+            file_bukti: null,
+            nominal: tertunggak ? tertunggak.nominal : '',
+            keterangan: '',
+        });
         setUploadModal(event);
     };
 
@@ -1381,6 +1391,32 @@ export default function ClientDashboard({ appointments, events, penawaran = [], 
                             </button>
                         </div>
                         <form onSubmit={handleUpload} className="space-y-4">
+                            {/* Tagihan yang dibayar — bukti menempel di sini, sehingga
+                                Finance tahu persis pembayaran ini untuk tagihan mana. */}
+                            {(uploadModal.invoices || []).length > 0 && (
+                                <div>
+                                    <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">
+                                        Untuk Tagihan
+                                    </label>
+                                    <select
+                                        value={data.id_invoice}
+                                        onChange={e => {
+                                            const inv = (uploadModal.invoices || []).find(i => String(i.id_invoice) === e.target.value);
+                                            setData(d => ({ ...d, id_invoice: e.target.value, nominal: inv ? inv.nominal : d.nominal }));
+                                        }}
+                                        className="w-full px-4 py-3 text-sm text-ink bg-surface border border-line rounded-xl focus:border-gold"
+                                    >
+                                        <option value="">— Pilih tagihan —</option>
+                                        {uploadModal.invoices.map(inv => (
+                                            <option key={inv.id_invoice} value={inv.id_invoice}>
+                                                {inv.tipe} · {inv.nomor_invoice} · Rp {Number(inv.nominal).toLocaleString('id-ID')}
+                                                {inv.status === 'Lunas' ? ' (lunas)' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.id_invoice && <p className="mt-1 text-xs text-danger">{errors.id_invoice}</p>}
+                                </div>
+                            )}
                             <div>
                                 <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">
                                     File Bukti * (JPG, PNG, PDF — max 5MB)

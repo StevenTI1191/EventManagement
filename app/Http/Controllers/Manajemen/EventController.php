@@ -162,9 +162,13 @@ class EventController extends Controller
         $data['status_event'] = Event::STATUS_LEAD;
         $data['tipe_event']   = Event::TIPE_EKSTERNAL;
 
-        Event::create($data);
+        $event = Event::create($data);
 
-        return redirect()->route('manajemen.event.index');
+        // Prospek baru lahir sebagai Lead, dan daftar Event menyaring event
+        // terkonfirmasi saja — mengarah ke sana membuat event yang baru dibuat
+        // seolah lenyap. Antar langsung ke halaman detailnya untuk dilengkapi.
+        return redirect()->route('manajemen.event.show', $event->id_event)
+            ->with('success', 'Prospek baru dibuat di tahap Lead. Lengkapi detailnya untuk bisa naik ke Negotiation.');
     }
 
     public function edit($id)

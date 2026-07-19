@@ -150,6 +150,21 @@ trait ManagesPipeline
         $baru       = $request->status_event;
         $dariRencana = $event->status_event === Event::STATUS_PLANNING;
 
+        // Penawaran yang sudah diterima klien tidak boleh ditarik mundur.
+        // Menariknya kembali ke Negotiation memunculkan lagi tombol terima di
+        // portal klien, sehingga klien diminta menyetujui penawaran yang sama
+        // dua kali dan langkahnya berputar. Pembatalan yang sah lewat "Tidak jadi".
+        $urut     = array_flip(Event::PIPELINE_STATUSES);
+        $sekarang = $urut[$event->status_event] ?? -1;
+        $tujuan   = $urut[$baru] ?? -1;
+
+        if ($tujuan < $sekarang && $event->respon_klien === 'Diterima') {
+            throw ValidationException::withMessages([
+                'status_event' => 'Penawaran sudah diterima klien, jadi tahapnya tidak bisa dimundurkan. '
+                    . 'Bila acaranya memang batal, gunakan tombol "Tidak jadi".',
+            ]);
+        }
+
         // Negotiation & Deal hanya boleh bila detail acara sudah lengkap.
         if (in_array($baru, [Event::STATUS_NEGOTIATION, Event::STATUS_DEAL], true)) {
             $kurang = $this->kelengkapanEvent($event);
