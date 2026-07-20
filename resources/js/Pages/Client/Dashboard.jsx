@@ -73,8 +73,11 @@ export default function ClientDashboard({
         return '📅';
     };
     // ── SEMUA HOOKS HARUS DI ATAS — sebelum return kondisional apapun ──
-    const [activeTab, setActiveTab]         = useState('appointments');
+    // Bila ada penawaran menunggu keputusan, buka tab itu lebih dulu supaya klien
+    // langsung melihatnya (dulu blok penawaran selalu tampil di atas semua tab).
+    const [activeTab, setActiveTab]         = useState(penawaran.length > 0 ? 'penawaran' : 'appointments');
     const [aptFilter, setAptFilter]         = useState('Semua');
+    const [evFilter, setEvFilter]           = useState('Semua'); // Semua | Berjalan | Selesai
     const [aptSearch, setAptSearch]         = useState('');
     const [expandedEvent, setExpandedEvent] = useState(null);
     const [uploadModal, setUploadModal]     = useState(null);
@@ -252,6 +255,13 @@ export default function ClientDashboard({
             { label: 'Meeting',   done: hasMeeting,   cancelled: isCancelled && !hasMeeting },
             { label: 'Selesai',   done: isDone,        cancelled: isCancelled },
         ];
+    };
+
+    // Filter tab "Event Saya": berjalan (deal→penyelesaian) vs selesai (Done).
+    const eventMatchesFilter = (e) => {
+        if (evFilter === 'Berjalan') return ['Deal', 'Upcoming', 'Penyelesaian'].includes(e.status_event);
+        if (evFilter === 'Selesai')  return e.status_event === 'Done';
+        return true;
     };
 
     // ── COUNTDOWN HELPER ─────────────────────────────────────
@@ -460,15 +470,45 @@ export default function ClientDashboard({
                         </div>
                     )}
 
+                    {/* ── SEGERA LUNASI DP — muncul begitu Finance menerbitkan invoice DP ── */}
+                    {(() => {
+                        const perluDP = (events || []).filter(e =>
+                            e.status_event === 'Deal'
+                            && (e.invoices || []).some(i => i.tipe === 'DP' && i.status !== 'Lunas')
+                        );
+                        return perluDP.length > 0 && (
+                            <div className="flex flex-col gap-3 p-4 mb-6 border sm:flex-row sm:items-center sm:justify-between bg-orange-500/10 border-orange-500/30 rounded-xl">
+                                <div className="flex items-start gap-3 min-w-0">
+                                    <span className="flex-shrink-0 text-xl">💳</span>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-bold text-orange-300">Segera lunasi DP</p>
+                                        <p className="mt-0.5 text-xs leading-relaxed text-orange-200/80">
+                                            Finance sudah menerbitkan invoice uang muka (DP 50%) untuk{' '}
+                                            <span className="font-bold">{perluDP.length} acara</span>. Lunasi DP agar tanggal acara Anda diamankan dan persiapan bisa dimulai.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setActiveTab('payments')}
+                                    className="self-start flex-shrink-0 px-3 py-1.5 text-xs font-bold text-white transition-all bg-gold-grad shadow-gold rounded-lg hover:brightness-110 whitespace-nowrap sm:self-auto">
+                                    Lunasi Sekarang →
+                                </button>
+                            </div>
+                        );
+                    })()}
+
                     {/* ── STAT SUMMARY CARDS (sekaligus tab selector) ── */}
                     {(() => {
                         const aptAktif = appointments.filter(a =>
                             ['Pending', 'Dikonfirmasi', 'Reschedule'].includes(a.status)
                         ).length;
 
-                        const evList       = events || [];
-                        const eventAktif   = evList.filter(e => e.status_event === 'Upcoming').length;
-                        const eventSelesai = evList.filter(e => e.status_event === 'Done').length;
+                        const evList        = events || [];
+                        // Berjalan = sudah deal sampai proses penyelesaian; Selesai = Done.
+                        // Keduanya kini dibaca dalam satu tab "Event Saya".
+                        const eventBerjalan = evList.filter(e =>
+                            ['Deal', 'Upcoming', 'Penyelesaian'].includes(e.status_event)
+                        ).length;
+                        const eventSelesai  = evList.filter(e => e.status_event === 'Done').length;
 
                         const eventBelumLunas = evList.filter(event => {
                             if (!event.deal_harga_event) return false;
@@ -490,25 +530,29 @@ export default function ClientDashboard({
                                 sub:     aptAktif === 0 ? 'Tidak ada yang aktif' : null,
                             },
                             {
-                                id:      'events-done',
-                                icon:    '🏁',
-                                value:   eventDone ?? eventSelesai,
-                                label:   'Event Selesai',
-                                sub:     (eventDone ?? eventSelesai) === 0 ? 'Belum ada yang selesai' : 'Sudah terlaksana',
+                                id:      'events',
+                                icon:    '🎪',
+                                value:   totalEvents ?? evList.length,
+                                label:   'Event Saya',
+                                // Satu tab untuk yang berjalan maupun sudah selesai;
+                                // badge menonjolkan yang masih berjalan lebih dulu.
+                                badge:   eventBerjalan > 0
+                                    ? { text: `${eventBerjalan} berjalan`, cls: 'bg-blue-500/20 text-info border-blue-500/30' }
+                                    : eventSelesai > 0
+                                        ? { text: `${eventSelesai} selesai`, cls: 'bg-ok-bg text-ok border-ok/30' }
+                                        : null,
+                                sub:     (totalEvents ?? evList.length) === 0 ? 'Belum ada event' : null,
                             },
                             {
-                                id:      'events-proses',
-                                icon:    '🎪',
-                                value:   eventProses ?? evList.length,
-                                label:   'Event Berjalan',
-                                // Yang belum deal ditonjolkan: di situlah klien
-                                // masih perlu mengambil keputusan.
-                                badge:   eventPraDeal > 0
-                                    ? { text: `${eventPraDeal} belum deal`, cls: 'bg-gold-soft text-gold-dim border-gold-2' }
-                                    : eventAktif > 0
-                                        ? { text: `${eventAktif} upcoming`, cls: 'bg-blue-500/20 text-info border-blue-500/30' }
-                                        : null,
-                                sub:     (eventProses ?? 0) === 0 ? 'Tidak ada yang berjalan' : null,
+                                id:      'penawaran',
+                                icon:    '📩',
+                                value:   penawaran.length,
+                                label:   'Penawaran',
+                                // Penawaran = acara yang menunggu keputusan klien, belum di-DP.
+                                badge:   penawaran.length > 0
+                                    ? { text: 'perlu ditinjau', cls: 'bg-gold-soft text-gold-dim border-gold-2' }
+                                    : null,
+                                sub:     penawaran.length === 0 ? 'Tidak ada penawaran' : 'Belum di-DP',
                             },
                             {
                                 id:      'payments',
@@ -568,8 +612,8 @@ export default function ClientDashboard({
                         );
                     })()}
 
-                    {/* ── PENAWARAN (event tahap Negotiation) ── */}
-                    {penawaran.length > 0 && (
+                    {/* TAB: PENAWARAN (event tahap Negotiation — menunggu keputusan klien, belum di-DP) */}
+                    {activeTab === 'penawaran' && (penawaran.length > 0 ? (
                         <div className="mb-6 space-y-3">
                             <div className="flex items-center gap-2">
                                 <h2 className="text-lg font-black text-ink">Penawaran untuk Anda</h2>
@@ -626,7 +670,13 @@ export default function ClientDashboard({
                                 </div>
                             ))}
                         </div>
-                    )}
+                    ) : (
+                        <div className="py-20 text-center border-2 border-line border-dashed rounded-3xl">
+                            <span className="block mb-4 text-5xl">📩</span>
+                            <p className="text-lg font-bold text-muted">Belum ada penawaran</p>
+                            <p className="mt-1 text-sm text-muted-2">Penawaran acara dari tim kami akan muncul di sini untuk Anda tinjau, terima, atau tolak.</p>
+                        </div>
+                    ))}
 
                     {/* TAB: APPOINTMENTS */}
                     {activeTab === 'appointments' && (
@@ -817,12 +867,38 @@ export default function ClientDashboard({
                         </div>
                     )}
 
-                    {/* TAB: EVENTS */}
+                    {/* TAB: EVENTS — berjalan & selesai jadi satu, dipilah lewat pill */}
                     {activeTab === 'events' && (
                         <div>
+                            {events && events.length > 0 && (() => {
+                                const nBerjalan = events.filter(e => ['Deal', 'Upcoming', 'Penyelesaian'].includes(e.status_event)).length;
+                                const nSelesai  = events.filter(e => e.status_event === 'Done').length;
+                                const pills = [
+                                    { key: 'Semua', label: 'Semua', count: events.length },
+                                    ...(nBerjalan > 0 ? [{ key: 'Berjalan', label: 'Berjalan', count: nBerjalan }] : []),
+                                    ...(nSelesai  > 0 ? [{ key: 'Selesai',  label: 'Selesai',  count: nSelesai  }] : []),
+                                ];
+                                return pills.length > 1 ? (
+                                    <div className="flex flex-wrap gap-2 pb-4">
+                                        {pills.map(p => (
+                                            <button key={p.key} onClick={() => setEvFilter(p.key)}
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
+                                                    evFilter === p.key
+                                                        ? 'bg-gold-grad text-white border-gold-dim'
+                                                        : 'bg-surface text-muted border-line hover:border-gold/40 hover:text-gold-dim'
+                                                }`}>
+                                                {p.label}
+                                                <span className={`px-1.5 py-0.5 text-[10px] rounded-full ${
+                                                    evFilter === p.key ? 'bg-white/25 text-white' : 'bg-gold-soft text-muted'
+                                                }`}>{p.count}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : null;
+                            })()}
                             {events && events.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {events.map(event => {
+                                    {events.filter(eventMatchesFilter).map(event => {
                                         const dibayar = (event.bukti_pembayaran || [])
                                             .filter(b => b.status === 'Diverifikasi')
                                             .reduce((sum, b) => sum + (Number(b.nominal) || 0), 0);
