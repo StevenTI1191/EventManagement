@@ -2,6 +2,7 @@ import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import Pagination from '@/Components/Pagination';
 import TabEvent from '@/Components/TabEvent';
 import Countdown from '@/Components/Countdown';
+import { asalEvent } from '@/constants/kategori';
 import { Search, Plus, Calendar as CalendarIcon, X, Pencil, Trash2, History } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
@@ -380,11 +381,21 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
                             <h3 className="mb-1 text-xl font-bold text-gray-900 transition-colors group-hover:text-[#FF2D55] line-clamp-1">
                                 {event.nama_event}
                             </h3>
-                            {event.kategori_event && (
-                                <span className="inline-block mb-3 px-3 py-1 bg-pink-50 text-[#FF2D55] text-[10px] font-black uppercase tracking-wider rounded-full">
-                                    {event.kategori_event}
-                                </span>
-                            )}
+                            <div className="flex flex-wrap gap-1.5 mb-3">
+                                {event.kategori_event && (
+                                    <span className="inline-block px-3 py-1 bg-pink-50 text-[#FF2D55] text-[10px] font-black uppercase tracking-wider rounded-full">
+                                        {event.kategori_event}
+                                    </span>
+                                )}
+                                {(() => {
+                                    const asal = asalEvent(event);
+                                    return asal && (
+                                        <span title={asal.ket} className={`inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full ${asal.badge}`}>
+                                            {asal.label}
+                                        </span>
+                                    );
+                                })()}
+                            </div>
                             <div className="flex items-center mb-1 text-sm font-medium text-gray-400">
                                 <CalendarIcon size={14} className="mr-2 shrink-0" />
                                 {rentangTgl(event.tgl_mulai_event, event.tgl_selesai_event)}

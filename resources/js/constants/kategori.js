@@ -21,3 +21,30 @@ export const KATEGORI_EVENT = [
 
 /** Hanya nilai kategorinya — untuk dropdown <select> di form internal. */
 export const KATEGORI_VALUES = KATEGORI_EVENT.map((k) => k.value);
+
+/**
+ * Asal sebuah acara, penentu apakah ia punya target omset:
+ *  - `dari_planning`  → rencana yang disiapkan Laksamana lalu ditawarkan ke
+ *    klien, jadi memang mengemban target omset.
+ *  - selain itu       → klien yang mendaftar sendiri lewat appointment; Laksamana
+ *    tidak "gerak duluan", sehingga acara ini tidak dihitung sebagai target.
+ *
+ * Dipakai untuk menampilkan penanda seragam di daftar & detail event.
+ */
+export function asalEvent(event) {
+    if (!event) return null;
+
+    if (event.dari_planning) {
+        return {
+            label: 'Rencana bertarget',
+            badge: 'bg-indigo-50 text-indigo-600',
+            ket:   'Rencana yang disiapkan Laksamana lalu ditawarkan ke klien.',
+        };
+    }
+
+    return {
+        label: 'Dari appointment klien',
+        badge: 'bg-sky-50 text-sky-600',
+        ket:   'Klien mendaftar sendiri lewat appointment — bukan target Laksamana.',
+    };
+}

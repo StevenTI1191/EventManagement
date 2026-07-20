@@ -10,7 +10,7 @@ import TimePicker from '@/Components/TimePicker';
 import DateTimePicker from '@/Components/DateTimePicker';
 import Countdown from '@/Components/Countdown';
 
-import { KATEGORI_VALUES as EVENT_CATEGORIES } from '@/constants/kategori';
+import { KATEGORI_VALUES as EVENT_CATEGORIES, asalEvent } from '@/constants/kategori';
 
 const STATUS_WARNA = {
     Planning:     'bg-gray-100 text-gray-600 border-gray-200',
@@ -177,6 +177,17 @@ export default function EventDetail({
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-wider rounded-full">
                             {event.tipe_event}
                         </span>
+                        {(() => {
+                            const asal = asalEvent(event);
+                            return asal && (
+                                <span
+                                    title={asal.ket}
+                                    className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full ${asal.badge}`}
+                                >
+                                    {asal.label}
+                                </span>
+                            );
+                        })()}
                     </div>
                     <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">{event.nama_event}</h1>
                     <p className="mt-1 text-sm text-gray-500">{LANGKAH[event.status_event]}</p>
