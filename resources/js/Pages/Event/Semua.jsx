@@ -32,7 +32,7 @@ function Kartu({ ikon: Ikon, label, nilai, sub }) {
 
 export default function EventSemua({
     Layout, events, ringkas: total = {}, perStatus = {}, tahapan = [], filters = {},
-    tahunAda = [], kategoris = [], pegawais = [], clients = [], routes = {},
+    tahunAda = [], kategoris = [], pegawais = [], clients = [], jumlahTipe = {}, routes = {},
 }) {
     const [cari, setCari] = useState(filters.search || '');
 
@@ -93,6 +93,31 @@ export default function EventSemua({
                         </span>
                     </button>
                 ))}
+            </div>
+
+            {/* Pemisah asal acara — milik LM sendiri vs pesanan klien */}
+            <div className="flex flex-wrap gap-2 mb-5">
+                {[
+                    { key: '',          label: 'Semua Acara' },
+                    { key: 'Eksternal', label: 'Dari Klien' },
+                    { key: 'Internal',  label: 'Internal LM' },
+                ].map((t) => {
+                    const on = (filters.tipe || '') === t.key;
+                    return (
+                        <button key={t.key || 'all'} onClick={() => kirim({ tipe: t.key })}
+                            className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-full border transition-all ${
+                                on ? 'bg-gray-900 text-white border-gray-900'
+                                   : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                            }`}>
+                            {t.label}
+                            {t.key && (
+                                <span className={`px-1.5 rounded-full ${on ? 'bg-white/25' : 'bg-gray-100 text-gray-500'}`}>
+                                    {jumlahTipe[t.key] ?? 0}
+                                </span>
+                            )}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Saringan */}

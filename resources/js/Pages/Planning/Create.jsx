@@ -165,9 +165,7 @@ export default function PlanningCreate({ Layout, categories = [], clients = [], 
                                 options={clients.map((c) => ({
                                     value: c.id,
                                     label: c.nama_client + (c.perusahaan_client ? ` — ${c.perusahaan_client}` : ''),
-                                    sub: c.sumber === 'Internal' ? 'Di-approach tim'
-                                        : c.sumber === 'Perusahaan Sendiri' ? 'Perusahaan LM sendiri'
-                                        : 'Daftar sendiri',
+                                    sub: c.sumber === 'Internal' ? 'Di-approach tim' : 'Daftar sendiri',
                                 }))}
                                 value={data.id_client}
                                 onChange={(v) => setData('id_client', v)}

@@ -25,6 +25,7 @@ trait ShowsRiwayatEvent
     protected function halamanRiwayatEvent(string $komponen, Request $request, array $routes): Response
     {
         $request->validate([
+            'tipe'       => 'nullable|in:Internal,Eksternal',
             'tahun'      => 'nullable|integer|min:2000|max:2100',
             'kategori'   => 'nullable|string|max:255',
             'id_pegawai' => 'nullable|integer|min:1',
@@ -36,6 +37,12 @@ trait ShowsRiwayatEvent
         // halaman yang sedang dibuka.
         $saring = function ($q) use ($request) {
             $q->whereIn('status_event', self::STATUS_RIWAYAT);
+
+            // Pisahkan acara milik LM sendiri dari pesanan klien — keduanya
+            // dinilai dengan ukuran berbeda.
+            if ($request->tipe) {
+                $q->where('tipe_event', $request->tipe);
+            }
 
             if ($request->tahun) {
                 $q->whereYear('tgl_mulai_event', $request->tahun);
@@ -77,7 +84,11 @@ trait ShowsRiwayatEvent
                 'target_pax'      => (int) $ringkas->target_pax,
                 'realisasi_pax'   => (int) $ringkas->realisasi_pax,
             ],
-            'filters'   => $request->only(['tahun', 'kategori', 'id_pegawai', 'search']),
+            'filters'   => $request->only(['tipe', 'tahun', 'kategori', 'id_pegawai', 'search']),
+            'jumlahTipe' => [
+                'Internal'  => Event::whereIn('status_event', self::STATUS_RIWAYAT)->internal()->count(),
+                'Eksternal' => Event::whereIn('status_event', self::STATUS_RIWAYAT)->eksternal()->count(),
+            ],
             'tahunAda'  => Event::whereIn('status_event', self::STATUS_RIWAYAT)
                 ->selectRaw('DISTINCT YEAR(tgl_mulai_event) as tahun')
                 ->orderByDesc('tahun')

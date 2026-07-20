@@ -22,23 +22,18 @@ class Client extends Authenticatable
 
     public const SUMBER_MANDIRI  = 'Mandiri';
     public const SUMBER_INTERNAL = 'Internal';
-    /**
-     * Klien yang sebenarnya adalah PT Laksamana Muda sendiri — dipakai untuk
-     * acara yang diselenggarakan sendiri, agar event internal tetap punya
-     * pihak klien yang jelas tanpa dianggap prospek dari luar.
-     */
-    public const SUMBER_LM = 'Perusahaan Sendiri';
 
-    public const SEMUA_SUMBER = [self::SUMBER_MANDIRI, self::SUMBER_INTERNAL, self::SUMBER_LM];
+    // Catatan: sumber "Perusahaan Sendiri" sudah dihapus. Pilihan itu dibuat
+    // agar acara milik LM punya klien, padahal Planning Event menangani acara
+    // internal tanpa klien sama sekali — satu acara internal jadi bisa tercatat
+    // dua cara. Lihat migrasi 2026_07_20_000002.
+    public const SEMUA_SUMBER = [self::SUMBER_MANDIRI, self::SUMBER_INTERNAL];
 
     /** Klien yang mendaftar sendiri lewat halaman registrasi. */
     public function scopeMandiri($q) { return $q->where('sumber', self::SUMBER_MANDIRI); }
 
     /** Klien yang di-input & di-approach sendiri oleh tim Event Marketing. */
     public function scopeInternal($q) { return $q->where('sumber', self::SUMBER_INTERNAL); }
-
-    /** "Klien" yang sebenarnya PT Laksamana Muda sendiri (acara internal). */
-    public function scopePerusahaanSendiri($q) { return $q->where('sumber', self::SUMBER_LM); }
 
     protected $hidden = [
         'password',

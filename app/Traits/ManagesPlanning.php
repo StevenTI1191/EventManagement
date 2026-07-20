@@ -126,6 +126,8 @@ trait ManagesPlanning
             // Semua rencana lahir sebagai internal. Yang diajukan ke klien baru
             // berubah jadi eksternal saat masuk pipeline (lihat finalisasiPlanning).
             'tipe_event'       => Event::TIPE_INTERNAL,
+            // Penanda asal — hanya acara dari sini yang boleh punya target.
+            'dari_planning'    => true,
             'is_public'        => false,
             'jumlah_pax'       => 0,
             'deal_harga_event' => 0,

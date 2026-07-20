@@ -268,10 +268,12 @@ export default function EventDetail({
                             {event.harga_per_pax ? ` · ${rp(event.harga_per_pax)}/pax` : ''}
                         </Baris>
                         {/* Target tetap terlihat setelah tahap Planning lewat */}
-                        <Baris icon={Target} label="Target">
-                            {event.target_pax ? `${event.target_pax} pax` : '—'}
-                            {event.target_omset ? ` · omset ${rp(event.target_omset)}` : ''}
-                        </Baris>
+                        {event.dari_planning && (
+                            <Baris icon={Target} label="Target">
+                                {event.target_pax ? `${event.target_pax} pax` : '—'}
+                                {event.target_omset ? ` · omset ${rp(event.target_omset)}` : ''}
+                            </Baris>
+                        )}
                         {(tagihan.deal || 0) > 0 && (
                             <div>
                                 <div className="flex items-center justify-between mb-1 text-xs">
@@ -539,17 +541,20 @@ export default function EventDetail({
                         </Field>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                        <Field label="Target Pax" error={errors.target_pax}>
-                            <input type="number" min="0" className={inputCls} value={data.target_pax}
-                                onChange={(e) => setData('target_pax', e.target.value)} />
-                        </Field>
-                        <Field label="Target Omset" error={errors.target_omset}
-                            hint="Target dari tahap perencanaan — tetap bisa dilihat & disunting di sini.">
-                            <RupiahInput className={inputCls} value={data.target_omset}
-                                onChange={(v) => setData('target_omset', v)} />
-                        </Field>
-                    </div>
+                    {/* Target hanya ada pada acara yang melewati tahap perencanaan */}
+                    {event.dari_planning && (
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <Field label="Target Pax" error={errors.target_pax}>
+                                <input type="number" min="0" className={inputCls} value={data.target_pax}
+                                    onChange={(e) => setData('target_pax', e.target.value)} />
+                            </Field>
+                            <Field label="Target Omset" error={errors.target_omset}
+                                hint="Dipasang saat perencanaan — tetap bisa dilihat & disunting di sini.">
+                                <RupiahInput className={inputCls} value={data.target_omset}
+                                    onChange={(v) => setData('target_omset', v)} />
+                            </Field>
+                        </div>
+                    )}
 
                     <Field label="Deskripsi" error={errors.deskripsi_event}>
                         <textarea className={`${inputCls} h-24`} value={data.deskripsi_event}

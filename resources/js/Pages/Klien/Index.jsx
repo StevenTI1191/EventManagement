@@ -12,7 +12,6 @@ import { useDebounced } from '@/hooks/useDebounced';
 const TABS = [
     { key: 'Mandiri',            label: 'Daftar Sendiri',    ket: 'Klien yang mendaftar sendiri lewat website.' },
     { key: 'Internal',           label: 'Di-input Tim',      ket: 'Klien hasil approach & input tim Event Marketing.' },
-    { key: 'Perusahaan Sendiri', label: 'Perusahaan Sendiri', ket: 'Acara yang diselenggarakan PT Laksamana Muda sendiri.' },
 ];
 
 export default function EMClientIndex({ Layout, routes = {}, canEdit = true,  clients, filters, sumber = 'Mandiri', jumlah = {} }) {

@@ -37,13 +37,26 @@ class Event extends Model
         'respon_klien',     // Diterima | Ditolak — respon klien atas penawaran
         'tgl_respon_klien',
         'tipe_event',       // Internal (dari Planning Event) | Eksternal (dari klien)
+        'dari_planning',    // lahir dari Planning Event — penentu boleh punya target
         'is_public',
         'deal_harga_event',
     ];
 
     protected $casts = [
-        'is_public' => 'boolean',
+        'is_public'     => 'boolean',
+        'dari_planning' => 'boolean',
     ];
+
+    /**
+     * Target pax & omset hanya berlaku untuk acara yang melewati tahap
+     * perencanaan — baik acara internal maupun rencana yang diajukan ke klien.
+     * Prospek yang di-input langsung tidak pernah punya tahap itu, jadi isian
+     * target tidak ditawarkan padanya.
+     */
+    public function bolehPunyaTarget(): bool
+    {
+        return (bool) $this->dari_planning;
+    }
 
     protected static function booted(): void
     {

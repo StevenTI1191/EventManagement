@@ -356,6 +356,13 @@ class EventController extends Controller
             unset($data['status_event']);
         }
 
+        // Target pax & omset milik tahap perencanaan. Prospek yang di-input
+        // langsung tidak pernah melewatinya, jadi nilainya tidak diterima
+        // walaupun ikut terkirim dari form yang sudah usang.
+        if (! $event->bolehPunyaTarget()) {
+            unset($data['target_pax'], $data['target_omset']);
+        }
+
         $event->update($data);
 
         // Kembali ke halaman detail, bukan daftar Event: daftar itu menyaring

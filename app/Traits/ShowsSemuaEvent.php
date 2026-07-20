@@ -24,6 +24,7 @@ trait ShowsSemuaEvent
     {
         $request->validate([
             'status'     => 'nullable|string|max:30',
+            'tipe'       => 'nullable|in:Internal,Eksternal',
             'tahun'      => 'nullable|integer|min:2000|max:2100',
             'kategori'   => 'nullable|string|max:255',
             'id_pegawai' => 'nullable|integer|min:1',
@@ -41,6 +42,10 @@ trait ShowsSemuaEvent
                 $q->whereIn('status_event', Event::PIPELINE_KOLOM);
             }
 
+            // Pisahkan acara milik LM sendiri dari pesanan klien.
+            if ($request->tipe) {
+                $q->where('tipe_event', $request->tipe);
+            }
             if ($request->tahun) {
                 $q->whereYear('tgl_mulai_event', $request->tahun);
             }
@@ -94,7 +99,11 @@ trait ShowsSemuaEvent
             ],
             'perStatus' => $perStatus,
             'tahapan'   => Event::PIPELINE_KOLOM,
-            'filters'   => $request->only(['status', 'tahun', 'kategori', 'id_pegawai', 'id_client', 'search']),
+            'filters'   => $request->only(['status', 'tipe', 'tahun', 'kategori', 'id_pegawai', 'id_client', 'search']),
+            'jumlahTipe' => [
+                'Internal'  => Event::whereIn('status_event', Event::PIPELINE_KOLOM)->internal()->count(),
+                'Eksternal' => Event::whereIn('status_event', Event::PIPELINE_KOLOM)->eksternal()->count(),
+            ],
             'tahunAda'  => Event::whereIn('status_event', Event::PIPELINE_KOLOM)
                 ->selectRaw('DISTINCT YEAR(tgl_mulai_event) as tahun')
                 ->orderByDesc('tahun')->pluck('tahun')->filter()->values(),

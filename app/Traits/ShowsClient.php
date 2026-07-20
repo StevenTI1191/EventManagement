@@ -46,7 +46,6 @@ trait ShowsClient
             'jumlah'  => [
                 Client::SUMBER_MANDIRI  => Client::mandiri()->count(),
                 Client::SUMBER_INTERNAL => Client::internal()->count(),
-                Client::SUMBER_LM       => Client::perusahaanSendiri()->count(),
             ],
             'canEdit' => $canEdit,
             'routes'  => $routes,

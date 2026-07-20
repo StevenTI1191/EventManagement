@@ -101,20 +101,15 @@ class ClientViewController extends Controller
             'perusahaan_client'  => 'nullable|string|max:255',
             'no_telp_client'     => 'nullable|string|max:20',
             'email_client'       => 'nullable|email|unique:clients,email_client',
-            'perusahaan_sendiri' => 'nullable|boolean',
         ]);
 
-        // Ditandai "perusahaan sendiri" bila acara diselenggarakan LM sendiri;
-        // selain itu klien hasil approach tim EM.
-        $sumber = $request->boolean('perusahaan_sendiri')
-            ? Client::SUMBER_LM
-            : Client::SUMBER_INTERNAL;
-
+        // Klien yang di-input tim selalu hasil approach. Acara milik LM sendiri
+        // tidak lagi dicatat sebagai klien — jalurnya lewat Planning Event.
         Client::create($request->only([
             'nama_client', 'perusahaan_client', 'no_telp_client', 'email_client',
-        ]) + ['sumber' => $sumber]);
+        ]) + ['sumber' => Client::SUMBER_INTERNAL]);
 
-        return redirect()->route('em.client.index', ['sumber' => $sumber])
+        return redirect()->route('em.client.index', ['sumber' => Client::SUMBER_INTERNAL])
             ->with('success', 'Client berhasil ditambahkan.');
     }
 
