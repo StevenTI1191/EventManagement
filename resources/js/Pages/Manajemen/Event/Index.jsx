@@ -341,7 +341,10 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
             {/* --- GRID CARDS --- */}
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {events.data && events.data.length > 0 ? events.data.map((event) => (
-                    <div key={event.id_event} className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div key={event.id_event}
+                        onClick={() => router.visit(route('manajemen.event.show', event.id_event))}
+                        title="Klik untuk membuka halaman event"
+                        className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
                         <div className="p-4">
                             <div className="relative">
                                 <img
@@ -356,7 +359,8 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
                                         {event.status_event || 'Upcoming'}
                                     </span>
                                 </div>
-                                <div className="absolute flex gap-2 transition-all duration-200 opacity-0 top-4 left-4 group-hover:opacity-100">
+                                <div onClick={(ev) => ev.stopPropagation()}
+                                    className="absolute flex gap-2 transition-all duration-200 opacity-0 top-4 left-4 group-hover:opacity-100">
                                     <Link
                                         href={route('manajemen.event.edit', event.id_event)}
                                         className="flex items-center justify-center text-gray-500 transition-colors rounded-full shadow-sm w-9 h-9 bg-white/90 backdrop-blur hover:bg-blue-50 hover:text-blue-600"
@@ -399,7 +403,7 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
                                 {event.pic?.nama_pegawai || '-'}
                             </div>
 
-                            <div className="flex gap-3">
+                            <div onClick={(ev) => ev.stopPropagation()} className="flex gap-3">
                                 <button
                                     onClick={() => handleOpenModal(event, 'detail')}
                                     className="flex-1 py-3.5 bg-pink-50 text-[#FF2D55] font-bold rounded-2xl hover:bg-pink-100 transition-colors text-sm"

@@ -150,13 +150,24 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                                 <p className="mt-1 text-lg font-extrabold text-amber-700">
                                     {stats.target_omset > 0 ? rupiah(stats.target_omset) : '—'}
                                 </p>
+                                {/* Asal angkanya, supaya nilai yang terlihat janggal bisa ditelusuri */}
+                                {stats.event_bertarget > 0 && (
+                                    <p className="mt-0.5 text-[10px] text-amber-600/80">
+                                        dari {stats.event_bertarget} event bertarget
+                                    </p>
+                                )}
                             </div>
                         </div>
 
                         {stats.capaian_target !== null && stats.capaian_target !== undefined ? (
                             <div className="mb-5">
                                 <div className="flex items-center justify-between mb-1.5">
-                                    <span className="text-xs font-bold text-gray-500">Capaian terhadap target</span>
+                                    <span className="text-xs font-bold text-gray-500">
+                                        Capaian terhadap target
+                                        <span className="ml-1 font-normal text-gray-400">
+                                            ({rupiah(stats.realisasi_target)} dari {stats.event_bertarget} event bertarget)
+                                        </span>
+                                    </span>
                                     <span className={`text-sm font-black ${stats.capaian_target >= 100 ? 'text-emerald-600' : 'text-[#FF2D55]'}`}>
                                         {stats.capaian_target}%
                                     </span>

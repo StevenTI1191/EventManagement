@@ -89,7 +89,22 @@ class EvaluasiController extends Controller
         $nilaiDeal = Event::where('id_pegawai', $id)->untukFinance()->sum('deal_harga_event');
         $uangMasuk = $idEventPic->isEmpty() ? 0
             : \App\Models\Transaksi::whereIn('id_event', $idEventPic)->sum('nominal');
-        $targetOmset = Event::where('id_pegawai', $id)->sum('target_omset');
+
+        // Target hanya dihitung dari acara yang benar-benar dipasangi target dan
+        // tidak dibatalkan, lalu capaiannya diukur dari acara yang sama juga.
+        //
+        // Sebelumnya target menjumlahkan SELURUH acara milik PIC — termasuk yang
+        // batal dan yang tak pernah dipasangi target — sedangkan pembilangnya
+        // hanya acara yang sudah terikat komitmen. Dua populasi berbeda itu
+        // membuat persentasenya tidak bisa dibaca, dan satu acara dengan target
+        // keliru ikut menggelembungkan angkanya selamanya.
+        $eventBertarget = Event::where('id_pegawai', $id)
+            ->where('target_omset', '>', 0)
+            ->where('status_event', '!=', Event::STATUS_BATAL)
+            ->get(['id_event', 'target_omset', 'deal_harga_event']);
+
+        $targetOmset     = (float) $eventBertarget->sum('target_omset');
+        $realisasiTarget = (float) $eventBertarget->sum('deal_harga_event');
 
         $stats = [
             'klien_dihandle'      => $klienDihandle,
@@ -100,8 +115,12 @@ class EvaluasiController extends Controller
             'total_event_pic'     => Event::where('id_pegawai', $id)->count(),
             'nilai_deal'          => (float) $nilaiDeal,
             'uang_masuk'          => (float) $uangMasuk,
-            'target_omset'        => (float) $targetOmset,
-            'capaian_target'      => $targetOmset > 0 ? (int) round($nilaiDeal / $targetOmset * 100) : null,
+            'target_omset'        => $targetOmset,
+            'realisasi_target'    => $realisasiTarget,
+            // Berapa acara yang menyumbang angka target — supaya nilainya bisa
+            // ditelusuri kalau terlihat janggal.
+            'event_bertarget'     => $eventBertarget->count(),
+            'capaian_target'      => $targetOmset > 0 ? (int) round($realisasiTarget / $targetOmset * 100) : null,
         ];
 
         // ── Tren 12 bulan terakhir: nilai deal & uang masuk per bulan ─────────
