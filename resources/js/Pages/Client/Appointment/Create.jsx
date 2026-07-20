@@ -2,16 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { Calendar, Clock, Users, Wallet, FileText, CheckCircle, LayoutDashboard, AlertTriangle, Phone } from 'lucide-react';
 import KalenderKetersediaan from '@/Components/KalenderKetersediaan';
-
-const EVENT_TYPES = [
-    { value: 'Corporate Event',  icon: '🏢', desc: 'Seminar, gathering, konferensi' },
-    { value: 'Wedding & Gala',   icon: '💍', desc: 'Pernikahan & gala dinner' },
-    { value: 'Music & Concert',  icon: '🎵', desc: 'Konser & pertunjukan musik' },
-    { value: 'Exhibition',       icon: '🎪', desc: 'Pameran & expo' },
-    { value: 'Sports Event',     icon: '🏆', desc: 'Turnamen & olahraga' },
-    { value: 'Private Party',    icon: '🎉', desc: 'Ulang tahun & acara privat' },
-    { value: 'Lainnya',          icon: '✨', desc: 'Jenis event lainnya' },
-];
+import { KATEGORI_EVENT as EVENT_TYPES } from '@/constants/kategori';
 
 const STEPS = ['Jenis Event', 'Detail', 'Jadwal'];
 

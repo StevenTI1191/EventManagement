@@ -4,7 +4,7 @@ import RupiahInput from '@/Components/RupiahInput';
 import SearchableSelect from '@/Components/SearchableSelect';
 import TimePicker from '@/Components/TimePicker';
 
-const EVENT_CATEGORIES = ['Konser', 'Wedding', 'Corporate', 'Birthday', 'Seminar', 'Lainnya'];
+import { KATEGORI_VALUES as EVENT_CATEGORIES } from '@/constants/kategori';
 
 const JENIS = [
     {

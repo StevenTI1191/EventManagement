@@ -10,7 +10,7 @@ import TimePicker from '@/Components/TimePicker';
 import DateTimePicker from '@/Components/DateTimePicker';
 import Countdown from '@/Components/Countdown';
 
-const EVENT_CATEGORIES = ['Konser', 'Wedding', 'Corporate', 'Birthday', 'Seminar', 'Lainnya'];
+import { KATEGORI_VALUES as EVENT_CATEGORIES } from '@/constants/kategori';
 
 const STATUS_WARNA = {
     Planning:     'bg-gray-100 text-gray-600 border-gray-200',

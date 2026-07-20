@@ -5,6 +5,7 @@ import DateTimePicker from '@/Components/DateTimePicker';
 import { Download } from 'lucide-react';
 import RupiahInput from '@/Components/RupiahInput';
 import SearchableSelect from '@/Components/SearchableSelect';
+import { KATEGORI_VALUES } from '@/constants/kategori';
 
 const PIPELINE_STATUSES = ['Lead', 'Negotiation', 'Deal'];
 
@@ -105,12 +106,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                 <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
                                     value={data.kategori_event} onChange={e => setData('kategori_event', e.target.value)}>
                                     <option value="">Pilih Kategori</option>
-                                    <option value="Konser">Konser</option>
-                                    <option value="Wedding">Wedding</option>
-                                    <option value="Corporate">Corporate</option>
-                                    <option value="Birthday">Birthday</option>
-                                    <option value="Seminar">Seminar</option>
-                                    <option value="Lainnya">Lainnya</option>
+                                    {KATEGORI_VALUES.map((k) => <option key={k} value={k}>{k}</option>)}
                                 </select>
                             </div>
 
