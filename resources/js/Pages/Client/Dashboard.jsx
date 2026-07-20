@@ -1079,6 +1079,13 @@ export default function ClientDashboard({
                                                                         </button>
                                                                     )}
                                                                 </div>
+                                                                {/* Alasan penolakan langsung di baris buktinya, bukan hanya di box terpisah */}
+                                                                {bukti.status === 'Ditolak' && bukti.catatan_finance && (
+                                                                    <div className="w-full mt-2 px-2.5 py-1.5 bg-danger-bg border border-red-500/20 rounded-lg">
+                                                                        <p className="text-[10px] font-bold text-danger mb-0.5">Alasan ditolak Finance:</p>
+                                                                        <p className="text-[11px] text-danger/90">{bukti.catatan_finance}</p>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>

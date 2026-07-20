@@ -111,6 +111,23 @@ class InvoiceController extends Controller
         $dp      = round($total * self::PERSEN_DP);
         $nominal = $tipe === Invoice::TIPE_DP ? $dp : ($total - $dp);
 
+        // Jatuh tempo:
+        //  - DP        : paling lambat sebelum acara berlangsung (H-1) — uang
+        //    muka harus masuk agar persiapan berjalan. Bila acara sudah dekat
+        //    atau lewat, beri kelonggaran 7 hari dari penerbitan.
+        //  - Pelunasan : paling lambat 7 hari setelah acara selesai (H+7).
+        $tglAkhir = \Illuminate\Support\Carbon::parse($event->tgl_selesai_event ?: $event->tgl_mulai_event);
+
+        if ($tipe === Invoice::TIPE_DP) {
+            $mulai      = \Illuminate\Support\Carbon::parse($event->tgl_mulai_event);
+            $jatuhTempo = $mulai->copy()->subDay();
+            if ($jatuhTempo->lte(now())) {
+                $jatuhTempo = now()->addDays(7);
+            }
+        } else {
+            $jatuhTempo = $tglAkhir->copy()->addDays(7);
+        }
+
         Invoice::create([
             'id_event'        => $event->id_event,
             'id_pegawai'      => Auth::guard('pegawai')->id(),
@@ -118,7 +135,7 @@ class InvoiceController extends Controller
             'tipe'            => $tipe,
             'nominal'         => $nominal,
             'tgl_terbit'      => now()->toDateString(),
-            'tgl_jatuh_tempo' => now()->addDays(7)->toDateString(),
+            'tgl_jatuh_tempo' => $jatuhTempo->toDateString(),
             'status'          => Invoice::STATUS_BELUM,
         ]);
 

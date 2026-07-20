@@ -52,19 +52,25 @@
 <div class="wrap">
 
     <div class="head">
-        <div class="brand">
-            PT LAKSAMANA MUDA BERSATU
-            <small>Event Organizer &amp; Venue — Pekanbaru, Riau</small>
-        </div>
-        <div class="doc">
-            <div class="title">DETAIL EVENT</div>
-            <div class="meta">
-                Dicetak: {{ $tglCetak }}<br>
-                <span class="badge {{ $event->status_event === 'Done' ? 'st-done' : ($event->status_event === 'Upcoming' ? 'st-upcoming' : 'st-deal') }}">
-                    {{ strtoupper($event->status_event) }}
-                </span>
-            </div>
-        </div>
+        <table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <td style="vertical-align:top;">
+                    <div class="brand">
+                        PT LAKSAMANA MUDA BERSATU
+                        <small>Event Organizer &amp; Venue — Pekanbaru, Riau</small>
+                    </div>
+                </td>
+                <td style="vertical-align:top; text-align:right;">
+                    <div class="title">DETAIL EVENT</div>
+                    <div class="meta">
+                        Dicetak: {{ $tglCetak }}<br>
+                        <span class="badge {{ $event->status_event === 'Done' ? 'st-done' : ($event->status_event === 'Upcoming' ? 'st-upcoming' : 'st-deal') }}">
+                            {{ strtoupper($event->status_event) }}
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div class="hero">
@@ -104,10 +110,10 @@
         <tr><td class="k">Penanggung jawab</td><td class="v">{{ $event->pic->nama_pegawai }}</td></tr>
         @endif
         @if($event->technical_meeting)
-        <tr><td class="k">Technical meeting</td><td class="v">{{ $event->technical_meeting }}</td></tr>
+        <tr><td class="k">Technical meeting</td><td class="v">{{ \Carbon\Carbon::parse($event->technical_meeting)->translatedFormat('d M Y, H:i') }}</td></tr>
         @endif
         @if($event->gladi_resik)
-        <tr><td class="k">Gladi resik</td><td class="v">{{ $event->gladi_resik }}</td></tr>
+        <tr><td class="k">Gladi resik</td><td class="v">{{ \Carbon\Carbon::parse($event->gladi_resik)->translatedFormat('d M Y, H:i') }}</td></tr>
         @endif
     </table>
 

@@ -37,20 +37,26 @@
 <div class="wrap">
 
     <div class="head">
-        <div class="brand">
-            PT LAKSAMANA MUDA BERSATU
-            <small>Event Organizer &amp; Venue — Pekanbaru</small>
-        </div>
-        <div class="doc">
-            <div class="title">INVOICE {{ strtoupper($invoice->tipe) }}</div>
-            <div class="meta">
-                No. {{ $invoice->nomor_invoice }}<br>
-                Terbit: {{ $tglTerbit }}
-                @if($tglJatuhTempo)<br>Jatuh tempo: {{ $tglJatuhTempo }}@endif
-                <br>
-                <span class="badge {{ $invoice->status === 'Lunas' ? 'lunas' : 'belum' }}">{{ strtoupper($invoice->status) }}</span>
-            </div>
-        </div>
+        <table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <td style="vertical-align:top;">
+                    <div class="brand">
+                        PT LAKSAMANA MUDA BERSATU
+                        <small>Event Organizer &amp; Venue — Pekanbaru</small>
+                    </div>
+                </td>
+                <td style="vertical-align:top; text-align:right;">
+                    <div class="title">INVOICE {{ strtoupper($invoice->tipe) }}</div>
+                    <div class="meta">
+                        No. {{ $invoice->nomor_invoice }}<br>
+                        Terbit: {{ $tglTerbit }}
+                        @if($tglJatuhTempo)<br>Jatuh tempo: {{ $tglJatuhTempo }}@endif
+                        <br>
+                        <span class="badge {{ $invoice->status === 'Lunas' ? 'lunas' : 'belum' }}">{{ strtoupper($invoice->status) }}</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div class="to">

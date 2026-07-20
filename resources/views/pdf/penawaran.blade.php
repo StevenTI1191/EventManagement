@@ -34,17 +34,26 @@
 <div class="wrap">
 
     <div class="head">
-        <div class="brand">
-            PT LAKSAMANA MUDA BERSATU
-            <small>Event Organizer &amp; Venue — Pekanbaru</small>
-        </div>
-        <div class="doc">
-            <div class="title">PENAWARAN</div>
-            <div class="meta">
-                No. {{ $nomor }}<br>
-                Tanggal: {{ $tanggal }}
-            </div>
-        </div>
+        {{-- Layout tabel dua kolom: brand kiri, info dokumen kanan. Sebelumnya
+             pakai float + margin-top negatif sehingga blok tanggal naik dan
+             tertimpa garis merah header. --}}
+        <table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <td style="vertical-align:top;">
+                    <div class="brand">
+                        PT LAKSAMANA MUDA BERSATU
+                        <small>Event Organizer &amp; Venue — Pekanbaru</small>
+                    </div>
+                </td>
+                <td style="vertical-align:top; text-align:right;">
+                    <div class="title">PENAWARAN</div>
+                    <div class="meta">
+                        No. {{ $nomor }}<br>
+                        Tanggal: {{ $tanggal }}
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div class="to">
@@ -68,7 +77,7 @@
         <tr><td class="k">Waktu</td><td class="v">{{ $jam }}</td></tr>
         <tr><td class="k">Area / Lokasi</td><td class="v">{{ $event->area_event ?? '—' }}</td></tr>
         @if($event->technical_meeting)
-            <tr><td class="k">Technical Meeting</td><td class="v">{{ $event->technical_meeting }}</td></tr>
+            <tr><td class="k">Technical Meeting</td><td class="v">{{ \Carbon\Carbon::parse($event->technical_meeting)->translatedFormat('d M Y, H:i') }}</td></tr>
         @endif
     </table>
 
@@ -102,7 +111,8 @@
     @endif
 
     <div class="note" style="margin-top:16px;">
-        Pembayaran dilakukan dua tahap: <b>DP 50%</b> setelah penawaran disetujui, dan <b>pelunasan 50%</b> sebelum acara berlangsung.
+        Pembayaran dilakukan dua tahap: <b>DP 50%</b> paling lambat sebelum acara berlangsung, dan
+        <b>pelunasan 50%</b> paling lambat 7 hari setelah acara selesai.
         Penawaran ini berlaku 14 hari sejak tanggal terbit.
     </div>
 

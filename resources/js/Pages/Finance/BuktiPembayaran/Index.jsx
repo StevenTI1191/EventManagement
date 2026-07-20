@@ -123,9 +123,9 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
                 </div>
             </div>
 
-            {/* TABEL */}
-            <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
-                <table className="w-full">
+            {/* TABEL — scroll mendatar supaya kolom Aksi tidak terpotong di layar sempit */}
+            <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-x-auto">
+                <table className="w-full min-w-[1080px]">
                     <thead>
                         <tr className="bg-[#FF2D55]">
                             <th className="w-10 px-4 py-3 text-xs font-bold text-left text-white uppercase">No</th>
