@@ -48,6 +48,10 @@ trait ManagesPlanning
                 'nama_event'      => $e->nama_event,
                 'kategori_event'  => $e->kategori_event,
                 'tgl_mulai_event' => $e->tgl_mulai_event,
+                'tgl_selesai_event' => $e->tgl_selesai_event,
+                'jam_mulai'       => $e->jam_mulai,
+                'jam_selesai'     => $e->jam_selesai,
+                'area_event'      => $e->area_event,
                 'client'          => $e->client?->nama_client,
                 'pic'             => $e->pic?->nama_pegawai,
                 'total'           => (int) $e->total_tugas,
@@ -111,7 +115,8 @@ trait ManagesPlanning
             'target_omset'    => 'nullable|numeric|min:0|max:9999999999999',
             'categories'      => 'nullable|array',
             'categories.*'    => 'string|max:255',
-        ] + $this->aturanJenisPlanning($request));
+            'multi_hari'      => 'nullable|boolean',
+        ] + $this->aturanJadwalPlanning() + $this->aturanJenisPlanning($request));
 
         $event = Event::create([
             'nama_event'       => $request->nama_event,
@@ -131,7 +136,7 @@ trait ManagesPlanning
             'is_public'        => false,
             'jumlah_pax'       => 0,
             'deal_harga_event' => 0,
-        ]);
+        ] + $this->isianJadwalPlanning($request));
 
         $cats = $request->input('categories');
         $this->generateTemplate($event, is_array($cats) ? $cats : null);
@@ -155,12 +160,42 @@ trait ManagesPlanning
             'tgl_mulai_event' => 'required|date',
             'target_pax'      => 'nullable|integer|min:0|max:100000',
             'target_omset'    => 'nullable|numeric|min:0|max:9999999999999',
-        ] + $this->aturanJenisPlanning($request));
+            'multi_hari'      => 'nullable|boolean',
+        ] + $this->aturanJadwalPlanning() + $this->aturanJenisPlanning($request));
 
         $event->update($request->only([
             'nama_event', 'deskripsi_event', 'kategori_event',
             'tgl_mulai_event', 'target_pax', 'target_omset',
-        ]) + ['id_client' => $this->clientSasaran($request)]);
+        ]) + ['id_client' => $this->clientSasaran($request)]
+          + $this->isianJadwalPlanning($request));
+    }
+
+    /**
+     * Jadwal rencana. Semuanya opsional karena namanya juga masih rencana —
+     * tapi disediakan sejak awal supaya acara yang jadwalnya sudah pasti bisa
+     * langsung difinalisasi tanpa harus dilengkapi lagi di halaman detail.
+     */
+    protected function aturanJadwalPlanning(): array
+    {
+        return [
+            'tgl_selesai_event' => 'nullable|date|after_or_equal:tgl_mulai_event',
+            'jam_mulai'         => 'nullable|string|max:8',
+            'jam_selesai'       => 'nullable|string|max:8',
+            'area_event'        => 'nullable|string|max:255',
+        ];
+    }
+
+    /** Kolom jadwal yang ikut disimpan dari form Planning. */
+    protected function isianJadwalPlanning(Request $request): array
+    {
+        return [
+            // Acara sehari: tanggal selesai dikosongkan, bukan disamakan —
+            // agar tampilannya tidak menulis rentang untuk acara satu hari.
+            'tgl_selesai_event' => $request->boolean('multi_hari') ? $request->tgl_selesai_event : null,
+            'jam_mulai'         => $request->jam_mulai ?: null,
+            'jam_selesai'       => $request->jam_selesai ?: null,
+            'area_event'        => $request->area_event ?: null,
+        ];
     }
 
     /**
@@ -223,6 +258,29 @@ trait ManagesPlanning
                 "\"{$event->nama_event}\" diajukan ke klien dan masuk pipeline di kolom Lead. "
                 . 'Lanjutkan dengan mengirim penawaran.'
             );
+        }
+
+        // Acara internal melompat langsung ke Upcoming tanpa melewati pipeline,
+        // jadi pemeriksaan bentrok yang biasanya terjadi saat menyimpan event
+        // tidak pernah berjalan padanya. Diperiksa di sini selagi jadwalnya
+        // sudah utuh, supaya tidak ada dua acara berimpit di area yang sama.
+        if (filled($event->jam_mulai) && filled($event->jam_selesai) && filled($event->area_event)) {
+            $bentrok = Event::checkBentrok(
+                $event->tgl_mulai_event,
+                $event->jam_mulai,
+                $event->jam_selesai,
+                $event->area_event,
+                $event->id_event,
+                $event->tgl_selesai_event,
+            );
+
+            if ($bentrok) {
+                return back()->with(
+                    'error',
+                    "Jadwal bentrok dengan \"{$bentrok->nama_event}\" di area {$bentrok->area_event} "
+                    . "pada {$bentrok->tgl_mulai_event}. Ubah jadwal atau areanya dulu sebelum difinalisasi."
+                );
+            }
         }
 
         $event->update(['status_event' => Event::STATUS_UPCOMING]);

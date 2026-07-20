@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, CalendarDays, MapPin, User, ListChecks, Building2, Target } from 'lucide-react';
+import { Plus, CalendarDays, MapPin, User, ListChecks, Building2, Target, Clock } from 'lucide-react';
 
 /**
  * Dua jenis rencana. Pembedanya cuma satu — ada tidaknya klien sasaran —
@@ -33,6 +33,7 @@ function ProgressBar({ value }) {
     );
 }
 
+const jam = (j) => (j ? String(j).slice(0, 5) : '—');
 const formatTgl = (t) => (t ? new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-');
 
 export default function PlanningIndex({ Layout, events = [], routes, jenis = 'internal', jumlah = {} }) {
@@ -101,7 +102,18 @@ export default function PlanningIndex({ Layout, events = [], routes, jenis = 'in
                                 )}
                             </div>
                             <div className="space-y-1.5 text-xs text-gray-500 mb-4">
-                                <p className="flex items-center gap-2"><CalendarDays size={13} /> {formatTgl(e.tgl_mulai_event)}</p>
+                                <p className="flex items-center gap-2">
+                                    <CalendarDays size={13} />
+                                    {formatTgl(e.tgl_mulai_event)}
+                                    {e.tgl_selesai_event && e.tgl_selesai_event !== e.tgl_mulai_event
+                                        && ` — ${formatTgl(e.tgl_selesai_event)}`}
+                                </p>
+                                {(e.jam_mulai || e.jam_selesai) && (
+                                    <p className="flex items-center gap-2">
+                                        <Clock size={13} />
+                                        {jam(e.jam_mulai)} – {jam(e.jam_selesai)}
+                                    </p>
+                                )}
                                 {e.client && <p className="flex items-center gap-2"><User size={13} /> {e.client}</p>}
                                 {e.area_event && <p className="flex items-center gap-2"><MapPin size={13} /> {e.area_event}</p>}
                             </div>

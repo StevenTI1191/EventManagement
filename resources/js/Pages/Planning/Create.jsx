@@ -2,6 +2,7 @@ import { Head, useForm, Link } from '@inertiajs/react';
 import { ListChecks, Check, Building2, Target } from 'lucide-react';
 import RupiahInput from '@/Components/RupiahInput';
 import SearchableSelect from '@/Components/SearchableSelect';
+import TimePicker from '@/Components/TimePicker';
 
 const EVENT_CATEGORIES = ['Konser', 'Wedding', 'Corporate', 'Birthday', 'Seminar', 'Lainnya'];
 
@@ -27,6 +28,12 @@ export default function PlanningCreate({ Layout, categories = [], clients = [], 
         kategori_event: event?.kategori_event || '',
         deskripsi_event: event?.deskripsi_event || '',
         tgl_mulai_event: event?.tgl_mulai_event ? String(event.tgl_mulai_event).slice(0, 10) : '',
+        // Tanggal selesai hanya terisi bila acaranya memang lebih dari sehari.
+        multi_hari: !!event?.tgl_selesai_event,
+        tgl_selesai_event: event?.tgl_selesai_event ? String(event.tgl_selesai_event).slice(0, 10) : '',
+        jam_mulai: event?.jam_mulai ? String(event.jam_mulai).slice(0, 5) : '',
+        jam_selesai: event?.jam_selesai ? String(event.jam_selesai).slice(0, 5) : '',
+        area_event: event?.area_event || '',
         target_pax: event?.target_pax ?? '',
         target_omset: event?.target_omset ?? '',
         // Saat edit, jenis dibaca dari ada tidaknya klien sasaran.
@@ -107,6 +114,66 @@ export default function PlanningCreate({ Layout, categories = [], clients = [], 
                                 value={data.tgl_mulai_event} onChange={(e) => setData('tgl_mulai_event', e.target.value)} />
                             {errors.tgl_mulai_event && <span className="text-xs text-red-500">{errors.tgl_mulai_event}</span>}
                         </div>
+                    </div>
+
+                    {/* Acara lebih dari sehari */}
+                    <label className="flex items-start gap-3 p-4 transition-colors border cursor-pointer border-gray-200 rounded-2xl hover:border-gray-300 has-[:checked]:border-[#FF2D55] has-[:checked]:bg-[#FF2D55]/5">
+                        <input type="checkbox" checked={data.multi_hari}
+                            onChange={(e) => setData((d) => ({
+                                ...d,
+                                multi_hari: e.target.checked,
+                                // Buang tanggal selesai bila dibatalkan, supaya tidak
+                                // ada sisa tanggal yang ikut tersimpan diam-diam.
+                                tgl_selesai_event: e.target.checked ? d.tgl_selesai_event : '',
+                            }))}
+                            className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#FF2D55] focus:ring-[#FF2D55]" />
+                        <span>
+                            <span className="block text-sm font-bold text-gray-800">Acara lebih dari satu hari</span>
+                            <span className="block mt-0.5 text-xs text-gray-500">
+                                Centang bila acara berlangsung beberapa hari berturut-turut, mis. festival tiga hari.
+                            </span>
+                        </span>
+                    </label>
+
+                    {data.multi_hari && (
+                        <div>
+                            <label className="block mb-1 text-sm font-bold text-gray-700">Tanggal Selesai</label>
+                            <input type="date" min={data.tgl_mulai_event}
+                                className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
+                                value={data.tgl_selesai_event}
+                                onChange={(e) => setData('tgl_selesai_event', e.target.value)} />
+                            {errors.tgl_selesai_event && <span className="text-xs text-red-500">{errors.tgl_selesai_event}</span>}
+                        </div>
+                    )}
+
+                    {/* Jam & tempat — boleh dikosongkan selama masih rencana,
+                        tapi bila sudah pasti, acara bisa langsung difinalisasi
+                        tanpa perlu dilengkapi lagi di halaman detail. */}
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <div>
+                            <label className="block mb-1 text-sm font-bold text-gray-700">
+                                Jam Mulai <span className="font-normal text-gray-400">(opsional)</span>
+                            </label>
+                            <TimePicker value={data.jam_mulai} onChange={(v) => setData('jam_mulai', v)} />
+                            {errors.jam_mulai && <span className="text-xs text-red-500">{errors.jam_mulai}</span>}
+                        </div>
+                        <div>
+                            <label className="block mb-1 text-sm font-bold text-gray-700">
+                                Jam Selesai <span className="font-normal text-gray-400">(opsional)</span>
+                            </label>
+                            <TimePicker value={data.jam_selesai} onChange={(v) => setData('jam_selesai', v)} />
+                            {errors.jam_selesai && <span className="text-xs text-red-500">{errors.jam_selesai}</span>}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block mb-1 text-sm font-bold text-gray-700">
+                            Area / Tempat <span className="font-normal text-gray-400">(opsional)</span>
+                        </label>
+                        <input type="text" placeholder="mis. Ballroom Hotel Pangeran"
+                            className="w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none"
+                            value={data.area_event} onChange={(e) => setData('area_event', e.target.value)} />
+                        {errors.area_event && <span className="text-xs text-red-500">{errors.area_event}</span>}
                     </div>
 
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
