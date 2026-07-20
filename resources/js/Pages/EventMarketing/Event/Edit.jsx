@@ -12,6 +12,10 @@ const PIPELINE_STATUSES = ['Lead', 'Negotiation', 'Deal'];
 export default function Edit({ auth, event, clients, pegawais }) {
     // Event di pipeline: statusnya diatur papan Pipeline, bukan form ini.
     const DI_PIPELINE = PIPELINE_STATUSES.includes(event.status_event);
+    // Nilai kesepakatan (deal) hanya milik acara pesanan klien; acara internal
+    // yang lahir dari Planning memegang target omset, bukan deal harga.
+    const IS_EKSTERNAL = event.tipe_event === 'Eksternal';
+    const PUNYA_TARGET = !!event.dari_planning;
 
     const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
         _method:              'PUT',
@@ -21,6 +25,8 @@ export default function Edit({ auth, event, clients, pegawais }) {
         harga_per_pax:        event.harga_per_pax || '',
         deskripsi_event:      event.deskripsi_event || '',
         deal_harga_event:     event.deal_harga_event || '',
+        target_pax:           event.target_pax || '',
+        target_omset:         event.target_omset || '',
         id_client:            event.id_client || '',
         id_pegawai:           event.id_pegawai || '',
         status_event:         event.status_event || 'Upcoming',
@@ -118,6 +124,8 @@ export default function Edit({ auth, event, clients, pegawais }) {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
+                                {/* Klien hanya untuk acara eksternal; acara internal tak berklien */}
+                                {IS_EKSTERNAL && (
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">Client</label>
                                     <SearchableSelect
@@ -128,6 +136,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                         searchPlaceholder="Cari nama / perusahaan…"
                                     />
                                 </div>
+                                )}
                                 <div>
                                     <label className="block mb-1 text-sm font-bold text-gray-700">PIC Event</label>
                                     <select className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
@@ -188,25 +197,53 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                     onChange={e => { const v = e.target.value; setData({ ...data, jumlah_pax: v, deal_harga_event: computeDeal(v, data.harga_per_pax) }); }} />
                             </div>
 
-                            <div>
-                                <label className="block mb-1 text-sm font-bold text-gray-700">Harga per Pax</label>
-                                <RupiahInput
-                                    placeholder="Silahkan Input Harga per Pax"
-                                    className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                    value={data.harga_per_pax}
-                                    onChange={v => setData({ ...data, harga_per_pax: v, deal_harga_event: computeDeal(data.jumlah_pax, v) })} />
-                                {errors.harga_per_pax && <span className="text-xs text-red-500">{errors.harga_per_pax}</span>}
-                            </div>
+                            {/* Harga & deal hanya untuk acara pesanan klien */}
+                            {IS_EKSTERNAL && (
+                                <>
+                                    <div>
+                                        <label className="block mb-1 text-sm font-bold text-gray-700">Harga per Pax</label>
+                                        <RupiahInput
+                                            placeholder="Silahkan Input Harga per Pax"
+                                            className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                            value={data.harga_per_pax}
+                                            onChange={v => setData({ ...data, harga_per_pax: v, deal_harga_event: computeDeal(data.jumlah_pax, v) })} />
+                                        {errors.harga_per_pax && <span className="text-xs text-red-500">{errors.harga_per_pax}</span>}
+                                    </div>
 
-                            <div>
-                                <label className="block mb-1 text-sm font-bold text-gray-700">Deal Total Harga</label>
-                                <RupiahInput
-                                    placeholder="Silahkan Input Deal Total"
-                                    className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
-                                    value={data.deal_harga_event} onChange={v => setData('deal_harga_event', v)} />
-                                <p className="mt-1 text-xs text-gray-400">Terisi otomatis dari Jumlah Pax × Harga per Pax, bisa diubah manual.</p>
-                                {errors.deal_harga_event && <span className="text-xs text-red-500">{errors.deal_harga_event}</span>}
-                            </div>
+                                    <div>
+                                        <label className="block mb-1 text-sm font-bold text-gray-700">Deal Total Harga</label>
+                                        <RupiahInput
+                                            placeholder="Silahkan Input Deal Total"
+                                            className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                            value={data.deal_harga_event} onChange={v => setData('deal_harga_event', v)} />
+                                        <p className="mt-1 text-xs text-gray-400">Terisi otomatis dari Jumlah Pax × Harga per Pax, bisa diubah manual.</p>
+                                        {errors.deal_harga_event && <span className="text-xs text-red-500">{errors.deal_harga_event}</span>}
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Acara hasil Planning memegang target omset, bukan deal harga */}
+                            {PUNYA_TARGET && (
+                                <>
+                                    <div>
+                                        <label className="block mb-1 text-sm font-bold text-gray-700">Target Pax</label>
+                                        <input type="number" min="0" placeholder="Target jumlah pengunjung"
+                                            className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                            value={data.target_pax} onChange={e => setData('target_pax', e.target.value)} />
+                                        {errors.target_pax && <span className="text-xs text-red-500">{errors.target_pax}</span>}
+                                    </div>
+
+                                    <div>
+                                        <label className="block mb-1 text-sm font-bold text-gray-700">Target Omset</label>
+                                        <RupiahInput
+                                            placeholder="Target omset dari perencanaan"
+                                            className="w-full p-3 border-gray-200 rounded-xl bg-gray-50"
+                                            value={data.target_omset} onChange={v => setData('target_omset', v)} />
+                                        <p className="mt-1 text-xs text-gray-400">Dipasang saat perencanaan — tetap bisa disunting di sini.</p>
+                                        {errors.target_omset && <span className="text-xs text-red-500">{errors.target_omset}</span>}
+                                    </div>
+                                </>
+                            )}
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Status Event</label>
