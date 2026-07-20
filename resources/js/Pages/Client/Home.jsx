@@ -444,11 +444,17 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
             </section>
 
             {/* ── PORTFOLIO ──────────────────────────────────────── */}
-            <section id="portfolio" className="py-24 bg-surface">
+            {/* Latar & garis atas berbeda dari Upcoming agar kedua bagian tidak
+                menyatu — sebelumnya sama-sama bg-surface sehingga tak ada pemisah. */}
+            <section id="portfolio" className="py-24 border-t bg-paper bg-paper-glow border-line">
                 <div className="px-6 mx-auto max-w-7xl">
                     <div className="mb-12 text-center">
+                        <span className="inline-block w-16 h-1 mb-6 rounded-full bg-gold-grad" />
                         <p className="mb-4 text-sm font-bold tracking-widest text-gold uppercase">Karya Terbaik Kami</p>
                         <h2 className="text-4xl font-black text-ink md:text-5xl">Portfolio <span className="text-gold">Event</span></h2>
+                        <p className="max-w-xl mx-auto mt-3 text-sm text-muted">
+                            Dokumentasi acara yang telah selesai kami selenggarakan.
+                        </p>
                     </div>
 
                     {/* Filter Kategori */}

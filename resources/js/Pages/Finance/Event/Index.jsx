@@ -1,9 +1,16 @@
 ﻿import FinanceLayout from '@/Layouts/FinanceLayout';
 import Pagination from '@/Components/Pagination';
 import TabEvent from '@/Components/TabEvent';
+import Countdown from '@/Components/Countdown';
 import { Search, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
+
+const rentangTgl = (a, b) => {
+    if (!a) return '-';
+    const f = (t) => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    return b && String(b).slice(0,10) !== String(a).slice(0,10) ? `${f(a)} — ${f(b)}` : f(a);
+};
 
 export default function FinanceEventIndex({ auth, events, filters, clients, pegawais }) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
@@ -211,7 +218,7 @@ export default function FinanceEventIndex({ auth, events, filters, clients, pega
                             )}
                             <div className="flex items-center mb-1 text-sm font-medium text-gray-400">
                                 <CalendarIcon size={14} className="mr-2 shrink-0" />
-                                {event.tgl_mulai_event || '-'}
+                                {rentangTgl(event.tgl_mulai_event, event.tgl_selesai_event)}
                             </div>
                             <div className="flex items-center mb-1 text-sm font-medium text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -225,6 +232,11 @@ export default function FinanceEventIndex({ auth, events, filters, clients, pega
                                 </svg>
                                 {event.pic?.nama_pegawai || '-'}
                             </div>
+                            {event.status_event === 'Upcoming' && (
+                                <div className="mb-4">
+                                    <Countdown target={event.tgl_mulai_event} jam={event.jam_mulai} ringkas />
+                                </div>
+                            )}
                             <button
                                 onClick={() => setSelectedEvent(event)}
                                 className="w-full py-3.5 bg-pink-50 text-[#FF2D55] font-bold rounded-2xl hover:bg-pink-100 transition-colors text-sm"

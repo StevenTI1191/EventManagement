@@ -6,6 +6,12 @@ import { Search, Plus, Calendar as CalendarIcon, X, Pencil, Trash2, ListChecks, 
 import { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 
+const rentangTgl = (a, b) => {
+    if (!a) return '-';
+    const f = (t) => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    return b && String(b).slice(0,10) !== String(a).slice(0,10) ? `${f(a)} — ${f(b)}` : f(a);
+};
+
 export default function Index({ auth, events, filters, clients, pegawais }) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [filterData, setFilterData] = useState({
@@ -368,7 +374,7 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
                             )}
                             <div className="flex items-center mb-1 text-sm font-medium text-gray-400">
                                 <CalendarIcon size={14} className="mr-2 shrink-0" />
-                                {event.tgl_mulai_event || '-'}
+                                {rentangTgl(event.tgl_mulai_event, event.tgl_selesai_event)}
                             </div>
                             <div className="flex items-center mb-1 text-sm font-medium text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -414,26 +420,17 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
             </div>
             <Pagination meta={events} />
 
-            {/* Dua pintu masuk sesuai asal event. "Tambah Event" yang lama membuat
-                prospek Lead, tapi mengarah ke daftar ini yang menyaring event
-                terkonfirmasi — hasilnya seolah tidak jadi apa-apa. Sekarang
-                asalnya disebut tegas dan keduanya mengantar ke tempat kerjanya. */}
-            <div className="fixed z-50 flex flex-col items-end gap-3 bottom-10 right-10">
+            {/* Hanya "Rencana Baru" (Planning). Tombol "Prospek Baru" dihapus:
+                prospek klien masuk lewat appointment lalu pipeline, bukan dibuat
+                langsung dari sini — sejalan dengan Manajemen & Finance. */}
+            <div className="fixed z-50 bottom-10 right-10">
                 <Link
                     href={route('em.planning.create')}
-                    title="Rencana acara yang disiapkan sendiri, dengan to-do list"
-                    className="flex items-center gap-2 px-6 py-3 font-bold text-gray-700 transition-all bg-white border border-gray-200 shadow-lg rounded-full hover:border-gray-300 hover:scale-105 active:scale-95"
-                >
-                    <ListChecks size={18} strokeWidth={2.5} />
-                    Rencana Baru
-                </Link>
-                <Link
-                    href={route('em.event.create')}
-                    title="Klien yang menghubungi langsung — masuk pipeline sebagai Lead"
-                    className="bg-[#FF2D55] text-white px-8 py-4 rounded-full shadow-2xl shadow-[#FF2D55]/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                    title="Rencana acara baru beserta to-do list"
+                    className="flex items-center gap-3 px-8 py-4 bg-[#FF2D55] text-white font-bold rounded-full shadow-2xl shadow-[#FF2D55]/40 hover:scale-105 active:scale-95 transition-all"
                 >
                     <Plus size={24} strokeWidth={3} />
-                    <span className="text-lg font-bold">Prospek Baru</span>
+                    <span className="text-lg">Rencana Baru</span>
                 </Link>
             </div>
 
