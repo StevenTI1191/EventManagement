@@ -58,6 +58,20 @@ trait ShowsEventDetail
                 // Hanya pembayaran yang sudah tercatat resmi sebagai transaksi.
                 'terbayar' => (float) $event->transaksis()->sum('nominal'),
             ],
+            // Appointment asal acara ini — supaya jejaknya tidak terputus dari
+            // permintaan awal klien sampai acara berjalan.
+            'appointments' => \App\Models\Appointment::where('id_event', $event->id_event)
+                ->with('pegawai:id_pegawai,nama_pegawai')
+                ->latest()
+                ->get(['id', 'id_pegawai', 'jenis_event', 'status', 'tgl_request', 'jam_request',
+                       'tgl_konfirmasi', 'jam_konfirmasi', 'catatan_meeting', 'estimasi_budget']),
+            // Rincian to-do per kategori — hasil dari tahap perencanaan.
+            'tugasPerKategori' => $event->tugas
+                ->groupBy(fn ($t) => $t->kategori ?: 'Tanpa Kategori')
+                ->map(fn ($g) => [
+                    'total' => $g->count(),
+                    'done'  => $g->where('status_tugas', 'Done')->count(),
+                ]),
             'followUps'  => $followUps,
             'waFollowUp' => Wa::link($event->client?->no_telp_client, $this->pesanFollowUp($event)),
             'clients'    => Client::select('id', 'nama_client', 'perusahaan_client', 'sumber')

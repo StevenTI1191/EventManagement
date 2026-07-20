@@ -10,10 +10,23 @@ use Inertia\Inertia;
 use App\Traits\ChecksPegawaiRole;
 use App\Traits\ShowsEventDetail;
 use App\Traits\ShowsRiwayatEvent;
+use App\Traits\ShowsSemuaEvent;
 
 class EventController extends Controller
 {
-    use ChecksPegawaiRole, ShowsEventDetail, ShowsRiwayatEvent;
+    use ChecksPegawaiRole, ShowsEventDetail, ShowsRiwayatEvent, ShowsSemuaEvent;
+
+    /** Seluruh siklus acara Lead sampai Done dalam satu tabel. */
+    public function semua(Request $request)
+    {
+        $this->checkManajemen();
+
+        return $this->halamanSemuaEvent('Manajemen/Event/Semua', $request, [
+            'detail' => 'manajemen.event.show',
+            'self'   => 'manajemen.event.semua',
+            'prefix' => 'manajemen',
+        ]);
+    }
 
     /** Riwayat event yang sudah pernah dijalankan, target vs hasilnya. */
     public function riwayat(Request $request)
@@ -24,6 +37,7 @@ class EventController extends Controller
             'index'  => 'manajemen.event.index',
             'detail' => 'manajemen.event.show',
             'self'   => 'manajemen.event.riwayat',
+            'prefix' => 'manajemen',
         ]);
     }
 

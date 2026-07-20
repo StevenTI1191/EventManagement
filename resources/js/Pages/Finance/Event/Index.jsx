@@ -1,5 +1,6 @@
 ﻿import FinanceLayout from '@/Layouts/FinanceLayout';
 import Pagination from '@/Components/Pagination';
+import TabEvent from '@/Components/TabEvent';
 import { Search, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -118,10 +119,12 @@ export default function FinanceEventIndex({ auth, events, filters, clients, pega
                 </div>
             )}
 
-            <div className="mb-8">
+            <div className="mb-6">
                 <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">Event</h1>
                 <p className="mt-1 font-medium text-gray-500">Selamat Datang, {auth.user.nama_pegawai}!</p>
             </div>
+
+            <TabEvent aktif="berjalan" prefix="finance" />
 
             <div className="bg-white p-6 rounded-[2rem] shadow-sm mb-10 border border-gray-100">
                 <h2 className="mb-4 text-sm font-extrabold tracking-widest text-gray-400 uppercase">Filter</h2>

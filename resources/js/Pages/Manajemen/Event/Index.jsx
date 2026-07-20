@@ -1,5 +1,6 @@
 import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import Pagination from '@/Components/Pagination';
+import TabEvent from '@/Components/TabEvent';
 import { Search, Plus, Calendar as CalendarIcon, X, Pencil, Trash2, History } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
@@ -267,16 +268,7 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
                 </div>
             </div>
 
-            {/* Acara berjalan vs yang sudah pernah dijalankan */}
-            <div className="flex flex-wrap gap-2 mb-6">
-                <span className="px-5 py-2.5 text-sm font-bold text-white bg-[#FF2D55] border border-[#FF2D55] rounded-xl shadow-md shadow-[#FF2D55]/20">
-                    Sedang Berjalan
-                </span>
-                <Link href={route('manajemen.event.riwayat')}
-                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-gray-600 transition-all bg-white border border-gray-200 rounded-xl hover:border-gray-300">
-                    <History size={15} /> Riwayat Event
-                </Link>
-            </div>
+            <TabEvent aktif="berjalan" prefix="manajemen" />
 
             {/* --- FILTER & SEARCH --- */}
             <div className="bg-white p-6 rounded-[2rem] shadow-sm mb-10 border border-gray-100">

@@ -88,6 +88,7 @@ const inputCls = 'w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-
 
 export default function EventDetail({
     Layout, event, kelengkapan = [], progres = {}, tagihan = {},
+    appointments = [], tugasPerKategori = {},
     followUps = [], waFollowUp, clients = [], pegawais = [], routes = {},
 }) {
     const dariPipeline = typeof window !== 'undefined'
@@ -289,6 +290,45 @@ export default function EventDetail({
                 </Kartu>
             </div>
 
+            {/* APPOINTMENT ASAL — jejak dari permintaan awal klien sampai acara jadi */}
+            {appointments.length > 0 && (
+                <div className="mb-5">
+                    <Kartu judul="Appointment Terkait">
+                        <ul className="space-y-3">
+                            {appointments.map((a) => (
+                                <li key={a.id} className="p-3 bg-gray-50 rounded-xl">
+                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                        <span className="text-sm font-bold text-gray-800">{a.jenis_event || 'Meeting'}</span>
+                                        <span className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full ${
+                                            a.status === 'Selesai' ? 'bg-green-50 text-green-700'
+                                                : a.status === 'Dibatalkan' ? 'bg-red-50 text-red-600'
+                                                : 'bg-purple-50 text-purple-700'
+                                        }`}>
+                                            {a.status}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500">
+                                        <CalendarDays size={12} className="inline mr-1" />
+                                        {tanggal(a.tgl_konfirmasi || a.tgl_request)}
+                                        {(a.jam_konfirmasi || a.jam_request) && `, ${jamPendek(a.jam_konfirmasi || a.jam_request)}`}
+                                        {a.pegawai?.nama_pegawai && ` · ditangani ${a.pegawai.nama_pegawai}`}
+                                    </p>
+                                    {a.estimasi_budget > 0 && (
+                                        <p className="mt-0.5 text-xs text-gray-400">Estimasi awal klien: {rp(a.estimasi_budget)}</p>
+                                    )}
+                                    {a.catatan_meeting && (
+                                        <div className="p-2 mt-2 text-xs text-gray-600 bg-white border border-gray-100 rounded-lg whitespace-pre-wrap">
+                                            <span className="block mb-0.5 text-[10px] font-bold tracking-wider text-gray-400 uppercase">Hasil Meeting</span>
+                                            {a.catatan_meeting}
+                                        </div>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </Kartu>
+                </div>
+            )}
+
             {/* TO-DO & FOLLOW-UP */}
             <div className="grid grid-cols-1 gap-5 mb-5 lg:grid-cols-2">
                 <Kartu
@@ -308,6 +348,20 @@ export default function EventDetail({
                             <div className="w-full h-2 overflow-hidden bg-gray-100 rounded-full">
                                 <div className="h-full bg-[#FF2D55] transition-all" style={{ width: `${progres.persen}%` }} />
                             </div>
+
+                            {/* Rincian per kategori — hasil tahap perencanaan */}
+                            {Object.keys(tugasPerKategori).length > 0 && (
+                                <ul className="mt-3 space-y-1.5 max-h-40 overflow-y-auto">
+                                    {Object.entries(tugasPerKategori).map(([kat, n]) => (
+                                        <li key={kat} className="flex items-center justify-between text-xs">
+                                            <span className="text-gray-600 truncate">{kat}</span>
+                                            <span className={`font-bold shrink-0 ${n.done === n.total ? 'text-green-600' : 'text-gray-500'}`}>
+                                                {n.done}/{n.total}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </>
                     ) : (
                         <p className="flex items-center gap-2 text-sm text-gray-400">
@@ -370,7 +424,9 @@ export default function EventDetail({
                 </Kartu>
             </div>
 
-            {/* FORM EDIT */}
+            {/* FORM EDIT — hanya untuk peran yang berwenang mengubah.
+                Finance menelusuri saja, jadi rute update-nya tidak dikirim. */}
+            {routes.update && (
             <form onSubmit={simpan} className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl sm:p-8">
                 <div className="flex items-center justify-between mb-6">
                     <div>
@@ -544,6 +600,7 @@ export default function EventDetail({
                     </button>
                 </div>
             </form>
+            )}
         </Layout>
     );
 }

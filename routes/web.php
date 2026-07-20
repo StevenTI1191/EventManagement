@@ -130,6 +130,9 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         // Didaftarkan sebelum rute detail agar "riwayat" tidak ditelan {id}.
         Route::get('/manajemen/event/riwayat', [EventController::class, 'riwayat'])
             ->name('manajemen.event.riwayat');
+        // Seluruh siklus Lead sampai Done dalam satu tabel.
+        Route::get('/manajemen/event/semua', [EventController::class, 'semua'])
+            ->name('manajemen.event.semua');
         // Detail satu event. Berlaku untuk semua status — termasuk yang masih
         // di pipeline, yang sengaja tidak muncul di daftar Event.
         Route::get('/manajemen/event/{id}', [EventController::class, 'show'])
@@ -319,6 +322,9 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         // Didaftarkan sebelum rute detail agar "riwayat" tidak ditelan {id}.
         Route::get('/event-marketing/event/riwayat', [EMEventController::class, 'riwayat'])
             ->name('em.event.riwayat');
+        // Seluruh siklus Lead sampai Done dalam satu tabel.
+        Route::get('/event-marketing/event/semua', [EMEventController::class, 'semua'])
+            ->name('em.event.semua');
         // Detail satu event. Berlaku untuk semua status — termasuk yang masih
         // di pipeline, yang sengaja tidak muncul di daftar Event.
         Route::get('/event-marketing/event/{id}', [EMEventController::class, 'show'])
@@ -420,6 +426,14 @@ Route::domain(config('app.backstage_domain'))->group(function () {
 
         Route::get('/finance/event', [\App\Http\Controllers\Finance\EventController::class, 'index'])
             ->name('finance.event.index');
+        // Riwayat & daftar menyeluruh — didaftarkan sebelum rute detail agar
+        // katanya tidak ditelan pola {id}.
+        Route::get('/finance/event/riwayat', [\App\Http\Controllers\Finance\EventController::class, 'riwayat'])
+            ->name('finance.event.riwayat');
+        Route::get('/finance/event/semua', [\App\Http\Controllers\Finance\EventController::class, 'semua'])
+            ->name('finance.event.semua');
+        Route::get('/finance/event/{id}', [\App\Http\Controllers\Finance\EventController::class, 'show'])
+            ->whereNumber('id')->name('finance.event.show');
         Route::get('/finance/client', [\App\Http\Controllers\Finance\ClientController::class, 'index'])
             ->name('finance.client.index');
         Route::get('/finance/client/{id}', [\App\Http\Controllers\Finance\ClientController::class, 'show'])

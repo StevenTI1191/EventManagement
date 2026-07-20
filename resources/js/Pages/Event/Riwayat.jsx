@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import Pagination from '@/Components/Pagination';
+import TabEvent from '@/Components/TabEvent';
 import { useDebounced } from '@/hooks/useDebounced';
 import {
     History, Search, Target, Wallet, Users, CalendarDays, TrendingUp, TrendingDown, Minus,
@@ -75,17 +76,7 @@ export default function EventRiwayat({
                 </p>
             </div>
 
-            {/* Tab: berjalan / riwayat */}
-            <div className="flex flex-wrap gap-2 mb-5">
-                <Link href={route(routes.index)}
-                    className="px-5 py-2.5 text-sm font-bold transition-all bg-white border border-gray-200 rounded-xl text-gray-600 hover:border-gray-300">
-                    Sedang Berjalan
-                </Link>
-                <span className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-[#FF2D55] border border-[#FF2D55] rounded-xl shadow-md shadow-[#FF2D55]/20">
-                    Riwayat
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-white/25">{ringkas.jumlah ?? 0}</span>
-                </span>
-            </div>
+            <TabEvent aktif="riwayat" prefix={routes.prefix} jumlah={{ riwayat: ringkas.jumlah ?? 0 }} />
 
             {/* Ringkasan target vs hasil untuk seluruh hasil saringan */}
             <div className="grid grid-cols-1 gap-5 mb-6 sm:grid-cols-2 lg:grid-cols-3">

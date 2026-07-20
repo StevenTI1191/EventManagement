@@ -10,10 +10,56 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 use App\Traits\ChecksPegawaiRole;
+use App\Traits\ShowsEventDetail;
+use App\Traits\ShowsRiwayatEvent;
+use App\Traits\ShowsSemuaEvent;
 
 class EventController extends Controller
 {
-    use ChecksPegawaiRole;
+    use ChecksPegawaiRole, ShowsEventDetail, ShowsRiwayatEvent, ShowsSemuaEvent;
+
+    /** Seluruh siklus acara Lead sampai Done dalam satu tabel. */
+    public function semua(Request $request)
+    {
+        $this->checkFinance();
+
+        return $this->halamanSemuaEvent('Finance/Event/Semua', $request, [
+            'detail' => 'finance.event.show',
+            'self'   => 'finance.event.semua',
+            'prefix' => 'finance',
+        ]);
+    }
+
+    /** Riwayat event yang sudah pernah dijalankan, target vs hasilnya. */
+    public function riwayat(Request $request)
+    {
+        $this->checkFinance();
+
+        return $this->halamanRiwayatEvent('Finance/Event/Riwayat', $request, [
+            'index'  => 'finance.event.index',
+            'detail' => 'finance.event.show',
+            'self'   => 'finance.event.riwayat',
+            'prefix' => 'finance',
+        ]);
+    }
+
+    /**
+     * Halaman detail satu event. Finance hanya menelusuri — tidak diberi rute
+     * ubah maupun catat follow-up, jadi form suntingnya tidak muncul.
+     */
+    public function show($id)
+    {
+        $this->checkFinance();
+
+        return $this->halamanDetailEvent('Finance/Event/Detail', $id, [
+            'index'    => 'finance.event.index',
+            'pipeline' => 'finance.pipeline.index',
+            'client'   => 'finance.client.show',
+            'update'   => null,
+            'followUp' => null,
+            'todo'     => null,
+        ]);
+    }
 
     public function index(Request $request)
     {
