@@ -27,6 +27,7 @@ class AppointmentController extends Controller
             'batal'          => 'manajemen.appointment.batal',
             'catatanMeeting' => 'manajemen.appointment.catatan-meeting',
             'buatEvent'      => 'manajemen.event.create',
+            'eventIndex'     => 'manajemen.event.index',
         ];
     }
 

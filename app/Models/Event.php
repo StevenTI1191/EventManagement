@@ -180,6 +180,14 @@ class Event extends Model
      */
     public function scopeTerkonfirmasi($q) { return $q->whereIn('status_event', [self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE]); }
 
+    /**
+     * Acara yang benar-benar sedang berjalan untuk tab "Sedang Berjalan" di
+     * menu Event: sudah DP lunas dan berjalan, tapi belum selesai. Deal masih
+     * menunggu uang muka (belum berjalan) dan Done sudah selesai (masuk
+     * Riwayat) — keduanya sengaja dikecualikan agar tabnya tidak tercampur.
+     */
+    public function scopeSedangBerjalan($q) { return $q->whereIn('status_event', [self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN]); }
+
     /** Event yang sudah masuk ranah Finance — mulai dari Deal (proses DP 50%). */
     public function scopeUntukFinance($q) { return $q->whereIn('status_event', [self::STATUS_DEAL, self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE]); }
 

@@ -77,7 +77,7 @@ class EventController extends Controller
 
         // Hanya event nyata (Upcoming/Done). Planning & pipeline (Lead/Negotiation/Deal)
         // punya halamannya sendiri, jadi tidak ditampilkan di daftar Event.
-        $query = Event::query()->terkonfirmasi();
+        $query = Event::query()->sedangBerjalan();
 
         if ($request->tgl_awal && $request->tgl_akhir) {
             $query->whereBetween('tgl_mulai_event', [$request->tgl_awal, $request->tgl_akhir]);

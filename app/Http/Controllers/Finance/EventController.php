@@ -74,7 +74,7 @@ class EventController extends Controller
             'search'     => 'nullable|string|max:255',
         ]);
 
-        $query = Event::with(['client', 'pic', 'tugas'])->untukFinance();
+        $query = Event::with(['client', 'pic', 'tugas'])->sedangBerjalan();
 
         if ($request->tgl_awal && $request->tgl_akhir) {
             $query->whereBetween('tgl_mulai_event', [$request->tgl_awal, $request->tgl_akhir]);

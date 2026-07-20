@@ -151,6 +151,17 @@ class LaporanController extends Controller
         $totalDibayar = $events->sum(fn($e) => $e->transaksis->sum('nominal'));
         $totalPiutang = max($totalDeal - $totalDibayar, 0);
 
+        // Ringkasan diambil dari rekap per-event, bukan dari transaksi yang
+        // difilter tanggal bayar. Sebelumnya keduanya beda populasi: pembayaran
+        // difilter tgl_bayar dalam periode, sedangkan rekap memakai total
+        // sepanjang waktu untuk event yang tanggalnya dalam periode — akibatnya
+        // pembayaran yang masuk di bulan lain hilang dari headline, dan laba
+        // bersih jadi 0 padahal per-event jelas menunjukkan untung.
+        $totalPemasukan   = collect($rekap_event)->sum('terbayar_raw')
+                          + $events->sum(fn ($e) => $e->transaksiItems->where('tipe', 'Pemasukan')->sum('total'));
+        $totalPengeluaran = collect($rekap_event)->sum('pengeluaran_raw');
+        $labaBersih       = collect($rekap_event)->sum('laba_raw');
+
         $summary = [
             'total_pemasukan'     => $fmt($totalPemasukan),
             'total_pemasukan_raw' => $totalPemasukan,

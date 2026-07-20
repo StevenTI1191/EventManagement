@@ -4,7 +4,7 @@
  * Reschedule yang tidak dimiliki versi EM.
  */
 import Pagination from '@/Components/Pagination';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { Search, Calendar, Clock, Users, Wallet, UserCheck } from 'lucide-react';
 import { useDebounced } from '@/hooks/useDebounced';
@@ -202,10 +202,22 @@ export default function ManajemenAppointmentIndex({ Layout, routes = {},  auth, 
                                 )}
                             </div>
 
-                            {/* Tanggal request di kanan */}
-                            <div className="text-right flex-shrink-0">
-                                <p className="text-[10px] text-gray-400">Tanggal Masuk</p>
-                                <p className="text-xs font-bold text-gray-600">{formatTgl(apt.created_at)}</p>
+                            {/* Tanggal request + tombol detail di kanan */}
+                            <div className="flex flex-col items-end flex-shrink-0 gap-3">
+                                <div className="text-right">
+                                    <p className="text-[10px] text-gray-400">Tanggal Masuk</p>
+                                    <p className="text-xs font-bold text-gray-600">{formatTgl(apt.created_at)}</p>
+                                </div>
+                                {routes.show && (
+                                    <Link href={route(routes.show, apt.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="flex items-center gap-1.5 px-4 py-1.5 bg-[#FF2D55] text-white text-xs font-bold rounded-lg hover:bg-[#e02249] transition-colors whitespace-nowrap">
+                                        Detail
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                                        </svg>
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>
