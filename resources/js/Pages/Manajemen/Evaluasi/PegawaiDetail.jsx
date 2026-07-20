@@ -20,7 +20,10 @@ const rupiahRingkas = (v) => {
     return String(n);
 };
 
-export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [], sebaran = [], clients = [], isEM }) {
+export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [], sebaran = [], clients = [], eventsDiassign = [], isEM }) {
+    const [bukaTodo, setBukaTodo] = useState({});
+    const toggleTodo = (id) => setBukaTodo((s) => ({ ...s, [id]: !s[id] }));
+    const fmtTgl = (t) => (t ? new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-');
     const { flash } = usePage().props;
     const [expanded, setExpanded] = useState({});
     const [rehire, setRehire] = useState(pegawai.rekomendasi_rehire);
@@ -301,7 +304,52 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                 </form>
             </div>
 
-            {/* Tabel Event */}
+            {/* Tabel To-Do yang di-assign ke pegawai ini — per event, dropdown detail */}
+            <div className="mb-6 overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
+                <div className="px-6 py-4 border-b border-gray-100">
+                    <h2 className="text-base font-extrabold text-gray-800">Event dengan To-Do yang Ditugaskan</h2>
+                    <p className="mt-0.5 text-xs text-gray-400">Jobdesk yang dipegang pegawai ini di tiap event. Klik untuk melihat rinciannya.</p>
+                </div>
+                {eventsDiassign.length > 0 ? (
+                    <div className="divide-y divide-gray-50">
+                        {eventsDiassign.map((ev) => (
+                            <div key={ev.id_event}>
+                                <button onClick={() => toggleTodo(ev.id_event)}
+                                    className="flex items-center w-full gap-4 px-6 py-4 text-left hover:bg-gray-50/60">
+                                    <ChevronDown size={16} className={`text-gray-400 transition-transform shrink-0 ${bukaTodo[ev.id_event] ? 'rotate-180' : ''}`} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-gray-800 truncate">{ev.nama_event}</p>
+                                        <p className="text-xs text-gray-400">{fmtTgl(ev.tgl)} · {ev.status}</p>
+                                    </div>
+                                    <span className={`px-2.5 py-1 text-xs font-bold rounded-full shrink-0 ${
+                                        ev.done === ev.total ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500'
+                                    }`}>
+                                        {ev.done}/{ev.total} tugas
+                                    </span>
+                                </button>
+                                {bukaTodo[ev.id_event] && (
+                                    <div className="px-6 pb-4 space-y-1.5 bg-gray-50/40">
+                                        {ev.tugas.map((t) => (
+                                            <div key={t.id} className="flex items-center gap-3 px-3 py-2 bg-white border border-gray-100 rounded-xl">
+                                                <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                                    t.status === 'Done' ? 'bg-green-500' : t.progress > 0 ? 'bg-amber-400' : 'bg-gray-300'
+                                                }`} />
+                                                <span className="flex-1 text-xs font-semibold text-gray-700 truncate">{t.nama}</span>
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0">{t.kategori}</span>
+                                                <span className="text-[10px] font-bold text-gray-500 shrink-0">{t.progress}%</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="px-6 py-10 text-sm text-center text-gray-400">Belum ada to-do yang ditugaskan ke pegawai ini.</p>
+                )}
+            </div>
+
+            {/* Tabel Event yang dipegang sebagai PIC event */}
             <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
                 <div className="px-6 py-4 border-b border-gray-100">
                     <h2 className="text-base font-extrabold text-gray-800">List Event</h2>

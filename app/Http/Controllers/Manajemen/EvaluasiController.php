@@ -65,18 +65,39 @@ class EvaluasiController extends Controller
             ->take(200)
             ->get();
 
-        // Statistik closing rate (khusus Event Marketing) — dipindah dari Manajemen Pegawai.
-        // Klien yang ditangani EM ini lewat appointment (id_pegawai di-set saat konfirmasi/batal)
-        $clientIds = \App\Models\Appointment::where('id_pegawai', $id)
+        // ── Closing rate (khusus Event Marketing) ────────────────────────────
+        // Klien "ditangani" = klien yang sudah masuk sistem lewat EM ini, baik
+        // dari appointment yang ditanganinya maupun dari acara yang ia bawa
+        // sampai pipeline (Lead ke atas) — termasuk rencana Planning yang sudah
+        // diajukan ke klien. Sebelumnya hanya dari appointment, sehingga klien
+        // yang datang lewat jalur Planning tidak pernah ikut terhitung.
+        $dariAppointment = \App\Models\Appointment::where('id_pegawai', $id)
             ->whereNotNull('client_id')
             ->distinct()
             ->pluck('client_id');
 
+        // Acara bawaan EM yang sudah menyasar klien (pipeline Lead ke atas).
+        $dariPipeline = Event::where('id_pegawai', $id)
+            ->whereNotNull('id_client')
+            ->whereIn('status_event', [
+                Event::STATUS_LEAD, Event::STATUS_NEGOTIATION, Event::STATUS_DEAL,
+                Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN, Event::STATUS_DONE,
+            ])
+            ->distinct()
+            ->pluck('id_client');
+
+        $clientIds = $dariAppointment->merge($dariPipeline)->unique()->values();
         $klienDihandle = $clientIds->count();
 
-        // Klien dari appointment yang akhirnya memiliki event = closing (deal terjadi)
+        // Closing = klien yang acaranya sudah mencapai Deal ke atas (kesepakatan
+        // terjadi). Lead/Negotiation belum dianggap closing.
         $klienClosing = $clientIds->isEmpty() ? 0 :
-            Event::whereIn('id_client', $clientIds)->distinct()->pluck('id_client')->count();
+            Event::whereIn('id_client', $clientIds)
+                ->whereIn('status_event', [
+                    Event::STATUS_DEAL, Event::STATUS_UPCOMING,
+                    Event::STATUS_PENYELESAIAN, Event::STATUS_DONE,
+                ])
+                ->distinct()->pluck('id_client')->count();
 
         $closingRate = $klienDihandle > 0 ? (int) round($klienClosing / $klienDihandle * 100) : 0;
 
@@ -168,6 +189,39 @@ class EvaluasiController extends Controller
                 'closed'            => $c->events_count > 0,
             ]);
 
+        // ── Event tempat pegawai ini ditugaskan sebagai PIC to-do ────────────
+        // Berbeda dari "Event sebagai PIC" (yang menghitung event yang ia pegang
+        // secara keseluruhan): di sini setiap event tempat ada jobdesk to-do
+        // yang ditugaskan kepadanya, beserta rincian tugasnya untuk dropdown.
+        $tugasDiassign = Tugas::with('event:id_event,nama_event,tgl_mulai_event,status_event')
+            ->where('id_pegawai', $id)
+            ->orderBy('kategori')
+            ->orderBy('urutan')
+            ->get();
+
+        $eventsDiassign = $tugasDiassign
+            ->filter(fn ($t) => $t->event)
+            ->groupBy('id_event')
+            ->map(function ($grup) {
+                $ev = $grup->first()->event;
+                return [
+                    'id_event'    => $ev->id_event,
+                    'nama_event'  => $ev->nama_event,
+                    'tgl'         => $ev->tgl_mulai_event,
+                    'status'      => $ev->status_event,
+                    'total'       => $grup->count(),
+                    'done'        => $grup->where('status_tugas', 'Done')->count(),
+                    'tugas'       => $grup->map(fn ($t) => [
+                        'id'       => $t->id_tugas ?? $t->id,
+                        'nama'     => $t->nama_tugas,
+                        'kategori' => $t->kategori,
+                        'status'   => $t->status_tugas,
+                        'progress' => (int) $t->progress,
+                        'deadline' => $t->deadline_tugas,
+                    ])->values(),
+                ];
+            })->values();
+
         return Inertia::render('Manajemen/Evaluasi/PegawaiDetail', [
             'pegawai' => $pegawai,
             'events'  => $events,
@@ -175,6 +229,7 @@ class EvaluasiController extends Controller
             'tren'    => $tren,
             'sebaran' => $sebaran,
             'clients' => $clients,
+            'eventsDiassign' => $eventsDiassign,
             'isEM'    => in_array($pegawai->posisi_pegawai, ['EventMarketing', 'Event Marketing']),
         ]);
     }
