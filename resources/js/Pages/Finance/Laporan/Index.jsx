@@ -298,10 +298,10 @@ export default function LaporanIndex() {
                             <div className="mb-6 bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden print:shadow-none print:border-0 print:rounded-none print-section">
                                 <button onClick={() => setShowTrx(!showTrx)}
                                     className="flex items-center justify-between w-full px-6 py-4 border-b border-gray-100 hover:bg-gray-50 print:hidden">
-                                    <h3 className="text-sm font-extrabold text-gray-900">Rincian Pembayaran Client ({preview.transaksis.length})</h3>
+                                    <h3 className="text-sm font-extrabold text-gray-900">Rincian Pembayaran ({preview.transaksis.length})</h3>
                                     {showTrx ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                                 </button>
-                                <h2 className="hidden print:block">Rincian Pembayaran Client</h2>
+                                <h2 className="hidden print:block">Rincian Pembayaran</h2>
                                 {showTrx && (
                                     <div className="overflow-x-auto">
                                         <table className="w-full">

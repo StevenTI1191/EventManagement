@@ -76,34 +76,28 @@ class DatabaseSeeder extends Seeder
         ];
     }
 
+    /**
+     * Klien dicatat sebagai prospek hasil input tim, tanpa kata sandi portal.
+     *
+     * Akun portal tidak dibuatkan di sini: klien nyata mendaftar sendiri lewat
+     * halaman registrasi, dan membuatkan akun beserta sandinya berarti
+     * mengarang pendaftaran yang tidak pernah terjadi. Data ini hanya menjadi
+     * pihak yang dituju oleh acara, persis seperti prospek yang di-input tim
+     * Event Marketing sehari-hari.
+     */
     private function klien(): array
     {
-        return [
-            Client::create([
-                'nama_client'       => 'Hengky Kurniawan',
-                'perusahaan_client' => 'Mitsubishi Pekanbaru',
-                'no_telp_client'    => '08112233445',
-                'email_client'      => 'hengky@mitsubishi.id',
-                'password'          => Hash::make(self::SANDI),
-                'sumber'            => Client::SUMBER_MANDIRI,
-            ]),
-            Client::create([
-                'nama_client'       => 'Rio Pratama',
-                'perusahaan_client' => 'Alpha Fit Gym',
-                'no_telp_client'    => '08221144556',
-                'email_client'      => 'rio@alphafit.id',
-                'password'          => Hash::make(self::SANDI),
-                'sumber'            => Client::SUMBER_INTERNAL,
-            ]),
-            Client::create([
-                'nama_client'       => 'Gunawan Saputra',
-                'perusahaan_client' => 'Bank Riau Kepri',
-                'no_telp_client'    => '08331155667',
-                'email_client'      => 'gunawan@bankriau.id',
-                'password'          => Hash::make(self::SANDI),
-                'sumber'            => Client::SUMBER_MANDIRI,
-            ]),
-        ];
+        return collect([
+            ['Hengky Kurniawan', 'Mitsubishi Pekanbaru', '08112233445', 'hengky@mitsubishi.id'],
+            ['Rio Pratama',      'Alpha Fit Gym',        '08221144556', 'rio@alphafit.id'],
+            ['Gunawan Saputra',  'Bank Riau Kepri',      '08331155667', 'gunawan@bankriau.id'],
+        ])->map(fn ($c) => Client::create([
+            'nama_client'       => $c[0],
+            'perusahaan_client' => $c[1],
+            'no_telp_client'    => $c[2],
+            'email_client'      => $c[3],
+            'sumber'            => Client::SUMBER_INTERNAL,
+        ]))->all();
     }
 
     /** Nilai bawaan acara klien — dipakai ulang agar tiap tahap konsisten. */

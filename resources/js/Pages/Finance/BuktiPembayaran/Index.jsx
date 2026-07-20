@@ -69,7 +69,7 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
 
             {/* HEADER */}
             <div className="mb-8">
-                <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Bukti Pembayaran Client</h1>
+                <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Bukti Pembayaran</h1>
                 <p className="mt-1 font-medium text-gray-500">Verifikasi bukti transfer yang dikirimkan client.</p>
             </div>
 

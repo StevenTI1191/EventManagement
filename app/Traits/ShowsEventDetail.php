@@ -48,6 +48,12 @@ trait ShowsEventDetail
         return Inertia::render($komponen, [
             'event'       => $event,
             'kelengkapan' => $event->kelengkapan(),
+            // Status yang boleh diubah langsung dari halaman ini. Perpindahan
+            // tahap pipeline tetap lewat papan, tapi acara yang sudah berjalan
+            // memang ditutup manual dari sini.
+            'statusManual' => in_array($event->status_event, Event::STATUS_MANUAL, true)
+                ? Event::STATUS_MANUAL
+                : [],
             'progres'     => [
                 'total'  => $total,
                 'done'   => $done,

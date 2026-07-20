@@ -210,7 +210,7 @@ trait ManagesPlanning
      * ia masuk pipeline sebagai Lead lebih dulu, supaya penawaran, deal, dan
      * penagihan tidak terlewat.
      */
-    protected function finalisasiPlanning(Event $event, string $editRoute, string $pipelineRoute): RedirectResponse
+    protected function finalisasiPlanning(Event $event, string $detailRoute, string $pipelineRoute): RedirectResponse
     {
         if ($event->id_client) {
             $event->update([
@@ -227,9 +227,11 @@ trait ManagesPlanning
 
         $event->update(['status_event' => Event::STATUS_UPCOMING]);
 
-        return redirect()->route($editRoute, $event->id_event)->with(
+        // Diarahkan ke halaman detail, bukan form Event lama: form itu meminta
+        // klien, sedangkan acara internal memang tidak punya klien.
+        return redirect()->route($detailRoute, $event->id_event)->with(
             'success',
-            'Event internal difinalisasi ke Upcoming. Lengkapi detail (PIC, jam, area).'
+            'Event internal difinalisasi ke Upcoming. Lengkapi jam, area, dan PIC-nya di bawah.'
         );
     }
 }

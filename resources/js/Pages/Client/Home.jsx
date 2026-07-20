@@ -94,7 +94,11 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
     const statItems = [
         { value: stats.totalEventDone + '+', label: 'Event Selesai',   icon: <CheckCircle size={20} /> },
         { value: stats.totalClient    + '+', label: 'Client Puas',     icon: <Users size={20} /> },
-        { value: stats.totalKategori  + '+', label: 'Jenis Layanan',   icon: <Layers size={20} /> },
+        // Jumlah layanan yang ditawarkan, bukan turunan data acara. Sebelumnya
+        // dihitung dari kategori acara yang tercatat, sehingga berbunyi "0+"
+        // selama acaranya belum dikategorikan — padahal layanannya jelas ada
+        // dan terpampang di bagian Layanan tepat di bawah.
+        { value: layanan.length + '+',       label: 'Jenis Layanan',   icon: <Layers size={20} /> },
         { value: '5+',                        label: 'Tahun Pengalaman', icon: <Award size={20} /> },
     ];
 

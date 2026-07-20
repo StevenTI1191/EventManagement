@@ -119,7 +119,7 @@ export default function TransaksiIndex({ auth, events }) {
                                                 <button
                                                     onClick={() => setExpandedTab('pembayaran')}
                                                     className={'px-5 py-1.5 rounded-xl text-xs font-bold transition-all ' + (expandedTab === 'pembayaran' ? 'bg-white text-[#FF2D55] shadow-sm' : 'text-gray-500')}>
-                                                    Pembayaran Client
+                                                    Pembayaran
                                                 </button>
                                                 <button
                                                     onClick={() => setExpandedTab('pengeluaran')}

@@ -228,10 +228,20 @@ class Event extends Model
      */
     private const DETAIL_HARUS_POSITIF = ['jumlah_pax', 'deal_harga_event'];
 
+    /**
+     * Acara milik LM sendiri tidak menagih siapa pun, jadi jumlah pax dan deal
+     * harga tidak berlaku baginya — yang wajib hanya jadwalnya. Tanpa pembedaan
+     * ini, acara internal yang difinalisasi dari Planning selamanya dianggap
+     * belum lengkap karena menunggu nilai yang memang tidak akan pernah ada.
+     */
     public function kelengkapan(): array
     {
+        $wajib = $this->tipe_event === self::TIPE_INTERNAL
+            ? array_diff_key(self::DETAIL_WAJIB, array_flip(self::DETAIL_HARUS_POSITIF))
+            : self::DETAIL_WAJIB;
+
         $kurang = [];
-        foreach (self::DETAIL_WAJIB as $kolom => $label) {
+        foreach ($wajib as $kolom => $label) {
             $kosong = in_array($kolom, self::DETAIL_HARUS_POSITIF, true)
                 ? (float) $this->{$kolom} <= 0
                 : blank($this->{$kolom});

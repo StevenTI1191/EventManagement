@@ -87,7 +87,7 @@ function Field({ label, error, children, hint = null }) {
 const inputCls = 'w-full p-3 border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:ring-1 focus:ring-[#FF2D55] focus:outline-none';
 
 export default function EventDetail({
-    Layout, event, kelengkapan = [], progres = {}, tagihan = {},
+    Layout, event, kelengkapan = [], statusManual = [], progres = {}, tagihan = {},
     appointments = [], tugasPerKategori = {},
     followUps = [], waFollowUp, clients = [], pegawais = [], routes = {},
 }) {
@@ -102,6 +102,7 @@ export default function EventDetail({
         _method: 'put',
         // Ikut dikirim agar tombol kembali tetap pulang ke pipeline setelah simpan.
         dari: dariPipeline ? 'pipeline' : '',
+        status_event: event.status_event || '',
         nama_event: event.nama_event || '',
         kategori_event: event.kategori_event || '',
         deskripsi_event: event.deskripsi_event || '',
@@ -434,9 +435,20 @@ export default function EventDetail({
                     <div>
                         <h2 className="text-lg font-extrabold text-gray-900">Lengkapi Detail Event</h2>
                         <p className="mt-0.5 text-sm text-gray-500">
-                            Status event tidak diubah dari sini — perpindahan tahap tetap lewat papan Pipeline.
+                            {statusManual.length > 0
+                                ? 'Acara sudah berjalan — statusnya bisa ditutup langsung dari sini.'
+                                : 'Status tidak diubah dari sini — perpindahan tahap lewat papan Pipeline.'}
                         </p>
                     </div>
+                    {statusManual.length > 0 && (
+                        <div className="min-w-[190px]">
+                            <label className="block mb-1 text-xs font-bold tracking-wider text-gray-400 uppercase">Status Event</label>
+                            <select className={inputCls} value={data.status_event}
+                                onChange={(e) => setData('status_event', e.target.value)}>
+                                {statusManual.map((s) => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 {Object.keys(errors).length > 0 && (
@@ -515,30 +527,39 @@ export default function EventDetail({
                             value={data.area_event} onChange={(e) => setData('area_event', e.target.value)} />
                     </Field>
 
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                        <Field label="Technical Meeting" hint="Tanggal & jam — boleh berbeda dari hari acara."
-                            error={errors.technical_meeting}>
-                            <DateTimePicker value={data.technical_meeting} onChange={(v) => setData('technical_meeting', v)} />
-                        </Field>
-                        <Field label="Gladi Resik" hint="Tanggal & jam — boleh berbeda dari hari acara."
-                            error={errors.gladi_resik}>
-                            <DateTimePicker value={data.gladi_resik} onChange={(v) => setData('gladi_resik', v)} />
-                        </Field>
-                    </div>
+                    {/* Technical meeting & gladi resik hanya relevan untuk acara
+                        klien — acara internal LM tidak melewati tahap itu. */}
+                    {event.tipe_event === 'Eksternal' && (
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <Field label="Technical Meeting" hint="Tanggal & jam — boleh berbeda dari hari acara."
+                                error={errors.technical_meeting}>
+                                <DateTimePicker value={data.technical_meeting} onChange={(v) => setData('technical_meeting', v)} />
+                            </Field>
+                            <Field label="Gladi Resik" hint="Tanggal & jam — boleh berbeda dari hari acara."
+                                error={errors.gladi_resik}>
+                                <DateTimePicker value={data.gladi_resik} onChange={(v) => setData('gladi_resik', v)} />
+                            </Field>
+                        </div>
+                    )}
 
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                    <div className={`grid grid-cols-1 gap-5 ${event.tipe_event === 'Eksternal' ? 'sm:grid-cols-3' : 'sm:grid-cols-1'}`}>
                         <Field label="Jumlah Pax" error={errors.jumlah_pax}>
                             <input type="number" min="0" className={inputCls} value={data.jumlah_pax}
                                 onChange={(e) => setData('jumlah_pax', e.target.value)} />
                         </Field>
-                        <Field label="Harga per Pax" error={errors.harga_per_pax}>
-                            <RupiahInput className={inputCls} value={data.harga_per_pax}
-                                onChange={(v) => setData('harga_per_pax', v)} />
-                        </Field>
-                        <Field label="Deal Harga" error={errors.deal_harga_event}>
-                            <RupiahInput className={inputCls} value={data.deal_harga_event}
-                                onChange={(v) => setData('deal_harga_event', v)} />
-                        </Field>
+                        {/* Nilai kesepakatan hanya ada pada acara pesanan klien */}
+                        {event.tipe_event === 'Eksternal' && (
+                            <>
+                                <Field label="Harga per Pax" error={errors.harga_per_pax}>
+                                    <RupiahInput className={inputCls} value={data.harga_per_pax}
+                                        onChange={(v) => setData('harga_per_pax', v)} />
+                                </Field>
+                                <Field label="Deal Harga" error={errors.deal_harga_event}>
+                                    <RupiahInput className={inputCls} value={data.deal_harga_event}
+                                        onChange={(v) => setData('deal_harga_event', v)} />
+                                </Field>
+                            </>
+                        )}
                     </div>
 
                     {/* Target hanya ada pada acara yang melewati tahap perencanaan */}

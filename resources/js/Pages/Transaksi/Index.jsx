@@ -612,7 +612,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                             <div className="flex gap-2 p-1 mb-5 bg-gray-200 rounded-2xl w-fit">
                                                 <button onClick={() => setExpandedTab('pembayaran')}
                                                     className={`px-5 py-1.5 rounded-xl text-xs font-bold transition-all ${expandedTab === 'pembayaran' ? 'bg-white text-[#FF2D55] shadow-sm' : 'text-gray-500'}`}>
-                                                    Pembayaran Client
+                                                    Pembayaran
                                                 </button>
                                                 <button onClick={() => setExpandedTab('pengeluaran')}
                                                     className={`px-5 py-1.5 rounded-xl text-xs font-bold transition-all ${expandedTab === 'pengeluaran' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>

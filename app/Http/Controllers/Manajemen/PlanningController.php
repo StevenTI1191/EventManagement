@@ -119,6 +119,6 @@ class PlanningController extends Controller
 
         $event = Event::where('status_event', 'Planning')->findOrFail($id_event);
 
-        return $this->finalisasiPlanning($event, 'manajemen.event.edit', 'manajemen.pipeline.index');
+        return $this->finalisasiPlanning($event, 'manajemen.event.show', 'manajemen.pipeline.index');
     }
 }
