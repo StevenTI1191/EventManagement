@@ -176,6 +176,17 @@ trait ManagesPipeline
 
         $event->update($ubah);
 
+        // Naik ke Negotiation = penawaran resmi dikirimkan. Email + lampiran PDF
+        // penawaran dan notifikasi in-app dikirim sekali saat MAJU ke tahap ini
+        // (bukan saat kartu ditarik mundur dari Deal ke Negotiation).
+        $pesanExtra = '';
+        if ($baru === Event::STATUS_NEGOTIATION && $sekarang < $tujuan) {
+            $terkirim = $this->kirimPenawaranKeKlien($event);
+            $pesanExtra = $terkirim
+                ? ' Penawaran beserta dokumen PDF telah dikirim ke email klien.'
+                : ' Klien belum memiliki email — silakan kirim penawaran secara manual.';
+        }
+
         // Deal tercapai → appointment asal (bila ada) otomatis ditandai Selesai,
         // sehingga tidak ikut terbatalkan scheduler auto-batal appointment.
         if ($baru === Event::STATUS_DEAL) {
@@ -184,7 +195,49 @@ trait ManagesPipeline
                 ->update(['status' => 'Selesai']);
         }
 
-        return back()->with('success', "Event \"{$event->nama_event}\" dipindahkan ke tahap {$baru}.");
+        return back()->with('success', "Event \"{$event->nama_event}\" dipindahkan ke tahap {$baru}.{$pesanExtra}");
+    }
+
+    /**
+     * Kirim penawaran ke klien: email berisi ringkasan + lampiran PDF penawaran,
+     * dan notifikasi in-app. Mengembalikan true bila email berhasil dikirim.
+     * Kegagalan email/notif hanya dicatat ke log — tidak menggagalkan perpindahan
+     * tahap, sebab kartu sudah terlanjur pindah dan datanya tetap benar.
+     */
+    protected function kirimPenawaranKeKlien(Event $event): bool
+    {
+        $event->loadMissing('client');
+
+        $terkirim = false;
+        $email    = $event->client?->email_client;
+
+        if ($email) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\PenawaranDikirim($event));
+                $terkirim = true;
+            } catch (\Throwable $e) {
+                \Log::warning('Email penawaran gagal dikirim: ' . $e->getMessage());
+            }
+        }
+
+        // Notifikasi in-app untuk klien yang memiliki akun portal.
+        if ($event->id_client) {
+            try {
+                \App\Models\Notifikasi::create([
+                    'judul'        => '📩 Penawaran Baru',
+                    'pesan'        => "Tim kami mengirimkan penawaran untuk acara \"{$event->nama_event}\". "
+                        . 'Tinjau rincian & harga, lalu terima atau tolak melalui dashboard Anda.',
+                    'tipe'         => 'penawaran',
+                    'reference_id' => $event->id_event,
+                    'client_id'    => $event->id_client,
+                    'is_read'      => false,
+                ]);
+            } catch (\Throwable $e) {
+                \Log::warning('Notifikasi penawaran gagal dibuat: ' . $e->getMessage());
+            }
+        }
+
+        return $terkirim;
     }
 
     /**

@@ -70,6 +70,7 @@ export default function ClientDashboard({
 
     const getNotifIcon = (tipe) => {
         if (tipe === 'bukti_pembayaran') return '💳';
+        if (tipe === 'penawaran') return '📩';
         return '📅';
     };
     // ── SEMUA HOOKS HARUS DI ATAS — sebelum return kondisional apapun ──
