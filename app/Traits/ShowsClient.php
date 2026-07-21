@@ -92,8 +92,12 @@ trait ShowsClient
                 ->latest()->take(100)->get(),
             'waFollowUp' => Wa::link(
                 $client->no_telp_client,
-                "Halo {$client->nama_client}, dari tim Laksamana Muda. "
-                    . 'Kami ingin menindaklanjuti kebutuhan acara Anda. Apakah ada yang bisa kami bantu?',
+                "Halo Bapak/Ibu {$client->nama_client}"
+                    . ($client->perusahaan_client ? " dari {$client->perusahaan_client}" : '') . ",\n\n"
+                    . "Perkenalkan, kami dari *PT Laksamana Muda Bersatu* — Event Organizer & Venue, Pekanbaru.\n\n"
+                    . "Kami ingin menindaklanjuti kebutuhan acara Anda. Bila Anda sedang merencanakan sebuah acara — corporate, wedding, konser, exhibition, maupun lainnya — dengan senang hati tim kami membantu dari konsep hingga hari pelaksanaan.\n\n"
+                    . "Apakah ada yang bisa kami bantu saat ini? 🙏\n"
+                    . "— PT Laksamana Muda Bersatu",
             ),
             'filters'   => request()->only(['tgl_awal', 'tgl_akhir', 'kategori', 'pic', 'search']),
             'canEdit'   => $canEdit,

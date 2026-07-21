@@ -233,24 +233,30 @@ class InvoiceController extends Controller
     /** Teks WhatsApp untuk pengiriman invoice / reminder pelunasan. */
     private function pesanInvoice(Event $event, Invoice $invoice): string
     {
-        $sapaan  = $event->client->nama_client ?? 'Bapak/Ibu';
-        $nominal = 'Rp ' . number_format((float) $invoice->nominal, 0, ',', '.');
-        $tempo   = $invoice->tgl_jatuh_tempo
+        $nama     = $event->client?->nama_client ?: 'Bapak/Ibu';
+        $pt       = $event->client?->perusahaan_client ? " dari {$event->client->perusahaan_client}" : '';
+        $nominal  = 'Rp ' . number_format((float) $invoice->nominal, 0, ',', '.');
+        $tglAcara = $event->tgl_mulai_event
+            ? Carbon::parse($event->tgl_mulai_event)->translatedFormat('d F Y')
+            : '-';
+        $tempo    = $invoice->tgl_jatuh_tempo
             ? $invoice->tgl_jatuh_tempo->translatedFormat('d F Y')
             : null;
+        $jenis    = $invoice->tipe === Invoice::TIPE_DP ? 'uang muka (DP 50%)' : 'pelunasan (sisa 50%)';
 
-        if ($invoice->tipe === Invoice::TIPE_DP) {
-            $teks = "Halo {$sapaan}, terima kasih atas kepercayaannya. Berikut invoice uang muka (DP 50%) "
-                . "untuk acara \"{$event->nama_event}\" sebesar {$nominal}.";
-        } else {
-            $teks = "Halo {$sapaan}, kami ingatkan untuk pelunasan acara \"{$event->nama_event}\" "
-                . "sebesar {$nominal} (sisa 50%).";
-        }
+        $pesan  = "Halo Bapak/Ibu {$nama}{$pt},\n\n";
+        $pesan .= "Terima kasih atas kepercayaan Anda kepada *PT Laksamana Muda Bersatu*. "
+                . "Berikut kami sampaikan invoice {$jenis} untuk acara:\n\n";
+        $pesan .= "📌 *{$event->nama_event}*\n";
+        $pesan .= "🗓️ {$tglAcara}\n";
+        $pesan .= "🧾 No. Invoice: {$invoice->nomor_invoice}\n";
+        $pesan .= "💰 Jumlah: *{$nominal}*\n";
+        if ($tempo) { $pesan .= "⏰ Jatuh tempo: *{$tempo}*\n"; }
+        $pesan .= "\nMohon pembayaran dilakukan ke rekening resmi kami, lalu *unggah bukti transfer* melalui "
+                . "portal klien agar dapat segera kami verifikasi. Berkas *invoice (PDF)* kami lampirkan pada pesan ini.\n\n";
+        $pesan .= "Bila ada pertanyaan, jangan ragu menghubungi kami. Terima kasih. 🙏\n";
+        $pesan .= "— Tim Finance, PT Laksamana Muda Bersatu";
 
-        if ($tempo) {
-            $teks .= " Mohon diselesaikan paling lambat {$tempo}.";
-        }
-
-        return $teks . " File invoice kami lampirkan pada pesan ini. Terima kasih. — PT Laksamana Muda Bersatu";
+        return $pesan;
     }
 }

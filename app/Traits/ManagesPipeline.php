@@ -84,15 +84,30 @@ trait ManagesPipeline
     /** Teks WhatsApp yang menyertai pengiriman penawaran. */
     protected function pesanPenawaran(Event $event): string
     {
-        $sapaan = $event->client->nama_client ?? 'Bapak/Ibu';
-        $tgl    = $event->tgl_mulai_event
+        $nama  = $event->client?->nama_client ?: 'Bapak/Ibu';
+        $pt    = $event->client?->perusahaan_client ? " dari {$event->client->perusahaan_client}" : '';
+        $tgl   = $event->tgl_mulai_event
             ? Carbon::parse($event->tgl_mulai_event)->translatedFormat('d F Y')
             : '-';
-        $total  = 'Rp ' . number_format((float) ($event->deal_harga_event ?? 0), 0, ',', '.');
+        $jam   = $event->jam_mulai ? ', ' . substr((string) $event->jam_mulai, 0, 5) . ' WIB' : '';
+        $total = 'Rp ' . number_format((float) ($event->deal_harga_event ?? 0), 0, ',', '.');
 
-        return "Halo {$sapaan}, berikut kami kirimkan penawaran untuk acara \"{$event->nama_event}\" "
-            . "pada {$tgl}. Total penawaran {$total}. File penawaran kami lampirkan pada pesan ini. "
-            . "Mohon dicek, terima kasih. — PT Laksamana Muda Bersatu";
+        $pesan  = "Halo Bapak/Ibu {$nama}{$pt},\n\n";
+        $pesan .= "Terima kasih atas ketertarikan Anda bekerja sama dengan *PT Laksamana Muda Bersatu*. "
+                . "Berikut kami sampaikan penawaran untuk acara Anda:\n\n";
+        $pesan .= "📌 *{$event->nama_event}*\n";
+        $pesan .= "🗓️ {$tgl}{$jam}\n";
+        if ($event->area_event) { $pesan .= "📍 {$event->area_event}\n"; }
+        if ($event->jumlah_pax) { $pesan .= "👥 {$event->jumlah_pax} tamu\n"; }
+        $pesan .= "💰 Total penawaran: *{$total}*\n\n";
+        $pesan .= "Rincian lengkap kami lampirkan dalam berkas *PDF penawaran* pada pesan ini. Silakan ditinjau; "
+                . "bila berkenan, Anda dapat menerima atau menolak penawaran melalui portal klien kami.\n\n";
+        $pesan .= "Pembayaran dua tahap: *DP 50%* setelah penawaran disetujui, dan *pelunasan 50%* paling lambat "
+                . "sebelum hari-H acara. Penawaran ini berlaku 14 hari sejak tanggal terbit.\n\n";
+        $pesan .= "Kami tunggu kabar baiknya. 🙏\n";
+        $pesan .= "— PT Laksamana Muda Bersatu";
+
+        return $pesan;
     }
 
     /** Unduh dokumen penawaran (PDF) untuk dikirim ke klien. */

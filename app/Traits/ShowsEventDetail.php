@@ -109,9 +109,24 @@ trait ShowsEventDetail
     /** Teks WhatsApp untuk menindaklanjuti event ini ke kliennya. */
     protected function pesanFollowUp(Event $event): string
     {
-        $sapaan = $event->client->nama_client ?? 'Bapak/Ibu';
+        $nama = $event->client?->nama_client ?: 'Bapak/Ibu';
+        $pt   = $event->client?->perusahaan_client ? " dari {$event->client->perusahaan_client}" : '';
+        $pic  = $event->pic?->nama_pegawai;
+        $tgl  = $event->tgl_mulai_event
+            ? \Carbon\Carbon::parse($event->tgl_mulai_event)->translatedFormat('d F Y')
+            : null;
 
-        return "Halo {$sapaan}, dari tim Laksamana Muda. Kami ingin menindaklanjuti "
-            . "rencana acara \"{$event->nama_event}\". Apakah ada yang bisa kami bantu?";
+        $pesan  = "Halo Bapak/Ibu {$nama}{$pt},\n\n";
+        $pesan .= ($pic ? "Perkenalkan, saya {$pic} dari " : "Kami dari ")
+                . "*PT Laksamana Muda Bersatu* — Event Organizer & Venue, Pekanbaru.\n\n";
+        $pesan .= "Kami ingin menindaklanjuti rencana acara Anda berikut:\n";
+        $pesan .= "📌 *{$event->nama_event}*\n";
+        if ($tgl)               { $pesan .= "🗓️ {$tgl}\n"; }
+        if ($event->area_event) { $pesan .= "📍 {$event->area_event}\n"; }
+        $pesan .= "\nApakah ada yang bisa kami bantu untuk mematangkan konsep atau menjawab pertanyaan seputar acara ini? Dengan senang hati kami mendampingi setiap tahapnya hingga hari pelaksanaan.\n\n";
+        $pesan .= "Terima kasih atas waktunya. 🙏\n";
+        $pesan .= "— " . ($pic ? "{$pic}, " : '') . "PT Laksamana Muda Bersatu";
+
+        return $pesan;
     }
 }
