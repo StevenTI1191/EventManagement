@@ -323,3 +323,76 @@ Schedule::call(function () {
         $f->update(['reminder_terkirim' => true]);
     }
 })->dailyAt('08:00')->name('followup-reminder')->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Reminder Technical Meeting & Gladi Resik — jalan setiap hari jam 07:45
+| Kedua agenda ini dijadwalkan menjelang hari-H. PIC diingatkan lewat email,
+| klien lewat email + notifikasi in-app, pada H-1 dan hari-H agenda tersebut.
+| Hanya untuk acara yang masih aktif (Upcoming/Penyelesaian) dan agendanya diisi.
+|--------------------------------------------------------------------------
+*/
+Schedule::call(function () {
+    $agenda = [
+        'technical_meeting' => 'Technical Meeting',
+        'gladi_resik'       => 'Gladi Resik',
+    ];
+
+    foreach ($agenda as $kolom => $label) {
+        foreach ([1, 0] as $offset) {
+            $events = Event::with(['pic', 'client'])
+                ->whereIn('status_event', [Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
+                ->whereNotNull($kolom)
+                ->whereDate($kolom, now()->addDays($offset)->toDateString())
+                ->get();
+
+            foreach ($events as $event) {
+                $kapan  = $offset === 0 ? 'HARI INI' : 'BESOK';
+                $jam    = \Illuminate\Support\Carbon::parse($event->{$kolom})->translatedFormat('d F Y, H:i');
+                $lokasi = $event->area_event ? " di {$event->area_event}" : '';
+
+                // PIC (pegawai) — koordinasi persiapan tim.
+                if ($emailPic = $event->pic?->email_pegawai) {
+                    $subjectPic = "📋 {$label} {$kapan} — {$event->nama_event}";
+                    $pesanPic   = "Pengingat: {$label} untuk acara \"{$event->nama_event}\" {$kapan} "
+                                . "({$jam} WIB){$lokasi}.\n\nMohon pastikan persiapan & kehadiran tim.\n\n— Sistem Laksamana Muda";
+                    try {
+                        Mail::raw($pesanPic, function ($m) use ($emailPic, $subjectPic) {
+                            $m->to($emailPic)->subject($subjectPic);
+                        });
+                    } catch (\Exception $e) {
+                        \Log::warning("Email reminder {$label} (PIC) gagal: " . $e->getMessage());
+                    }
+                }
+
+                // Klien — email + notifikasi in-app di dashboard.
+                if ($client = $event->client) {
+                    $pesanKlien = "Pengingat: {$label} untuk acara \"{$event->nama_event}\" dijadwalkan {$kapan} "
+                                . "pada {$jam} WIB{$lokasi}.";
+
+                    if ($emailKlien = $client->email_client) {
+                        $subjectKlien = "📋 {$label} — {$event->nama_event}";
+                        try {
+                            Mail::raw($pesanKlien . "\n\nTerima kasih.\n— PT Laksamana Muda Bersatu", function ($m) use ($emailKlien, $subjectKlien) {
+                                $m->to($emailKlien)->subject($subjectKlien);
+                            });
+                        } catch (\Exception $e) {
+                            \Log::warning("Email reminder {$label} (klien) gagal: " . $e->getMessage());
+                        }
+                    }
+
+                    if ($client->id) {
+                        \App\Models\Notifikasi::create([
+                            'judul'        => "📋 Pengingat {$label}",
+                            'pesan'        => $pesanKlien,
+                            'tipe'         => 'agenda',
+                            'reference_id' => $event->id_event,
+                            'client_id'    => $client->id,
+                            'is_read'      => false,
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+})->dailyAt('07:45')->name('agenda-reminder')->withoutOverlapping();
