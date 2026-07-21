@@ -43,6 +43,7 @@ const GoogleIcon = () => (
 export default function Register() {
     const { data, setData, post, processing, errors } = useForm({
         nama_client:           '',
+        tipe_client:           'Perusahaan',
         perusahaan_client:     '',
         email_client:          '',
         no_telp_client:        '',
@@ -111,12 +112,27 @@ export default function Register() {
                             </div>
 
                             <div>
-                                <label className={labelClass}>Perusahaan *</label>
-                                <input type="text" value={data.perusahaan_client}
-                                    onChange={e => setData('perusahaan_client', e.target.value)}
-                                    placeholder="PT. Example" className={inputClass} />
-                                {errors.perusahaan_client && <p className="mt-1 text-xs text-danger">{errors.perusahaan_client}</p>}
+                                <label className={labelClass}>Daftar sebagai *</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[['Perusahaan', '🏢 Perusahaan'], ['Perorangan', '👤 Pribadi']].map(([val, lbl]) => (
+                                        <button type="button" key={val}
+                                            onClick={() => setData({ ...data, tipe_client: val, perusahaan_client: val === 'Perorangan' ? '' : data.perusahaan_client })}
+                                            className={`py-2.5 text-sm font-bold rounded-xl border transition-all ${data.tipe_client === val ? 'bg-gold-grad text-white border-gold-dim' : 'bg-paper text-muted border-line hover:border-gold/40'}`}>
+                                            {lbl}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
+
+                            {data.tipe_client === 'Perusahaan' && (
+                                <div>
+                                    <label className={labelClass}>Perusahaan *</label>
+                                    <input type="text" value={data.perusahaan_client}
+                                        onChange={e => setData('perusahaan_client', e.target.value)}
+                                        placeholder="PT. Example" className={inputClass} />
+                                    {errors.perusahaan_client && <p className="mt-1 text-xs text-danger">{errors.perusahaan_client}</p>}
+                                </div>
+                            )}
 
                             <div>
                                 <label className={labelClass}>Email *</label>

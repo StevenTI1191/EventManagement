@@ -173,11 +173,12 @@ class AppointmentController extends Controller
     {
         $client = Auth::guard('client')->user();
 
-        // Wajib lengkapi profil (perusahaan + no HP) dulu — terutama akun Google
-        // yang otomatis tanpa data ini. Arahkan ke profil sebelum buat appointment.
-        if (empty($client->perusahaan_client) || empty($client->no_telp_client)) {
+        // Wajib lengkapi profil dulu — terutama akun Google yang otomatis tanpa
+        // data ini. Nama perusahaan hanya wajib untuk klien tipe Perusahaan.
+        if (! $client->profilLengkap()) {
+            $kurang = $client->perluPerusahaan() ? 'nama perusahaan dan nomor HP' : 'nomor HP';
             return redirect()->route('client.profile')
-                ->with('warning', 'Lengkapi nama perusahaan dan nomor HP terlebih dahulu sebelum membuat appointment.');
+                ->with('warning', "Lengkapi {$kurang} terlebih dahulu sebelum membuat appointment.");
         }
 
         $hasActive = Appointment::where('client_id', $client->id)
@@ -187,7 +188,7 @@ class AppointmentController extends Controller
         return Inertia::render('Client/Appointment/Create', [
             'has_active_appointment' => $hasActive,
             'missing_phone'          => empty($client->no_telp_client),
-            'missing_company'        => empty($client->perusahaan_client),
+            'missing_company'        => $client->perluPerusahaan() && empty($client->perusahaan_client),
             'slots'                  => self::workingSlots(),
         ]);
     }
@@ -206,10 +207,10 @@ class AppointmentController extends Controller
         }
         RateLimiter::hit($rateLimitKey, 3600);
 
-        // Blokir jika nama perusahaan / no HP belum diisi
-        if (empty($client->perusahaan_client) || empty($client->no_telp_client)) {
+        // Blokir jika profil belum lengkap (perusahaan hanya wajib utk tipe Perusahaan)
+        if (! $client->profilLengkap()) {
             return back()->withErrors([
-                'jenis_event' => 'Lengkapi nama perusahaan dan nomor HP di profil terlebih dahulu.',
+                'jenis_event' => 'Lengkapi profil (' . ($client->perluPerusahaan() ? 'nama perusahaan dan nomor HP' : 'nomor HP') . ') di profil terlebih dahulu.',
             ]);
         }
 

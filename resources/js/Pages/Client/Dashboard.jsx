@@ -190,6 +190,21 @@ export default function ClientDashboard({
         }).format(value);
     };
 
+    // Total terbayar sebuah event. Diambil dari yang lebih besar antara nilai
+    // invoice yang sudah LUNAS (termasuk yang ditandai lunas manual oleh Finance
+    // tanpa unggah bukti) dan total bukti terverifikasi (menangkap pembayaran
+    // sebagian yang belum melunasi satu invoice pun). Dengan begitu, begitu
+    // invoice ditandai lunas, sisa pembayaran otomatis ikut nol.
+    const terbayarEvent = (event) => {
+        const lunasInvoice = (event.invoices || [])
+            .filter(i => i.status === 'Lunas')
+            .reduce((s, i) => s + (Number(i.nominal) || 0), 0);
+        const buktiVerif = (event.bukti_pembayaran || [])
+            .filter(b => b.status === 'Diverifikasi')
+            .reduce((s, b) => s + (Number(b.nominal) || 0), 0);
+        return Math.max(lunasInvoice, buktiVerif);
+    };
+
     const handleCancel = (apt) => {
         setCancelModal(apt);
         setAlasanBatal('');
@@ -447,17 +462,21 @@ export default function ClientDashboard({
                         </div>
                     )}
 
-                    {/* Banner: lengkapi profil (perusahaan / no HP belum diisi — mis. akun Google) */}
-                    {(!user?.no_telp_client || !user?.perusahaan_client) && (
+                    {/* Banner: lengkapi profil. Nama perusahaan hanya wajib utk klien tipe Perusahaan. */}
+                    {(() => {
+                        const perluPerusahaan = user?.tipe_client === 'Perusahaan';
+                        const kurangPerusahaan = perluPerusahaan && !user?.perusahaan_client;
+                        const kurangHp = !user?.no_telp_client;
+                        return (kurangHp || kurangPerusahaan) && (
                         <div className="flex items-center justify-between gap-4 p-4 mb-6 bg-blue-500/10 border border-blue-500/30 rounded-xl">
                             <div className="flex items-center gap-3 min-w-0">
                                 <span className="text-xl flex-shrink-0">📋</span>
                                 <div className="min-w-0">
                                     <p className="text-sm font-bold text-blue-300">Lengkapi profil Anda</p>
                                     <p className="text-xs text-info/70 mt-0.5 leading-relaxed">
-                                        {!user?.perusahaan_client && !user?.no_telp_client
+                                        {kurangPerusahaan && kurangHp
                                             ? 'Nama perusahaan & nomor HP belum diisi — wajib untuk membuat appointment.'
-                                            : !user?.perusahaan_client
+                                            : kurangPerusahaan
                                                 ? 'Nama perusahaan belum diisi — wajib untuk membuat appointment.'
                                                 : 'Nomor HP belum diisi — diperlukan agar tim kami bisa menghubungi Anda.'}
                                     </p>
@@ -468,7 +487,8 @@ export default function ClientDashboard({
                                 Isi Sekarang →
                             </Link>
                         </div>
-                    )}
+                        );
+                    })()}
 
                     {/* ── SEGERA LUNASI — muncul begitu Finance menerbitkan invoice (DP atau pelunasan) ── */}
                     {(() => {
@@ -527,10 +547,7 @@ export default function ClientDashboard({
 
                         const eventBelumLunas = evList.filter(event => {
                             if (!event.deal_harga_event) return false;
-                            const dibayar = (event.bukti_pembayaran || [])
-                                .filter(b => b.status === 'Diverifikasi')
-                                .reduce((s, b) => s + (Number(b.nominal) || 0), 0);
-                            return dibayar < event.deal_harga_event;
+                            return terbayarEvent(event) < event.deal_harga_event;
                         }).length;
 
                         const cards = [
@@ -914,9 +931,7 @@ export default function ClientDashboard({
                             {events && events.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {events.filter(eventMatchesFilter).map(event => {
-                                        const dibayar = (event.bukti_pembayaran || [])
-                                            .filter(b => b.status === 'Diverifikasi')
-                                            .reduce((sum, b) => sum + (Number(b.nominal) || 0), 0);
+                                        const dibayar = terbayarEvent(event);
                                         const dealHarga = Number(event.deal_harga_event) || 0;
                                         const pct   = dealHarga > 0 ? Math.min(100, Math.round((dibayar / dealHarga) * 100)) : 0;
                                         const lunas = dealHarga > 0 && dibayar >= dealHarga;
@@ -1218,9 +1233,7 @@ export default function ClientDashboard({
 
                     {/* TAB: PAYMENTS */}
                     {activeTab === 'payments' && (() => {
-                        const sumBayar  = (e) => (e.bukti_pembayaran || [])
-                            .filter(b => b.status === 'Diverifikasi')
-                            .reduce((a, b) => a + (Number(b.nominal) || 0), 0);
+                        const sumBayar  = (e) => terbayarEvent(e);
                         const payEvents = (events || []).filter(e => Number(e.deal_harga_event) > 0);
                         const totalTagihan  = payEvents.reduce((s, e) => s + Number(e.deal_harga_event || 0), 0);
                         const totalTerbayar = payEvents.reduce((s, e) => s + sumBayar(e), 0);

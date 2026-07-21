@@ -28,7 +28,8 @@ class ProfileController extends Controller
         $rules = [
             'nama_client'       => 'required|string|max:255',
             'no_telp_client'    => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/'],
-            'perusahaan_client' => 'required|string|max:255',
+            'tipe_client'       => 'required|in:Perorangan,Perusahaan',
+            'perusahaan_client' => 'required_if:tipe_client,Perusahaan|nullable|string|max:255',
             'email_client'      => ['required', 'email', Rule::unique('clients', 'email_client')->ignore($client->id)],
             'password'          => 'nullable|string|min:8|max:255|confirmed',
         ];
@@ -49,7 +50,11 @@ class ProfileController extends Controller
             }
         }
 
-        $data = $request->only(['nama_client', 'no_telp_client', 'perusahaan_client', 'email_client']);
+        $data = $request->only(['nama_client', 'no_telp_client', 'tipe_client', 'perusahaan_client', 'email_client']);
+        // Perorangan tidak menyimpan nama perusahaan.
+        if ($request->tipe_client === 'Perorangan') {
+            $data['perusahaan_client'] = null;
+        }
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);

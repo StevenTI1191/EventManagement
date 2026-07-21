@@ -13,12 +13,30 @@ class Client extends Authenticatable
     protected $fillable = [
         'nama_client',
         'perusahaan_client',
+        'tipe_client',      // Perorangan (pribadi) | Perusahaan
         'no_telp_client',
         'email_client',
         'sumber',           // Mandiri = daftar sendiri | Internal = di-input/di-approach EM
         'google_id',
         'password',
     ];
+
+    public const TIPE_PERORANGAN = 'Perorangan';
+    public const TIPE_PERUSAHAAN = 'Perusahaan';
+    public const SEMUA_TIPE      = [self::TIPE_PERORANGAN, self::TIPE_PERUSAHAAN];
+
+    /** Klien perusahaan wajib mengisi nama perusahaan; perorangan tidak. */
+    public function perluPerusahaan(): bool
+    {
+        return $this->tipe_client === self::TIPE_PERUSAHAAN;
+    }
+
+    /** Profil dianggap lengkap untuk membuat appointment. */
+    public function profilLengkap(): bool
+    {
+        return ! empty($this->no_telp_client)
+            && (! $this->perluPerusahaan() || ! empty($this->perusahaan_client));
+    }
 
     public const SUMBER_MANDIRI  = 'Mandiri';
     public const SUMBER_INTERNAL = 'Internal';

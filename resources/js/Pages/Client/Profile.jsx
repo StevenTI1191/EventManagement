@@ -43,6 +43,7 @@ export default function ClientProfile({ auth, has_password }) {
         nama_client:           user?.nama_client       || '',
         email_client:          user?.email_client      || '',
         no_telp_client:        user?.no_telp_client    || '',
+        tipe_client:           user?.tipe_client       || 'Perusahaan',
         perusahaan_client:     user?.perusahaan_client || '',
         current_password:      '',
         password:              '',
@@ -173,16 +174,31 @@ export default function ClientProfile({ auth, has_password }) {
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Perusahaan *</label>
-                                    <div className="relative">
-                                        <Building2 size={15} className="absolute text-muted-2 left-3 top-3.5" />
-                                        <input type="text" value={data.perusahaan_client}
-                                            onChange={e => setData('perusahaan_client', e.target.value)}
-                                            placeholder="PT. Nama Perusahaan"
-                                            className={inputClass + ' pl-9'} />
+                                    <label className={labelClass}>Jenis Akun *</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[['Perusahaan', '🏢 Perusahaan'], ['Perorangan', '👤 Pribadi']].map(([val, lbl]) => (
+                                            <button type="button" key={val}
+                                                onClick={() => setData({ ...data, tipe_client: val, perusahaan_client: val === 'Perorangan' ? '' : data.perusahaan_client })}
+                                                className={`py-2.5 text-sm font-bold rounded-xl border transition-all ${data.tipe_client === val ? 'bg-gold-grad text-white border-gold-dim' : 'bg-paper text-muted border-line hover:border-gold/40'}`}>
+                                                {lbl}
+                                            </button>
+                                        ))}
                                     </div>
-                                    {errors.perusahaan_client && <p className="mt-1 text-xs text-danger">{errors.perusahaan_client}</p>}
                                 </div>
+
+                                {data.tipe_client === 'Perusahaan' && (
+                                    <div>
+                                        <label className={labelClass}>Perusahaan *</label>
+                                        <div className="relative">
+                                            <Building2 size={15} className="absolute text-muted-2 left-3 top-3.5" />
+                                            <input type="text" value={data.perusahaan_client}
+                                                onChange={e => setData('perusahaan_client', e.target.value)}
+                                                placeholder="PT. Nama Perusahaan"
+                                                className={inputClass + ' pl-9'} />
+                                        </div>
+                                        {errors.perusahaan_client && <p className="mt-1 text-xs text-danger">{errors.perusahaan_client}</p>}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
