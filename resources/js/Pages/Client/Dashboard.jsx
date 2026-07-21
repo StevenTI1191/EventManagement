@@ -11,7 +11,6 @@ import {
 
 export default function ClientDashboard({
     appointments, events, penawaran = [], totalAppointments, totalEvents,
-    eventDone, eventProses, eventPraDeal,
 }) {
     const { auth, flash } = usePage().props;
 
@@ -471,21 +470,36 @@ export default function ClientDashboard({
                         </div>
                     )}
 
-                    {/* ── SEGERA LUNASI DP — muncul begitu Finance menerbitkan invoice DP ── */}
+                    {/* ── SEGERA LUNASI — muncul begitu Finance menerbitkan invoice (DP atau pelunasan) ── */}
                     {(() => {
-                        const perluDP = (events || []).filter(e =>
-                            e.status_event === 'Deal'
-                            && (e.invoices || []).some(i => i.tipe === 'DP' && i.status !== 'Lunas')
-                        );
-                        return perluDP.length > 0 && (
+                        // Hitung acara yang punya invoice terbit tapi belum lunas.
+                        // DP menandakan booking belum aman; pelunasan menandakan sisa
+                        // pembayaran menjelang hari-H. Keduanya harus lunas sebelum acara.
+                        const adaDp = (e) => (e.invoices || []).some(i => i.tipe === 'DP' && i.status !== 'Lunas');
+                        const adaPelunasan = (e) => (e.invoices || []).some(i => i.tipe === 'Pelunasan' && i.status !== 'Lunas');
+                        const perluDP        = (events || []).filter(adaDp);
+                        const perluPelunasan = (events || []).filter(e => !adaDp(e) && adaPelunasan(e));
+                        const total = perluDP.length + perluPelunasan.length;
+
+                        if (total === 0) return null;
+
+                        // Susun pesan sesuai jenis tagihan yang tertunggak.
+                        const bagian = [];
+                        if (perluDP.length)        bagian.push(`uang muka (DP 50%) untuk ${perluDP.length} acara`);
+                        if (perluPelunasan.length) bagian.push(`pelunasan (sisa 50%) untuk ${perluPelunasan.length} acara`);
+                        const judul = perluDP.length && !perluPelunasan.length ? 'Segera lunasi DP'
+                                    : !perluDP.length && perluPelunasan.length ? 'Segera lunasi pelunasan'
+                                    : 'Ada tagihan menunggu pembayaran';
+
+                        return (
                             <div className="flex flex-col gap-3 p-4 mb-6 border sm:flex-row sm:items-center sm:justify-between bg-orange-500/10 border-orange-500/30 rounded-xl">
                                 <div className="flex items-start gap-3 min-w-0">
                                     <span className="flex-shrink-0 text-xl">💳</span>
                                     <div className="min-w-0">
-                                        <p className="text-sm font-bold text-orange-300">Segera lunasi DP</p>
+                                        <p className="text-sm font-bold text-orange-300">{judul}</p>
                                         <p className="mt-0.5 text-xs leading-relaxed text-orange-200/80">
-                                            Finance sudah menerbitkan invoice uang muka (DP 50%) untuk{' '}
-                                            <span className="font-bold">{perluDP.length} acara</span>. Lunasi DP agar tanggal acara Anda diamankan dan persiapan bisa dimulai.
+                                            Finance sudah menerbitkan invoice {bagian.join(' dan ')}. Mohon dilunasi
+                                            paling lambat sehari sebelum acara agar jadwal Anda tetap aman.
                                         </p>
                                     </div>
                                 </div>
