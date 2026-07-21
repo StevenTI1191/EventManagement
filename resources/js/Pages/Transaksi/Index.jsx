@@ -12,7 +12,12 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useState, Fragment } from 'react';
 import { ChevronDown, ChevronUp, Plus, Trash2, X, Pencil } from 'lucide-react';
 
+// Label peran untuk judul tab — komponen ini dipakai Finance, Event Marketing,
+// dan Manajemen, jadi judulnya ikut prefix, bukan selalu "Finance".
+const LABEL_PERAN = { finance: 'Finance', em: 'Event Marketing', manajemen: 'Manajemen' };
+
 export default function TransaksiIndex({ Layout, prefix, auth, events, filters = {}, counts = {} }) {
+    const labelPeran = LABEL_PERAN[prefix] ?? 'Finance';
     const [expandedEvent, setExpandedEvent] = useState(null);
     const [expandedTab, setExpandedTab]     = useState('pembayaran');
     const [modalBayar, setModalBayar]       = useState(null);
@@ -168,7 +173,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
 
     return (
         <Layout>
-            <Head title="Transaksi - Finance" />
+            <Head title={`Transaksi - ${labelPeran}`} />
 
             {/* MODAL TAMBAH PEMBAYARAN */}
             {modalBayar && (
