@@ -2,7 +2,7 @@ import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import Pagination from '@/Components/Pagination';
 import TabEvent from '@/Components/TabEvent';
 import Countdown from '@/Components/Countdown';
-import { asalEvent } from '@/constants/kategori';
+import { asalEvent, POSTER_PLACEHOLDER } from '@/constants/kategori';
 import { Search, Plus, Calendar as CalendarIcon, X, Pencil, Trash2, History } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
@@ -107,7 +107,7 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
                             <img
                                 src={selectedEvent.poster_event
                                     ? `/${selectedEvent.poster_event}`
-                                    : 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=700'}
+                                    : POSTER_PLACEHOLDER}
                                 className="object-cover w-full h-full"
                             />
                             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 rounded-t-[2.5rem]" />
@@ -350,7 +350,7 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
                                 <img
                                     src={event.poster_event
                                         ? `/${event.poster_event}`
-                                        : 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=400'}
+                                        : POSTER_PLACEHOLDER}
                                     className="w-full h-56 object-cover rounded-[2rem]"
                                 />
                                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">

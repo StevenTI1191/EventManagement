@@ -5,6 +5,7 @@
 import { Head, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { ChevronLeft, Search, Download, X, MessageCircle, Plus, Trash2 } from 'lucide-react';
+import { POSTER_PLACEHOLDER } from '@/constants/kategori';
 import StatusEventBadge from '@/Components/StatusEventBadge';
 
 export default function EMClientShow({ Layout, routes = {}, canEdit = true,  client, events, pics, kategoris, filters, followUps = [], waFollowUp }) {
@@ -99,7 +100,7 @@ export default function EMClientShow({ Layout, routes = {}, canEdit = true,  cli
                             <img
                                 src={selectedEvent.poster_event
                                     ? '/' + selectedEvent.poster_event
-                                    : 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=700'}
+                                    : POSTER_PLACEHOLDER}
                                 className="object-cover w-full h-full"
                                 alt={selectedEvent.nama_event}
                             />

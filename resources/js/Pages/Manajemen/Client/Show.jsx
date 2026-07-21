@@ -1,6 +1,7 @@
 ﻿import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import { Head, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { POSTER_PLACEHOLDER } from '@/constants/kategori';
 import { ChevronLeft, Search, Download, Info, X } from 'lucide-react';
 import StatusEventBadge from '@/Components/StatusEventBadge';
 
@@ -83,7 +84,7 @@ export default function ClientShow({ auth, client, events, pics, kategoris, filt
                             <img
                                 src={selectedEvent.poster_event
                                     ? `/${selectedEvent.poster_event}`
-                                    : 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=700'}
+                                    : POSTER_PLACEHOLDER}
                                 className="object-cover w-full h-full"
                                 alt={selectedEvent.nama_event}
                             />
