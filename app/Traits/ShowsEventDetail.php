@@ -29,6 +29,7 @@ trait ShowsEventDetail
             'pic:id_pegawai,nama_pegawai,posisi_pegawai',
             'tugas',
             'invoices',
+            'dokumentasi',
         ])->findOrFail($id_event);
 
         $total = $event->tugas->count();

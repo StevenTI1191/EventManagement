@@ -381,4 +381,9 @@ class Event extends Model
     {
         return $this->hasMany(BuktiPembayaran::class, 'id_event');
     }
+    public function dokumentasi()
+    {
+        return $this->hasMany(EventDokumentasi::class, 'id_event', 'id_event')
+            ->orderBy('urutan')->orderBy('id');
+    }
 }

@@ -12,13 +12,19 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 use App\Traits\ChecksPegawaiRole;
+use App\Traits\ManagesDokumentasi;
 use App\Traits\ShowsEventDetail;
 use App\Traits\ShowsRiwayatEvent;
 use App\Traits\ShowsSemuaEvent;
 
 class EventController extends Controller
 {
-    use ChecksPegawaiRole, ShowsEventDetail, ShowsRiwayatEvent, ShowsSemuaEvent;
+    use ChecksPegawaiRole, ShowsEventDetail, ShowsRiwayatEvent, ShowsSemuaEvent, ManagesDokumentasi;
+
+    protected function checkDokumentasiAkses(): void
+    {
+        $this->checkEventMarketing();
+    }
 
     /** Seluruh siklus acara Lead sampai Done dalam satu tabel. */
     public function semua(Request $request)
@@ -58,6 +64,8 @@ class EventController extends Controller
             'followUp' => 'em.client.follow-up.store',
             'todo'     => 'em.todo.index',
             'client'   => 'em.client.show',
+            'dokumentasiStore'   => 'em.event.dokumentasi.store',
+            'dokumentasiDestroy' => 'em.event.dokumentasi.destroy',
         ]);
     }
 

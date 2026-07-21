@@ -3,6 +3,7 @@ import { useState } from 'react';
 import {
     ChevronLeft, CalendarDays, Clock, MapPin, User, Users, Wallet, Target,
     AlertTriangle, CheckCircle2, MessageCircle, ListChecks, Save, Send, Building2,
+    Upload, Trash2,
 } from 'lucide-react';
 import RupiahInput from '@/Components/RupiahInput';
 import SearchableSelect from '@/Components/SearchableSelect';
@@ -97,6 +98,30 @@ export default function EventDetail({
     const [catatan, setCatatan] = useState('');
     const [tglBerikutnya, setTglBerikutnya] = useState('');
     const [kirimFu, setKirimFu] = useState(false);
+
+    // Dokumentasi acara (foto) — untuk acara Penyelesaian/Done.
+    const [fotoDok, setFotoDok]           = useState([]);
+    const [uploadingDok, setUploadingDok] = useState(false);
+    const bolehDok  = ['Penyelesaian', 'Done'].includes(event.status_event);
+    const dokumentasi = event.dokumentasi || [];
+
+    const uploadDok = (e) => {
+        e.preventDefault();
+        if (!fotoDok.length || uploadingDok || !routes.dokumentasiStore) return;
+        const fd = new FormData();
+        fotoDok.forEach((f) => fd.append('foto[]', f));
+        setUploadingDok(true);
+        router.post(route(routes.dokumentasiStore, event.id_event), fd, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => setFotoDok([]),
+            onFinish: () => setUploadingDok(false),
+        });
+    };
+    const hapusDok = (id) => {
+        if (!routes.dokumentasiDestroy) return;
+        router.delete(route(routes.dokumentasiDestroy, id), { preserveScroll: true });
+    };
 
     const { data, setData, post, processing, errors } = useForm({
         _method: 'put',
@@ -303,6 +328,54 @@ export default function EventDetail({
                     </div>
                 </Kartu>
             </div>
+
+            {/* DOKUMENTASI ACARA — foto untuk portfolio; hanya saat Penyelesaian/Done */}
+            {bolehDok && (
+                <div className="mb-5">
+                    <Kartu judul="Dokumentasi Acara">
+                        <p className="mb-3 text-xs text-gray-500">
+                            Foto dokumentasi acara ini akan tampil sebagai <b>galeri di portfolio publik</b> saat
+                            pengunjung mengklik acaranya.
+                        </p>
+
+                        {dokumentasi.length > 0 ? (
+                            <div className="grid grid-cols-3 gap-2 mb-4 sm:grid-cols-4 md:grid-cols-6">
+                                {dokumentasi.map((d) => (
+                                    <div key={d.id} className="relative overflow-hidden border border-gray-200 rounded-lg group aspect-square bg-gray-50">
+                                        <img src={`/${d.file_path}`} alt="Dokumentasi" loading="lazy" className="object-cover w-full h-full" />
+                                        {routes.dokumentasiDestroy && (
+                                            <button type="button" onClick={() => hapusDok(d.id)} title="Hapus foto"
+                                                className="absolute flex items-center justify-center w-6 h-6 text-white transition-opacity rounded-full opacity-0 top-1 right-1 bg-red-500/90 group-hover:opacity-100 hover:bg-red-600">
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="py-6 mb-4 text-sm text-center text-gray-400 border border-gray-200 border-dashed rounded-xl">
+                                Belum ada foto dokumentasi.
+                            </p>
+                        )}
+
+                        {routes.dokumentasiStore && (
+                            <>
+                                <form onSubmit={uploadDok} className="flex flex-wrap items-center gap-3">
+                                    <input type="file" accept="image/*" multiple
+                                        onChange={(e) => setFotoDok(Array.from(e.target.files))}
+                                        className="flex-1 min-w-[200px] block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-pink-50 file:text-[#FF2D55] hover:file:bg-pink-100" />
+                                    <button type="submit" disabled={!fotoDok.length || uploadingDok}
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-[#FF2D55] rounded-xl hover:brightness-110 disabled:opacity-50 transition-all">
+                                        <Upload size={15} />
+                                        {uploadingDok ? 'Mengunggah…' : (fotoDok.length ? `Unggah ${fotoDok.length} Foto` : 'Unggah Foto')}
+                                    </button>
+                                </form>
+                                <p className="mt-2 text-[11px] text-gray-400">Format gambar, maks 8 MB/foto, hingga 12 foto sekali unggah.</p>
+                            </>
+                        )}
+                    </Kartu>
+                </div>
+            )}
 
             {/* APPOINTMENT ASAL — jejak dari permintaan awal klien sampai acara jadi */}
             {appointments.length > 0 && (

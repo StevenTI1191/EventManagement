@@ -16,6 +16,7 @@ class HomeController extends Controller
         // agar modal portfolio bisa menampilkan skala & isi acara untuk menarik klien.
         $portfolio = Event::where('status_event', 'Done')
             ->where('is_public', true)
+            ->with(['dokumentasi:id,id_event,file_path,keterangan'])
             ->latest('tgl_mulai_event')
             ->take(6)
             ->get([
@@ -60,7 +61,8 @@ class HomeController extends Controller
         // (pipeline, Batal, Penyelesaian) tidak boleh bocor ke halaman publik —
         // "Penyelesaian" adalah istilah operasional, bukan konsumsi pengunjung.
         $query = Event::whereIn('status_event', [Event::STATUS_UPCOMING, Event::STATUS_DONE])
-            ->where('is_public', true);
+            ->where('is_public', true)
+            ->with(['dokumentasi:id,id_event,file_path,keterangan']);
 
         if ($request->filled('search')) {
             $query->where('nama_event', 'like', '%' . $request->search . '%');

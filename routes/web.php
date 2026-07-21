@@ -143,6 +143,11 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('manajemen.event.update');
         Route::delete('/manajemen/event/{id}', [EventController::class, 'destroy'])
             ->name('manajemen.event.destroy');
+        // Dokumentasi acara (foto) — untuk acara Penyelesaian/Done, tampil di portfolio.
+        Route::post('/manajemen/event/{id_event}/dokumentasi', [EventController::class, 'uploadDokumentasi'])
+            ->whereNumber('id_event')->name('manajemen.event.dokumentasi.store');
+        Route::delete('/manajemen/dokumentasi/{id}', [EventController::class, 'destroyDokumentasi'])
+            ->whereNumber('id')->name('manajemen.event.dokumentasi.destroy');
 
         // --- TODO / TUGAS ---
         Route::get('/manajemen/event/{id_event}/todo', [TugasController::class, 'index'])
@@ -335,6 +340,11 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('em.event.update');
         Route::delete('/event-marketing/event/{id}', [EMEventController::class, 'destroy'])
             ->name('em.event.destroy');
+        // Dokumentasi acara (foto) — untuk acara Penyelesaian/Done, tampil di portfolio.
+        Route::post('/event-marketing/event/{id_event}/dokumentasi', [EMEventController::class, 'uploadDokumentasi'])
+            ->whereNumber('id_event')->name('em.event.dokumentasi.store');
+        Route::delete('/event-marketing/dokumentasi/{id}', [EMEventController::class, 'destroyDokumentasi'])
+            ->whereNumber('id')->name('em.event.dokumentasi.destroy');
 
         // --- EVENT MARKETING: PLANNING EVENT ---
         Route::get('/event-marketing/planning', [\App\Http\Controllers\EventMarketing\PlanningController::class, 'index'])

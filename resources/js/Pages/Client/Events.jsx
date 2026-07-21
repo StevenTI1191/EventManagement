@@ -5,7 +5,7 @@ import { KATEGORI_EVENT } from '@/constants/kategori';
 import {
     ChevronDown, Phone, Mail, MapPin, Menu, X,
     Home as HomeIcon, Calendar, LogOut, Search,
-    Clock, Users, ChevronLeft, ChevronRight
+    Clock, Users, ChevronLeft, ChevronRight, Images
 } from 'lucide-react';
 
 export default function Events({ events, kategoris, filters, isLoggedIn, auth }) {
@@ -14,6 +14,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen]     = useState(false);
     const [selectedEvent, setSelectedEvent]   = useState(null);
+    const [lightbox, setLightbox]             = useState(null); // index foto dokumentasi
 
     // Filter state — initialised from server-side filters
     const [search, setSearch]           = useState(filters?.search || '');
@@ -240,7 +241,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                                     const badge = getStatusBadge(event.status_event);
                                     return (
                                         <article key={event.id_event}
-                                            onClick={() => setSelectedEvent(event)}
+                                            onClick={() => { setSelectedEvent(event); setLightbox(null); }}
                                             className="relative overflow-hidden transition-all duration-300 bg-surface border border-line cursor-pointer group rounded-2xl hover:border-gold-2 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-yellow-500/10">
 
                                             {/* ── Image ── */}
@@ -486,11 +487,56 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                                 </div>
                             )}
 
+                            {/* Galeri dokumentasi acara — klik untuk perbesar */}
+                            {selectedEvent.dokumentasi?.length > 0 && (
+                                <div className="mb-3">
+                                    <p className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-muted uppercase">
+                                        <Images size={13} className="text-gold" /> Dokumentasi Acara
+                                    </p>
+                                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                                        {selectedEvent.dokumentasi.map((d, i) => (
+                                            <button key={d.id} type="button" onClick={() => setLightbox(i)}
+                                                className="relative overflow-hidden border aspect-square rounded-xl border-line group">
+                                                <img src={`/${d.file_path}`} alt="Dokumentasi" loading="lazy"
+                                                    className="object-cover w-full h-full transition-transform group-hover:scale-105" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <a href={isLoggedIn ? `${BASE_URL}/appointment/create` : `${BASE_URL}/register`}
                                 className="block w-full py-3.5 text-sm font-black text-center text-white transition-all bg-gold-grad shadow-gold rounded-2xl hover:brightness-110 hover:shadow-lg hover:shadow-yellow-500/20 mt-4">
                                 🗓️ Buat Appointment
                             </a>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── LIGHTBOX DOKUMENTASI ─────────────────────────── */}
+            {selectedEvent && lightbox !== null && selectedEvent.dokumentasi?.[lightbox] && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90"
+                    onClick={() => setLightbox(null)}>
+                    <button onClick={() => setLightbox(null)}
+                        className="absolute z-10 top-4 right-4 text-white/80 hover:text-white"><X size={30} /></button>
+                    {selectedEvent.dokumentasi.length > 1 && (
+                        <>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setLightbox((lightbox - 1 + selectedEvent.dokumentasi.length) % selectedEvent.dokumentasi.length); }}
+                                className="absolute z-10 flex items-center justify-center text-white rounded-full w-11 h-11 left-3 sm:left-6 bg-white/10 hover:bg-white/20">
+                                <ChevronLeft size={26} /></button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setLightbox((lightbox + 1) % selectedEvent.dokumentasi.length); }}
+                                className="absolute z-10 flex items-center justify-center text-white rounded-full w-11 h-11 right-3 sm:right-6 bg-white/10 hover:bg-white/20">
+                                <ChevronRight size={26} /></button>
+                        </>
+                    )}
+                    <img src={`/${selectedEvent.dokumentasi[lightbox].file_path}`} alt="Dokumentasi"
+                        onClick={(e) => e.stopPropagation()}
+                        className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+                    <div className="absolute text-sm bottom-5 text-white/70">
+                        {lightbox + 1} / {selectedEvent.dokumentasi.length}
                     </div>
                 </div>
             )}
