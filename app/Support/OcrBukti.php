@@ -43,6 +43,11 @@ class OcrBukti
             'pesan_gagal' => null,
         ];
 
+        // Dimatikan lewat config (mis. di server kecil agar unggahan tak molor).
+        if (! config('ocr.enabled', true)) {
+            return array_merge($kosong, ['pesan_gagal' => 'OCR dinonaktifkan']);
+        }
+
         // PDF tidak dibaca OCR — langsung diteruskan ke verifikasi manual.
         if (strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION)) === 'pdf') {
             return array_merge($kosong, ['pesan_gagal' => 'PDF tidak dibaca otomatis']);
@@ -52,16 +57,35 @@ class OcrBukti
             return array_merge($kosong, ['pesan_gagal' => 'Berkas tidak terbaca']);
         }
 
-        $biner = self::cariTesseract();
-        if (! $biner) {
-            // Lingkungan tanpa Tesseract (mis. dev lokal) — jangan menghalangi upload.
-            return array_merge($kosong, ['pesan_gagal' => 'Tesseract tidak tersedia']);
+        // Lewati gambar sangat besar — paling lama diproses & paling sering
+        // membuat request menggantung.
+        $maxBytes = (int) config('ocr.max_bytes', 4 * 1024 * 1024);
+        if ($maxBytes > 0 && (int) @filesize($absolutePath) > $maxBytes) {
+            return array_merge($kosong, ['pesan_gagal' => 'Berkas terlalu besar untuk OCR']);
         }
 
-        $perintah = escapeshellcmd($biner) . ' ' . escapeshellarg($absolutePath)
-            . ' stdout -l ind+eng --psm 6 2>/dev/null';
+        // Seluruh pemanggilan proses eksternal dibungkus try/catch: apa pun yang
+        // terjadi (shell_exec dinonaktifkan host, Tesseract error, dsb.) TIDAK
+        // boleh menggagalkan unggahan bukti — cukup lewati pembacaan otomatis.
+        try {
+            $biner = self::cariTesseract();
+            if (! $biner) {
+                // Lingkungan tanpa Tesseract (mis. dev lokal) — jangan menghalangi upload.
+                return array_merge($kosong, ['pesan_gagal' => 'Tesseract tidak tersedia']);
+            }
 
-        $teks = @shell_exec($perintah);
+            // Batasi durasi dengan `timeout` bila tersedia, agar proses yang
+            // menggantung tidak menahan worker PHP.
+            $detik   = max(1, (int) config('ocr.timeout', 20));
+            $prefix  = self::cariTimeout() ? (self::cariTimeout() . ' ' . $detik . ' ') : '';
+            $perintah = $prefix . escapeshellcmd($biner) . ' ' . escapeshellarg($absolutePath)
+                . ' stdout -l ind+eng --psm 6 2>/dev/null';
+
+            $teks = @shell_exec($perintah);
+        } catch (\Throwable $e) {
+            Log::warning('OCR bukti error: ' . $e->getMessage());
+            return array_merge($kosong, ['pesan_gagal' => 'OCR gagal dijalankan']);
+        }
 
         if (! is_string($teks)) {
             Log::warning('OCR bukti gagal dijalankan: ' . $absolutePath);
@@ -193,8 +217,24 @@ class OcrBukti
             }
         }
 
-        $which = @shell_exec('command -v tesseract 2>/dev/null');
+        try {
+            $which = @shell_exec('command -v tesseract 2>/dev/null');
+        } catch (\Throwable $e) {
+            return null;
+        }
 
         return is_string($which) && trim($which) !== '' ? trim($which) : null;
+    }
+
+    /** Cari utilitas `timeout` (coreutils) untuk membatasi durasi OCR; null bila tak ada. */
+    private static function cariTimeout(): ?string
+    {
+        foreach (['/usr/bin/timeout', '/bin/timeout'] as $kandidat) {
+            if (is_executable($kandidat)) {
+                return $kandidat;
+            }
+        }
+
+        return null;
     }
 }
