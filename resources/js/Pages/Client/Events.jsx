@@ -1,6 +1,7 @@
 import { Head, router, Link } from '@inertiajs/react';
 import { useState, useEffect, useCallback } from 'react';
 import Countdown from '@/Components/Countdown';
+import { KATEGORI_EVENT } from '@/constants/kategori';
 import {
     ChevronDown, Phone, Mail, MapPin, Menu, X,
     Home as HomeIcon, Calendar, LogOut, Search,
@@ -69,13 +70,15 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
         return { label: status || '-', cls: 'bg-paper text-muted border-line' };
     };
 
+    // Ikon kategori memakai daftar kanonis yang sama dengan form appointment &
+    // penanda event, plus beberapa alias lama agar acara lama tetap berikon benar.
     const getCategoryIcon = (kategori) => {
-        const map = {
-            'Corporate Event': '🏢', 'Wedding': '💍', 'Wedding & Gala': '💍',
-            'Music & Concert': '🎵', 'Concert': '🎵', 'Exhibition': '🎪',
-            'Sports Event': '🏆', 'Private Party': '🎉',
+        const kanonis = Object.fromEntries(KATEGORI_EVENT.map(k => [k.value, k.icon]));
+        const alias = {
+            'Corporate Event': '🏢', 'Wedding & Gala': '💍',
+            'Music & Concert': '🎵', 'Concert': '🎵', 'Sports Event': '🏆',
         };
-        return map[kategori] || '🎊';
+        return kanonis[kategori] || alias[kategori] || '🎊';
     };
 
     return (
