@@ -1,9 +1,9 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     ChevronLeft, CalendarDays, Clock, MapPin, User, Users, Wallet, Target,
     AlertTriangle, CheckCircle2, MessageCircle, ListChecks, Save, Send, Building2,
-    Upload, Trash2,
+    Upload, Trash2, X,
 } from 'lucide-react';
 import RupiahInput from '@/Components/RupiahInput';
 import SearchableSelect from '@/Components/SearchableSelect';
@@ -101,9 +101,26 @@ export default function EventDetail({
 
     // Dokumentasi acara (foto) — untuk acara Penyelesaian/Done.
     const [fotoDok, setFotoDok]           = useState([]);
+    const [previewDok, setPreviewDok]     = useState([]); // URL preview foto terpilih
     const [uploadingDok, setUploadingDok] = useState(false);
     const bolehDok  = ['Penyelesaian', 'Done'].includes(event.status_event);
     const dokumentasi = event.dokumentasi || [];
+
+    // Preview thumbnail dibuat dari file terpilih; URL-nya dibebaskan ulang tiap
+    // pilihan berubah agar tidak bocor memori.
+    useEffect(() => {
+        const urls = fotoDok.map((f) => URL.createObjectURL(f));
+        setPreviewDok(urls);
+        return () => urls.forEach((u) => URL.revokeObjectURL(u));
+    }, [fotoDok]);
+
+    // Menambah file (akumulatif, tidak menimpa pilihan sebelumnya), maksimal 12.
+    const tambahFotoDok = (files) => {
+        setFotoDok((prev) => [...prev, ...Array.from(files)].slice(0, 12));
+    };
+    const hapusFotoPilihan = (idx) => {
+        setFotoDok((prev) => prev.filter((_, i) => i !== idx));
+    };
 
     const uploadDok = (e) => {
         e.preventDefault();
@@ -359,19 +376,43 @@ export default function EventDetail({
                         )}
 
                         {routes.dokumentasiStore && (
-                            <>
-                                <form onSubmit={uploadDok} className="flex flex-wrap items-center gap-3">
-                                    <input type="file" accept="image/*" multiple
-                                        onChange={(e) => setFotoDok(Array.from(e.target.files))}
-                                        className="flex-1 min-w-[200px] block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-pink-50 file:text-[#FF2D55] hover:file:bg-pink-100" />
+                            <form onSubmit={uploadDok}>
+                                <input type="file" accept="image/*" multiple
+                                    onChange={(e) => { tambahFotoDok(e.target.files); e.target.value = ''; }}
+                                    className="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-pink-50 file:text-[#FF2D55] hover:file:bg-pink-100" />
+
+                                {/* Preview foto yang dipilih — bisa dihapus sebelum diunggah */}
+                                {fotoDok.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2 mt-3 sm:grid-cols-4 md:grid-cols-6">
+                                        {fotoDok.map((f, i) => (
+                                            <div key={i} className="relative overflow-hidden border border-gray-200 rounded-lg group aspect-square bg-gray-50">
+                                                {previewDok[i] && (
+                                                    <img src={previewDok[i]} alt={f.name} className="object-cover w-full h-full" />
+                                                )}
+                                                <button type="button" onClick={() => hapusFotoPilihan(i)} title="Buang dari pilihan"
+                                                    className="absolute flex items-center justify-center w-5 h-5 text-white transition-colors rounded-full top-1 right-1 bg-black/55 hover:bg-red-600">
+                                                    <X size={11} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="flex flex-wrap items-center gap-3 mt-3">
                                     <button type="submit" disabled={!fotoDok.length || uploadingDok}
                                         className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-[#FF2D55] rounded-xl hover:brightness-110 disabled:opacity-50 transition-all">
                                         <Upload size={15} />
                                         {uploadingDok ? 'Mengunggah…' : (fotoDok.length ? `Unggah ${fotoDok.length} Foto` : 'Unggah Foto')}
                                     </button>
-                                </form>
-                                <p className="mt-2 text-[11px] text-gray-400">Format gambar, maks 8 MB/foto, hingga 12 foto sekali unggah.</p>
-                            </>
+                                    {fotoDok.length > 0 && !uploadingDok && (
+                                        <button type="button" onClick={() => setFotoDok([])}
+                                            className="text-xs font-bold text-gray-400 hover:text-gray-600">
+                                            Bersihkan pilihan
+                                        </button>
+                                    )}
+                                    <span className="text-[11px] text-gray-400">Format gambar, maks 8 MB/foto, hingga 12 foto.</span>
+                                </div>
+                            </form>
                         )}
                     </Kartu>
                 </div>
