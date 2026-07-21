@@ -139,8 +139,8 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
         if (deleting) return;
         setDeleting(true);
         const routeName = deleteModal.type === 'bayar'
-            ? 'finance.transaksi.destroy'
-            : 'finance.transaksi.item.destroy';
+            ? `${prefix}.transaksi.destroy`
+            : `${prefix}.transaksi.item.destroy`;
         router.delete(route(routeName, deleteModal.id), {
             preserveScroll: true,
             onFinish: () => { setDeleteModal(null); setDeleting(false); },

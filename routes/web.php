@@ -367,7 +367,19 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('em.task-divisi.index');
 
         Route::get('/event-marketing/transaksi', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'index'])
-        ->name('em.transaksi.index');
+            ->name('em.transaksi.index');
+        Route::post('/event-marketing/transaksi', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'store'])
+            ->name('em.transaksi.store');
+        Route::put('/event-marketing/transaksi/{id}', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'update'])
+            ->name('em.transaksi.update');
+        Route::delete('/event-marketing/transaksi/{id}', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'destroy'])
+            ->name('em.transaksi.destroy');
+        Route::post('/event-marketing/transaksi/item', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'storeItem'])
+            ->name('em.transaksi.item.store');
+        Route::put('/event-marketing/transaksi/item/{id}', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'updateItem'])
+            ->name('em.transaksi.item.update');
+        Route::delete('/event-marketing/transaksi/item/{id}', [\App\Http\Controllers\EventMarketing\TransaksiController::class, 'destroyItem'])
+            ->name('em.transaksi.item.destroy');
         // --- EVENT MARKETING: TODO / TUGAS ---
         Route::get('/event-marketing/event/{id_event}/todo', [\App\Http\Controllers\EventMarketing\TugasController::class, 'index'])
             ->name('em.todo.index');
