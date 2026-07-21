@@ -111,21 +111,26 @@ class InvoiceController extends Controller
         $dp      = round($total * self::PERSEN_DP);
         $nominal = $tipe === Invoice::TIPE_DP ? $dp : ($total - $dp);
 
-        // Jatuh tempo:
-        //  - DP        : paling lambat sebelum acara berlangsung (H-1) — uang
-        //    muka harus masuk agar persiapan berjalan. Bila acara sudah dekat
-        //    atau lewat, beri kelonggaran 7 hari dari penerbitan.
-        //  - Pelunasan : paling lambat 7 hari setelah acara selesai (H+7).
-        $tglAkhir = \Illuminate\Support\Carbon::parse($event->tgl_selesai_event ?: $event->tgl_mulai_event);
+        // Jatuh tempo — keduanya HARUS lunas sebelum hari-H acara:
+        //  - DP        : dibayar segera untuk mengamankan booking (maks 7 hari
+        //    sejak terbit), namun tidak boleh melewati sehari sebelum acara.
+        //  - Pelunasan : paling lambat sehari sebelum acara berlangsung (H-1).
+        $mulai   = \Illuminate\Support\Carbon::parse($event->tgl_mulai_event);
+        $hMinus1 = $mulai->copy()->subDay(); // sehari sebelum hari-H
 
         if ($tipe === Invoice::TIPE_DP) {
-            $mulai      = \Illuminate\Support\Carbon::parse($event->tgl_mulai_event);
-            $jatuhTempo = $mulai->copy()->subDay();
-            if ($jatuhTempo->lte(now())) {
-                $jatuhTempo = now()->addDays(7);
+            $jatuhTempo = now()->addDays(7);
+            if ($jatuhTempo->gt($hMinus1)) {
+                $jatuhTempo = $hMinus1;
             }
         } else {
-            $jatuhTempo = $tglAkhir->copy()->addDays(7);
+            $jatuhTempo = $hMinus1;
+        }
+
+        // Bila acara sudah dekat/lewat saat invoice terbit, jangan menaruh
+        // jatuh tempo di masa lampau — minta dibayar segera.
+        if ($jatuhTempo->lt(now())) {
+            $jatuhTempo = now();
         }
 
         Invoice::create([
