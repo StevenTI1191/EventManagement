@@ -36,11 +36,15 @@ class GoogleAuthController extends Controller
             if ($client) {
                 $client->update(['google_id' => $googleUser->id]);
             } else {
-                // Create new client from Google data
+                // Create new client from Google data. Akun Google dianggap
+                // Perorangan (belum ada data perusahaan) supaya tidak langsung
+                // diminta mengisi nama perusahaan; bisa diubah ke Perusahaan
+                // dari halaman profil.
                 $client = Client::create([
                     'nama_client'  => $googleUser->name,
                     'email_client' => $googleUser->email,
                     'google_id'    => $googleUser->id,
+                    'tipe_client'  => Client::TIPE_PERORANGAN,
                     'password'     => null,
                 ]);
             }
