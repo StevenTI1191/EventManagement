@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 export default function ClientDashboard({
-    appointments, events, penawaran = [], totalAppointments, totalEvents,
+    appointments, events, penawaran = [], totalAppointments, totalEvents, slots = [],
 }) {
     const { auth, flash } = usePage().props;
 
@@ -88,6 +88,10 @@ export default function ClientDashboard({
     const [uploadModal, setUploadModal]     = useState(null);
     const [cancelModal, setCancelModal]     = useState(null);
     const [alasanBatal, setAlasanBatal]     = useState('');
+    // Usulan jadwal alternatif dari klien (reschedule dua arah).
+    const [usulModal, setUsulModal]         = useState(null);
+    const [usulForm, setUsulForm]           = useState({ usulan_tgl: '', usulan_jam: '', usulan_catatan: '' });
+    const [usulLoading, setUsulLoading]     = useState(false);
     const [deleteBuktiId, setDeleteBuktiId] = useState(null);
     const [deletingBukti, setDeletingBukti] = useState(false);
     const [tolakModal, setTolakModal]       = useState(null); // event penawaran yang ditolak
@@ -222,6 +226,22 @@ export default function ClientDashboard({
             data: { alasan: alasanBatal },
             onSuccess: () => { setCancelModal(null); setAlasanBatal(''); },
             onFinish: () => setCancelLoading(false),
+        });
+    };
+
+    const openUsul = (apt) => {
+        setUsulForm({ usulan_tgl: '', usulan_jam: '', usulan_catatan: '' });
+        setUsulModal(apt);
+    };
+
+    const submitUsul = (e) => {
+        e.preventDefault();
+        if (usulLoading) return;
+        setUsulLoading(true);
+        router.post(route('client.appointment.usul-jadwal', usulModal.id), usulForm, {
+            preserveScroll: true,
+            onSuccess: () => setUsulModal(null),
+            onFinish: () => setUsulLoading(false),
         });
     };
 
@@ -855,6 +875,13 @@ export default function ClientDashboard({
                                                     )}
                                                 </div>
                                             )}
+                                            {apt.usulan_tgl && ['Pending', 'Dikonfirmasi', 'Reschedule'].includes(apt.status) && (
+                                                <div className="p-3 mt-3 border bg-gold-soft/60 border-gold-2 rounded-xl">
+                                                    <p className="mb-1 text-xs font-bold text-gold-dim">🔄 Usulan jadwalmu (menunggu tinjauan tim)</p>
+                                                    <p className="text-sm text-muted">{formatTanggal(apt.usulan_tgl)}{apt.usulan_jam && ` pukul ${String(apt.usulan_jam).substring(0,5)}`}</p>
+                                                    {apt.usulan_catatan && <p className="mt-1 text-xs text-muted-2 italic">"{apt.usulan_catatan}"</p>}
+                                                </div>
+                                            )}
                                             {apt.catatan_em && (
                                                 <div className="p-3 mt-3 bg-paper rounded-xl">
                                                     <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Catatan dari Tim</p>
@@ -869,10 +896,16 @@ export default function ClientDashboard({
                                             )}
                                         </div>
                                         {['Pending', 'Dikonfirmasi', 'Reschedule'].includes(apt.status) && (
-                                            <button onClick={() => handleCancel(apt)}
-                                                className="self-start sm:self-auto px-3 py-1.5 text-xs font-bold text-danger border border-danger/30 rounded-lg hover:bg-danger-bg transition-colors flex-shrink-0">
-                                                Batalkan
-                                            </button>
+                                            <div className="flex flex-col gap-2 self-start sm:self-auto flex-shrink-0">
+                                                <button onClick={() => openUsul(apt)}
+                                                    className="px-3 py-1.5 text-xs font-bold text-gold-dim border border-gold-2 rounded-lg hover:bg-gold-soft transition-colors">
+                                                    Usulkan jadwal
+                                                </button>
+                                                <button onClick={() => handleCancel(apt)}
+                                                    className="px-3 py-1.5 text-xs font-bold text-danger border border-danger/30 rounded-lg hover:bg-danger-bg transition-colors">
+                                                    Batalkan
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -1264,9 +1297,17 @@ export default function ClientDashboard({
                                                                         {bukti.status}
                                                                     </span>
                                                                     <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer"
+                                                                        title="Lihat bukti"
                                                                         className="p-1 text-muted hover:text-gold-dim transition-colors">
                                                                         <Eye size={13} />
                                                                     </a>
+                                                                    {bukti.status === 'Diverifikasi' && (
+                                                                        <a href={route('client.bukti.kwitansi', bukti.id)}
+                                                                            title="Unduh kwitansi"
+                                                                            className="p-1 text-muted hover:text-ok transition-colors">
+                                                                            <Download size={13} />
+                                                                        </a>
+                                                                    )}
                                                                     {bukti.status === 'Menunggu' && (
                                                                         <button onClick={() => handleDeleteBukti(bukti.id)}
                                                                             className="p-1 text-muted hover:text-danger transition-colors">
@@ -1584,6 +1625,73 @@ export default function ClientDashboard({
                                 {cancelLoading ? 'Memproses...' : 'Ya, Batalkan'}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Usulan Jadwal (reschedule dua arah) */}
+            {usulModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md p-6 bg-surface border border-line shadow-xl rounded-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 className="text-lg font-extrabold text-ink">Usulkan Jadwal Lain</h2>
+                                <p className="text-xs text-muted mt-0.5">{usulModal.jenis_event}</p>
+                            </div>
+                            <button onClick={() => setUsulModal(null)} className="p-1.5 text-muted hover:bg-paper rounded-lg">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <p className="p-3 mb-4 text-xs text-muted bg-gold-soft/60 border border-gold-2 rounded-xl">
+                            Ajukan tanggal & jam yang lebih pas untukmu. Jadwal yang berlaku sekarang tetap sama sampai tim kami meninjau dan mengonfirmasi usulanmu.
+                        </p>
+
+                        <form onSubmit={submitUsul} className="space-y-4">
+                            <div>
+                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Tanggal Usulan *</label>
+                                <input type="date"
+                                    value={usulForm.usulan_tgl}
+                                    min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
+                                    onChange={e => setUsulForm(f => ({ ...f, usulan_tgl: e.target.value }))}
+                                    className="w-full px-4 py-3 text-sm text-ink bg-surface border border-line rounded-xl focus:border-gold-2 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Jam Usulan *</label>
+                                <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                                    {slots.map(s => (
+                                        <button type="button" key={s}
+                                            onClick={() => setUsulForm(f => ({ ...f, usulan_jam: s }))}
+                                            className={`py-2 text-xs font-bold border rounded-xl transition-all ${
+                                                usulForm.usulan_jam === s
+                                                    ? 'bg-gold-grad text-white border-transparent shadow-gold'
+                                                    : 'bg-surface border-line text-ink hover:border-gold-2'
+                                            }`}>
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Catatan <span className="normal-case font-normal text-muted-2">(opsional)</span></label>
+                                <textarea rows={2}
+                                    value={usulForm.usulan_catatan}
+                                    onChange={e => setUsulForm(f => ({ ...f, usulan_catatan: e.target.value }))}
+                                    placeholder="Mis. lebih nyaman sore hari…"
+                                    className="w-full px-4 py-3 text-sm text-ink placeholder-muted-2 bg-surface border border-line resize-none rounded-xl focus:border-gold-2 focus:outline-none" />
+                            </div>
+                            <div className="flex gap-3">
+                                <button type="button" onClick={() => setUsulModal(null)}
+                                    className="flex-1 py-2.5 border border-line text-muted font-bold rounded-xl hover:bg-paper transition-colors text-sm">
+                                    Kembali
+                                </button>
+                                <button type="submit"
+                                    disabled={usulLoading || !usulForm.usulan_tgl || !usulForm.usulan_jam}
+                                    className="flex-1 py-2.5 bg-gold-grad text-white font-black rounded-xl hover:brightness-95 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {usulLoading ? 'Mengirim…' : 'Kirim Usulan'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

@@ -2,7 +2,7 @@ import FinanceLayout from '@/Layouts/FinanceLayout';
 import Pagination from '@/Components/Pagination';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { Search, CheckCircle, XCircle, Clock, Eye, X, AlertCircle } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Clock, Eye, X, AlertCircle, Download } from 'lucide-react';
 import { useDebounced } from '@/hooks/useDebounced';
 
 const fmt = (v) => v
@@ -234,6 +234,12 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
                                             </div>
                                         ) : (
                                             <div className="flex items-center justify-center gap-1">
+                                                {b.status === 'Diverifikasi' && (
+                                                    <a href={route('finance.bukti.kwitansi', b.id)}
+                                                        className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
+                                                        <Download size={11} /> Kwitansi
+                                                    </a>
+                                                )}
                                                 <button onClick={() => openVerify(b, b.status === 'Diverifikasi' ? 'Ditolak' : 'Diverifikasi')}
                                                     className="px-3 py-1.5 text-[10px] font-bold text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                                                     Ubah Status

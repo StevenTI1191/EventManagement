@@ -211,6 +211,39 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
                         )}
                     </div>
 
+                    {/* Usulan jadwal dari klien (reschedule dua arah) */}
+                    {appointment.usulan_tgl && ['Pending', 'Dikonfirmasi', 'Reschedule'].includes(appointment.status) && (
+                        <div className="p-6 bg-amber-50 border border-amber-200 shadow-sm rounded-2xl">
+                            <h3 className="mb-3 font-extrabold text-amber-900">🔄 Usulan Jadwal dari Klien</h3>
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p className="text-[10px] text-amber-500 uppercase tracking-wider">Tanggal Usulan</p>
+                                    <p className="text-sm font-bold text-amber-900">{formatTanggal(appointment.usulan_tgl)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-amber-500 uppercase tracking-wider">Jam Usulan</p>
+                                    <p className="text-sm font-bold text-amber-900">{String(appointment.usulan_jam || '').substring(0, 5) || '-'}</p>
+                                </div>
+                            </div>
+                            {appointment.usulan_catatan && (
+                                <p className="p-3 mb-3 text-sm italic text-amber-800 bg-amber-100/60 rounded-xl">"{appointment.usulan_catatan}"</p>
+                            )}
+                            <button
+                                onClick={() => {
+                                    setRescheduleForm({
+                                        tgl_konfirmasi: appointment.usulan_tgl,
+                                        jam_konfirmasi: String(appointment.usulan_jam || '').substring(0, 5),
+                                        catatan_em: '',
+                                    });
+                                    setShowReschedule(true);
+                                }}
+                                className="px-4 py-2 text-sm font-bold text-white transition-colors bg-amber-500 rounded-xl hover:bg-amber-600"
+                            >
+                                Terima &amp; jadwalkan usulan ini
+                            </button>
+                        </div>
+                    )}
+
                     {/* Hasil Konfirmasi */}
                     {(appointment.tgl_konfirmasi || appointment.catatan_em) && (
                         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">

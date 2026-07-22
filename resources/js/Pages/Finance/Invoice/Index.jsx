@@ -52,6 +52,23 @@ export default function FinanceInvoiceIndex({ events = [] }) {
         });
     };
 
+    // Pembatalan acara berbayar + refund.
+    const [refundEvent, setRefundEvent] = useState(null);
+    const [refundAlasan, setRefundAlasan] = useState('');
+
+    const submitRefund = () => {
+        if (proses) return;
+        setProses(`refund-${refundEvent.id_event}`);
+        router.patch(route('finance.invoice.batal-refund', refundEvent.id_event), { alasan: refundAlasan }, {
+            preserveScroll: true,
+            onSuccess: () => { setRefundEvent(null); setRefundAlasan(''); },
+            onFinish: () => setProses(null),
+        });
+    };
+
+    const totalTerbayar = (ev) =>
+        (ev.invoices || []).filter((i) => i.status === 'Lunas').reduce((s, i) => s + Number(i.nominal || 0), 0);
+
     return (
         <FinanceLayout>
             <Head title="Invoice — Laksamana Muda" />
@@ -108,6 +125,12 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                                 <div className="text-right">
                                     <p className="text-[10px] font-bold tracking-wide text-gray-400 uppercase">Total Nilai Acara</p>
                                     <p className="text-lg font-extrabold text-[#FF2D55]">{rupiah(ev.deal_harga_event)}</p>
+                                    {['Deal', 'Upcoming', 'Penyelesaian'].includes(ev.status_event) && (
+                                        <button onClick={() => { setRefundAlasan(''); setRefundEvent(ev); }}
+                                            className="mt-2 px-2.5 py-1 text-[10px] font-bold text-red-600 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+                                            Batalkan &amp; Refund
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -218,6 +241,45 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                             <button onClick={simpanEdit} disabled={!!proses}
                                     className="px-4 py-2 text-sm font-bold text-white bg-[#FF2D55] rounded-xl hover:bg-[#e02249] disabled:opacity-60">
                                 {proses === `edit-${editInv.id_invoice}` ? 'Menyimpan…' : 'Simpan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Batalkan & Refund */}
+            {refundEvent && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+                     onClick={() => proses || setRefundEvent(null)}>
+                    <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-start justify-between mb-2">
+                            <h3 className="text-lg font-extrabold text-gray-900">Batalkan Acara &amp; Refund</h3>
+                            <button onClick={() => setRefundEvent(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                        </div>
+                        <p className="mb-3 text-xs text-gray-500">{refundEvent.nama_event}</p>
+
+                        <div className="p-3 mb-4 text-xs border rounded-xl bg-red-50 border-red-200 text-red-700">
+                            Acara akan ditandai <b>Batal</b>. Dana yang sudah masuk
+                            (<b>{rupiah(totalTerbayar(refundEvent))}</b>) dicatat sebagai <b>refund</b> di buku kas
+                            sehingga saldo acara ini kembali nol. Tindakan ini tercatat permanen di riwayat.
+                        </div>
+
+                        <label className="block mb-2 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                            Alasan pembatalan <span className="text-red-500 normal-case font-normal">* wajib</span>
+                        </label>
+                        <textarea rows={3} value={refundAlasan} onChange={(e) => setRefundAlasan(e.target.value)}
+                            placeholder="Jelaskan alasan pembatalan (min. 5 karakter)…"
+                            className="w-full px-4 py-3 text-sm text-gray-800 border border-gray-200 resize-none rounded-xl focus:border-red-400 focus:outline-none" />
+
+                        <div className="flex gap-3 mt-5">
+                            <button onClick={() => setRefundEvent(null)} disabled={!!proses}
+                                className="flex-1 py-2.5 text-sm font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-60">
+                                Kembali
+                            </button>
+                            <button onClick={submitRefund}
+                                disabled={!!proses || refundAlasan.trim().length < 5}
+                                className="flex-1 py-2.5 text-sm font-black text-white bg-red-500 rounded-xl hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                                {proses === `refund-${refundEvent.id_event}` ? 'Memproses…' : 'Ya, Batalkan & Refund'}
                             </button>
                         </div>
                     </div>

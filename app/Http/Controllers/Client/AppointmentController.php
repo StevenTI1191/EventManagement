@@ -78,6 +78,7 @@ class AppointmentController extends Controller
             'appointments'      => $appointments,
             'events'            => $events,
             'penawaran'         => $penawaran,
+            'slots'             => self::workingSlots(),
             'totalAppointments' => $appointments->count(),
             'totalEvents'       => $events->count(),
             'eventDone'         => $milikKlien()->where('status_event', Event::STATUS_DONE)->count(),
@@ -404,8 +405,18 @@ class AppointmentController extends Controller
             ->firstOrFail();
 
         // Slot usulan harus jam kerja, bukan Minggu, dan tidak bentrok dengan
-        // appointment lain maupun jadwal acara.
-        $this->validateSlot($data['usulan_tgl'], $data['usulan_jam']);
+        // appointment lain maupun jadwal acara. validateSlot memakai kunci
+        // tgl_request/jam_request — dipetakan ke field usulan agar pesan error
+        // muncul di kolom yang benar pada form usulan.
+        try {
+            $this->validateSlot($data['usulan_tgl'], $data['usulan_jam']);
+        } catch (ValidationException $e) {
+            $errs  = $e->errors();
+            $remap = [];
+            if (isset($errs['tgl_request'])) $remap['usulan_tgl'] = $errs['tgl_request'];
+            if (isset($errs['jam_request'])) $remap['usulan_jam'] = $errs['jam_request'];
+            throw ValidationException::withMessages($remap ?: ['usulan_jam' => 'Slot yang diusulkan tidak tersedia.']);
+        }
 
         $appointment->update([
             'usulan_tgl'     => $data['usulan_tgl'],
