@@ -1151,6 +1151,55 @@ export default function ClientDashboard({
                                                     )}
                                                 </div>
 
+                                                {/* Progres persiapan acara — dari papan To-Do internal (read-only) */}
+                                                {event.tugas?.length > 0 && (() => {
+                                                    const tugas   = event.tugas;
+                                                    const total   = tugas.length;
+                                                    const selesai = tugas.filter(t => t.status_tugas === 'Done').length;
+                                                    const persenSiap = total ? Math.round((selesai / total) * 100) : 0;
+
+                                                    const perKat = {};
+                                                    tugas.forEach(t => {
+                                                        const k = t.kategori || 'Lainnya';
+                                                        if (!perKat[k]) perKat[k] = { total: 0, done: 0, ongoing: 0 };
+                                                        perKat[k].total++;
+                                                        if (t.status_tugas === 'Done') perKat[k].done++;
+                                                        else if ((t.progress || 0) > 0) perKat[k].ongoing++;
+                                                    });
+
+                                                    const statusKat = (c) =>
+                                                        c.done === c.total ? { label: 'Selesai', cls: 'bg-ok-bg text-ok border-ok/30' }
+                                                        : (c.done > 0 || c.ongoing > 0) ? { label: 'Sedang dikerjakan', cls: 'bg-blue-500/10 text-info border-blue-500/30' }
+                                                        : { label: 'Menunggu', cls: 'bg-paper text-muted-2 border-line' };
+
+                                                    return (
+                                                        <div className="mb-4">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <p className="text-[10px] font-black text-gold uppercase tracking-wider">🛠️ Progres Persiapan Acara</p>
+                                                                <span className="text-xs font-bold text-gold-dim">{selesai}/{total} tugas · {persenSiap}%</span>
+                                                            </div>
+                                                            <div className="w-full h-2 mb-3 overflow-hidden rounded-full bg-paper">
+                                                                <div className="h-2 transition-all duration-700 rounded-full bg-gold-grad" style={{ width: `${persenSiap}%` }} />
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                {Object.entries(perKat).map(([kat, c]) => {
+                                                                    const s = statusKat(c);
+                                                                    return (
+                                                                        <div key={kat} className="flex items-center justify-between gap-2 px-3 py-2 bg-paper rounded-lg">
+                                                                            <span className="text-xs font-bold truncate text-ink">{kat}</span>
+                                                                            <div className="flex items-center flex-shrink-0 gap-2">
+                                                                                <span className="text-[10px] text-muted">{c.done}/{c.total}</span>
+                                                                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${s.cls}`}>{s.label}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            <p className="mt-2 text-[10px] text-muted-2">Progres ini diperbarui oleh tim kami seiring persiapan acara berjalan.</p>
+                                                        </div>
+                                                    );
+                                                })()}
+
                                                 {/* Bukti list */}
                                                 {event.bukti_pembayaran && event.bukti_pembayaran.length > 0 ? (
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">

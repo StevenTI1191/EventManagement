@@ -40,6 +40,12 @@ class AppointmentController extends Controller
                 'pic',
                 'invoices' => fn($q) => $q->orderBy('tgl_terbit'),
                 'buktiPembayaran' => fn($q) => $q->where('client_id', $client->id),
+                // To-do persiapan acara — hanya kolom yang aman ditampilkan ke
+                // klien (tanpa PIC/catatan internal), agar klien bisa memantau
+                // sejauh mana persiapan acaranya.
+                'tugas' => fn($q) => $q
+                    ->select('id_tugas', 'id_event', 'nama_tugas', 'kategori', 'status_tugas', 'progress', 'deadline_tugas', 'urutan')
+                    ->orderBy('urutan')->orderBy('id_tugas'),
             ])
             ->latest('tgl_mulai_event')
             ->take(50)
