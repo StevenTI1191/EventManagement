@@ -58,41 +58,59 @@ class TugasTemplate
     }
 
     /**
-     * Divisi mana yang bertanggung jawab atas tiap kategori to-do. Kategori
-     * yang tidak terdaftar di sini ditangani pegawai lapangan/eksternal.
+     * Peta kategori to-do → posisi pegawai yang menanganinya, urut prioritas
+     * (kiri = paling spesifik). To-do otomatis ditugaskan ke pegawai pertama
+     * yang posisinya cocok, sehingga tiap divisi jatuh ke spesialisnya —
+     * mis. tugas Sosial Media ke pegawai Social Media (Christy), Marketing ke
+     * Event Marketing (Devani), Legalitas ke pegawai Lapangan (Tegar) —
+     * bukan menumpuk semua ke satu orang. Kandidat terakhir berperan sebagai
+     * cadangan bila spesialisnya belum ada.
      */
-    private const DIVISI_KATEGORI = [
-        'em' => [
-            'Talent', 'Legalitas', 'Marketing', 'Sosial Media & Designer',
-            'Strategi Penjualan / Promo', 'Ticketing & Registration', 'Acara',
-        ],
-        'finance' => [
-            'Finance', 'Operasional - Kasir',
-        ],
-        // F&B, Operasional - Floor, Operasional - Lainnya → pegawai eksternal.
+    private const KATEGORI_POSISI = [
+        'Talent'                     => ['Talent', 'EventMarketing'],
+        'Legalitas'                  => ['Legalitas', 'Lapangan', 'EventMarketing'],
+        'Marketing'                  => ['Marketing', 'EventMarketing'],
+        'Sosial Media & Designer'    => ['Social Media', 'Sosial Media', 'Media', 'Design', 'EventMarketing'],
+        'Strategi Penjualan / Promo' => ['Marketing', 'Promo', 'EventMarketing'],
+        'Ticketing & Registration'   => ['Ticketing', 'EventMarketing'],
+        'Acara'                      => ['Acara', 'EventMarketing'],
+        'Finance'                    => ['Finance'],
+        'Operasional - Kasir'        => ['Kasir', 'Finance'],
+        'F&B'                        => ['Kitchen', 'F&B', 'Bar'],
+        'Operasional - Floor'        => ['Floor', 'Operasional', 'Lapangan'],
+        'Operasional - Lainnya'      => ['Operasional', 'Lapangan'],
     ];
 
     /**
-     * Peta kategori → id_pegawai yang otomatis ditugaskan.
-     *
-     * PIC dipilih sekali per divisi lalu dipakai ulang, supaya to-do dari satu
-     * event konsisten: kategori pemasaran ke tim Event Marketing, kategori
-     * keuangan/kasir ke tim Finance, dan operasional lapangan ke pegawai
-     * eksternal. Bila divisinya belum punya pegawai, kategorinya dibiarkan
+     * Peta kategori → id_pegawai yang otomatis ditugaskan, berdasarkan posisi
+     * (lihat KATEGORI_POSISI). Bila tidak ada posisi yang cocok, jatuh ke
+     * pegawai eksternal mana pun; bila itu pun tak ada, kategori dibiarkan
      * tanpa PIC agar bisa diisi manual di board.
      */
     private static function picPerKategori(): array
     {
-        $em       = Pegawai::whereIn('posisi_pegawai', ['EventMarketing', 'Event Marketing'])->value('id_pegawai');
-        $finance  = Pegawai::where('posisi_pegawai', 'Finance')->value('id_pegawai');
-        $eksternal = Pegawai::where('jenis_pegawai', 'Eksternal')->value('id_pegawai');
+        // Ambil sekali, lalu resolusi di memori (hindari query per kategori).
+        $pegawai = Pegawai::get(['id_pegawai', 'posisi_pegawai', 'jenis_pegawai']);
+
+        // id pegawai pertama yang posisinya memuat salah satu kandidat.
+        $cari = function (array $kandidat) use ($pegawai) {
+            foreach ($kandidat as $pos) {
+                $p = $pegawai->first(fn ($x) => str_contains(
+                    mb_strtolower((string) $x->posisi_pegawai),
+                    mb_strtolower($pos)
+                ));
+                if ($p) {
+                    return $p->id_pegawai;
+                }
+            }
+            return null;
+        };
+
+        $eksternal = $pegawai->firstWhere('jenis_pegawai', 'Eksternal')?->id_pegawai;
 
         $peta = [];
-        foreach (self::DIVISI_KATEGORI['em'] as $k)      { $peta[$k] = $em; }
-        foreach (self::DIVISI_KATEGORI['finance'] as $k) { $peta[$k] = $finance; }
-        // Kategori operasional lapangan yang tersisa → eksternal.
-        foreach (['F&B', 'Operasional - Floor', 'Operasional - Lainnya'] as $k) {
-            $peta[$k] = $eksternal;
+        foreach (self::KATEGORI_POSISI as $kategori => $kandidat) {
+            $peta[$kategori] = $cari($kandidat) ?? $eksternal;
         }
 
         return $peta;
