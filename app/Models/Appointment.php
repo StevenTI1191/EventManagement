@@ -12,7 +12,31 @@ class Appointment extends Model
         'jumlah_tamu', 'estimasi_budget', 'tgl_request', 'jam_request',
         'tgl_konfirmasi', 'jam_konfirmasi', 'status', 'catatan_em',
         'id_pegawai', 'alasan_batal_client', 'id_event', 'catatan_meeting',
+        'usulan_tgl', 'usulan_jam', 'usulan_catatan',
     ];
+
+    /** Status yang masih menempati slot (memegang slot_key). */
+    public const STATUS_AKTIF = ['Pending', 'Dikonfirmasi', 'Reschedule'];
+
+    /**
+     * Jaga slot_key selalu konsisten: appointment aktif memegang kunci unik
+     * "tanggal|jam" dari slot yang dimintanya, appointment tak aktif melepasnya
+     * (NULL). Unique index pada slot_key-lah yang menutup celah double-booking
+     * saat dua permintaan tiba nyaris bersamaan.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Appointment $a) {
+            if (in_array($a->status, self::STATUS_AKTIF, true) && $a->tgl_request && $a->jam_request) {
+                $tgl = $a->tgl_request instanceof \DateTimeInterface
+                    ? $a->tgl_request->format('Y-m-d')
+                    : substr((string) $a->tgl_request, 0, 10);
+                $a->slot_key = $tgl . '|' . substr((string) $a->jam_request, 0, 5);
+            } else {
+                $a->slot_key = null;
+            }
+        });
+    }
 
     public function client()
     {

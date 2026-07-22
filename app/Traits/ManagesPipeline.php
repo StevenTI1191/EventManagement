@@ -203,11 +203,14 @@ trait ManagesPipeline
         }
 
         // Deal tercapai → appointment asal (bila ada) otomatis ditandai Selesai,
-        // sehingga tidak ikut terbatalkan scheduler auto-batal appointment.
+        // sehingga tidak ikut terbatalkan scheduler auto-batal appointment;
+        // sekaligus invoice DP diterbitkan otomatis agar Finance tak perlu manual.
         if ($baru === Event::STATUS_DEAL) {
             \App\Models\Appointment::where('id_event', $event->id_event)
                 ->whereIn('status', ['Dikonfirmasi', 'Reschedule'])
                 ->update(['status' => 'Selesai']);
+
+            \App\Models\Invoice::terbitkanDpOtomatis($event->refresh());
         }
 
         return back()->with('success', "Event \"{$event->nama_event}\" dipindahkan ke tahap {$baru}.{$pesanExtra}");

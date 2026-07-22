@@ -73,4 +73,79 @@ class Invoice extends Model
 
         return $prefix . str_pad((string) $urut, 4, '0', STR_PAD_LEFT);
     }
+
+    /**
+     * Terbitkan satu invoice (DP atau Pelunasan) untuk sebuah event — inti
+     * pembuatan yang dipakai bersama jalur manual (Finance) & otomatis. Tanpa
+     * validasi kelayakan; pemanggil yang menjaganya. Nominal & jatuh tempo
+     * dihitung seragam: DP maks 7 hari sejak terbit tapi tak melewati H-1,
+     * pelunasan H-1; keduanya tak pernah jatuh di masa lampau.
+     */
+    public static function buat(Event $event, string $tipe, ?int $idPegawai = null): self
+    {
+        $total   = (float) ($event->deal_harga_event ?? 0);
+        $dp      = self::nominalDp($total);
+        $nominal = $tipe === self::TIPE_DP ? $dp : ($total - $dp);
+
+        $mulai   = \Illuminate\Support\Carbon::parse($event->tgl_mulai_event);
+        $hMinus1 = $mulai->copy()->subDay();
+
+        if ($tipe === self::TIPE_DP) {
+            $jatuhTempo = now()->addDays(7);
+            if ($jatuhTempo->gt($hMinus1)) {
+                $jatuhTempo = $hMinus1;
+            }
+        } else {
+            $jatuhTempo = $hMinus1;
+        }
+        if ($jatuhTempo->lt(now())) {
+            $jatuhTempo = now();
+        }
+
+        return self::create([
+            'id_event'        => $event->id_event,
+            'id_pegawai'      => $idPegawai,
+            'nomor_invoice'   => self::generateNomor(),
+            'tipe'            => $tipe,
+            'nominal'         => $nominal,
+            'tgl_terbit'      => now()->toDateString(),
+            'tgl_jatuh_tempo' => $jatuhTempo->toDateString(),
+            'status'          => self::STATUS_BELUM,
+        ]);
+    }
+
+    /**
+     * Auto-terbit invoice DP begitu event mencapai Deal. Idempotent & aman:
+     * hanya untuk event eksternal berharga jelas yang belum punya invoice DP.
+     */
+    public static function terbitkanDpOtomatis(Event $event): ?self
+    {
+        if ($event->tipe_event !== Event::TIPE_EKSTERNAL) return null;
+        if ($event->status_event !== Event::STATUS_DEAL)   return null;
+        if (! $event->tgl_mulai_event)                     return null;
+        if ((float) ($event->deal_harga_event ?? 0) <= 0)  return null;
+        if (self::where('id_event', $event->id_event)->where('tipe', self::TIPE_DP)->exists()) return null;
+
+        return self::buat($event, self::TIPE_DP);
+    }
+
+    /**
+     * Auto-terbit invoice Pelunasan setelah DP lunas (dipanggil saat event naik
+     * ke Upcoming). Idempotent: hanya bila DP sudah Lunas dan pelunasan belum ada.
+     */
+    public static function terbitkanPelunasanOtomatis(Event $event): ?self
+    {
+        if ($event->tipe_event !== Event::TIPE_EKSTERNAL) return null;
+        if (! $event->tgl_mulai_event)                    return null;
+        if ((float) ($event->deal_harga_event ?? 0) <= 0) return null;
+        if (self::where('id_event', $event->id_event)->where('tipe', self::TIPE_PELUNASAN)->exists()) return null;
+
+        $dpLunas = self::where('id_event', $event->id_event)
+            ->where('tipe', self::TIPE_DP)
+            ->where('status', self::STATUS_LUNAS)
+            ->exists();
+        if (! $dpLunas) return null;
+
+        return self::buat($event, self::TIPE_PELUNASAN);
+    }
 }

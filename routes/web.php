@@ -445,6 +445,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_invoice')->name('finance.invoice.update');
         Route::patch('/finance/invoice/{id_invoice}/lunas', [\App\Http\Controllers\Finance\InvoiceController::class, 'lunas'])
             ->whereNumber('id_invoice')->name('finance.invoice.lunas');
+        Route::patch('/finance/invoice/event/{id_event}/batal-refund', [\App\Http\Controllers\Finance\InvoiceController::class, 'batalRefund'])
+            ->whereNumber('id_event')->name('finance.invoice.batal-refund');
 
         Route::get('/finance/event', [\App\Http\Controllers\Finance\EventController::class, 'index'])
             ->name('finance.event.index');
@@ -500,6 +502,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         })->name('finance.notifikasi.destroy');
         Route::patch('/finance/bukti-pembayaran/{id}/verifikasi', [\App\Http\Controllers\Finance\BuktiPembayaranController::class, 'verifikasi'])
             ->name('finance.bukti.verifikasi');
+        Route::get('/finance/bukti-pembayaran/{id}/kwitansi', [\App\Http\Controllers\Finance\BuktiPembayaranController::class, 'kwitansi'])
+            ->whereNumber('id')->name('finance.bukti.kwitansi');
     });
 });
 
@@ -615,6 +619,8 @@ Route::domain(config('app.domain'))->group(function () {
             ->name('client.appointment.store');
         Route::delete('/appointment/{id}', [\App\Http\Controllers\Client\AppointmentController::class, 'destroy'])
             ->name('client.appointment.destroy');
+        Route::post('/appointment/{id}/usul-jadwal', [\App\Http\Controllers\Client\AppointmentController::class, 'usulJadwal'])
+            ->whereNumber('id')->name('client.appointment.usul-jadwal');
 
         Route::get('/profile', [\App\Http\Controllers\Client\ProfileController::class, 'index'])
             ->name('client.profile');
@@ -625,6 +631,8 @@ Route::domain(config('app.domain'))->group(function () {
             ->name('client.bukti.upload');
         Route::delete('/bukti-pembayaran/{id}', [\App\Http\Controllers\Client\AppointmentController::class, 'deleteBukti'])
             ->name('client.bukti.delete');
+        Route::get('/bukti-pembayaran/{id}/kwitansi', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadKwitansi'])
+            ->whereNumber('id')->name('client.bukti.kwitansi');
         Route::get('/invoice/{id_invoice}/pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadInvoice'])
             ->whereNumber('id_invoice')->name('client.invoice.pdf');
 

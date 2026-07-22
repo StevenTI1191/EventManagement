@@ -99,6 +99,8 @@ class PelunasanInvoice
 
         if ($dibayar >= Invoice::nominalDp($totalDeal)) {
             $event->update(['status_event' => Event::STATUS_UPCOMING]);
+            // DP terpenuhi → langsung terbitkan invoice pelunasan (bila belum ada).
+            Invoice::terbitkanPelunasanOtomatis($event);
         }
     }
 }

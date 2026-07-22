@@ -108,41 +108,9 @@ class InvoiceController extends Controller
             }
         }
 
-        $dp      = round($total * self::PERSEN_DP);
-        $nominal = $tipe === Invoice::TIPE_DP ? $dp : ($total - $dp);
-
-        // Jatuh tempo — keduanya HARUS lunas sebelum hari-H acara:
-        //  - DP        : dibayar segera untuk mengamankan booking (maks 7 hari
-        //    sejak terbit), namun tidak boleh melewati sehari sebelum acara.
-        //  - Pelunasan : paling lambat sehari sebelum acara berlangsung (H-1).
-        $mulai   = \Illuminate\Support\Carbon::parse($event->tgl_mulai_event);
-        $hMinus1 = $mulai->copy()->subDay(); // sehari sebelum hari-H
-
-        if ($tipe === Invoice::TIPE_DP) {
-            $jatuhTempo = now()->addDays(7);
-            if ($jatuhTempo->gt($hMinus1)) {
-                $jatuhTempo = $hMinus1;
-            }
-        } else {
-            $jatuhTempo = $hMinus1;
-        }
-
-        // Bila acara sudah dekat/lewat saat invoice terbit, jangan menaruh
-        // jatuh tempo di masa lampau — minta dibayar segera.
-        if ($jatuhTempo->lt(now())) {
-            $jatuhTempo = now();
-        }
-
-        Invoice::create([
-            'id_event'        => $event->id_event,
-            'id_pegawai'      => Auth::guard('pegawai')->id(),
-            'nomor_invoice'   => Invoice::generateNomor(),
-            'tipe'            => $tipe,
-            'nominal'         => $nominal,
-            'tgl_terbit'      => now()->toDateString(),
-            'tgl_jatuh_tempo' => $jatuhTempo->toDateString(),
-            'status'          => Invoice::STATUS_BELUM,
-        ]);
+        // Nominal & jatuh tempo dihitung di satu tempat (Invoice::buat) supaya
+        // konsisten dengan jalur auto-terbit.
+        Invoice::buat($event, $tipe, Auth::guard('pegawai')->id());
 
         return back()->with('success', "Invoice {$tipe} berhasil diterbitkan.");
     }
@@ -194,9 +162,11 @@ class InvoiceController extends Controller
 
             $invoice->update(['status' => Invoice::STATUS_LUNAS]);
 
-            // DP lunas → event resmi berjalan (masuk Task Divisi & kalender operasional).
+            // DP lunas → event resmi berjalan (masuk Task Divisi & kalender operasional),
+            // lalu invoice pelunasan diterbitkan otomatis.
             if ($invoice->tipe === Invoice::TIPE_DP && $invoice->event?->status_event === Event::STATUS_DEAL) {
                 $invoice->event->update(['status_event' => Event::STATUS_UPCOMING]);
+                Invoice::terbitkanPelunasanOtomatis($invoice->event->refresh());
             }
         });
 
@@ -230,6 +200,59 @@ class InvoiceController extends Controller
         $invoice->update($data);
 
         return back()->with('success', 'Invoice berhasil diperbarui.');
+    }
+
+    /**
+     * Batalkan acara yang sudah masuk penagihan (Deal ke atas) sekaligus catat
+     * pengembalian dana. Setelah Deal, pembatalan bukan lagi urusan papan
+     * pipeline melainkan Finance — di sinilah refund dibukukan.
+     *
+     * Refund dicatat sebagai transaksi negatif sebesar uang yang sudah masuk,
+     * sehingga buku kas untuk acara ini kembali nol dan laporan Finance ikut
+     * terkoreksi. Status acara menjadi Batal (riwayatnya tetap tersimpan).
+     */
+    public function batalRefund(Request $request, $id_event)
+    {
+        $this->checkFinance();
+
+        $data = $request->validate([
+            'alasan' => 'required|string|min:5|max:500',
+        ]);
+
+        $event = Event::eksternal()
+            ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
+            ->findOrFail($id_event);
+
+        $dibayar = DB::transaction(function () use ($event, $data) {
+            $dibayar = (float) \App\Models\Transaksi::where('id_event', $event->id_event)->sum('nominal');
+
+            if ($dibayar > 0) {
+                \App\Models\Transaksi::create([
+                    'id_event'   => $event->id_event,
+                    'id_pegawai' => Auth::guard('pegawai')->id(),
+                    'nominal'    => -1 * $dibayar,
+                    'tgl_bayar'  => now()->toDateString(),
+                    'keterangan' => 'Refund pembatalan acara — ' . trim($data['alasan']),
+                ]);
+            }
+
+            $jejak = '❌ Dibatalkan Finance (' . now()->translatedFormat('d M Y H:i') . ')'
+                . ($dibayar > 0 ? ' — refund Rp ' . number_format($dibayar, 0, ',', '.') : '')
+                . ': ' . trim($data['alasan']);
+
+            $event->update([
+                'status_event' => Event::STATUS_BATAL,
+                'note_event'   => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
+            ]);
+
+            return $dibayar;
+        });
+
+        $pesan = $dibayar > 0
+            ? 'Acara dibatalkan. Refund Rp ' . number_format($dibayar, 0, ',', '.') . ' dicatat di buku kas.'
+            : 'Acara dibatalkan. Belum ada pembayaran masuk, jadi tidak ada refund.';
+
+        return back()->with('success', $pesan);
     }
 
     /** Susun PDF invoice dari data invoice. */

@@ -15,11 +15,23 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
+use App\Traits\BuatKwitansi;
 use App\Traits\ChecksPegawaiRole;
 
 class BuktiPembayaranController extends Controller
 {
     use ChecksPegawaiRole;
+    use BuatKwitansi;
+
+    /** Unduh kwitansi (tanda terima) untuk bukti yang sudah diverifikasi. */
+    public function kwitansi($id)
+    {
+        $this->checkFinance();
+
+        $bukti = BuktiPembayaran::where('status', 'Diverifikasi')->findOrFail($id);
+
+        return $this->kwitansiPdf($bukti);
+    }
 
 
     public function index(Request $request)

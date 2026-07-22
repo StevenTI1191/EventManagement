@@ -102,6 +102,10 @@ trait ManagesAppointment
             'catatan_em'     => $request->catatan_em,
             'status'         => $reschedule ? 'Reschedule' : 'Dikonfirmasi',
             'id_pegawai'     => Auth::guard('pegawai')->id(),
+            // Jadwal sudah diputuskan tim → usulan klien (bila ada) tak berlaku lagi.
+            'usulan_tgl'     => null,
+            'usulan_jam'     => null,
+            'usulan_catatan' => null,
         ]);
 
         $appointment->load('client');

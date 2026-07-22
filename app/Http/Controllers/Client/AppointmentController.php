@@ -7,6 +7,7 @@ use App\Mail\AppointmentDiterima;
 use App\Models\Appointment;
 use App\Models\BuktiPembayaran;
 use App\Models\Event;
+use App\Traits\BuatKwitansi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -20,6 +21,8 @@ use Illuminate\Validation\ValidationException;
 
 class AppointmentController extends Controller
 {
+    use BuatKwitansi;
+
     public function index()
     {
         $client = Auth::guard('client')->user();
@@ -313,14 +316,26 @@ class AppointmentController extends Controller
 
         // Validasi jam kerja (Senin–Sabtu, slot selang 1,5 jam 09:00–16:30) + cek bentrok
         $this->validateSlot($request->tgl_request, $request->jam_request);
-        $appointment = Appointment::create([
-            ...$request->only([
-                'jenis_event', 'deskripsi_event', 'jumlah_tamu',
-                'estimasi_budget', 'tgl_request', 'jam_request',
-            ]),
-            'client_id' => $client->id,
-            'status'    => 'Pending',
-        ]);
+
+        // Backstop race condition: bila dua klien menembus pemeriksaan di atas
+        // nyaris bersamaan, unique index slot_key menolak yang kedua (error 1062).
+        try {
+            $appointment = Appointment::create([
+                ...$request->only([
+                    'jenis_event', 'deskripsi_event', 'jumlah_tamu',
+                    'estimasi_budget', 'tgl_request', 'jam_request',
+                ]),
+                'client_id' => $client->id,
+                'status'    => 'Pending',
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
+                throw ValidationException::withMessages([
+                    'jam_request' => 'Maaf, slot ini baru saja dipesan klien lain. Silakan pilih jam lain.',
+                ]);
+            }
+            throw $e;
+        }
 
         // Load relasi client untuk email
         $appointment->load('client');
@@ -363,6 +378,59 @@ class AppointmentController extends Controller
         ]);
 
         return back()->with('success', 'Appointment berhasil dibatalkan.');
+    }
+
+    /**
+     * Klien mengusulkan jadwal meeting alternatif (reschedule dua arah).
+     * Usulan disimpan terpisah dari jadwal berjalan — jadwal yang sudah ada tetap
+     * berlaku sampai tim meninjau & mengonfirmasi usulan ini.
+     */
+    public function usulJadwal(Request $request, $id)
+    {
+        $client = Auth::guard('client')->user();
+
+        $data = $request->validate([
+            'usulan_tgl'     => ['required', 'date', 'after:today'],
+            'usulan_jam'     => ['required', 'date_format:H:i'],
+            'usulan_catatan' => ['nullable', 'string', 'max:500'],
+        ], [
+            'usulan_tgl.after'    => 'Tanggal usulan harus setelah hari ini.',
+            'usulan_jam.required' => 'Pilih jam usulan.',
+        ]);
+
+        $appointment = Appointment::where('id', $id)
+            ->where('client_id', $client->id)
+            ->whereIn('status', ['Pending', 'Dikonfirmasi', 'Reschedule'])
+            ->firstOrFail();
+
+        // Slot usulan harus jam kerja, bukan Minggu, dan tidak bentrok dengan
+        // appointment lain maupun jadwal acara.
+        $this->validateSlot($data['usulan_tgl'], $data['usulan_jam']);
+
+        $appointment->update([
+            'usulan_tgl'     => $data['usulan_tgl'],
+            'usulan_jam'     => $data['usulan_jam'],
+            'usulan_catatan' => $data['usulan_catatan'] ?? null,
+        ]);
+
+        // Kabari PIC yang menangani (bila sudah ada) lewat email — tabel Notifikasi
+        // hanya untuk klien, jadi staf internal dikabari via email.
+        if ($appointment->id_pegawai && ($email = optional($appointment->pegawai)->email_pegawai)) {
+            $tglUsul = \Illuminate\Support\Carbon::parse($data['usulan_tgl'])->translatedFormat('d F Y');
+            try {
+                Mail::raw(
+                    "Klien {$client->nama_client} mengusulkan jadwal meeting alternatif untuk \"{$appointment->jenis_event}\": "
+                        . "{$tglUsul} pukul {$data['usulan_jam']}."
+                        . (! empty($data['usulan_catatan']) ? "\n\nCatatan klien: {$data['usulan_catatan']}" : '')
+                        . "\n\nSilakan tinjau & konfirmasi di menu Appointment.",
+                    fn ($m) => $m->to($email)->subject('🔄 Usulan Jadwal Meeting dari Klien — ' . $appointment->jenis_event)
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Email usulan jadwal gagal: ' . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', 'Usulan jadwal terkirim. Tim kami akan meninjau dan mengonfirmasi.');
     }
 
     /**
@@ -535,6 +603,20 @@ class AppointmentController extends Controller
     }
 
     /**
+     * Unduh kwitansi (tanda terima) untuk bukti pembayaran milik sendiri yang
+     * sudah diverifikasi Finance.
+     */
+    public function downloadKwitansi($id)
+    {
+        $bukti = BuktiPembayaran::where('id', $id)
+            ->where('client_id', Auth::guard('client')->id())
+            ->where('status', 'Diverifikasi')
+            ->firstOrFail();
+
+        return $this->kwitansiPdf($bukti);
+    }
+
+    /**
      * Unduh PDF "Detail Event" milik client sendiri — informasi acara lengkap
      * sekaligus ringkasan tagihan (invoice, sudah dibayar, sisa).
      */
@@ -614,6 +696,9 @@ class AppointmentController extends Controller
         Appointment::where('id_event', $event->id_event)
             ->whereIn('status', ['Dikonfirmasi', 'Reschedule'])
             ->update(['status' => 'Selesai']);
+
+        // Deal → invoice DP terbit otomatis (sama seperti jalur pipeline).
+        \App\Models\Invoice::terbitkanDpOtomatis($event->refresh());
 
         $this->kabariPicPenawaran($event, 'diterima');
 
