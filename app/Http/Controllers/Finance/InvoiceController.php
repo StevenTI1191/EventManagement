@@ -172,6 +172,26 @@ class InvoiceController extends Controller
         }
 
         DB::transaction(function () use ($invoice) {
+            // Catat pembayaran ke buku kas untuk sisa tagihan invoice ini yang
+            // belum tertutup bukti. Tanpa transaksi ini: (1) uangnya tidak masuk
+            // laporan Finance, dan (2) status Lunas bisa terbalik jadi Belum saat
+            // PelunasanInvoice::sinkron dijalankan (mis. verifikasi bukti lain),
+            // karena sinkron menghitung ulang status dari buku kas.
+            $sudahBukti = (float) \App\Models\BuktiPembayaran::where('id_invoice', $invoice->id_invoice)
+                ->where('status', 'Diverifikasi')
+                ->sum('nominal');
+            $gap = (float) $invoice->nominal - $sudahBukti;
+
+            if ($gap > 0.0) {
+                \App\Models\Transaksi::create([
+                    'id_event'   => $invoice->id_event,
+                    'id_pegawai' => Auth::guard('pegawai')->id(),
+                    'nominal'    => $gap,
+                    'tgl_bayar'  => now()->toDateString(),
+                    'keterangan' => 'Pelunasan manual — invoice ' . $invoice->nomor_invoice,
+                ]);
+            }
+
             $invoice->update(['status' => Invoice::STATUS_LUNAS]);
 
             // DP lunas → event resmi berjalan (masuk Task Divisi & kalender operasional).
@@ -181,8 +201,8 @@ class InvoiceController extends Controller
         });
 
         $pesan = $invoice->tipe === Invoice::TIPE_DP
-            ? 'DP ditandai lunas. Status event berubah menjadi Upcoming.'
-            : 'Pelunasan ditandai lunas.';
+            ? 'DP ditandai lunas & tercatat di buku kas. Status event berubah menjadi Upcoming.'
+            : 'Pelunasan ditandai lunas & tercatat di buku kas.';
 
         return back()->with('success', $pesan);
     }
