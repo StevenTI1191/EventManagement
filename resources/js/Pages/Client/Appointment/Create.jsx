@@ -23,6 +23,8 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
 
     // Slot yang sudah dipesan pada tanggal terpilih (untuk dinonaktifkan di dropdown)
     const [bookedSlots, setBookedSlots] = useState([]);
+    // Slot yang bentrok dengan jadwal acara — ditandai terpisah agar labelnya jelas.
+    const [eventSlots, setEventSlots]    = useState([]);
     const [slotLoading, setSlotLoading]  = useState(false);
     const [dateError, setDateError]      = useState('');
 
@@ -30,6 +32,7 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
         setData('tgl_request', value);
         setData('jam_request', '');   // reset jam saat tanggal berubah
         setBookedSlots([]);
+        setEventSlots([]);
         setDateError('');
         if (!value) return;
 
@@ -42,8 +45,11 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
         setSlotLoading(true);
         fetch(`/appointment/slots?tgl=${value}`, { headers: { Accept: 'application/json' } })
             .then(r => r.json())
-            .then(d => setBookedSlots(d.booked || []))
-            .catch(() => setBookedSlots([]))
+            .then(d => {
+                setBookedSlots(d.booked || []);
+                setEventSlots(d.eventBlocked || []);
+            })
+            .catch(() => { setBookedSlots([]); setEventSlots([]); })
             .finally(() => setSlotLoading(false));
     };
 
@@ -276,19 +282,21 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                                     ) : (
                                         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                                             {slots.map(s => {
-                                                const taken = bookedSlots.includes(s);
+                                                const taken     = bookedSlots.includes(s);
+                                                const eventBlok = eventSlots.includes(s);
+                                                const nonaktif  = taken || eventBlok;
                                                 const aktif = data.jam_request === s;
                                                 return (
                                                     <button
                                                         key={s}
                                                         type="button"
-                                                        disabled={taken}
+                                                        disabled={nonaktif}
                                                         onClick={() => setData('jam_request', s)}
-                                                        title={taken ? 'Sudah dipesan' : `Meeting ${s}`}
+                                                        title={taken ? 'Sudah dipesan' : eventBlok ? 'Bertepatan dengan jadwal acara' : `Meeting ${s}`}
                                                         className={`py-2 text-xs font-bold border rounded-xl transition-all ${
                                                             aktif
                                                                 ? 'bg-gold-grad text-white border-transparent shadow-gold'
-                                                                : taken
+                                                                : nonaktif
                                                                     ? 'bg-paper border-line text-muted-2 line-through cursor-not-allowed'
                                                                     : 'bg-surface border-line text-ink hover:border-gold-2'
                                                         }`}
@@ -300,7 +308,7 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
                                         </div>
                                     )}
 
-                                    <p className="mt-2 text-[10px] text-muted-2">Meeting 30 menit · Senin–Sabtu 09:00–17:00</p>
+                                    <p className="mt-2 text-[10px] text-muted-2">Meeting 30 menit · Senin–Sabtu · slot tiap 1,5 jam (09:00–16:30). Slot yang bertepatan jadwal acara tidak tersedia.</p>
                                     {errors.jam_request && <p className="mt-1 text-xs text-danger">⚠ {errors.jam_request}</p>}
                                 </div>
                             </div>
