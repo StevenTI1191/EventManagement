@@ -6,7 +6,7 @@ import {
     Plus, Calendar, Clock, CheckCircle, XCircle,
     AlertCircle, LogOut, Home, Upload, FileText,
     ChevronDown, ChevronUp, X, Eye, Bell, Trash2, CheckCheck,
-    User, Timer, Download, Music, Utensils
+    User, Timer, Download, Music, Utensils, Info, Wallet
 } from 'lucide-react';
 
 export default function ClientDashboard({
@@ -79,7 +79,12 @@ export default function ClientDashboard({
     const [aptFilter, setAptFilter]         = useState('Semua');
     const [evFilter, setEvFilter]           = useState('Semua'); // Semua | Berjalan | Selesai
     const [aptSearch, setAptSearch]         = useState('');
+    // Panel yang sedang terbuka pada sebuah kartu event: { id, tab: 'acara' | 'bukti' } | null.
+    // Dua tombol berbeda (Detail Acara & Pembayaran) memakai satu state agar hanya
+    // satu panel terbuka per kartu.
     const [expandedEvent, setExpandedEvent] = useState(null);
+    const panelOpen   = (id, tab) => expandedEvent?.id === id && expandedEvent?.tab === tab;
+    const togglePanel = (id, tab) => setExpandedEvent(prev => (prev?.id === id && prev?.tab === tab) ? null : { id, tab });
     const [uploadModal, setUploadModal]     = useState(null);
     const [cancelModal, setCancelModal]     = useState(null);
     const [alasanBatal, setAlasanBatal]     = useState('');
@@ -936,7 +941,9 @@ export default function ClientDashboard({
                                         const pct   = dealHarga > 0 ? Math.min(100, Math.round((dibayar / dealHarga) * 100)) : 0;
                                         const lunas = dealHarga > 0 && dibayar >= dealHarga;
                                         const sisa  = dealHarga - dibayar;
-                                        const isExpanded = expandedEvent === event.id_event;
+                                        const acaraOpen = panelOpen(event.id_event, 'acara');
+                                        const buktiOpen = panelOpen(event.id_event, 'bukti');
+                                        const jmlBukti  = event.bukti_pembayaran?.length ?? 0;
                                         const days  = getDaysUntil(event.tgl_mulai_event);
 
                                         return (
@@ -1040,21 +1047,25 @@ export default function ClientDashboard({
                                                     </div>
                                                 )}
 
-                                                {/* Buttons: Bukti */}
+                                                {/* Aksi: Detail Acara + Pembayaran */}
                                                 <div className="flex gap-1.5 mt-auto pt-1">
-                                                    <button onClick={() => openUpload(event)}
-                                                        className="flex-1 flex items-center justify-center gap-1 py-2 bg-gold-soft text-gold-dim text-[11px] font-bold rounded-xl hover:bg-gold-soft transition-colors border border-gold-2">
-                                                        <Upload size={12} />
-                                                        Bukti
-                                                    </button>
-                                                    <button onClick={() => setExpandedEvent(isExpanded ? null : event.id_event)}
+                                                    <button onClick={() => togglePanel(event.id_event, 'acara')}
                                                         className={`flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-bold rounded-xl transition-colors border ${
-                                                            isExpanded
-                                                                ? 'bg-gold-soft text-ink border-line'
+                                                            acaraOpen
+                                                                ? 'bg-gold-soft text-ink border-gold-2'
                                                                 : 'bg-paper text-muted border-line hover:bg-gold-soft'
                                                         }`}>
-                                                        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                                                        {event.bukti_pembayaran?.length ?? 0} Bukti
+                                                        {acaraOpen ? <ChevronUp size={12} /> : <Info size={12} />}
+                                                        Detail Acara
+                                                    </button>
+                                                    <button onClick={() => togglePanel(event.id_event, 'bukti')}
+                                                        className={`flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-bold rounded-xl transition-colors border ${
+                                                            buktiOpen
+                                                                ? 'bg-gold-soft text-ink border-gold-2'
+                                                                : 'bg-paper text-muted border-line hover:bg-gold-soft'
+                                                        }`}>
+                                                        {buktiOpen ? <ChevronUp size={12} /> : <Wallet size={12} />}
+                                                        Pembayaran{jmlBukti > 0 ? ` · ${jmlBukti}` : ''}
                                                     </button>
                                                 </div>
 
@@ -1063,19 +1074,20 @@ export default function ClientDashboard({
                                                     <a href={route('client.event.detail-pdf', event.id_event)}
                                                         className="flex-1 flex items-center justify-center gap-1 py-2 bg-gold-soft text-gold-dim text-[11px] font-bold rounded-xl hover:brightness-95 transition-all border border-gold-2">
                                                         <Download size={12} />
-                                                        Detail Event
+                                                        Unduh PDF Detail Event
                                                     </a>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* ── Expanded: Riwayat Bukti (col-span-full) ── */}
-                                        {isExpanded && (
+                                        {/* ── Panel: Detail Acara ── */}
+                                        {acaraOpen && (
                                             <div className="col-span-full bg-surface border border-line rounded-2xl p-5">
                                                 <div className="flex items-center justify-between mb-4">
-                                                    <h4 className="text-sm font-extrabold text-ink">
-                                                        Detail Acara &amp; Pembayaran
-                                                        <span className="ml-2 text-xs font-normal text-muted">— {event.nama_event}</span>
+                                                    <h4 className="flex items-center gap-1.5 text-sm font-extrabold text-ink">
+                                                        <Info size={15} className="text-gold" />
+                                                        Detail Acara
+                                                        <span className="ml-1 text-xs font-normal text-muted">— {event.nama_event}</span>
                                                     </h4>
                                                     <button onClick={() => setExpandedEvent(null)}
                                                         className="p-1 text-muted hover:text-muted transition-colors">
@@ -1120,36 +1132,6 @@ export default function ClientDashboard({
                                                         </div>
                                                     </div>
                                                 )}
-
-                                                {/* Detail info row */}
-                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                                                    {dealHarga > 0 && (
-                                                        <>
-                                                            <div className="p-3 bg-paper rounded-xl">
-                                                                <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Total Deal</p>
-                                                                <p className="text-sm font-black text-gold-dim">{formatBudget(dealHarga)}</p>
-                                                            </div>
-                                                            <div className="p-3 bg-paper rounded-xl">
-                                                                <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Terbayar</p>
-                                                                <p className="text-sm font-black text-ok">{formatBudget(dibayar)}</p>
-                                                            </div>
-                                                            <div className="p-3 bg-paper rounded-xl">
-                                                                <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Sisa</p>
-                                                                <p className={`text-sm font-black ${lunas ? 'text-ok' : 'text-orange-400'}`}>
-                                                                    {lunas ? '✓ Lunas' : formatBudget(sisa)}
-                                                                </p>
-                                                            </div>
-                                                            <div className="p-3 bg-paper rounded-xl">
-                                                                <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Progress</p>
-                                                                <div className="w-full h-1.5 bg-gold-soft rounded-full overflow-hidden">
-                                                                    <div className="h-1.5 rounded-full"
-                                                                        style={{ width: `${pct}%`, background: lunas ? '#22c55e' : pct >= 50 ? '#eab308' : '#f97316' }} />
-                                                                </div>
-                                                                <p className="text-[10px] font-black text-gold-dim mt-0.5">{pct}%</p>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
 
                                                 {/* Progres persiapan acara — dari papan To-Do internal (read-only) */}
                                                 {event.tugas?.length > 0 && (() => {
@@ -1199,6 +1181,64 @@ export default function ClientDashboard({
                                                         </div>
                                                     );
                                                 })()}
+
+                                                {(!event.tugas || event.tugas.length === 0) && (
+                                                    <p className="text-[11px] text-muted-2">Persiapan acara belum dijadwalkan. Progres akan tampil di sini seiring tim kami mengerjakannya.</p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* ── Panel: Detail Pembayaran ── */}
+                                        {buktiOpen && (
+                                            <div className="col-span-full bg-surface border border-line rounded-2xl p-5">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h4 className="flex items-center gap-1.5 text-sm font-extrabold text-ink">
+                                                        <Wallet size={15} className="text-gold" />
+                                                        Detail Pembayaran
+                                                        <span className="ml-1 text-xs font-normal text-muted">— {event.nama_event}</span>
+                                                    </h4>
+                                                    <button onClick={() => setExpandedEvent(null)}
+                                                        className="p-1 text-muted hover:text-muted transition-colors">
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Ringkasan angka */}
+                                                {dealHarga > 0 && (
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                                                        <div className="p-3 bg-paper rounded-xl">
+                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Total Deal</p>
+                                                            <p className="text-sm font-black text-gold-dim">{formatBudget(dealHarga)}</p>
+                                                        </div>
+                                                        <div className="p-3 bg-paper rounded-xl">
+                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Terbayar</p>
+                                                            <p className="text-sm font-black text-ok">{formatBudget(dibayar)}</p>
+                                                        </div>
+                                                        <div className="p-3 bg-paper rounded-xl">
+                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Sisa</p>
+                                                            <p className={`text-sm font-black ${lunas ? 'text-ok' : 'text-orange-400'}`}>
+                                                                {lunas ? '✓ Lunas' : formatBudget(sisa)}
+                                                            </p>
+                                                        </div>
+                                                        <div className="p-3 bg-paper rounded-xl">
+                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Progress</p>
+                                                            <div className="w-full h-1.5 bg-gold-soft rounded-full overflow-hidden">
+                                                                <div className="h-1.5 rounded-full"
+                                                                    style={{ width: `${pct}%`, background: lunas ? '#22c55e' : pct >= 50 ? '#eab308' : '#f97316' }} />
+                                                            </div>
+                                                            <p className="text-[10px] font-black text-gold-dim mt-0.5">{pct}%</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Header bukti + tombol upload */}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <p className="text-[10px] font-black text-gold uppercase tracking-wider">Bukti Pembayaran Diunggah</p>
+                                                    <button onClick={() => openUpload(event)}
+                                                        className="flex items-center gap-1 px-3 py-1.5 bg-gold-grad text-white text-[11px] font-bold rounded-lg hover:brightness-95 transition-all shadow-gold">
+                                                        <Upload size={12} /> Upload Bukti
+                                                    </button>
+                                                </div>
 
                                                 {/* Bukti list */}
                                                 {event.bukti_pembayaran && event.bukti_pembayaran.length > 0 ? (
@@ -1323,7 +1363,7 @@ export default function ClientDashboard({
                                     const pct        = dealHarga > 0 ? Math.min(100, Math.round((dibayar / dealHarga) * 100)) : 0;
                                     const lunas      = dibayar >= dealHarga;
                                     const sisa       = dealHarga - dibayar;
-                                    const isExpanded = expandedEvent === event.id_event;
+                                    const isExpanded = panelOpen(event.id_event, 'bukti');
                                     const buktiList  = event.bukti_pembayaran || [];
 
                                     return (
@@ -1410,7 +1450,7 @@ export default function ClientDashboard({
                                                 className="flex items-center justify-center gap-1 px-4 py-2 text-xs font-bold text-gold-dim transition-colors border bg-gold-soft rounded-xl hover:bg-gold-soft border-gold-2">
                                                 <Upload size={13} /> Upload Bukti
                                             </button>
-                                            <button onClick={() => setExpandedEvent(isExpanded ? null : event.id_event)}
+                                            <button onClick={() => togglePanel(event.id_event, 'bukti')}
                                                 className="flex items-center justify-center gap-1 px-4 py-2 text-xs font-bold text-muted transition-colors bg-paper border border-line rounded-xl hover:bg-gold-soft">
                                                 {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                                                 {buktiList.length} Bukti
