@@ -414,15 +414,36 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                                             <div className="space-y-1">
                                                 {event.jam_mulai && (
                                                     <p className="flex items-center gap-1.5 text-xs text-muted">
-                                                        <Clock size={11} /> {event.jam_mulai} – {event.jam_selesai}
+                                                        <Clock size={11} className="shrink-0" /> {event.jam_mulai.substring(0,5)} – {event.jam_selesai?.substring(0,5)}
                                                     </p>
                                                 )}
                                                 {event.area_event && (
                                                     <p className="flex items-center gap-1.5 text-xs text-muted">
-                                                        <MapPinned size={11} /> {event.area_event}
+                                                        <MapPinned size={11} className="shrink-0" /> <span className="truncate">{event.area_event}</span>
+                                                    </p>
+                                                )}
+                                                {event.jumlah_pax > 0 && (
+                                                    <p className="flex items-center gap-1.5 text-xs text-muted">
+                                                        <Users size={11} className="shrink-0" /> {Number(event.jumlah_pax).toLocaleString('id-ID')} tamu
+                                                    </p>
+                                                )}
+                                                {event.entairtainment_event && (
+                                                    <p className="flex items-center gap-1.5 text-xs text-muted">
+                                                        <Music size={11} className="shrink-0 text-gold" /> <span className="truncate">{event.entairtainment_event}</span>
+                                                    </p>
+                                                )}
+                                                {event.food_beverage_event && (
+                                                    <p className="flex items-center gap-1.5 text-xs text-muted">
+                                                        <Utensils size={11} className="shrink-0 text-gold" /> <span className="truncate">{event.food_beverage_event}</span>
                                                     </p>
                                                 )}
                                             </div>
+
+                                            {event.deskripsi_event && (
+                                                <p className="mt-2.5 pt-2.5 border-t border-line text-xs leading-relaxed text-muted-2 line-clamp-3">
+                                                    {event.deskripsi_event}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 );

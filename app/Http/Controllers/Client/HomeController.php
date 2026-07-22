@@ -25,12 +25,18 @@ class HomeController extends Controller
                 'deskripsi_event', 'entairtainment_event', 'food_beverage_event',
             ]);
 
-        // Upcoming events — urut terdekat (hanya yang Publik)
+        // Upcoming events — urut terdekat (hanya yang Publik). Sertakan deskripsi &
+        // isi acara (entertainment, F&B) supaya kartunya lebih informatif, bukan
+        // sekadar nama + tanggal.
         $upcoming = Event::where('status_event', 'Upcoming')
             ->where('is_public', true)
             ->orderBy('tgl_mulai_event', 'asc')
             ->take(4)
-            ->get(['id_event', 'nama_event', 'kategori_event', 'tgl_mulai_event', 'jam_mulai', 'jam_selesai', 'area_event', 'poster_event', 'status_event', 'jumlah_pax']);
+            ->get([
+                'id_event', 'nama_event', 'kategori_event', 'tgl_mulai_event', 'tgl_selesai_event',
+                'jam_mulai', 'jam_selesai', 'area_event', 'poster_event', 'status_event', 'jumlah_pax',
+                'deskripsi_event', 'entairtainment_event', 'food_beverage_event',
+            ]);
 
         // Stats real dari DB
         $stats = [
