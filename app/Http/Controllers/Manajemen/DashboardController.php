@@ -25,7 +25,12 @@ class DashboardController extends Controller
         $totalTransaksi = \App\Models\Transaksi::count();
         $totalPenjualan = \App\Models\Transaksi::sum('nominal');
 
-        $recentEvents = Event::with('client')->terkonfirmasi()->latest()->take(5)->get();
+        // "Event Terbaru" hanya menampilkan acara yang AKAN datang (Upcoming),
+        // diurutkan dari tanggal terdekat.
+        $recentEvents = Event::with('client')
+            ->where('status_event', Event::STATUS_UPCOMING)
+            ->orderBy('tgl_mulai_event')
+            ->take(5)->get();
 
         // ── Chart 1: Penjualan per bulan (tahun ini) ─────────────────────
         $bulanLabels = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
@@ -54,7 +59,10 @@ class DashboardController extends Controller
         ]);
 
         // ── Chart 4: Top 5 PIC berdasarkan jumlah event ───────────────────
+        // Hanya pengguna internal sistem (EM/Manajemen/Finance) — staf eksternal
+        // bukan penanggung jawab acara, jadi tidak ikut leaderboard.
         $topPic = Pegawai::withCount('events')
+            ->where('jenis_pegawai', 'Internal')
             ->orderByDesc('events_count')
             ->take(5)
             ->get()
