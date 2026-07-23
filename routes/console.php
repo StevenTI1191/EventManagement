@@ -95,23 +95,34 @@ Schedule::call(function () {
         $lunas       = $event->pembayaranLunas();
         $tglAkhir    = $event->tgl_selesai_event ?? $event->tgl_mulai_event;
 
-        // Benar-benar kelar → baru ditutup.
+        // Benar-benar kelar → baru ditutup. Jejaknya dicatat di note_event agar
+        // terlihat langsung di halaman detail acara (bukan hanya di file log).
         if ($tugasTuntas && $lunas) {
-            $event->update(['status_event' => Event::STATUS_DONE]);
+            $jejak = '✅ Otomatis ditandai selesai (' . now()->translatedFormat('d M Y H:i')
+                   . ') — tugas & pembayaran telah tuntas.';
+            $event->update([
+                'status_event' => Event::STATUS_DONE,
+                'note_event'   => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
+            ]);
             \Log::info("Event auto-Done: {$event->nama_event} (berakhir {$tglAkhir}, tugas & pembayaran tuntas).");
             continue;
         }
 
         // Belum tuntas → masuk/tetap di Penyelesaian, JANGAN ditutup.
-        $baruMasuk = $event->status_event !== Event::STATUS_PENYELESAIAN;
-        if ($baruMasuk) {
-            $event->update(['status_event' => Event::STATUS_PENYELESAIAN]);
-        }
-
         $sisaTugas = $event->tugas()->where('status_tugas', '!=', 'Done')->count();
         $kurang    = [];
         if (! $tugasTuntas) $kurang[] = "{$sisaTugas} tugas belum selesai";
         if (! $lunas)       $kurang[] = 'pembayaran belum lunas';
+
+        $baruMasuk = $event->status_event !== Event::STATUS_PENYELESAIAN;
+        if ($baruMasuk) {
+            $jejak = '🔧 Otomatis masuk Penyelesaian (' . now()->translatedFormat('d M Y H:i')
+                   . ') — acara sudah lewat tetapi ' . implode(' dan ', $kurang) . '.';
+            $event->update([
+                'status_event' => Event::STATUS_PENYELESAIAN,
+                'note_event'   => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
+            ]);
+        }
 
         \Log::info("Event masuk Penyelesaian: {$event->nama_event} — " . implode(', ', $kurang) . '.');
 
