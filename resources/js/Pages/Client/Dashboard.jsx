@@ -1344,8 +1344,8 @@ export default function ClientDashboard({
                                                                         {bukti.status === 'Diverifikasi' && (
                                                                             <a href={route('client.bukti.kwitansi', bukti.id)}
                                                                                 title="Unduh kwitansi"
-                                                                                className="p-1 text-muted hover:text-ok transition-colors">
-                                                                                <Download size={13} />
+                                                                                className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-ok bg-ok-bg border border-ok/30 rounded-lg hover:brightness-95 transition-all">
+                                                                                <Download size={11} /> Kwitansi
                                                                             </a>
                                                                         )}
                                                                         {bukti.status === 'Menunggu' && (
@@ -1550,7 +1550,7 @@ export default function ClientDashboard({
                                                                     <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full border ${getBuktiStatusColor(bukti.status)}`}>{bukti.status}</span>
                                                                     <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer" title="Lihat bukti" className="p-1 text-muted transition-colors hover:text-gold-dim"><Eye size={13} /></a>
                                                                     {bukti.status === 'Diverifikasi' && (
-                                                                        <a href={route('client.bukti.kwitansi', bukti.id)} title="Unduh kwitansi" className="p-1 text-muted transition-colors hover:text-ok"><Download size={13} /></a>
+                                                                        <a href={route('client.bukti.kwitansi', bukti.id)} title="Unduh kwitansi" className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-ok bg-ok-bg border border-ok/30 rounded-lg transition-all hover:brightness-95"><Download size={11} /> Kwitansi</a>
                                                                     )}
                                                                     {bukti.status === 'Menunggu' && (
                                                                         <button onClick={() => handleDeleteBukti(bukti.id)} className="p-1 text-muted transition-colors hover:text-danger"><X size={13} /></button>
