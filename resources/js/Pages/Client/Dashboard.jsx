@@ -92,6 +92,10 @@ export default function ClientDashboard({
     const [usulModal, setUsulModal]         = useState(null);
     const [usulForm, setUsulForm]           = useState({ usulan_tgl: '', usulan_jam: '', usulan_catatan: '' });
     const [usulLoading, setUsulLoading]     = useState(false);
+    // Pengajuan pembatalan + refund acara.
+    const [pembatalanModal, setPembatalanModal] = useState(null);
+    const [pembatalanAlasan, setPembatalanAlasan] = useState('');
+    const [pembatalanLoading, setPembatalanLoading] = useState(false);
     const [deleteBuktiId, setDeleteBuktiId] = useState(null);
     const [deletingBukti, setDeletingBukti] = useState(false);
     const [tolakModal, setTolakModal]       = useState(null); // event penawaran yang ditolak
@@ -242,6 +246,17 @@ export default function ClientDashboard({
             preserveScroll: true,
             onSuccess: () => setUsulModal(null),
             onFinish: () => setUsulLoading(false),
+        });
+    };
+
+    const submitPembatalan = (e) => {
+        e.preventDefault();
+        if (pembatalanLoading) return;
+        setPembatalanLoading(true);
+        router.post(route('client.event.ajukan-pembatalan', pembatalanModal.id_event), { alasan: pembatalanAlasan }, {
+            preserveScroll: true,
+            onSuccess: () => { setPembatalanModal(null); setPembatalanAlasan(''); },
+            onFinish: () => setPembatalanLoading(false),
         });
     };
 
@@ -1264,6 +1279,27 @@ export default function ClientDashboard({
                                                     </div>
                                                 )}
 
+                                                {/* Pengajuan pembatalan + refund acara */}
+                                                {event.pembatalan_aktif ? (
+                                                    <div className={`mb-4 p-3 rounded-xl border ${event.pembatalan_aktif.status === 'Disetujui' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-gold-soft/60 border-gold-2'}`}>
+                                                        <p className="text-xs font-bold text-ink">
+                                                            {event.pembatalan_aktif.status === 'Disetujui' ? '✅ Pengajuan pembatalan disetujui' : '📩 Pengajuan pembatalan sedang ditinjau'}
+                                                        </p>
+                                                        <p className="mt-1 text-[11px] text-muted">
+                                                            {event.pembatalan_aktif.status === 'Disetujui'
+                                                                ? 'Manajemen telah menyetujui. Tim Finance akan memproses pengembalian dana Anda.'
+                                                                : 'Menunggu persetujuan tim Manajemen kami.'}
+                                                        </p>
+                                                    </div>
+                                                ) : ['Deal', 'Upcoming', 'Penyelesaian'].includes(event.status_event) && (
+                                                    <div className="mb-4">
+                                                        <button onClick={() => { setPembatalanAlasan(''); setPembatalanModal(event); }}
+                                                            className="text-[11px] font-bold text-danger border border-danger/30 px-3 py-1.5 rounded-lg hover:bg-danger-bg transition-colors">
+                                                            Ajukan Pembatalan &amp; Refund
+                                                        </button>
+                                                    </div>
+                                                )}
+
                                                 {/* Header bukti + tombol upload */}
                                                 <div className="flex items-center justify-between mb-2">
                                                     <p className="text-[10px] font-black text-gold uppercase tracking-wider">Bukti Pembayaran Diunggah</p>
@@ -1691,6 +1727,51 @@ export default function ClientDashboard({
                                     disabled={usulLoading || !usulForm.usulan_tgl || !usulForm.usulan_jam}
                                     className="flex-1 py-2.5 bg-gold-grad text-white font-black rounded-xl hover:brightness-95 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                     {usulLoading ? 'Mengirim…' : 'Kirim Usulan'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Ajukan Pembatalan & Refund */}
+            {pembatalanModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
+                    <div className="w-full max-w-md p-6 bg-surface border border-line shadow-xl rounded-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 className="text-lg font-extrabold text-ink">Ajukan Pembatalan &amp; Refund</h2>
+                                <p className="text-xs text-muted mt-0.5">{pembatalanModal.nama_event}</p>
+                            </div>
+                            <button onClick={() => setPembatalanModal(null)} className="p-1.5 text-muted hover:bg-paper rounded-lg">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="p-3 mb-4 text-xs border bg-gold-soft/60 border-gold-2 rounded-xl text-muted">
+                            Pengajuan ini akan <b className="text-ink">ditinjau tim Manajemen</b> terlebih dahulu. Bila disetujui,
+                            tim <b className="text-ink">Finance</b> memproses pengembalian dana. Acara <b className="text-ink">belum</b> dibatalkan
+                            sampai proses tersebut selesai.
+                        </div>
+
+                        <form onSubmit={submitPembatalan}>
+                            <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">
+                                Alasan pembatalan <span className="text-danger normal-case font-normal">* wajib</span>
+                            </label>
+                            <textarea rows={3} value={pembatalanAlasan} onChange={(e) => setPembatalanAlasan(e.target.value)}
+                                placeholder="Jelaskan alasan pembatalan (min. 10 karakter)…"
+                                className="w-full px-4 py-3 text-sm text-ink placeholder-muted-2 bg-surface border border-line resize-none rounded-xl focus:border-gold-2 focus:outline-none" />
+                            <div className="flex justify-end mt-1">
+                                <p className="text-[10px] text-muted-2">{pembatalanAlasan.length}/1000</p>
+                            </div>
+                            <div className="flex gap-3 mt-3">
+                                <button type="button" onClick={() => setPembatalanModal(null)}
+                                    className="flex-1 py-2.5 border border-line text-muted font-bold rounded-xl hover:bg-paper transition-colors text-sm">
+                                    Kembali
+                                </button>
+                                <button type="submit" disabled={pembatalanLoading || pembatalanAlasan.trim().length < 10}
+                                    className="flex-1 py-2.5 bg-danger text-white font-black rounded-xl hover:brightness-110 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {pembatalanLoading ? 'Mengirim…' : 'Kirim Pengajuan'}
                                 </button>
                             </div>
                         </form>

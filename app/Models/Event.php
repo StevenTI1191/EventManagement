@@ -386,4 +386,18 @@ class Event extends Model
         return $this->hasMany(EventDokumentasi::class, 'id_event', 'id_event')
             ->orderBy('urutan')->orderBy('id');
     }
+
+    /** Riwayat pengajuan pembatalan + refund acara ini. */
+    public function pembatalan()
+    {
+        return $this->hasMany(EventPembatalan::class, 'id_event', 'id_event')->latest();
+    }
+
+    /** Pengajuan pembatalan yang masih berjalan (Diajukan/Disetujui), bila ada. */
+    public function pembatalanAktif()
+    {
+        return $this->hasOne(EventPembatalan::class, 'id_event', 'id_event')
+            ->whereIn('status', EventPembatalan::STATUS_AKTIF)
+            ->latestOfMany();
+    }
 }

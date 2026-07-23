@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\BuktiPembayaran;
 use App\Models\Event;
 use App\Traits\BuatKwitansi;
+use App\Traits\KabariRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -22,6 +23,7 @@ use Illuminate\Validation\ValidationException;
 class AppointmentController extends Controller
 {
     use BuatKwitansi;
+    use KabariRole;
 
     public function index()
     {
@@ -49,6 +51,8 @@ class AppointmentController extends Controller
                 'tugas' => fn($q) => $q
                     ->select('id_tugas', 'id_event', 'nama_tugas', 'kategori', 'status_tugas', 'progress', 'deadline_tugas', 'urutan')
                     ->orderBy('urutan')->orderBy('id_tugas'),
+                // Status pengajuan pembatalan yang sedang berjalan (bila ada).
+                'pembatalanAktif',
             ])
             ->latest('tgl_mulai_event')
             ->take(50)
@@ -611,6 +615,52 @@ class AppointmentController extends Controller
             'Invoice-' . \Illuminate\Support\Str::slug($invoice->nomor_invoice)
             . '-' . \Illuminate\Support\Str::slug($event->nama_event) . '.pdf'
         );
+    }
+
+    /**
+     * Klien mengajukan pembatalan + refund acara yang sudah berjalan (Deal ke
+     * atas). Pengajuan HANYA membuat permintaan berstatus Diajukan — acara belum
+     * batal. Alur lanjut: Manajemen menyetujui, lalu Finance memproses refund.
+     */
+    public function ajukanPembatalan(Request $request, $id_event)
+    {
+        $client = Auth::guard('client')->user();
+
+        $data = $request->validate([
+            'alasan' => 'required|string|min:10|max:1000',
+        ], [
+            'alasan.required' => 'Mohon sertakan alasan pembatalan.',
+            'alasan.min'      => 'Alasan terlalu singkat (minimal 10 karakter).',
+        ]);
+
+        $event = Event::where('id_client', $client->id)
+            ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
+            ->findOrFail($id_event);
+
+        // Satu pengajuan aktif per acara.
+        if (\App\Models\EventPembatalan::where('id_event', $event->id_event)->aktif()->exists()) {
+            return back()->with('error', 'Sudah ada pengajuan pembatalan yang sedang diproses untuk acara ini.');
+        }
+
+        \App\Models\EventPembatalan::create([
+            'id_event'  => $event->id_event,
+            'client_id' => $client->id,
+            'alasan'    => $data['alasan'],
+            'status'    => \App\Models\EventPembatalan::STATUS_DIAJUKAN,
+        ]);
+
+        $jejak = '📩 Klien mengajukan pembatalan (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['alasan']);
+        $event->update(['note_event' => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak]);
+
+        // Kabari Manajemen (pengguna internal) via email untuk ditinjau.
+        $this->kabariRole('Manajemen',
+            '📩 Pengajuan Pembatalan Acara — ' . $event->nama_event,
+            "Klien " . ($client->nama_client ?? '-') . " mengajukan pembatalan acara \"{$event->nama_event}\".\n\n"
+            . "Alasan: {$data['alasan']}\n\n"
+            . "Silakan tinjau (setujui/tolak) di menu Pembatalan pada dashboard Manajemen."
+        );
+
+        return back()->with('success', 'Pengajuan pembatalan terkirim. Tim Manajemen kami akan meninjaunya.');
     }
 
     /**

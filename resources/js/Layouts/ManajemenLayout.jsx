@@ -13,6 +13,7 @@ import {
     ClipboardList,
     ListChecks,
     GitBranch,
+    Ban,
     Menu,
     X,
 } from 'lucide-react';
@@ -86,6 +87,12 @@ export default function ManajemenLayout({ children }) {
             icon: CalendarCheck,
             href: route('manajemen.appointment.index'),
             active: currentPath.includes('/manajemen/appointment'),
+        },
+        {
+            name: 'Pembatalan',
+            icon: Ban,
+            href: route('manajemen.pembatalan.index'),
+            active: currentPath.includes('/manajemen/pembatalan'),
         },
         {
             name: 'Evaluasi Kinerja',

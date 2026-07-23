@@ -49,7 +49,7 @@ class InvoiceController extends Controller
                         ->whereHas('invoices', fn ($i) => $i->where('status', Invoice::STATUS_BELUM));
                   });
             })
-            ->with(['client:id,nama_client,perusahaan_client,no_telp_client', 'invoices'])
+            ->with(['client:id,nama_client,perusahaan_client,no_telp_client', 'invoices', 'pembatalanAktif'])
             ->orderByDesc('updated_at')
             ->get()
             ->map(function (Event $e) {
@@ -203,27 +203,29 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Batalkan acara yang sudah masuk penagihan (Deal ke atas) sekaligus catat
-     * pengembalian dana. Setelah Deal, pembatalan bukan lagi urusan papan
-     * pipeline melainkan Finance — di sinilah refund dibukukan.
+     * Proses refund atas pengajuan pembatalan yang SUDAH DISETUJUI Manajemen.
+     * Finance adalah pihak ketiga & terakhir: Klien mengajukan → Manajemen
+     * menyetujui → Finance memproses di sini. Tanpa persetujuan Manajemen,
+     * pengajuan tak akan berstatus Disetujui sehingga tak bisa diproses.
      *
      * Refund dicatat sebagai transaksi negatif sebesar uang yang sudah masuk,
      * sehingga buku kas untuk acara ini kembali nol dan laporan Finance ikut
      * terkoreksi. Status acara menjadi Batal (riwayatnya tetap tersimpan).
      */
-    public function batalRefund(Request $request, $id_event)
+    public function prosesRefund($id_pembatalan)
     {
         $this->checkFinance();
 
-        $data = $request->validate([
-            'alasan' => 'required|string|min:5|max:500',
-        ]);
+        $p = \App\Models\EventPembatalan::with('event')
+            ->where('status', \App\Models\EventPembatalan::STATUS_DISETUJUI)
+            ->findOrFail($id_pembatalan);
 
-        $event = Event::eksternal()
-            ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
-            ->findOrFail($id_event);
+        $event = $p->event;
+        if (! $event) {
+            return back()->with('error', 'Acara untuk pengajuan ini tidak ditemukan.');
+        }
 
-        $dibayar = DB::transaction(function () use ($event, $data) {
+        $dibayar = DB::transaction(function () use ($event, $p) {
             $dibayar = (float) \App\Models\Transaksi::where('id_event', $event->id_event)->sum('nominal');
 
             if ($dibayar > 0) {
@@ -232,24 +234,44 @@ class InvoiceController extends Controller
                     'id_pegawai' => Auth::guard('pegawai')->id(),
                     'nominal'    => -1 * $dibayar,
                     'tgl_bayar'  => now()->toDateString(),
-                    'keterangan' => 'Refund pembatalan acara — ' . trim($data['alasan']),
+                    'keterangan' => 'Refund pembatalan acara — ' . trim($p->alasan),
                 ]);
             }
 
-            $jejak = '❌ Dibatalkan Finance (' . now()->translatedFormat('d M Y H:i') . ')'
-                . ($dibayar > 0 ? ' — refund Rp ' . number_format($dibayar, 0, ',', '.') : '')
-                . ': ' . trim($data['alasan']);
+            $jejak = '💸 Refund diproses Finance (' . now()->translatedFormat('d M Y H:i') . ')'
+                . ($dibayar > 0 ? ' — Rp ' . number_format($dibayar, 0, ',', '.') : ' — tidak ada dana masuk')
+                . '. Acara dibatalkan.';
 
             $event->update([
                 'status_event' => Event::STATUS_BATAL,
                 'note_event'   => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
             ]);
 
+            $p->update([
+                'status'         => \App\Models\EventPembatalan::STATUS_SELESAI,
+                'refund_nominal' => $dibayar,
+                'diproses_oleh'  => Auth::guard('pegawai')->id(),
+                'diproses_pada'  => now(),
+            ]);
+
             return $dibayar;
         });
 
+        // Kabari klien lewat notifikasi in-app.
+        if ($p->client_id) {
+            \App\Models\Notifikasi::create([
+                'judul'        => 'Pembatalan Diproses',
+                'pesan'        => "Acara \"{$event->nama_event}\" telah dibatalkan."
+                    . ($dibayar > 0 ? ' Pengembalian dana Rp ' . number_format($dibayar, 0, ',', '.') . ' sedang kami proses.' : ''),
+                'tipe'         => 'pembatalan',
+                'reference_id' => $event->id_event,
+                'client_id'    => $p->client_id,
+                'is_read'      => false,
+            ]);
+        }
+
         $pesan = $dibayar > 0
-            ? 'Acara dibatalkan. Refund Rp ' . number_format($dibayar, 0, ',', '.') . ' dicatat di buku kas.'
+            ? 'Refund Rp ' . number_format($dibayar, 0, ',', '.') . ' dicatat di buku kas & acara dibatalkan.'
             : 'Acara dibatalkan. Belum ada pembayaran masuk, jadi tidak ada refund.';
 
         return back()->with('success', $pesan);

@@ -260,6 +260,14 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         Route::patch('/manajemen/appointment/{id}/catatan-meeting', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'simpanCatatanMeeting'])
             ->whereNumber('id')->name('manajemen.appointment.catatan-meeting');
 
+        // Persetujuan pengajuan pembatalan + refund dari klien
+        Route::get('/manajemen/pembatalan', [\App\Http\Controllers\Manajemen\PembatalanController::class, 'index'])
+            ->name('manajemen.pembatalan.index');
+        Route::patch('/manajemen/pembatalan/{id}/setujui', [\App\Http\Controllers\Manajemen\PembatalanController::class, 'setujui'])
+            ->whereNumber('id')->name('manajemen.pembatalan.setujui');
+        Route::patch('/manajemen/pembatalan/{id}/tolak', [\App\Http\Controllers\Manajemen\PembatalanController::class, 'tolak'])
+            ->whereNumber('id')->name('manajemen.pembatalan.tolak');
+
         // --- MANAJEMEN PEGAWAI ---
         Route::get('/manajemen/pegawai', [\App\Http\Controllers\Manajemen\PegawaiController::class, 'index'])
             ->name('manajemen.pegawai.index');
@@ -445,8 +453,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_invoice')->name('finance.invoice.update');
         Route::patch('/finance/invoice/{id_invoice}/lunas', [\App\Http\Controllers\Finance\InvoiceController::class, 'lunas'])
             ->whereNumber('id_invoice')->name('finance.invoice.lunas');
-        Route::patch('/finance/invoice/event/{id_event}/batal-refund', [\App\Http\Controllers\Finance\InvoiceController::class, 'batalRefund'])
-            ->whereNumber('id_event')->name('finance.invoice.batal-refund');
+        Route::patch('/finance/pembatalan/{id_pembatalan}/proses', [\App\Http\Controllers\Finance\InvoiceController::class, 'prosesRefund'])
+            ->whereNumber('id_pembatalan')->name('finance.pembatalan.proses');
 
         Route::get('/finance/event', [\App\Http\Controllers\Finance\EventController::class, 'index'])
             ->name('finance.event.index');
@@ -636,6 +644,8 @@ Route::domain(config('app.domain'))->group(function () {
         Route::get('/invoice/{id_invoice}/pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadInvoice'])
             ->whereNumber('id_invoice')->name('client.invoice.pdf');
 
+        Route::post('/event/{id_event}/ajukan-pembatalan', [\App\Http\Controllers\Client\AppointmentController::class, 'ajukanPembatalan'])
+            ->whereNumber('id_event')->name('client.event.ajukan-pembatalan');
         Route::get('/event/{id_event}/detail-pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadDetailEvent'])
             ->whereNumber('id_event')->name('client.event.detail-pdf');
 
