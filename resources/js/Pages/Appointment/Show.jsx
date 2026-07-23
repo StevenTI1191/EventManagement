@@ -34,6 +34,17 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
         catatanForm.patch(route(routes.catatanMeeting, appointment.id), { preserveScroll: true });
     };
 
+    // Tolak usulan jadwal dari klien (jadwal semula tetap berlaku).
+    const [tolakUsulanLoading, setTolakUsulanLoading] = useState(false);
+    const tolakUsulan = () => {
+        router.patch(route(routes.tolakUsulan, appointment.id), {}, {
+            preserveScroll: true,
+            onBefore: () => confirm('Tolak usulan jadwal dari klien? Jadwal meeting yang berlaku tetap sama, dan klien akan diberi tahu.'),
+            onStart: () => setTolakUsulanLoading(true),
+            onFinish: () => setTolakUsulanLoading(false),
+        });
+    };
+
     const formatTanggal = (tgl) => {
         if (!tgl) return '-';
         return new Date(tgl).toLocaleDateString('id-ID', {
@@ -228,19 +239,28 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
                             {appointment.usulan_catatan && (
                                 <p className="p-3 mb-3 text-sm italic text-amber-800 bg-amber-100/60 rounded-xl">"{appointment.usulan_catatan}"</p>
                             )}
-                            <button
-                                onClick={() => {
-                                    setRescheduleForm({
-                                        tgl_konfirmasi: appointment.usulan_tgl,
-                                        jam_konfirmasi: String(appointment.usulan_jam || '').substring(0, 5),
-                                        catatan_em: '',
-                                    });
-                                    setShowReschedule(true);
-                                }}
-                                className="px-4 py-2 text-sm font-bold text-white transition-colors bg-amber-500 rounded-xl hover:bg-amber-600"
-                            >
-                                Terima &amp; jadwalkan usulan ini
-                            </button>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => {
+                                        setRescheduleForm({
+                                            tgl_konfirmasi: appointment.usulan_tgl,
+                                            jam_konfirmasi: String(appointment.usulan_jam || '').substring(0, 5),
+                                            catatan_em: '',
+                                        });
+                                        setShowReschedule(true);
+                                    }}
+                                    className="px-4 py-2 text-sm font-bold text-white transition-colors bg-amber-500 rounded-xl hover:bg-amber-600"
+                                >
+                                    Terima &amp; jadwalkan usulan ini
+                                </button>
+                                <button
+                                    onClick={tolakUsulan}
+                                    disabled={tolakUsulanLoading}
+                                    className="px-4 py-2 text-sm font-bold transition-colors bg-white border text-amber-700 border-amber-300 rounded-xl hover:bg-amber-100 disabled:opacity-60"
+                                >
+                                    {tolakUsulanLoading ? 'Memproses…' : 'Tolak Usulan'}
+                                </button>
+                            </div>
                         </div>
                     )}
 

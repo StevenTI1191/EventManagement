@@ -26,6 +26,7 @@ class AppointmentController extends Controller
             'selesai'        => 'em.appointment.selesai',
             'batal'          => 'em.appointment.batal',
             'catatanMeeting' => 'em.appointment.catatan-meeting',
+            'tolakUsulan'    => 'em.appointment.tolak-usulan',
             'buatEvent'      => 'em.event.create',
             'eventIndex'     => 'em.event.index',
         ];
@@ -71,5 +72,12 @@ class AppointmentController extends Controller
         $this->checkEventMarketing();
 
         return $this->batalkanAppointment($request, $id);
+    }
+
+    public function tolakUsulan(Request $request, $id)
+    {
+        $this->checkEventMarketing();
+
+        return $this->tolakUsulanAppointment($request, $id);
     }
 }

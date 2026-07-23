@@ -149,6 +149,54 @@ trait ManagesAppointment
         return back()->with('success', 'Catatan meeting tersimpan.');
     }
 
+    /**
+     * Tolak usulan jadwal dari klien. Usulan dihapus (jadwal semula tetap
+     * berlaku) dan klien diberi tahu bahwa usulannya belum dapat dipenuhi.
+     */
+    protected function tolakUsulanAppointment(Request $request, $id)
+    {
+        $data = $request->validate(['alasan' => 'nullable|string|max:500']);
+
+        $appointment = Appointment::whereNotNull('usulan_tgl')->findOrFail($id);
+        $appointment->load('client');
+
+        $appointment->update([
+            'usulan_tgl'     => null,
+            'usulan_jam'     => null,
+            'usulan_catatan' => null,
+        ]);
+
+        $jadwal = $appointment->tgl_konfirmasi
+            ? Carbon::parse($appointment->tgl_konfirmasi)->translatedFormat('d F Y')
+                . ($appointment->jam_konfirmasi ? ' pukul ' . $appointment->jam_konfirmasi : '')
+            : null;
+
+        $pesan = "Mohon maaf, usulan jadwal Anda untuk \"{$appointment->jenis_event}\" belum dapat kami penuhi."
+            . ($jadwal ? " Jadwal meeting tetap {$jadwal}." : '')
+            . (filled($data['alasan'] ?? null) ? ' Catatan: ' . trim($data['alasan']) : '');
+
+        if ($appointment->client_id) {
+            Notifikasi::create([
+                'judul'        => '🔄 Usulan Jadwal Belum Dapat Dipenuhi',
+                'pesan'        => $pesan,
+                'tipe'         => 'appointment',
+                'reference_id' => $appointment->id,
+                'client_id'    => $appointment->client_id,
+                'is_read'      => false,
+            ]);
+        }
+
+        if ($email = $appointment->client?->email_client) {
+            try {
+                Mail::raw($pesan, fn ($m) => $m->to($email)->subject('Usulan Jadwal Meeting'));
+            } catch (\Exception $e) {
+                \Log::warning('Email tolak usulan gagal: ' . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', 'Usulan jadwal klien ditolak. Klien telah diberi tahu.');
+    }
+
     protected function batalkanAppointment(Request $request, $id)
     {
         $request->validate(['catatan_em' => 'required|string|min:5|max:2000']);
