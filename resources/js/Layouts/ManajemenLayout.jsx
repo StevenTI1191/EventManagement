@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function ManajemenLayout({ children }) {
-    const { auth } = usePage().props;
+    const { auth, badges = {} } = usePage().props;
     const user = auth.user;
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -93,6 +93,7 @@ export default function ManajemenLayout({ children }) {
             icon: Ban,
             href: route('manajemen.pembatalan.index'),
             active: currentPath.includes('/manajemen/pembatalan'),
+            badge: badges.pembatalanMenunggu || 0,
         },
         {
             name: 'Evaluasi Kinerja',
@@ -168,7 +169,7 @@ export default function ManajemenLayout({ children }) {
                             key={item.name}
                             href={item.href}
                             onClick={() => setMobileOpen(false)}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                            className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                                 item.active
                                     ? 'bg-[#FF2D55] text-white shadow-lg shadow-[#FF2D55]/30'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
@@ -176,6 +177,16 @@ export default function ManajemenLayout({ children }) {
                         >
                             <item.icon size={20} className="flex-shrink-0" />
                             <span className={`text-sm font-medium ${isSidebarOpen ? '' : 'lg:hidden'}`}>{item.name}</span>
+                            {item.badge > 0 && (
+                                <span className={`ml-auto min-w-[20px] text-center text-[11px] font-black px-1.5 py-0.5 rounded-full ${
+                                    item.active ? 'bg-white text-[#FF2D55]' : 'bg-[#FF2D55] text-white'
+                                } ${isSidebarOpen ? '' : 'lg:hidden'}`}>
+                                    {item.badge}
+                                </span>
+                            )}
+                            {item.badge > 0 && !isSidebarOpen && (
+                                <span className="absolute hidden w-2.5 h-2.5 rounded-full bg-[#FF2D55] lg:block top-1 right-1 ring-2 ring-white" />
+                            )}
                         </Link>
                     ))}
                 </nav>
