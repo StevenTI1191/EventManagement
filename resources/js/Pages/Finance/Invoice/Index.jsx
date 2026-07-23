@@ -54,19 +54,26 @@ export default function FinanceInvoiceIndex({ events = [] }) {
 
     // Proses refund atas pengajuan pembatalan yang sudah disetujui Manajemen.
     const [refundEvent, setRefundEvent] = useState(null);
+    const [refundNominal, setRefundNominal] = useState(0);
+
+    const dibayarEvent = (ev) => Number(ev?.total_dibayar || 0);
+
+    const openRefund = (ev) => {
+        setRefundNominal(dibayarEvent(ev)); // default = seluruh yang sudah dibayar
+        setRefundEvent(ev);
+    };
 
     const submitRefund = () => {
         if (proses || !refundEvent?.pembatalan_aktif) return;
+        const maks = dibayarEvent(refundEvent);
+        if (refundNominal === '' || Number(refundNominal) < 0 || Number(refundNominal) > maks) return;
         setProses(`refund-${refundEvent.pembatalan_aktif.id}`);
-        router.patch(route('finance.pembatalan.proses', refundEvent.pembatalan_aktif.id), {}, {
+        router.patch(route('finance.pembatalan.proses', refundEvent.pembatalan_aktif.id), { refund_nominal: Number(refundNominal) }, {
             preserveScroll: true,
             onSuccess: () => setRefundEvent(null),
             onFinish: () => setProses(null),
         });
     };
-
-    const totalTerbayar = (ev) =>
-        (ev.invoices || []).filter((i) => i.status === 'Lunas').reduce((s, i) => s + Number(i.nominal || 0), 0);
 
     return (
         <FinanceLayout>
@@ -125,7 +132,7 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                                     <p className="text-[10px] font-bold tracking-wide text-gray-400 uppercase">Total Nilai Acara</p>
                                     <p className="text-lg font-extrabold text-[#FF2D55]">{rupiah(ev.deal_harga_event)}</p>
                                     {ev.pembatalan_aktif?.status === 'Disetujui' && (
-                                        <button onClick={() => setRefundEvent(ev)}
+                                        <button onClick={() => openRefund(ev)}
                                             className="mt-2 px-2.5 py-1 text-[10px] font-bold text-red-600 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
                                             💸 Proses Refund
                                         </button>
@@ -268,10 +275,36 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                             )}
                         </div>
 
-                        <div className="p-3 mb-4 text-xs border rounded-xl bg-red-50 border-red-200 text-red-700">
-                            Acara akan ditandai <b>Batal</b>. Dana yang sudah masuk
-                            (<b>{rupiah(totalTerbayar(refundEvent))}</b>) dicatat sebagai <b>refund</b> di buku kas
-                            sehingga saldo acara ini kembali nol. Klien akan diberi tahu. Tindakan ini permanen.
+                        <div className="p-3 mb-3 text-xs border rounded-xl bg-gray-50 border-gray-200 text-gray-600">
+                            Total sudah dibayar klien: <b className="text-gray-900">{rupiah(dibayarEvent(refundEvent))}</b>
+                        </div>
+
+                        <label className="block mb-1.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                            Nominal refund <span className="text-gray-400 normal-case font-normal">(boleh dikurangi, mis. DP hangus)</span>
+                        </label>
+                        <div className="relative">
+                            <span className="absolute -translate-y-1/2 left-3 top-1/2 text-sm font-bold text-gray-400">Rp</span>
+                            <input type="number" min={0} max={dibayarEvent(refundEvent)} step={1000}
+                                value={refundNominal}
+                                onChange={(e) => setRefundNominal(e.target.value)}
+                                className="w-full py-2.5 pl-9 pr-3 text-sm font-bold text-gray-800 border border-gray-200 rounded-xl focus:border-red-400 focus:outline-none" />
+                        </div>
+                        <div className="flex items-center justify-between mt-1.5">
+                            <div className="flex gap-2">
+                                <button type="button" onClick={() => setRefundNominal(dibayarEvent(refundEvent))}
+                                    className="text-[10px] font-bold text-gray-500 underline hover:text-gray-700">Penuh</button>
+                                <button type="button" onClick={() => setRefundNominal(0)}
+                                    className="text-[10px] font-bold text-gray-500 underline hover:text-gray-700">Nol (tanpa refund)</button>
+                            </div>
+                            <p className="text-[10px] text-gray-400">Terbilang: {rupiah(Number(refundNominal) || 0)}</p>
+                        </div>
+                        {Number(refundNominal) > dibayarEvent(refundEvent) && (
+                            <p className="mt-1 text-[10px] font-bold text-red-500">Melebihi total yang dibayar.</p>
+                        )}
+
+                        <div className="p-3 mt-3 mb-4 text-xs border rounded-xl bg-red-50 border-red-200 text-red-700">
+                            Acara akan ditandai <b>Batal</b>. Nominal di atas dicatat sebagai <b>refund</b> (transaksi keluar)
+                            di buku kas. Transfer dana ke klien dilakukan Finance secara terpisah. Tindakan ini permanen.
                         </div>
 
                         <div className="flex gap-3">
@@ -279,9 +312,10 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                                 className="flex-1 py-2.5 text-sm font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-60">
                                 Kembali
                             </button>
-                            <button onClick={submitRefund} disabled={!!proses}
+                            <button onClick={submitRefund}
+                                disabled={!!proses || refundNominal === '' || Number(refundNominal) < 0 || Number(refundNominal) > dibayarEvent(refundEvent)}
                                 className="flex-1 py-2.5 text-sm font-black text-white bg-red-500 rounded-xl hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                                {proses === `refund-${refundEvent.pembatalan_aktif?.id}` ? 'Memproses…' : 'Proses Refund & Batalkan'}
+                                {proses === `refund-${refundEvent.pembatalan_aktif?.id}` ? 'Memproses…' : 'Proses & Batalkan'}
                             </button>
                         </div>
                     </div>
