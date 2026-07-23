@@ -92,6 +92,7 @@ export default function ClientDashboard({
     const [usulModal, setUsulModal]         = useState(null);
     const [usulForm, setUsulForm]           = useState({ usulan_tgl: '', usulan_jam: '', usulan_catatan: '' });
     const [usulLoading, setUsulLoading]     = useState(false);
+    const [usulErrors, setUsulErrors]       = useState({});
     // Pengajuan pembatalan + refund acara.
     const [pembatalanModal, setPembatalanModal] = useState(null);
     const [pembatalanAlasan, setPembatalanAlasan] = useState('');
@@ -235,16 +236,19 @@ export default function ClientDashboard({
 
     const openUsul = (apt) => {
         setUsulForm({ usulan_tgl: '', usulan_jam: '', usulan_catatan: '' });
+        setUsulErrors({});
         setUsulModal(apt);
     };
 
     const submitUsul = (e) => {
         e.preventDefault();
         if (usulLoading) return;
+        setUsulErrors({});
         setUsulLoading(true);
         router.post(route('client.appointment.usul-jadwal', usulModal.id), usulForm, {
             preserveScroll: true,
-            onSuccess: () => setUsulModal(null),
+            onSuccess: () => { setUsulModal(null); setUsulErrors({}); },
+            onError: (errs) => setUsulErrors(errs),
             onFinish: () => setUsulLoading(false),
         });
     };
@@ -1686,13 +1690,17 @@ export default function ClientDashboard({
                         </p>
 
                         <form onSubmit={submitUsul} className="space-y-4">
+                            {usulErrors.message && (
+                                <p className="px-3 py-2 text-xs font-bold text-danger bg-danger-bg border border-red-500/20 rounded-xl">{usulErrors.message}</p>
+                            )}
                             <div>
                                 <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Tanggal Usulan *</label>
                                 <input type="date"
                                     value={usulForm.usulan_tgl}
                                     min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
                                     onChange={e => setUsulForm(f => ({ ...f, usulan_tgl: e.target.value }))}
-                                    className="w-full px-4 py-3 text-sm text-ink bg-surface border border-line rounded-xl focus:border-gold-2 focus:outline-none" />
+                                    className={`w-full px-4 py-3 text-sm text-ink bg-surface border rounded-xl focus:outline-none ${usulErrors.usulan_tgl ? 'border-red-500 focus:border-red-500' : 'border-line focus:border-gold-2'}`} />
+                                {usulErrors.usulan_tgl && <p className="mt-1 text-[11px] text-danger">{usulErrors.usulan_tgl}</p>}
                             </div>
                             <div>
                                 <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Jam Usulan *</label>
@@ -1709,6 +1717,7 @@ export default function ClientDashboard({
                                         </button>
                                     ))}
                                 </div>
+                                {usulErrors.usulan_jam && <p className="mt-1 text-[11px] text-danger">{usulErrors.usulan_jam}</p>}
                             </div>
                             <div>
                                 <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Catatan <span className="normal-case font-normal text-muted-2">(opsional)</span></label>
