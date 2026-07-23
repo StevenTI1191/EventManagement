@@ -1276,54 +1276,60 @@ export default function ClientDashboard({
                                                 {/* Bukti list */}
                                                 {event.bukti_pembayaran && event.bukti_pembayaran.length > 0 ? (
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                                                        {event.bukti_pembayaran.map(bukti => (
-                                                            <div key={bukti.id} className="flex items-center justify-between p-3 bg-paper rounded-xl">
-                                                                <div className="flex items-center gap-2 min-w-0">
-                                                                    <div className="flex items-center justify-center w-8 h-8 bg-gold-soft rounded-lg flex-shrink-0">
-                                                                        <FileText size={14} className="text-muted" />
+                                                        {event.bukti_pembayaran.map(bukti => {
+                                                            const ditolak = bukti.status === 'Ditolak' && bukti.catatan_finance;
+                                                            return (
+                                                            // Bukti yang ditolak melebar penuh agar alasannya lega, tidak berdesakan.
+                                                            <div key={bukti.id} className={`p-3 bg-paper rounded-xl ${ditolak ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <div className="flex items-center gap-2 min-w-0">
+                                                                        <div className="flex items-center justify-center w-8 h-8 bg-gold-soft rounded-lg flex-shrink-0">
+                                                                            <FileText size={14} className="text-muted" />
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <p className="text-xs font-bold text-ink truncate">
+                                                                                {bukti.nominal ? formatBudget(bukti.nominal) : 'Bukti Pembayaran'}
+                                                                            </p>
+                                                                            <p className="text-[10px] text-muted">
+                                                                                {new Date(bukti.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                            </p>
+                                                                            {bukti.keterangan && <p className="text-[10px] text-muted truncate">{bukti.keterangan}</p>}
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="min-w-0">
-                                                                        <p className="text-xs font-bold text-ink truncate">
-                                                                            {bukti.nominal ? formatBudget(bukti.nominal) : 'Bukti Pembayaran'}
-                                                                        </p>
-                                                                        <p className="text-[10px] text-muted">
-                                                                            {new Date(bukti.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                                        </p>
-                                                                        {bukti.keterangan && <p className="text-[10px] text-muted truncate">{bukti.keterangan}</p>}
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                                                                    <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full border ${getBuktiStatusColor(bukti.status)}`}>
-                                                                        {bukti.status}
-                                                                    </span>
-                                                                    <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer"
-                                                                        title="Lihat bukti"
-                                                                        className="p-1 text-muted hover:text-gold-dim transition-colors">
-                                                                        <Eye size={13} />
-                                                                    </a>
-                                                                    {bukti.status === 'Diverifikasi' && (
-                                                                        <a href={route('client.bukti.kwitansi', bukti.id)}
-                                                                            title="Unduh kwitansi"
-                                                                            className="p-1 text-muted hover:text-ok transition-colors">
-                                                                            <Download size={13} />
+                                                                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                                        <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full border ${getBuktiStatusColor(bukti.status)}`}>
+                                                                            {bukti.status}
+                                                                        </span>
+                                                                        <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer"
+                                                                            title="Lihat bukti"
+                                                                            className="p-1 text-muted hover:text-gold-dim transition-colors">
+                                                                            <Eye size={13} />
                                                                         </a>
-                                                                    )}
-                                                                    {bukti.status === 'Menunggu' && (
-                                                                        <button onClick={() => handleDeleteBukti(bukti.id)}
-                                                                            className="p-1 text-muted hover:text-danger transition-colors">
-                                                                            <X size={13} />
-                                                                        </button>
-                                                                    )}
+                                                                        {bukti.status === 'Diverifikasi' && (
+                                                                            <a href={route('client.bukti.kwitansi', bukti.id)}
+                                                                                title="Unduh kwitansi"
+                                                                                className="p-1 text-muted hover:text-ok transition-colors">
+                                                                                <Download size={13} />
+                                                                            </a>
+                                                                        )}
+                                                                        {bukti.status === 'Menunggu' && (
+                                                                            <button onClick={() => handleDeleteBukti(bukti.id)}
+                                                                                className="p-1 text-muted hover:text-danger transition-colors">
+                                                                                <X size={13} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                                {/* Alasan penolakan langsung di baris buktinya, bukan hanya di box terpisah */}
-                                                                {bukti.status === 'Ditolak' && bukti.catatan_finance && (
-                                                                    <div className="w-full mt-2 px-2.5 py-1.5 bg-danger-bg border border-red-500/20 rounded-lg">
+                                                                {/* Alasan penolakan di bawah baris bukti, lega selebar kartu */}
+                                                                {ditolak && (
+                                                                    <div className="mt-2 px-2.5 py-1.5 bg-danger-bg border border-red-500/20 rounded-lg">
                                                                         <p className="text-[10px] font-bold text-danger mb-0.5">Alasan ditolak Finance:</p>
-                                                                        <p className="text-[11px] text-danger/90">{bukti.catatan_finance}</p>
+                                                                        <p className="text-[11px] text-danger/90 leading-relaxed">{bukti.catatan_finance}</p>
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : (
                                                     <div className="py-8 text-center text-muted-2">
@@ -1332,17 +1338,10 @@ export default function ClientDashboard({
                                                     </div>
                                                 )}
 
-                                                {/* Ditolak warning */}
+                                                {/* Tip tindak lanjut — alasannya sudah tampil di tiap bukti di atas,
+                                                    jadi di sini cukup ajakan tindak lanjutnya saja (tak diulang). */}
                                                 {event.bukti_pembayaran?.some(b => b.status === 'Ditolak') && (
-                                                    <div className="p-3 mt-3 border bg-danger-bg border-red-500/20 rounded-xl">
-                                                        <p className="mb-1 text-xs font-bold text-danger">⚠️ Ada Bukti Ditolak</p>
-                                                        {event.bukti_pembayaran.filter(b => b.status === 'Ditolak').map(b => (
-                                                            <div key={b.id}>
-                                                                {b.catatan_finance && <p className="text-xs text-red-300 mb-1">Alasan: {b.catatan_finance}</p>}
-                                                            </div>
-                                                        ))}
-                                                        <p className="text-xs text-gold-dim mt-1">💡 Hapus bukti yang ditolak lalu upload ulang.</p>
-                                                    </div>
+                                                    <p className="mt-3 text-xs text-gold-dim">💡 Ada bukti yang ditolak — hapus bukti tersebut lalu unggah ulang sesuai catatan Finance.</p>
                                                 )}
                                             </div>
                                         )}
@@ -1513,7 +1512,10 @@ export default function ClientDashboard({
                                                                 </div>
                                                                 <div className="flex items-center gap-1.5 flex-shrink-0">
                                                                     <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full border ${getBuktiStatusColor(bukti.status)}`}>{bukti.status}</span>
-                                                                    <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer" className="p-1 text-muted transition-colors hover:text-gold-dim"><Eye size={13} /></a>
+                                                                    <a href={`/${bukti.file_bukti}`} target="_blank" rel="noreferrer" title="Lihat bukti" className="p-1 text-muted transition-colors hover:text-gold-dim"><Eye size={13} /></a>
+                                                                    {bukti.status === 'Diverifikasi' && (
+                                                                        <a href={route('client.bukti.kwitansi', bukti.id)} title="Unduh kwitansi" className="p-1 text-muted transition-colors hover:text-ok"><Download size={13} /></a>
+                                                                    )}
                                                                     {bukti.status === 'Menunggu' && (
                                                                         <button onClick={() => handleDeleteBukti(bukti.id)} className="p-1 text-muted transition-colors hover:text-danger"><X size={13} /></button>
                                                                     )}

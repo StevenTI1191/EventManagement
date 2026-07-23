@@ -427,16 +427,6 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                                                         <Users size={11} className="shrink-0" /> {Number(event.jumlah_pax).toLocaleString('id-ID')} tamu
                                                     </p>
                                                 )}
-                                                {event.entairtainment_event && (
-                                                    <p className="flex items-center gap-1.5 text-xs text-muted">
-                                                        <Music size={11} className="shrink-0 text-gold" /> <span className="truncate">{event.entairtainment_event}</span>
-                                                    </p>
-                                                )}
-                                                {event.food_beverage_event && (
-                                                    <p className="flex items-center gap-1.5 text-xs text-muted">
-                                                        <Utensils size={11} className="shrink-0 text-gold" /> <span className="truncate">{event.food_beverage_event}</span>
-                                                    </p>
-                                                )}
                                             </div>
 
                                             {event.deskripsi_event && (
