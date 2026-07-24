@@ -105,6 +105,10 @@ export default function ClientDashboard({
     const [tolakModal, setTolakModal]       = useState(null); // event penawaran yang ditolak
     const [alasanTolak, setAlasanTolak]     = useState('');
     const [prosesPenawaran, setProsesPenawaran] = useState(null); // id_event yang sedang diproses
+    // Ajukan penyesuaian / negosiasi lanjutan atas penawaran.
+    const [penyesuaianModal, setPenyesuaianModal] = useState(null);
+    const [penyesuaianPesan, setPenyesuaianPesan] = useState('');
+    const [penyesuaianMeeting, setPenyesuaianMeeting] = useState(false);
 
     const terimaPenawaran = (id_event) => {
         if (prosesPenawaran) return;
@@ -121,6 +125,17 @@ export default function ClientDashboard({
         router.post(route('client.penawaran.tolak', tolakModal.id_event), { alasan: alasanTolak }, {
             preserveScroll: true,
             onSuccess: () => { setTolakModal(null); setAlasanTolak(''); },
+            onFinish: () => setProsesPenawaran(null),
+        });
+    };
+
+    const submitPenyesuaian = () => {
+        if (!penyesuaianModal || prosesPenawaran || penyesuaianPesan.trim().length < 5) return;
+        setProsesPenawaran(penyesuaianModal.id_event);
+        router.post(route('client.penawaran.penyesuaian', penyesuaianModal.id_event),
+            { pesan: penyesuaianPesan, minta_meeting: penyesuaianMeeting }, {
+            preserveScroll: true,
+            onSuccess: () => { setPenyesuaianModal(null); setPenyesuaianPesan(''); setPenyesuaianMeeting(false); },
             onFinish: () => setProsesPenawaran(null),
         });
     };
@@ -764,6 +779,12 @@ export default function ClientDashboard({
                                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white rounded-xl bg-emerald-600 shadow-md shadow-emerald-600/30 hover:bg-emerald-700 transition-all disabled:opacity-60">
                                             <CheckCircle size={14} /> {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Penawaran'}
                                         </button>
+                                        {p.respon_klien !== 'Ditolak' && (
+                                            <button onClick={() => { setPenyesuaianPesan(''); setPenyesuaianMeeting(false); setPenyesuaianModal(p); }} disabled={prosesPenawaran === p.id_event}
+                                                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gold-dim bg-surface border border-gold-2 rounded-xl hover:bg-gold-soft transition-all disabled:opacity-60">
+                                                💬 Ajukan Penyesuaian
+                                            </button>
+                                        )}
                                         {p.respon_klien !== 'Ditolak' && (
                                             <button onClick={() => { setAlasanTolak(''); setTolakModal(p); }} disabled={prosesPenawaran === p.id_event}
                                                 className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-danger bg-danger-bg border border-danger/30 rounded-xl hover:brightness-95 transition-all disabled:opacity-60">
@@ -1604,6 +1625,45 @@ export default function ClientDashboard({
                     })()}
                 </div>
             </div>
+
+            {/* Modal ajukan penyesuaian penawaran (negosiasi lanjutan) */}
+            {penyesuaianModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm"
+                    onClick={() => !prosesPenawaran && setPenyesuaianModal(null)}>
+                    <div className="w-full max-w-md p-6 border shadow-xl bg-surface border-line rounded-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                            <h2 className="text-lg font-extrabold text-ink">💬 Ajukan Penyesuaian</h2>
+                            <button onClick={() => !prosesPenawaran && setPenyesuaianModal(null)}
+                                className="p-1.5 text-muted hover:bg-paper rounded-lg"><X size={18} /></button>
+                        </div>
+                        <p className="mb-4 text-sm text-muted">
+                            Untuk penawaran <span className="font-bold text-ink">"{penyesuaianModal.nama_event}"</span>.
+                            Sampaikan bagian yang ingin disesuaikan atau ditambahkan. Penawaran tidak ditolak — tim kami akan menindaklanjuti.
+                        </p>
+                        <label className="block mb-1.5 text-xs font-bold tracking-wide text-muted uppercase">
+                            Yang ingin disesuaikan <span className="text-danger normal-case font-normal">* wajib</span>
+                        </label>
+                        <textarea value={penyesuaianPesan} onChange={e => setPenyesuaianPesan(e.target.value)} rows={4} maxLength={1000}
+                            placeholder="Mis. tambah dekorasi panggung, ubah menu F&B, kurangi jumlah tamu, sesuaikan harga…"
+                            className="w-full px-3 py-2 text-sm border bg-surface border-line rounded-xl text-ink placeholder-muted-2 focus:border-gold-2 focus:outline-none" />
+                        <label className="flex items-center gap-2 mt-3 text-sm cursor-pointer text-muted">
+                            <input type="checkbox" checked={penyesuaianMeeting} onChange={e => setPenyesuaianMeeting(e.target.checked)}
+                                className="w-4 h-4 rounded accent-gold-dim" />
+                            Saya ingin dijadwalkan meeting ulang untuk membahas
+                        </label>
+                        <div className="flex justify-end gap-2 mt-5">
+                            <button onClick={() => setPenyesuaianModal(null)} disabled={prosesPenawaran}
+                                className="px-4 py-2 text-sm font-bold text-muted transition-colors bg-paper border border-line rounded-xl hover:bg-gold-soft disabled:opacity-60">
+                                Batal
+                            </button>
+                            <button onClick={submitPenyesuaian} disabled={prosesPenawaran || penyesuaianPesan.trim().length < 5}
+                                className="px-4 py-2 text-sm font-black text-white transition-all bg-gold-grad shadow-gold rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
+                                {prosesPenawaran === penyesuaianModal.id_event ? 'Mengirim…' : 'Kirim Permintaan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Modal Cancel Appointment */}
             {/* Modal tolak penawaran */}

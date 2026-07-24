@@ -787,6 +787,47 @@ class AppointmentController extends Controller
         return back()->with('success', 'Penawaran telah Anda tolak. Tim kami akan menindaklanjuti.');
     }
 
+    /**
+     * Klien mengajukan penyesuaian / negosiasi lanjutan atas penawaran (tanpa
+     * menolak). Isi permintaan direkam di jejak acara dan dikirim ke PIC; bila
+     * klien ingin membahas langsung, ia bisa menandai minta meeting ulang.
+     * Penawaran tetap di tahap Negotiation sehingga bisa diterima/ditolak nanti.
+     */
+    public function ajukanPenyesuaian(Request $request, $id_event)
+    {
+        $data = $request->validate([
+            'pesan'         => 'required|string|min:5|max:1000',
+            'minta_meeting' => 'boolean',
+        ], ['pesan.required' => 'Sampaikan bagian yang ingin disesuaikan.']);
+
+        $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
+        $mintaMeeting = $request->boolean('minta_meeting');
+
+        $jejak = '💬 Klien minta penyesuaian penawaran (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['pesan'])
+            . ($mintaMeeting ? ' [minta dijadwalkan meeting ulang]' : '');
+
+        $event->update([
+            'tgl_respon_klien' => now(),
+            'note_event'       => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
+        ]);
+
+        if ($email = $event->pic?->email_pegawai) {
+            $isi = "Klien meminta PENYESUAIAN atas penawaran acara \"{$event->nama_event}\".\n\n"
+                 . 'Permintaan: ' . trim($data['pesan'])
+                 . ($mintaMeeting ? "\n\nKlien juga meminta dijadwalkan MEETING ULANG untuk membahas." : '')
+                 . "\n\nSilakan tindak lanjuti — sesuaikan penawaran lalu kirim ulang, atau jadwalkan meeting.\n\n"
+                 . '— Sistem Laksamana Muda';
+            try {
+                Mail::raw($isi, fn ($m) => $m->to($email)->subject('💬 Permintaan Penyesuaian Penawaran — ' . $event->nama_event));
+            } catch (\Exception $e) {
+                \Log::warning('Email penyesuaian penawaran gagal: ' . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', 'Permintaan penyesuaian terkirim. Tim kami akan menindaklanjuti'
+            . ($mintaMeeting ? ' dan menjadwalkan meeting ulang.' : '.'));
+    }
+
     /** Kirim email pemberitahuan jelas ke PIC/EM saat klien merespon penawaran. */
     private function kabariPicPenawaran(Event $event, string $aksi, ?string $alasan = null): void
     {
