@@ -7,6 +7,20 @@ const rupiah = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID', { maximumFr
 const tanggal = (d) =>
     d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
+// Selisih hari menuju tanggal acara (negatif berarti sudah lewat).
+const hariKeAcara = (d) => {
+    if (!d) return null;
+    return Math.round((new Date(d + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000);
+};
+
+// Label status yang lebih bermakna untuk Finance.
+const labelStatus = (s) => (s === 'Upcoming' ? 'Menunggu Pelunasan' : s);
+const kelasStatus = (s) => {
+    if (s === 'Deal') return 'bg-emerald-100 text-emerald-700';
+    if (s === 'Upcoming') return 'bg-orange-100 text-orange-700';
+    return 'bg-blue-100 text-blue-700';
+};
+
 export default function FinanceInvoiceIndex({ events = [] }) {
     const { flash } = usePage().props;
     const [proses, setProses] = useState(null);
@@ -85,8 +99,8 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                     <h1 className="text-3xl font-extrabold text-gray-900">Invoice</h1>
                 </div>
                 <p className="mt-1 font-medium text-gray-500">
-                    Event tahap <b>Deal</b> ditagih DP 50%. Setelah DP lunas, status event menjadi <b>Upcoming</b> dan
-                    invoice pelunasan 50% dapat diterbitkan.
+                    Event tahap <b>Deal</b> ditagih uang muka. Setelah uang muka lunas, status berubah menjadi
+                    <b> Menunggu Pelunasan</b> dan invoice pelunasan dapat diterbitkan.
                 </p>
             </div>
 
@@ -109,6 +123,10 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                 {events.map((ev) => {
                     const dp  = cariInvoice(ev, 'DP');
                     const pel = cariInvoice(ev, 'Pelunasan');
+                    // Mendesak: ada tagihan belum lunas dan acara ≤ 3 hari lagi (atau sudah lewat).
+                    const hari = hariKeAcara(ev.tgl_mulai_event);
+                    const adaBelumLunas = (dp && dp.status !== 'Lunas') || (pel && pel.status !== 'Lunas') || !pel;
+                    const mendesak = hari !== null && hari <= 3 && adaBelumLunas;
 
                     return (
                         <div key={ev.id_event} className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
@@ -117,15 +135,16 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <h2 className="font-extrabold text-gray-900">{ev.nama_event}</h2>
-                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
-                                            ev.status_event === 'Deal' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
-                                        }`}>
-                                            {ev.status_event}
+                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${kelasStatus(ev.status_event)}`}>
+                                            {labelStatus(ev.status_event)}
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap gap-4 mt-1.5 text-xs text-gray-500">
                                         <span className="flex items-center gap-1"><Building2 size={12} />{ev.client?.perusahaan_client || ev.client?.nama_client || '—'}</span>
-                                        <span className="flex items-center gap-1"><CalendarDays size={12} />{tanggal(ev.tgl_mulai_event)}</span>
+                                        <span className={`flex items-center gap-1 ${mendesak ? 'font-bold text-red-600' : ''}`}>
+                                            <CalendarDays size={12} />{tanggal(ev.tgl_mulai_event)}
+                                            {mendesak && <span className="ml-1">· ⚠ mendekati hari acara, belum lunas</span>}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -146,15 +165,15 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                             {/* Dua kartu tagihan */}
                             <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
                                 {[
-                                    { tipe: 'DP',        judul: 'DP 50%',        nominal: ev.nominal_dp,        inv: dp,  aktif: ev.status_event === 'Deal' },
-                                    { tipe: 'Pelunasan', judul: 'Pelunasan 50%', nominal: ev.nominal_pelunasan, inv: pel, aktif: dp?.status === 'Lunas' },
+                                    { tipe: 'DP',        judul: 'Uang Muka',  nominal: ev.nominal_dp,        inv: dp,  aktif: ev.status_event === 'Deal' },
+                                    { tipe: 'Pelunasan', judul: 'Pelunasan',  nominal: ev.nominal_pelunasan, inv: pel, aktif: dp?.status === 'Lunas' },
                                 ].map((t) => (
                                     <div key={t.tipe} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50">
                                         <div className="flex items-center justify-between">
                                             <h3 className="text-sm font-bold text-gray-800">{t.judul}</h3>
                                             {t.inv && (
                                                 <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
-                                                    t.inv.status === 'Lunas' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                                    t.inv.status === 'Lunas' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                                 }`}>
                                                     {t.inv.status}
                                                 </span>

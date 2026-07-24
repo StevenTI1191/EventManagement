@@ -549,8 +549,8 @@ export default function ClientDashboard({
 
                         // Susun pesan sesuai jenis tagihan yang tertunggak.
                         const bagian = [];
-                        if (perluDP.length)        bagian.push(`uang muka (DP 50%) untuk ${perluDP.length} acara`);
-                        if (perluPelunasan.length) bagian.push(`pelunasan (sisa 50%) untuk ${perluPelunasan.length} acara`);
+                        if (perluDP.length)        bagian.push(`uang muka untuk ${perluDP.length} acara`);
+                        if (perluPelunasan.length) bagian.push(`pelunasan untuk ${perluPelunasan.length} acara`);
                         const judul = perluDP.length && !perluPelunasan.length ? 'Segera lunasi DP'
                                     : !perluDP.length && perluPelunasan.length ? 'Segera lunasi pelunasan'
                                     : 'Ada tagihan menunggu pembayaran';
@@ -733,7 +733,7 @@ export default function ClientDashboard({
                                             <Download size={14} /> Lihat Penawaran (PDF)
                                         </a>
                                         <button onClick={() => terimaPenawaran(p.id_event)} disabled={prosesPenawaran === p.id_event}
-                                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white rounded-xl bg-gold-grad shadow-gold hover:brightness-110 transition-all disabled:opacity-60">
+                                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white rounded-xl bg-emerald-600 shadow-md shadow-emerald-600/30 hover:bg-emerald-700 transition-all disabled:opacity-60">
                                             <CheckCircle size={14} /> {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Penawaran'}
                                         </button>
                                         {p.respon_klien !== 'Ditolak' && (
@@ -1093,7 +1093,7 @@ export default function ClientDashboard({
                                                         </div>
                                                         {!lunas && (
                                                             <p className="mt-1 text-[10px] text-orange-400 font-bold">
-                                                                Sisa: {formatBudget(sisa)}
+                                                                Kekurangan: {formatBudget(sisa)}
                                                             </p>
                                                         )}
                                                     </div>
@@ -1267,7 +1267,7 @@ export default function ClientDashboard({
                                                             <p className="text-sm font-black text-ok">{formatBudget(dibayar)}</p>
                                                         </div>
                                                         <div className="p-3 bg-paper rounded-xl">
-                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Sisa</p>
+                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Kekurangan</p>
                                                             <p className={`text-sm font-black ${lunas ? 'text-ok' : 'text-orange-400'}`}>
                                                                 {lunas ? '✓ Lunas' : formatBudget(sisa)}
                                                             </p>
@@ -1431,7 +1431,7 @@ export default function ClientDashboard({
                                         <p className="text-xl font-black text-ok">{formatBudget(totalTerbayar)}</p>
                                     </div>
                                     <div className="p-5 bg-orange-500/5 border border-orange-500/20 rounded-2xl">
-                                        <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Sisa</p>
+                                        <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Kekurangan</p>
                                         <p className="text-xl font-black text-orange-400">{totalSisa === 0 ? '✓ Lunas' : formatBudget(totalSisa)}</p>
                                     </div>
                                 </div>
@@ -1469,7 +1469,7 @@ export default function ClientDashboard({
                                                 <p className="text-sm font-bold text-ok">{formatBudget(dibayar)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] text-muted uppercase tracking-wider">Sisa</p>
+                                                <p className="text-[10px] text-muted uppercase tracking-wider">Kekurangan</p>
                                                 <p className={`text-sm font-bold ${lunas ? 'text-ok' : 'text-orange-400'}`}>{lunas ? '✓' : formatBudget(sisa)}</p>
                                             </div>
                                         </div>
@@ -1502,7 +1502,7 @@ export default function ClientDashboard({
                                                             <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full border ${
                                                                 inv.status === 'Lunas'
                                                                     ? 'text-ok bg-ok-bg border-ok/30'
-                                                                    : 'text-orange-500 bg-orange-500/10 border-orange-500/30'
+                                                                    : 'text-red-500 bg-red-500/10 border-red-500/30'
                                                             }`}>{inv.status}</span>
                                                             <a href={route('client.invoice.pdf', inv.id_invoice)}
                                                                 className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-gold-dim transition-colors border bg-gold-soft border-gold-2 rounded-lg hover:brightness-95">
@@ -1520,7 +1520,7 @@ export default function ClientDashboard({
                                                 <Clock size={14} className="text-gold-dim mt-0.5 shrink-0" />
                                                 <p className="text-xs text-muted">
                                                     <span className="font-bold text-gold-dim">Penawaran Anda sudah kami terima.</span> Tim Finance sedang menyiapkan
-                                                    invoice uang muka (DP 50%). Invoice akan muncul di sini begitu diterbitkan.
+                                                    invoice uang muka. Invoice akan muncul di sini begitu diterbitkan.
                                                 </p>
                                             </div>
                                         )}

@@ -85,7 +85,7 @@
         </tr>
         <tr>
             <td>
-                {{ $invoice->tipe === 'DP' ? 'Uang muka (DP 50%)' : 'Pelunasan (sisa 50%)' }} — {{ $event->nama_event }}<br>
+                {{ $invoice->tipe === 'DP' ? 'Uang Muka' : 'Pelunasan' }} — {{ $event->nama_event }}<br>
                 <span style="color:#6b7280; font-size:9.5px;">
                     Total nilai acara: Rp {{ number_format($event->deal_harga_event ?? 0, 0, ',', '.') }}
                 </span>
