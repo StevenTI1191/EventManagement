@@ -57,7 +57,9 @@ trait ManagesPipeline
                 'client:id,nama_client,perusahaan_client,no_telp_client,sumber',
                 'pic:id_pegawai,nama_pegawai',
             ])
-            ->orderByDesc('updated_at')
+            // Urutan first-in-first-out: prospek yang lebih dulu masuk tampil di
+            // atas pada tiap kolom, supaya ditangani lebih dulu.
+            ->orderBy('created_at')
             ->get();
 
         $events->each(function (Event $e) {

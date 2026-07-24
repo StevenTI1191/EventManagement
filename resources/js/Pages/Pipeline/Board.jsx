@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import {
     GitBranch, Eye, Building2, CalendarDays, MapPin, User, GripVertical,
-    FileDown, MessageCircle, XCircle, X, LayoutGrid, Table2, Lightbulb, Lock,
+    FileDown, MessageCircle, XCircle, X, LayoutGrid, Table2, Lightbulb, Lock, ChevronDown,
 } from 'lucide-react';
 
 // Tiga tahap pertama boleh digeser. Sisanya ditentukan pembayaran & jadwal,
@@ -44,9 +44,14 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
     const [alasan, setAlasan] = useState('');
     const [submitBatal, setSubmitBatal] = useState(false);
 
+    const [expandedCard, setExpandedCard] = useState(null);
+
     const semua = Object.values(kolom).flat();
     const total = semua.length;
-    const nilaiPapan = semua.reduce((s, e) => s + Number(e.deal_harga_event || 0), 0);
+    // Nilai event tertinggi & terendah (menggantikan total nilai papan).
+    const nilaiList = semua.map((e) => Number(e.deal_harga_event || 0)).filter((v) => v > 0);
+    const tertinggi = nilaiList.length ? Math.max(...nilaiList) : 0;
+    const terendah  = nilaiList.length ? Math.min(...nilaiList) : 0;
 
     const bisaGeser = (key) => KOLOM.find((k) => k.key === key)?.geser;
 
@@ -107,11 +112,16 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                         </span>
                     )}
                     <span className="px-3 py-1 text-xs font-bold text-gray-500 bg-gray-100 rounded-full">{total} event</span>
-                    {/* Nilai seluruh papan — angka yang paling sering dicari saat membuka pipeline */}
-                    {nilaiPapan > 0 && (
-                        <span className="px-3 py-1 text-xs font-bold text-white rounded-full bg-gradient-to-r from-[#FF2D55] to-[#c81e42] shadow-sm shadow-[#FF2D55]/25">
-                            Rp {ringkasRupiah(nilaiPapan)}
-                        </span>
+                    {/* Nilai event tertinggi & terendah di pipeline */}
+                    {tertinggi > 0 && (
+                        <>
+                            <span title="Nilai event tertinggi" className="px-3 py-1 text-xs font-bold border rounded-full text-emerald-700 bg-emerald-50 border-emerald-200">
+                                ▲ Tertinggi Rp {ringkasRupiah(tertinggi)}
+                            </span>
+                            <span title="Nilai event terendah" className="px-3 py-1 text-xs font-bold text-gray-600 bg-gray-100 border border-gray-200 rounded-full">
+                                ▼ Terendah Rp {ringkasRupiah(terendah)}
+                            </span>
+                        </>
                     )}
 
                     {/* Ganti tampilan papan / tabel */}
@@ -188,95 +198,113 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                         </div>
                                     )}
 
-                                    {kartu.map((e) => (
+                                    {kartu.map((e) => {
+                                        const isOpen = expandedCard === e.id_event;
+                                        return (
                                         <div
                                             key={e.id_event}
                                             draggable={canEdit && k.geser}
                                             onDragStart={() => { setDragId(e.id_event); setBaruDigeser(true); }}
                                             onDragEnd={() => {
                                                 setDragId(null); setHover(null);
-                                                // beri jeda singkat agar klik sisa seretan tidak ikut membuka event
                                                 setTimeout(() => setBaruDigeser(false), 100);
                                             }}
-                                            onClick={() => bukaEvent(e)}
-                                            title={routes.detail ? 'Klik untuk membuka detail event' : undefined}
-                                            className={`relative overflow-hidden p-2.5 pl-3 bg-white border rounded-xl shadow-sm transition-all hover:shadow-lg hover:border-gray-200 hover:-translate-y-0.5 ${
-                                                routes.detail ? 'cursor-pointer' : ''
-                                            } ${dragId === e.id_event ? 'opacity-40 rotate-1' : 'border-gray-100'}`}
+                                            onClick={() => { if (baruDigeser) return; setExpandedCard(isOpen ? null : e.id_event); }}
+                                            title="Klik untuk lihat detail"
+                                            className={`relative overflow-hidden p-2.5 pl-3 bg-white border rounded-xl shadow-sm transition-all cursor-pointer hover:shadow-md ${
+                                                dragId === e.id_event ? 'opacity-40 rotate-1 border-gray-100' : isOpen ? 'border-gray-200 ring-1 ring-gray-200' : 'border-gray-100'
+                                            }`}
                                         >
-                                            {/* Garis tahap di tepi kartu — warnanya sama dengan pita kolom */}
                                             <span className={`absolute inset-y-0 left-0 w-1 ${k.aksen}`} />
 
+                                            {/* Header ringkas — selalu tampil */}
                                             <div className="flex items-start gap-1.5">
                                                 {canEdit && k.geser && (
-                                                    <GripVertical size={13} className="mt-0.5 text-gray-300 shrink-0 cursor-grab active:cursor-grabbing"
+                                                    <GripVertical size={13} onClick={(ev) => ev.stopPropagation()}
+                                                        className="mt-0.5 text-gray-300 shrink-0 cursor-grab active:cursor-grabbing"
                                                         title="Seret untuk memindahkan tahap" />
                                                 )}
                                                 <h3 className="flex-1 text-xs font-bold leading-snug text-gray-900 line-clamp-2">{e.nama_event}</h3>
+                                                <ChevronDown size={14} className={`mt-0.5 text-gray-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                                             </div>
 
-                                            <div className="flex flex-wrap gap-1 mt-1.5">
-                                                {e.dari_planning && (
-                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black text-indigo-600 bg-indigo-50 rounded">
-                                                        <Lightbulb size={9} /> RENCANA
-                                                    </span>
-                                                )}
-                                                {/* Sudah diterima klien → tahapnya terkunci, tidak bisa mundur */}
-                                                {e.respon_klien === 'Diterima' && (
-                                                    <span title="Penawaran sudah diterima klien — tahap tidak bisa dimundurkan"
-                                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black text-emerald-700 bg-emerald-50 rounded">
-                                                        <Lock size={9} /> DITERIMA KLIEN
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div className="mt-2 space-y-1 text-[10px] text-gray-500">
-                                                <p className="flex items-center gap-1">
-                                                    <Building2 size={10} className="shrink-0" />
-                                                    <span className="truncate">{e.client?.perusahaan_client || e.client?.nama_client || 'Tanpa klien'}</span>
-                                                </p>
-                                                <p className="flex items-center gap-1">
-                                                    <CalendarDays size={10} className="shrink-0" /> {tanggal(e.tgl_mulai_event)}
-                                                    {e.area_event && (
-                                                        <>
-                                                            <MapPin size={10} className="ml-1 shrink-0" />
-                                                            <span className="truncate">{e.area_event}</span>
-                                                        </>
+                                            <div className="flex items-center justify-between gap-2 mt-1">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {e.dari_planning && (
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black text-indigo-600 bg-indigo-50 rounded">
+                                                            <Lightbulb size={9} /> RENCANA
+                                                        </span>
                                                     )}
-                                                </p>
-                                            </div>
-
-                                            <p className="mt-2 text-xs font-extrabold text-[#FF2D55]">{rupiah(e.deal_harga_event)}</p>
-
-                                            {canEdit && routes.penawaran && (k.key === 'Negotiation' || k.key === 'Deal') && (
-                                                <div className="flex flex-wrap gap-1 mt-2" onClick={(ev) => ev.stopPropagation()}>
-                                                    <a href={route(routes.penawaran, e.id_event)} draggable={false}
-                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-gray-600 bg-gray-100 rounded hover:bg-gray-200">
-                                                        <FileDown size={10} /> PDF
-                                                    </a>
-                                                    {e.wa_penawaran ? (
-                                                        <a href={e.wa_penawaran} target="_blank" rel="noopener noreferrer" draggable={false}
-                                                            className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-emerald-700 rounded bg-emerald-50 hover:bg-emerald-100">
-                                                            <MessageCircle size={10} /> WA
-                                                        </a>
-                                                    ) : (
-                                                        <span title="Nomor WhatsApp klien belum diisi"
-                                                            className="px-1.5 py-1 text-[9px] font-bold text-gray-400 rounded bg-gray-50">
-                                                            No. WA —
+                                                    {e.respon_klien === 'Diterima' && (
+                                                        <span title="Penawaran sudah diterima klien" className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black text-emerald-700 bg-emerald-50 rounded">
+                                                            <Lock size={9} /> DITERIMA
                                                         </span>
                                                     )}
                                                 </div>
-                                            )}
+                                                <p className="text-xs font-extrabold text-[#FF2D55] whitespace-nowrap">{rupiah(e.deal_harga_event)}</p>
+                                            </div>
 
-                                            {canEdit && routes.batal && (k.key === 'Lead' || k.key === 'Negotiation') && !e.dari_planning && (
-                                                <button type="button"
-                                                    onClick={(ev) => { ev.stopPropagation(); setError(''); setAlasan(''); setBatalKartu(e); }}
-                                                    className="flex items-center gap-0.5 mt-1.5 px-1.5 py-1 text-[9px] font-bold text-rose-600 rounded bg-rose-50 hover:bg-rose-100">
-                                                    <XCircle size={10} /> Tidak jadi
-                                                </button>
+                                            {/* Detail (dropdown) */}
+                                            {isOpen && (
+                                                <div className="pt-2 mt-2 border-t border-gray-100">
+                                                    <div className="space-y-1 text-[10px] text-gray-500">
+                                                        <p className="flex items-center gap-1">
+                                                            <Building2 size={10} className="shrink-0" />
+                                                            <span className="truncate">{e.client?.perusahaan_client || e.client?.nama_client || 'Tanpa klien'}</span>
+                                                        </p>
+                                                        <p className="flex items-center gap-1">
+                                                            <CalendarDays size={10} className="shrink-0" /> {tanggal(e.tgl_mulai_event)}
+                                                            {e.area_event && (
+                                                                <>
+                                                                    <MapPin size={10} className="ml-1 shrink-0" />
+                                                                    <span className="truncate">{e.area_event}</span>
+                                                                </>
+                                                            )}
+                                                        </p>
+                                                        {e.pic?.nama_pegawai && (
+                                                            <p className="flex items-center gap-1">
+                                                                <User size={10} className="shrink-0" /> {e.pic.nama_pegawai}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    {canEdit && routes.penawaran && (k.key === 'Negotiation' || k.key === 'Deal') && (
+                                                        <div className="flex flex-wrap gap-1 mt-2" onClick={(ev) => ev.stopPropagation()}>
+                                                            <a href={route(routes.penawaran, e.id_event)} draggable={false}
+                                                                className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-gray-600 bg-gray-100 rounded hover:bg-gray-200">
+                                                                <FileDown size={10} /> PDF
+                                                            </a>
+                                                            {e.wa_penawaran ? (
+                                                                <a href={e.wa_penawaran} target="_blank" rel="noopener noreferrer" draggable={false}
+                                                                    className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-emerald-700 rounded bg-emerald-50 hover:bg-emerald-100">
+                                                                    <MessageCircle size={10} /> WA
+                                                                </a>
+                                                            ) : (
+                                                                <span title="Nomor WhatsApp klien belum diisi" className="px-1.5 py-1 text-[9px] font-bold text-gray-400 rounded bg-gray-50">No. WA —</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex flex-wrap items-center gap-1 mt-2">
+                                                        {routes.detail && (
+                                                            <button type="button" onClick={(ev) => { ev.stopPropagation(); bukaEvent(e); }}
+                                                                className="flex items-center gap-1 px-2 py-1 text-[9px] font-bold text-white rounded bg-[#FF2D55] hover:brightness-110">
+                                                                <Eye size={10} /> Buka detail
+                                                            </button>
+                                                        )}
+                                                        {canEdit && routes.batal && (k.key === 'Lead' || k.key === 'Negotiation') && !e.dari_planning && (
+                                                            <button type="button"
+                                                                onClick={(ev) => { ev.stopPropagation(); setError(''); setAlasan(''); setBatalKartu(e); }}
+                                                                className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-rose-600 rounded bg-rose-50 hover:bg-rose-100">
+                                                                <XCircle size={10} /> Tidak jadi
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             )}
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                                 </div>
                             </div>
@@ -329,9 +357,9 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                         {total > 0 && (
                             <tfoot>
                                 <tr className="bg-gray-50">
-                                    <td colSpan={6} className="px-4 py-3 text-xs font-bold text-right text-gray-500">Total nilai pipeline</td>
-                                    <td className="px-4 py-3 text-sm font-extrabold text-right text-gray-900">
-                                        {rupiah(semua.reduce((a, e) => a + (Number(e.deal_harga_event) || 0), 0))}
+                                    <td colSpan={6} className="px-4 py-3 text-xs font-bold text-right text-gray-500">Nilai tertinggi &middot; terendah</td>
+                                    <td className="px-4 py-3 text-sm font-extrabold text-right text-gray-900 whitespace-nowrap">
+                                        {rupiah(tertinggi)} &middot; {rupiah(terendah)}
                                     </td>
                                 </tr>
                             </tfoot>
