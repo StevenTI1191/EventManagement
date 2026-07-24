@@ -34,6 +34,8 @@ export default function Edit({ auth, event, clients, pegawais }) {
         tgl_mulai_event:      event.tgl_mulai_event || '',
         jam_mulai:            event.jam_mulai || '09:00',
         jam_selesai:          event.jam_selesai || '13:00',
+        loading_in:           event.loading_in ? String(event.loading_in).substring(0, 5) : '',
+        loading_out:          event.loading_out ? String(event.loading_out).substring(0, 5) : '',
         area_event:           event.area_event || 'Lantai 1',
         entairtainment_event: event.entairtainment_event || '',
         food_beverage_event:  event.food_beverage_event || '',
@@ -162,6 +164,18 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                     <TimePicker value={data.jam_selesai} onChange={v => setData('jam_selesai', v)} />
                                 </div>
                             </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block mb-1 text-sm font-bold text-gray-700">Loading In <span className="font-normal text-gray-400">(opsional)</span></label>
+                                    <TimePicker value={data.loading_in} onChange={v => setData('loading_in', v)} />
+                                </div>
+                                <div>
+                                    <label className="block mb-1 text-sm font-bold text-gray-700">Loading Out <span className="font-normal text-gray-400">(opsional)</span></label>
+                                    <TimePicker value={data.loading_out} onChange={v => setData('loading_out', v)} />
+                                </div>
+                            </div>
+                            <p className="-mt-2 text-xs text-gray-400">Rentang loading in–out dipakai untuk cek bentrok antar-acara di area sama (plus jeda 1 jam). Kosongkan untuk memakai jam acara.</p>
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Entertainment</label>

@@ -22,6 +22,8 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
         tgl_selesai_event: '',
         jam_mulai: '09:00',
         jam_selesai: '13:00',
+        loading_in: '',
+        loading_out: '',
         area_event: 'Lantai 1',
         entairtainment_event: '',
         food_beverage_event: '',
@@ -211,6 +213,18 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
                                     <TimePicker value={data.jam_selesai} onChange={v => setData('jam_selesai', v)} />
                                 </div>
                             </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block mb-1 text-sm font-bold text-gray-700">Loading In <span className="font-normal text-gray-400">(opsional)</span></label>
+                                    <TimePicker value={data.loading_in} onChange={v => setData('loading_in', v)} />
+                                </div>
+                                <div>
+                                    <label className="block mb-1 text-sm font-bold text-gray-700">Loading Out <span className="font-normal text-gray-400">(opsional)</span></label>
+                                    <TimePicker value={data.loading_out} onChange={v => setData('loading_out', v)} />
+                                </div>
+                            </div>
+                            <p className="-mt-2 text-xs text-gray-400">Rentang loading in–out dipakai untuk cek bentrok antar-acara di area sama (plus jeda 1 jam). Kosongkan untuk memakai jam acara.</p>
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Entertainment</label>

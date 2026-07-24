@@ -168,6 +168,8 @@ class EventController extends Controller
             'tgl_selesai_event' => 'nullable|date|after_or_equal:tgl_mulai_event',
             'jam_mulai'         => 'required|string|max:8',
             'jam_selesai'       => 'required|string|max:8',
+            'loading_in'        => 'nullable|string|max:8',
+            'loading_out'       => 'nullable|string|max:8',
             'area_event'        => 'required|string|max:255',
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
@@ -182,7 +184,9 @@ class EventController extends Controller
             $request->jam_selesai,
             $request->area_event,
             null,
-            $request->tgl_selesai_event
+            $request->tgl_selesai_event,
+            $request->loading_in,
+            $request->loading_out
         );
 
         if ($bentrok) {
@@ -197,6 +201,7 @@ class EventController extends Controller
         $data = $request->only([
             'nama_event', 'id_client', 'id_pegawai', 'kategori_event', 'deskripsi_event',
             'tgl_mulai_event', 'tgl_selesai_event', 'jam_mulai', 'jam_selesai',
+            'loading_in', 'loading_out',
             'jam_meeting', 'jam_keluar_makanan', 'area_event', 'jumlah_pax', 'harga_per_pax',
             'note_event', 'food_beverage_event', 'entairtainment_event',
             'technical_meeting', 'gladi_resik', 'deal_harga_event', 'status_event',
@@ -294,6 +299,8 @@ class EventController extends Controller
             'tgl_selesai_event' => 'nullable|date|after_or_equal:tgl_mulai_event',
             'jam_mulai'         => $jadwal . '|string|max:8',
             'jam_selesai'       => $jadwal . '|string|max:8',
+            'loading_in'        => 'nullable|string|max:8',
+            'loading_out'       => 'nullable|string|max:8',
             'area_event'        => $jadwal . '|string|max:255',
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
@@ -311,7 +318,9 @@ class EventController extends Controller
                 $request->jam_selesai,
                 $request->area_event,
                 $id,
-                $request->tgl_selesai_event
+                $request->tgl_selesai_event,
+                $request->loading_in,
+                $request->loading_out
             );
 
             if ($bentrok) {
@@ -327,6 +336,7 @@ class EventController extends Controller
         $data = $request->only([
             'nama_event', 'id_client', 'id_pegawai', 'kategori_event', 'deskripsi_event',
             'tgl_mulai_event', 'tgl_selesai_event', 'jam_mulai', 'jam_selesai',
+            'loading_in', 'loading_out',
             'jam_meeting', 'jam_keluar_makanan', 'area_event', 'jumlah_pax', 'harga_per_pax',
             'note_event', 'food_beverage_event', 'entairtainment_event',
             'technical_meeting', 'gladi_resik', 'deal_harga_event', 'status_event',

@@ -19,6 +19,8 @@ class Event extends Model
         'tgl_selesai_event',
         'jam_mulai',
         'jam_selesai',
+        'loading_in',
+        'loading_out',
         'jam_meeting',
         'jam_keluar_makanan',
         'area_event',
@@ -323,7 +325,7 @@ class Event extends Model
      * setup dan bongkar. Mencegah dua acara dijadwalkan mepet sehingga
      * mustahil dikerjakan tim di lapangan.
      */
-    public const BUFFER_JADWAL_MENIT = 180;
+    public const BUFFER_JADWAL_MENIT = 60;
 
     /**
      * Cek bentrok jadwal pada satu area.
@@ -335,10 +337,15 @@ class Event extends Model
      * Event Done & Batal dikecualikan: jadwalnya dilepas agar slot bisa dipakai
      * lagi. Penyelesaian TETAP memblokir karena tim mungkin masih di lokasi.
      */
-    public static function checkBentrok($tgl, $jam_mulai, $jam_selesai, $area, $exclude_id = null, $tgl_selesai = null): ?self
+    public static function checkBentrok($tgl, $jam_mulai, $jam_selesai, $area, $exclude_id = null, $tgl_selesai = null, $loading_in = null, $loading_out = null): ?self
     {
-        $mulai   = \Illuminate\Support\Carbon::parse($tgl . ' ' . $jam_mulai);
-        $selesai = \Illuminate\Support\Carbon::parse(($tgl_selesai ?: $tgl) . ' ' . $jam_selesai);
+        // Rentang "sibuk" acara = loading in s/d loading out (mencakup bongkar-pasang).
+        // Bila loading tidak diisi, pakai jam acara sebagai gantinya.
+        $awalJam  = $loading_in  ?: $jam_mulai;
+        $akhirJam = $loading_out ?: $jam_selesai;
+
+        $mulai   = \Illuminate\Support\Carbon::parse($tgl . ' ' . $awalJam);
+        $selesai = \Illuminate\Support\Carbon::parse(($tgl_selesai ?: $tgl) . ' ' . $akhirJam);
 
         // Acara lintas tengah malam (mis. 20:00–02:00) — akhir dianggap besoknya.
         if ($selesai->lessThanOrEqualTo($mulai)) {
@@ -348,14 +355,15 @@ class Event extends Model
         $batasAwal  = $mulai->copy()->subMinutes(self::BUFFER_JADWAL_MENIT);
         $batasAkhir = $selesai->copy()->addMinutes(self::BUFFER_JADWAL_MENIT);
 
+        // Rentang acara lain juga memakai loading in/out-nya (fallback jam acara).
         $query = self::where('area_event', $area)
             ->whereNotIn('status_event', [self::STATUS_DONE, self::STATUS_BATAL])
             ->whereRaw(
-                "CAST(CONCAT(tgl_mulai_event, ' ', jam_mulai) AS DATETIME) < ?",
+                "CAST(CONCAT(tgl_mulai_event, ' ', COALESCE(loading_in, jam_mulai)) AS DATETIME) < ?",
                 [$batasAkhir->toDateTimeString()]
             )
             ->whereRaw(
-                "CAST(CONCAT(COALESCE(tgl_selesai_event, tgl_mulai_event), ' ', jam_selesai) AS DATETIME) > ?",
+                "CAST(CONCAT(COALESCE(tgl_selesai_event, tgl_mulai_event), ' ', COALESCE(loading_out, jam_selesai)) AS DATETIME) > ?",
                 [$batasAwal->toDateTimeString()]
             );
 
