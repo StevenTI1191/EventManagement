@@ -86,6 +86,9 @@ export default function ClientDashboard({
     const panelOpen   = (id, tab) => expandedEvent?.id === id && expandedEvent?.tab === tab;
     const togglePanel = (id, tab) => setExpandedEvent(prev => (prev?.id === id && prev?.tab === tab) ? null : { id, tab });
     const [uploadModal, setUploadModal]     = useState(null);
+    // Validasi bukti di sisi klien saat file dipilih (tipe/ukuran + pratinjau).
+    const [buktiWarning, setBuktiWarning]   = useState('');
+    const [buktiPreview, setBuktiPreview]   = useState(null);
     const [cancelModal, setCancelModal]     = useState(null);
     const [alasanBatal, setAlasanBatal]     = useState('');
     // Usulan jadwal alternatif dari klien (reschedule dua arah).
@@ -264,8 +267,36 @@ export default function ClientDashboard({
         });
     };
 
+    const bersihkanPreview = () => {
+        setBuktiWarning('');
+        setBuktiPreview((url) => { if (url) URL.revokeObjectURL(url); return null; });
+    };
+
+    // Cek berkas begitu dipilih (tidak menunggu tombol Upload ditekan). Isi gambar
+    // tetap diverifikasi server (OCR); di sini hanya tipe, ukuran, & pratinjau.
+    const pilihFileBukti = (e) => {
+        const file = e.target.files?.[0] || null;
+        bersihkanPreview();
+        setData('file_bukti', file);
+        if (!file) return;
+
+        const tipeOk   = /\.(jpe?g|png|pdf)$/i.test(file.name) || ['image/jpeg', 'image/png', 'application/pdf'].includes(file.type);
+        const ukuranOk = file.size <= 5 * 1024 * 1024;
+
+        if (!tipeOk) {
+            setBuktiWarning('Format tidak didukung. Unggah gambar JPG/PNG atau PDF bukti transfer.');
+        } else if (!ukuranOk) {
+            setBuktiWarning(`Ukuran file ${(file.size / 1048576).toFixed(1)} MB melebihi 5 MB. Perkecil dulu.`);
+        } else if (file.type.startsWith('image/')) {
+            setBuktiPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const tutupUpload = () => { setUploadModal(null); bersihkanPreview(); reset(); };
+
     const openUpload = (event) => {
         reset();
+        bersihkanPreview();
         // Tagihan yang masih tertunggak dipilih lebih dulu, beserta nominalnya —
         // supaya bukti langsung menempel ke tagihan yang benar.
         const tertunggak = (event.invoices || []).find(i => i.status !== 'Lunas');
@@ -283,10 +314,7 @@ export default function ClientDashboard({
         e.preventDefault();
         post(route('client.bukti.upload'), {
             forceFormData: true,
-            onSuccess: () => {
-                setUploadModal(null);
-                reset();
-            },
+            onSuccess: () => { setUploadModal(null); bersihkanPreview(); reset(); },
         });
     };
 
@@ -1797,7 +1825,7 @@ export default function ClientDashboard({
                                 <h2 className="text-lg font-extrabold text-ink">Upload Bukti Pembayaran</h2>
                                 <p className="text-xs text-muted mt-0.5">{uploadModal.nama_event}</p>
                             </div>
-                            <button onClick={() => { setUploadModal(null); reset(); }}
+                            <button onClick={tutupUpload}
                                 className="p-1.5 text-muted hover:bg-paper rounded-lg">
                                 <X size={18} />
                             </button>
@@ -1834,8 +1862,21 @@ export default function ClientDashboard({
                                     File Bukti * (JPG, PNG, PDF — max 5MB)
                                 </label>
                                 <input type="file" accept=".jpg,.jpeg,.png,.pdf"
-                                    onChange={e => setData('file_bukti', e.target.files[0])}
+                                    onChange={pilihFileBukti}
                                     className="w-full px-4 py-3 text-sm text-ink bg-surface border border-line rounded-xl file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gold file:text-white" />
+                                {/* Peringatan langsung saat file dipilih */}
+                                {buktiWarning && (
+                                    <p className="mt-2 px-3 py-2 text-xs font-bold text-danger bg-danger-bg border border-red-500/20 rounded-lg">⚠ {buktiWarning}</p>
+                                )}
+                                {buktiPreview && !buktiWarning && (
+                                    <div className="mt-2">
+                                        <img src={buktiPreview} alt="Pratinjau bukti" className="max-h-40 rounded-lg border border-line" />
+                                        <p className="mt-1 text-[10px] text-muted-2">Pastikan nominal &amp; keterangan transaksi terbaca jelas. Isi bukti diverifikasi tim Finance.</p>
+                                    </div>
+                                )}
+                                {data.file_bukti && data.file_bukti.type === 'application/pdf' && !buktiWarning && (
+                                    <p className="mt-2 text-[11px] text-muted">📄 {data.file_bukti.name} siap diunggah.</p>
+                                )}
                                 {errors.file_bukti && <p className="mt-1 text-xs text-danger">{errors.file_bukti}</p>}
                             </div>
                             <div>
@@ -1853,12 +1894,12 @@ export default function ClientDashboard({
                                     className="w-full px-4 py-3 text-sm text-ink placeholder-muted-2 bg-surface border border-line resize-none rounded-xl focus:border-gold" />
                             </div>
                             <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => { setUploadModal(null); reset(); }}
+                                <button type="button" onClick={tutupUpload}
                                     className="flex-1 py-2.5 border border-line text-muted font-bold rounded-xl hover:bg-paper">
                                     Batal
                                 </button>
-                                <button type="submit" disabled={processing}
-                                    className="flex-1 py-2.5 bg-gold-grad shadow-gold text-white font-black rounded-xl hover:brightness-110 disabled:opacity-60">
+                                <button type="submit" disabled={processing || !!buktiWarning}
+                                    className="flex-1 py-2.5 bg-gold-grad shadow-gold text-white font-black rounded-xl hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed">
                                     {processing ? 'Mengupload...' : '📤 Upload'}
                                 </button>
                             </div>
