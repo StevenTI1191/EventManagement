@@ -115,6 +115,10 @@ Route::domain(config('app.backstage_domain'))->group(function () {
     // --- 2. ROUTE TERPROTEKSI ---
     Route::middleware('auth:pegawai')->group(function () {
 
+        // Jadwal terpakai (untuk cek bentrok langsung di form acara) — semua peran
+        Route::get('/backstage/jadwal-terpakai', [\App\Http\Controllers\Backstage\JadwalController::class, 'terpakai'])
+            ->name('backstage.jadwal-terpakai');
+
         // MANAJEMEN Dashboard
         Route::get('/manajemen/dashboard', [DashboardController::class, 'index'])
             ->name('manajemen.dashboard');

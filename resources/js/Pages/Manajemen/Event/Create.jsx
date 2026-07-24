@@ -1,6 +1,7 @@
 import ManajemenLayout from '@/Layouts/ManajemenLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import TimePicker from '@/Components/TimePicker';
+import JadwalTerpakai from '@/Components/JadwalTerpakai';
 import DateTimePicker from '@/Components/DateTimePicker';
 import RupiahInput from '@/Components/RupiahInput';
 import SearchableSelect from '@/Components/SearchableSelect';
@@ -193,6 +194,8 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'manajem
                                 </div>
                             </div>
                             <p className="-mt-2 text-xs text-gray-400">Rentang loading in–out dipakai untuk cek bentrok antar-acara di area sama (plus jeda 1 jam). Kosongkan untuk memakai jam acara.</p>
+
+                            <JadwalTerpakai area={data.area_event} tgl={data.tgl_mulai_event} />
 
                             <div>
                                 <label className="block mb-1 text-sm font-bold text-gray-700">Entertainment</label>
