@@ -27,6 +27,7 @@ class AppointmentController extends Controller
             'batal'          => 'manajemen.appointment.batal',
             'catatanMeeting' => 'manajemen.appointment.catatan-meeting',
             'tolakUsulan'    => 'manajemen.appointment.tolak-usulan',
+            'hapus'          => 'manajemen.appointment.hapus',
             'buatEvent'      => 'manajemen.event.create',
             'eventIndex'     => 'manajemen.event.index',
         ];
@@ -79,5 +80,14 @@ class AppointmentController extends Controller
         $this->checkManajemen();
 
         return $this->tolakUsulanAppointment($request, $id);
+    }
+
+    public function hapus(Request $request, $id)
+    {
+        $this->checkManajemen();
+
+        $this->hapusAppointment($request, $id);
+
+        return redirect()->route('manajemen.appointment.index')->with('success', 'Appointment dihapus permanen.');
     }
 }

@@ -45,6 +45,19 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
         });
     };
 
+    // Hapus appointment permanen — dijaga konfirmasi ketik "HAPUS".
+    const [hapusModal, setHapusModal] = useState(false);
+    const [hapusKonfirmasi, setHapusKonfirmasi] = useState('');
+    const [hapusLoading, setHapusLoading] = useState(false);
+    const submitHapus = () => {
+        if (hapusLoading || hapusKonfirmasi !== 'HAPUS') return;
+        setHapusLoading(true);
+        router.delete(route(routes.hapus, appointment.id), {
+            data: { konfirmasi: hapusKonfirmasi },
+            onFinish: () => setHapusLoading(false),
+        });
+    };
+
     const formatTanggal = (tgl) => {
         if (!tgl) return '-';
         return new Date(tgl).toLocaleDateString('id-ID', {
@@ -396,6 +409,47 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
                             </button>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {/* Hapus permanen — dijaga konfirmasi ketik "HAPUS" */}
+            <div className="max-w-3xl p-6 mx-auto mt-6 bg-white border border-red-100 shadow-sm rounded-2xl">
+                <h3 className="font-extrabold text-red-700">Hapus Appointment</h3>
+                <p className="mt-1 mb-3 text-xs text-gray-500">
+                    Menghapus appointment ini secara permanen dari sistem. Riwayatnya tidak dapat dikembalikan. Gunakan hanya bila appointment memang perlu dihilangkan, misalnya duplikat atau salah input.
+                </p>
+                <button onClick={() => { setHapusKonfirmasi(''); setHapusModal(true); }}
+                    className="px-4 py-2 text-sm font-bold text-red-600 transition-colors border border-red-300 rounded-xl hover:bg-red-50">
+                    Hapus Permanen
+                </button>
+            </div>
+
+            {/* Modal konfirmasi ketat hapus appointment */}
+            {hapusModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                    onClick={() => !hapusLoading && setHapusModal(false)}>
+                    <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-lg font-extrabold text-red-700">Hapus Appointment Permanen</h3>
+                        <p className="mt-2 text-sm text-gray-600">
+                            Tindakan ini <b>tidak dapat dibatalkan</b>. Appointment <b>"{appointment.jenis_event}"</b> akan hilang dari sistem.
+                        </p>
+                        <label className="block mt-4 mb-1.5 text-xs font-bold tracking-wide text-gray-500 uppercase">
+                            Ketik <span className="text-red-600">HAPUS</span> untuk mengonfirmasi
+                        </label>
+                        <input type="text" value={hapusKonfirmasi} onChange={(e) => setHapusKonfirmasi(e.target.value)}
+                            placeholder="HAPUS"
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-red-400 focus:outline-none" />
+                        <div className="flex justify-end gap-2 mt-5">
+                            <button onClick={() => setHapusModal(false)} disabled={hapusLoading}
+                                className="px-4 py-2 text-sm font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-60">
+                                Batal
+                            </button>
+                            <button onClick={submitHapus} disabled={hapusLoading || hapusKonfirmasi !== 'HAPUS'}
+                                className="px-4 py-2 text-sm font-black text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                {hapusLoading ? 'Menghapus…' : 'Hapus Permanen'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

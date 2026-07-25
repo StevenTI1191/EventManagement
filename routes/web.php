@@ -265,6 +265,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id')->name('manajemen.appointment.catatan-meeting');
         Route::patch('/manajemen/appointment/{id}/tolak-usulan', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'tolakUsulan'])
             ->whereNumber('id')->name('manajemen.appointment.tolak-usulan');
+        Route::delete('/manajemen/appointment/{id}', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'hapus'])
+            ->whereNumber('id')->name('manajemen.appointment.hapus');
 
         // Persetujuan pengajuan pembatalan + refund dari klien
         Route::get('/manajemen/pembatalan', [\App\Http\Controllers\Manajemen\PembatalanController::class, 'index'])
@@ -331,6 +333,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->name('em.appointment.catatan-meeting');
         Route::patch('/event-marketing/appointments/{id}/tolak-usulan', [\App\Http\Controllers\EventMarketing\AppointmentController::class, 'tolakUsulan'])
             ->whereNumber('id')->name('em.appointment.tolak-usulan');
+        Route::delete('/event-marketing/appointments/{id}', [\App\Http\Controllers\EventMarketing\AppointmentController::class, 'hapus'])
+            ->whereNumber('id')->name('em.appointment.hapus');
 
         // --- EVENT MARKETING: EVENT CRUD ---
         Route::get('/event-marketing/event', [EMEventController::class, 'index'])

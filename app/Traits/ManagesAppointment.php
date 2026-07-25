@@ -197,6 +197,24 @@ trait ManagesAppointment
         return back()->with('success', 'Usulan jadwal klien ditolak. Klien telah diberi tahu.');
     }
 
+    /**
+     * Hapus appointment secara PERMANEN. Dijaga konfirmasi ketat: pengguna harus
+     * mengetik kata "HAPUS" (validasi juga di server, bukan hanya di tombol).
+     * Hanya mengubah data appointment — tidak menyentuh event yang mungkin sudah
+     * lahir darinya.
+     */
+    protected function hapusAppointment(Request $request, $id): void
+    {
+        $request->validate([
+            'konfirmasi' => ['required', 'in:HAPUS'],
+        ], [
+            'konfirmasi.required' => 'Ketik HAPUS untuk mengonfirmasi.',
+            'konfirmasi.in'       => 'Konfirmasi tidak cocok. Ketik HAPUS (huruf besar) persis.',
+        ]);
+
+        Appointment::findOrFail($id)->delete();
+    }
+
     protected function batalkanAppointment(Request $request, $id)
     {
         $request->validate(['catatan_em' => 'required|string|min:5|max:2000']);
