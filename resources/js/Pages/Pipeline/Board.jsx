@@ -229,17 +229,15 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                             </div>
 
                                             <div className="flex items-center justify-between gap-2 mt-1">
-                                                <div className="flex flex-wrap gap-1">
+                                                <div className="flex items-center flex-wrap gap-1.5 min-w-0 text-[10px] text-gray-500">
                                                     {e.dari_planning && (
                                                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black text-indigo-600 bg-indigo-50 rounded">
                                                             <Lightbulb size={9} /> RENCANA
                                                         </span>
                                                     )}
-                                                    {e.respon_klien === 'Diterima' && (
-                                                        <span title="Penawaran sudah diterima klien" className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black text-emerald-700 bg-emerald-50 rounded">
-                                                            <Lock size={9} /> DITERIMA
-                                                        </span>
-                                                    )}
+                                                    <span className="flex items-center gap-1 whitespace-nowrap">
+                                                        <CalendarDays size={10} className="shrink-0" /> {tanggal(e.tgl_mulai_event)}
+                                                    </span>
                                                 </div>
                                                 <p className="text-xs font-extrabold text-[#FF2D55] whitespace-nowrap">{rupiah(e.deal_harga_event)}</p>
                                             </div>
@@ -264,6 +262,11 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                                         {e.pic?.nama_pegawai && (
                                                             <p className="flex items-center gap-1">
                                                                 <User size={10} className="shrink-0" /> {e.pic.nama_pegawai}
+                                                            </p>
+                                                        )}
+                                                        {e.respon_klien === 'Diterima' && (
+                                                            <p className="flex items-center gap-1 font-bold text-emerald-700">
+                                                                <Lock size={10} className="shrink-0" /> Penawaran diterima klien
                                                             </p>
                                                         )}
                                                     </div>
