@@ -264,9 +264,9 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                                                 <User size={10} className="shrink-0" /> {e.pic.nama_pegawai}
                                                             </p>
                                                         )}
-                                                        {e.respon_klien === 'Diterima' && (
+                                                        {(['Deal', 'Upcoming', 'Penyelesaian', 'Done'].includes(k.key) || e.respon_klien === 'Diterima') && (
                                                             <p className="flex items-center gap-1 font-bold text-emerald-700">
-                                                                <Lock size={10} className="shrink-0" /> Penawaran diterima klien
+                                                                <Lock size={10} className="shrink-0" /> Penawaran diterima
                                                             </p>
                                                         )}
                                                     </div>
@@ -295,7 +295,7 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                                                 <Eye size={10} /> Buka detail
                                                             </button>
                                                         )}
-                                                        {canEdit && routes.batal && (k.key === 'Lead' || k.key === 'Negotiation') && !e.dari_planning && (
+                                                        {canEdit && routes.batal && ['Lead', 'Negotiation', 'Deal'].includes(k.key) && !e.dari_planning && (
                                                             <button type="button"
                                                                 onClick={(ev) => { ev.stopPropagation(); setError(''); setAlasan(''); setBatalKartu(e); }}
                                                                 className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-rose-600 rounded bg-rose-50 hover:bg-rose-100">

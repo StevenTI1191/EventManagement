@@ -261,12 +261,14 @@ trait ManagesPipeline
     }
 
     /**
-     * Tandai prospek "tidak jadi" (batal). Hanya berlaku selama event masih di
-     * tahap awal pipeline (Lead/Negotiation) — setelah Deal, event sudah
-     * ditangani Finance lewat invoice, sehingga pembatalannya bukan di papan ini.
+     * Tandai prospek "tidak jadi" (batal) langsung dari papan. Berlaku untuk
+     * Lead, Negotiation, dan Deal — selama BELUM ada pembayaran masuk. Deal yang
+     * sudah menerima uang harus lewat alur Pembatalan & Refund (klien → Manajemen
+     * → Finance), bukan sekadar "tidak jadi" di papan ini.
      *
-     * Event tidak dihapus: statusnya jadi Batal agar riwayat tetap ada, dan
-     * alasan gagalnya dicatat di note_event untuk bahan evaluasi prospek.
+     * Event tidak dihapus permanen: statusnya jadi Batal agar riwayat tetap ada.
+     * Invoice yang belum dibayar (mis. DP yang terbit otomatis saat Deal)
+     * dibersihkan supaya tidak menggantung.
      */
     protected function handlePipelineBatal(Request $request, $id_event)
     {
@@ -275,11 +277,26 @@ trait ManagesPipeline
         ]);
 
         $event = Event::eksternal()
-            ->whereIn('status_event', [Event::STATUS_LEAD, Event::STATUS_NEGOTIATION])
+            ->whereIn('status_event', [Event::STATUS_LEAD, Event::STATUS_NEGOTIATION, Event::STATUS_DEAL])
             ->findOrFail($id_event);
+
+        // Deal yang sudah ada uang masuk tidak boleh dibatalkan lewat sini.
+        if ($event->status_event === Event::STATUS_DEAL) {
+            $adaBayar = \App\Models\Transaksi::where('id_event', $event->id_event)->where('nominal', '>', 0)->exists();
+            if ($adaBayar) {
+                throw ValidationException::withMessages([
+                    'alasan' => 'Acara ini sudah menerima pembayaran. Gunakan alur Pembatalan & Refund, bukan "Tidak jadi".',
+                ]);
+            }
+        }
 
         $jejak = 'Tidak jadi (' . now()->translatedFormat('d M Y') . ')'
             . (filled($data['alasan'] ?? null) ? ': ' . trim($data['alasan']) : '.');
+
+        // Bersihkan invoice yang belum dibayar (mis. DP otomatis saat Deal).
+        \App\Models\Invoice::where('id_event', $event->id_event)
+            ->where('status', \App\Models\Invoice::STATUS_BELUM)
+            ->delete();
 
         $event->update([
             'status_event' => Event::STATUS_BATAL,
