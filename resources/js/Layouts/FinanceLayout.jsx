@@ -5,11 +5,11 @@ import {
     LayoutDashboard, Calendar, CalendarDays, CreditCard,
     LogOut, ChevronLeft, ChevronRight, Users, Receipt,
     Bell, Trash2, CheckCheck, Upload, FileBarChart, StickyNote,
-    GitBranch, FileText, Menu, X,
+    GitBranch, FileText, Ban, Menu, X,
 } from 'lucide-react';
 
 export default function FinanceLayout({ children }) {
-    const { auth } = usePage().props;
+    const { auth, badges = {} } = usePage().props;
     const user = auth.user;
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [mobileOpen, setMobileOpen]       = useState(false);
@@ -29,6 +29,7 @@ export default function FinanceLayout({ children }) {
         { name: 'Transaksi',        icon: CreditCard,      href: route('finance.transaksi.index'), active: currentPath.includes('/finance/transaksi') },
         { name: 'Invoice',          icon: FileText,        href: route('finance.invoice.index'),   active: currentPath.includes('/finance/invoice') },
         { name: 'Bukti Pembayaran', icon: Receipt,         href: route('finance.bukti.index'),     active: currentPath.includes('/finance/bukti-pembayaran') },
+        { name: 'Pembatalan',       icon: Ban,             href: route('finance.pembatalan.index'), active: currentPath.includes('/finance/pembatalan'), badge: badges.pembatalanMenunggu || 0 },
         { name: 'Laporan',          icon: FileBarChart,    href: route('finance.laporan.index'),   active: currentPath.includes('/finance/laporan') },
     ];
 
@@ -143,6 +144,11 @@ export default function FinanceLayout({ children }) {
                                 <span className={`ml-auto px-1.5 py-0.5 text-[10px] font-black bg-white text-[#FF2D55] rounded-full leading-none ${isSidebarOpen ? '' : 'lg:hidden'}`}>
                                     {unread}
                                 </span>
+                            )}
+                            {item.badge > 0 && (
+                                <span className={`ml-auto px-1.5 py-0.5 text-[11px] font-black rounded-full leading-none ${
+                                    item.active ? 'bg-white text-[#FF2D55]' : 'bg-[#FF2D55] text-white'
+                                } ${isSidebarOpen ? '' : 'lg:hidden'}`}>{item.badge}</span>
                             )}
                         </Link>
                     ))}

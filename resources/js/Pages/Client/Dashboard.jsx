@@ -1334,14 +1334,10 @@ export default function ClientDashboard({
 
                                                 {/* Pengajuan pembatalan + refund acara */}
                                                 {event.pembatalan_aktif ? (
-                                                    <div className={`mb-4 p-3 rounded-xl border ${event.pembatalan_aktif.status === 'Disetujui' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-gold-soft/60 border-gold-2'}`}>
-                                                        <p className="text-xs font-bold text-ink">
-                                                            {event.pembatalan_aktif.status === 'Disetujui' ? '✅ Pengajuan pembatalan disetujui' : '📩 Pengajuan pembatalan sedang ditinjau'}
-                                                        </p>
+                                                    <div className="mb-4 p-3 rounded-xl border bg-gold-soft/60 border-gold-2">
+                                                        <p className="text-xs font-bold text-ink">📩 Pengajuan pembatalan sedang diproses</p>
                                                         <p className="mt-1 text-[11px] text-muted">
-                                                            {event.pembatalan_aktif.status === 'Disetujui'
-                                                                ? 'Manajemen telah menyetujui. Tim Finance akan memproses pengembalian dana Anda.'
-                                                                : 'Menunggu persetujuan tim Manajemen kami.'}
+                                                            Status: <b>{event.pembatalan_aktif.status}</b>. Pengajuan Anda ditinjau secara berjenjang oleh tim kami (Event Marketing → Finance → Manajemen).
                                                         </p>
                                                     </div>
                                                 ) : ['Deal', 'Upcoming', 'Penyelesaian'].includes(event.status_event) && (

@@ -43,10 +43,15 @@ class HandleInertiaRequests extends Middleware
         $posisi = strtolower(str_replace(' ', '', (string) $pegawai->posisi_pegawai));
         $badges = [];
 
-        if ($posisi === 'manajemen') {
-            $badges['pembatalanMenunggu'] = \App\Models\EventPembatalan::where(
-                'status', \App\Models\EventPembatalan::STATUS_DIAJUKAN
-            )->count();
+        // Pengajuan pembatalan yang menunggu giliran peran ini.
+        $giliranStatus = match ($posisi) {
+            'eventmarketing' => \App\Models\EventPembatalan::STATUS_DIAJUKAN,
+            'finance'        => \App\Models\EventPembatalan::STATUS_DISETUJUI_EM,
+            'manajemen'      => \App\Models\EventPembatalan::STATUS_DISETUJUI_FIN,
+            default          => null,
+        };
+        if ($giliranStatus) {
+            $badges['pembatalanMenunggu'] = \App\Models\EventPembatalan::where('status', $giliranStatus)->count();
         }
 
         return $badges;

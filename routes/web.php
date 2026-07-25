@@ -336,6 +336,14 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         Route::delete('/event-marketing/appointments/{id}', [\App\Http\Controllers\EventMarketing\AppointmentController::class, 'hapus'])
             ->whereNumber('id')->name('em.appointment.hapus');
 
+        // Persetujuan pembatalan tahap 1 (Event Marketing)
+        Route::get('/event-marketing/pembatalan', [\App\Http\Controllers\EventMarketing\PembatalanController::class, 'index'])
+            ->name('em.pembatalan.index');
+        Route::patch('/event-marketing/pembatalan/{id}/setujui', [\App\Http\Controllers\EventMarketing\PembatalanController::class, 'setujui'])
+            ->whereNumber('id')->name('em.pembatalan.setujui');
+        Route::patch('/event-marketing/pembatalan/{id}/tolak', [\App\Http\Controllers\EventMarketing\PembatalanController::class, 'tolak'])
+            ->whereNumber('id')->name('em.pembatalan.tolak');
+
         // --- EVENT MARKETING: EVENT CRUD ---
         Route::get('/event-marketing/event', [EMEventController::class, 'index'])
             ->name('em.event.index');
@@ -465,8 +473,13 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_invoice')->name('finance.invoice.update');
         Route::patch('/finance/invoice/{id_invoice}/lunas', [\App\Http\Controllers\Finance\InvoiceController::class, 'lunas'])
             ->whereNumber('id_invoice')->name('finance.invoice.lunas');
-        Route::patch('/finance/pembatalan/{id_pembatalan}/proses', [\App\Http\Controllers\Finance\InvoiceController::class, 'prosesRefund'])
-            ->whereNumber('id_pembatalan')->name('finance.pembatalan.proses');
+        // Persetujuan pembatalan tahap 2 (Finance menetapkan nominal refund)
+        Route::get('/finance/pembatalan', [\App\Http\Controllers\Finance\PembatalanController::class, 'index'])
+            ->name('finance.pembatalan.index');
+        Route::patch('/finance/pembatalan/{id}/setujui', [\App\Http\Controllers\Finance\PembatalanController::class, 'setujui'])
+            ->whereNumber('id')->name('finance.pembatalan.setujui');
+        Route::patch('/finance/pembatalan/{id}/tolak', [\App\Http\Controllers\Finance\PembatalanController::class, 'tolak'])
+            ->whereNumber('id')->name('finance.pembatalan.tolak');
 
         Route::get('/finance/event', [\App\Http\Controllers\Finance\EventController::class, 'index'])
             ->name('finance.event.index');

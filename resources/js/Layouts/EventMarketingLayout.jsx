@@ -14,12 +14,13 @@ import {
     GitBranch,
     Users,
     StickyNote,
+    Ban,
     Menu,
     X,
 } from 'lucide-react';
 
 export default function EventMarketingLayout({ children }) {
-    const { auth } = usePage().props;
+    const { auth, badges = {} } = usePage().props;
     const user = auth.user;
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -80,6 +81,13 @@ export default function EventMarketingLayout({ children }) {
             icon: CalendarCheck,
             href: route('em.appointment.index'),
             active: currentPath.includes('/event-marketing/appointment'),
+        },
+        {
+            name: 'Pembatalan',
+            icon: Ban,
+            href: route('em.pembatalan.index'),
+            active: currentPath.includes('/event-marketing/pembatalan'),
+            badge: badges.pembatalanMenunggu || 0,
         },
     ];
 
@@ -149,6 +157,11 @@ export default function EventMarketingLayout({ children }) {
                         >
                             <item.icon size={20} className="flex-shrink-0" />
                             <span className={`text-sm font-medium ${isSidebarOpen ? '' : 'lg:hidden'}`}>{item.name}</span>
+                            {item.badge > 0 && (
+                                <span className={`ml-auto min-w-[20px] text-center text-[11px] font-black px-1.5 py-0.5 rounded-full ${
+                                    item.active ? 'bg-white text-[#FF2D55]' : 'bg-[#FF2D55] text-white'
+                                } ${isSidebarOpen ? '' : 'lg:hidden'}`}>{item.badge}</span>
+                            )}
                         </Link>
                     ))}
                 </nav>
