@@ -19,22 +19,53 @@ class Appointment extends Model
     public const STATUS_AKTIF = ['Pending', 'Dikonfirmasi', 'Reschedule'];
 
     /**
+     * Jadwal meeting yang BERLAKU, dalam bentuk SQL agar bisa dipakai query.
+     *
+     * Begitu tim mengonfirmasi atau menjadwal ulang, jadwal yang berlaku adalah
+     * hasil konfirmasi — bukan lagi yang diminta klien. Keduanya harus terisi
+     * untuk dipakai; konfirmasi bertanggal tanpa jam (data lama) jatuh kembali ke
+     * permintaan semula supaya tidak mencampur tanggal baru dengan jam lama.
+     */
+    public const SQL_TGL_BERLAKU = '(CASE WHEN tgl_konfirmasi IS NOT NULL AND jam_konfirmasi IS NOT NULL THEN tgl_konfirmasi ELSE tgl_request END)';
+    public const SQL_JAM_BERLAKU = '(CASE WHEN tgl_konfirmasi IS NOT NULL AND jam_konfirmasi IS NOT NULL THEN jam_konfirmasi ELSE jam_request END)';
+
+    /** Versi PHP dari aturan di atas: ['tgl' => 'Y-m-d', 'jam' => 'H:i'] atau null. */
+    public function jadwalBerlaku(): ?array
+    {
+        $pakaiKonfirmasi = filled($this->tgl_konfirmasi) && filled($this->jam_konfirmasi);
+
+        $tgl = $pakaiKonfirmasi ? $this->tgl_konfirmasi : $this->tgl_request;
+        $jam = $pakaiKonfirmasi ? $this->jam_konfirmasi : $this->jam_request;
+
+        if (blank($tgl) || blank($jam)) {
+            return null;
+        }
+
+        return [
+            'tgl' => $tgl instanceof \DateTimeInterface ? $tgl->format('Y-m-d') : substr((string) $tgl, 0, 10),
+            'jam' => substr((string) $jam, 0, 5),
+        ];
+    }
+
+    /**
      * Jaga slot_key selalu konsisten: appointment aktif memegang kunci unik
-     * "tanggal|jam" dari slot yang dimintanya, appointment tak aktif melepasnya
+     * "tanggal|jam" dari jadwal yang BERLAKU, appointment tak aktif melepasnya
      * (NULL). Unique index pada slot_key-lah yang menutup celah double-booking
      * saat dua permintaan tiba nyaris bersamaan.
+     *
+     * Dulu kuncinya diambil dari tgl_request/jam_request saja. Akibatnya
+     * penjadwalan ulang oleh tim tidak memindahkan slot: jam lama tetap terkunci
+     * padahal sudah kosong, dan jam baru tetap terbuka sehingga klien lain bisa
+     * memesan waktu yang sama.
      */
     protected static function booted(): void
     {
         static::saving(function (Appointment $a) {
-            if (in_array($a->status, self::STATUS_AKTIF, true) && $a->tgl_request && $a->jam_request) {
-                $tgl = $a->tgl_request instanceof \DateTimeInterface
-                    ? $a->tgl_request->format('Y-m-d')
-                    : substr((string) $a->tgl_request, 0, 10);
-                $a->slot_key = $tgl . '|' . substr((string) $a->jam_request, 0, 5);
-            } else {
-                $a->slot_key = null;
-            }
+            $jadwal = $a->jadwalBerlaku();
+
+            $a->slot_key = ($jadwal && in_array($a->status, self::STATUS_AKTIF, true))
+                ? $jadwal['tgl'] . '|' . $jadwal['jam']
+                : null;
         });
     }
 

@@ -83,9 +83,13 @@ trait ManagesAppointment
     {
         $request->validate([
             'tgl_konfirmasi' => 'required|date',
-            'jam_konfirmasi' => 'nullable|string|max:8',
+            // Jam wajib: jadwal meeting tanpa jam tidak bermakna, emailnya jadi
+            // "pukul " kosong, dan kunci slot tidak bisa dibentuk darinya.
+            'jam_konfirmasi' => ['required', 'string', 'max:8', \App\Models\Event::ATURAN_JAM],
             'catatan_em'     => 'nullable|string|max:2000',
             'is_reschedule'  => 'boolean',
+        ], [
+            'jam_konfirmasi.required' => 'Tentukan jam meeting.',
         ]);
 
         // Hanya yang belum dikonfirmasi — mencegah jadwal yang sudah disepakati
@@ -96,17 +100,40 @@ trait ManagesAppointment
 
         $reschedule = $request->boolean('is_reschedule');
 
-        $appointment->update([
-            'tgl_konfirmasi' => $request->tgl_konfirmasi,
-            'jam_konfirmasi' => $request->jam_konfirmasi,
-            'catatan_em'     => $request->catatan_em,
-            'status'         => $reschedule ? 'Reschedule' : 'Dikonfirmasi',
-            'id_pegawai'     => Auth::guard('pegawai')->id(),
-            // Jadwal sudah diputuskan tim → usulan klien (bila ada) tak berlaku lagi.
-            'usulan_tgl'     => null,
-            'usulan_jam'     => null,
-            'usulan_catatan' => null,
-        ]);
+        // Slot tujuan diperiksa dengan aturan yang sama seperti pemesanan klien.
+        // Ini juga yang menjaga usulan jadwal klien: usulan tidak mengunci slot
+        // apa pun saat diajukan (ia baru sebuah permintaan), jadi kelayakannya
+        // harus dinilai ulang di sini — saat disetujui — bukan saat diusulkan.
+        \App\Support\SlotMeeting::periksa(
+            \Illuminate\Support\Carbon::parse($request->tgl_konfirmasi)->toDateString(),
+            $request->jam_konfirmasi,
+            $appointment->id,
+            'tgl_konfirmasi',
+            'jam_konfirmasi',
+        );
+
+        try {
+            $appointment->update([
+                'tgl_konfirmasi' => $request->tgl_konfirmasi,
+                'jam_konfirmasi' => $request->jam_konfirmasi,
+                'catatan_em'     => $request->catatan_em,
+                'status'         => $reschedule ? 'Reschedule' : 'Dikonfirmasi',
+                'id_pegawai'     => Auth::guard('pegawai')->id(),
+                // Jadwal sudah diputuskan tim → usulan klien (bila ada) tak berlaku lagi.
+                'usulan_tgl'     => null,
+                'usulan_jam'     => null,
+                'usulan_catatan' => null,
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Backstop unique index slot_key, bila dua konfirmasi menyasar slot
+            // yang sama nyaris bersamaan dan lolos pemeriksaan di atas.
+            if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'jam_konfirmasi' => 'Slot ini baru saja terpakai. Silakan pilih jam lain.',
+                ]);
+            }
+            throw $e;
+        }
 
         $appointment->load('client');
         $tanggal = Carbon::parse($appointment->tgl_konfirmasi)->translatedFormat('d F Y');
@@ -157,7 +184,13 @@ trait ManagesAppointment
     {
         $data = $request->validate(['alasan' => 'nullable|string|max:500']);
 
-        $appointment = Appointment::whereNotNull('usulan_tgl')->findOrFail($id);
+        // Hanya appointment yang masih berjalan. Tanpa penjagaan status, usulan
+        // yang tertinggal pada appointment yang sudah dibatalkan/selesai masih
+        // bisa "ditolak", dan klien menerima email "jadwal meeting tetap ..."
+        // untuk meeting yang sudah tidak ada.
+        $appointment = Appointment::whereNotNull('usulan_tgl')
+            ->whereIn('status', Appointment::STATUS_AKTIF)
+            ->findOrFail($id);
         $appointment->load('client');
 
         $appointment->update([
@@ -227,6 +260,11 @@ trait ManagesAppointment
             'status'     => 'Dibatalkan',
             'catatan_em' => $request->catatan_em,
             'id_pegawai' => Auth::guard('pegawai')->id(),
+            // Usulan yang menggantung ikut dibersihkan — appointment ini sudah
+            // tidak punya jadwal untuk diubah.
+            'usulan_tgl'     => null,
+            'usulan_jam'     => null,
+            'usulan_catatan' => null,
         ]);
 
         $appointment->load('client');

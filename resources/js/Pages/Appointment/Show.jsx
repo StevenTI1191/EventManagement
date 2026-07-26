@@ -9,7 +9,7 @@ import { ChevronLeft, Calendar, Users, Wallet, Phone, Mail, Building, X } from '
 import { useState } from 'react';
 
 export default function AppointmentShow({ Layout, routes = {},  appointment }) {
-    const { flash } = usePage().props;
+    const { flash, errors = {} } = usePage().props;
     const [showReschedule, setShowReschedule]     = useState(false);
     const [showBatal, setShowBatal]               = useState(false);
     const [showKonfirmModal, setShowKonfirmModal] = useState(false);
@@ -89,7 +89,7 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
     // Reschedule — opens modal
     const handleReschedule = (e) => {
         e.preventDefault();
-        if (!rescheduleForm.tgl_konfirmasi) return;
+        if (!rescheduleForm.tgl_konfirmasi || !rescheduleForm.jam_konfirmasi) return;
         setRescheduleLoading(true);
         router.patch(route(routes.konfirmasi, appointment.id), {
             ...rescheduleForm,
@@ -152,6 +152,18 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
             {flash?.success && (
                 <div className="p-4 mb-6 text-sm font-bold text-green-700 border border-green-200 bg-green-50 rounded-xl">
                     ✅ {flash.success}
+                </div>
+            )}
+
+            {/* Galat wajib tampil: konfirmasi & reschedule kini memeriksa slot
+                (hari kerja, jam kerja, bentrok appointment/acara), dan tanpa
+                penampil ini penolakannya tak terlihat — tombolnya seolah mati. */}
+            {(flash?.error || Object.keys(errors).length > 0) && (
+                <div className="p-4 mb-6 text-sm font-bold text-red-700 border border-red-200 bg-red-50 rounded-xl">
+                    {flash?.error && <p>⚠️ {flash.error}</p>}
+                    {Object.values(errors).map((pesan, i) => (
+                        <p key={i}>⚠️ {pesan}</p>
+                    ))}
                 </div>
             )}
 
@@ -527,11 +539,12 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
                                 />
                             </div>
                             <div>
-                                <label className="block mb-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Jam Baru</label>
+                                <label className="block mb-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Jam Baru *</label>
                                 <input
                                     type="time"
                                     value={rescheduleForm.jam_konfirmasi}
                                     onChange={e => setRescheduleForm(prev => ({ ...prev, jam_konfirmasi: e.target.value }))}
+                                    required
                                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-[#FF2D55] focus:border-[#FF2D55]"
                                 />
                             </div>
@@ -555,7 +568,7 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={rescheduleLoading || !rescheduleForm.tgl_konfirmasi}
+                                    disabled={rescheduleLoading || !rescheduleForm.tgl_konfirmasi || !rescheduleForm.jam_konfirmasi}
                                     className="flex-1 py-2.5 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 disabled:opacity-60"
                                 >
                                     {rescheduleLoading ? 'Menyimpan...' : 'Simpan Reschedule'}

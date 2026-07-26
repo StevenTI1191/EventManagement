@@ -98,104 +98,25 @@ class AppointmentController extends Controller
      */
     public static function workingSlots(): array
     {
-        $slots = [];
-        for ($m = 9 * 60; $m <= 16 * 60 + 30; $m += 90) {
-            $slots[] = sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
-        }
-        return $slots;
-    }
-
-    /** Durasi satu meeting (menit) — dipakai untuk cek bentrok dengan jadwal event. */
-    private const MEETING_MENIT = 30;
-
-    /** Ubah "HH:MM" jadi menit sejak tengah malam; null → nilai default. */
-    private static function keMenit(?string $jam, int $default): int
-    {
-        if (! $jam) {
-            return $default;
-        }
-        [$h, $m] = array_pad(explode(':', substr($jam, 0, 5)), 2, 0);
-        return (int) $h * 60 + (int) $m;
+        return \App\Support\SlotMeeting::kerja();
     }
 
     /**
-     * Slot meeting yang terhalang jadwal acara pada satu tanggal. Bila ada acara
-     * (Deal ke atas) yang berlangsung pada tanggal & jam itu, tim sedang bertugas
-     * sehingga slotnya tidak bisa dipakai meeting.
-     *
-     * @return array<string> daftar jam "HH:MM" yang terblokir
+     * Slot meeting yang terhalang jadwal acara pada satu tanggal.
+     * Aturannya tinggal di App\Support\SlotMeeting agar sisi tim memakai yang sama.
      */
     public static function slotTerhalangEvent(string $tgl): array
     {
-        $tanggal = \Illuminate\Support\Carbon::parse($tgl)->toDateString();
-
-        $events = Event::untukFinance()
-            ->whereDate('tgl_mulai_event', '<=', $tanggal)
-            ->whereRaw('COALESCE(tgl_selesai_event, tgl_mulai_event) >= ?', [$tanggal])
-            ->get(['tgl_mulai_event', 'tgl_selesai_event', 'jam_mulai', 'jam_selesai']);
-
-        // Susun jendela "sibuk" (menit) untuk tanggal ini dari tiap acara.
-        $jendela = [];
-        foreach ($events as $e) {
-            $mulaiTgl   = \Illuminate\Support\Carbon::parse($e->tgl_mulai_event)->toDateString();
-            $selesaiTgl = $e->tgl_selesai_event
-                ? \Illuminate\Support\Carbon::parse($e->tgl_selesai_event)->toDateString()
-                : $mulaiTgl;
-
-            $bStart = ($tanggal === $mulaiTgl)   ? self::keMenit($e->jam_mulai, 9 * 60)  : 0;
-            $bEnd   = ($tanggal === $selesaiTgl) ? self::keMenit($e->jam_selesai, 17 * 60) : 24 * 60;
-            $jendela[] = [$bStart, $bEnd];
-        }
-
-        $blok = [];
-        foreach (self::workingSlots() as $slot) {
-            $t = self::keMenit($slot, 0);
-            foreach ($jendela as [$bs, $be]) {
-                if ($t < $be && ($t + self::MEETING_MENIT) > $bs) {
-                    $blok[] = $slot;
-                    break;
-                }
-            }
-        }
-
-        return $blok;
+        return \App\Support\SlotMeeting::terhalangEvent($tgl);
     }
 
     /** Status appointment yang dianggap "menempati" slot (untuk cek bentrok). */
-    private const SLOT_BLOCKING_STATUS = ['Pending', 'Dikonfirmasi', 'Reschedule'];
+    private const SLOT_BLOCKING_STATUS = \App\Support\SlotMeeting::STATUS_MENEMPATI;
 
     /** Validasi: bukan Minggu, jam dalam slot kerja, dan tidak bentrok. */
-    private function validateSlot(string $tgl, string $jam): void
+    private function validateSlot(string $tgl, string $jam, ?int $kecualiId = null): void
     {
-        if (\Illuminate\Support\Carbon::parse($tgl)->isSunday()) {
-            throw ValidationException::withMessages([
-                'tgl_request' => 'Hari Minggu libur. Pilih hari Senin–Sabtu.',
-            ]);
-        }
-
-        if (! in_array($jam, self::workingSlots(), true)) {
-            throw ValidationException::withMessages([
-                'jam_request' => 'Pilih jam dari slot yang tersedia (09:00–16:30, selang 1,5 jam).',
-            ]);
-        }
-
-        $bentrok = Appointment::where('tgl_request', $tgl)
-            ->where('jam_request', $jam)
-            ->whereIn('status', self::SLOT_BLOCKING_STATUS)
-            ->exists();
-
-        if ($bentrok) {
-            throw ValidationException::withMessages([
-                'jam_request' => 'Slot waktu ini sudah dipesan. Silakan pilih jam lain.',
-            ]);
-        }
-
-        // Bentrok dengan jadwal acara — tim sedang bertugas, tak bisa meeting.
-        if (in_array($jam, self::slotTerhalangEvent($tgl), true)) {
-            throw ValidationException::withMessages([
-                'jam_request' => 'Jam ini bertepatan dengan jadwal acara kami, sehingga belum bisa untuk meeting. Silakan pilih jam lain.',
-            ]);
-        }
+        \App\Support\SlotMeeting::periksa($tgl, $jam, $kecualiId);
     }
 
     /** JSON: daftar jam yang sudah dipesan pada satu tanggal (untuk disable di dropdown). */
@@ -215,14 +136,21 @@ class AppointmentController extends Controller
 
         $slotKerja = self::workingSlots();
 
-        // Jam appointment yang sudah dipesan, dikelompokkan per tanggal. Data lama
-        // bisa menyimpan jam di luar slot kerja — disaring agar tidak salah hitung.
-        $aptPerTgl = Appointment::whereBetween('tgl_request', [$awal->toDateString(), $akhir->toDateString()])
+        // Jam appointment yang sudah terpakai, dikelompokkan per tanggal. Yang
+        // dibaca adalah JADWAL BERLAKU (hasil konfirmasi bila sudah ada), bukan
+        // jam yang semula diminta — kalau tidak, jadwal yang sudah dipindahkan
+        // tim tetap mengunci slot lamanya dan slot barunya terlihat kosong.
+        // Data lama bisa menyimpan jam di luar slot kerja — disaring agar tidak
+        // salah hitung.
+        $aptPerTgl = Appointment::query()
             ->whereIn('status', self::SLOT_BLOCKING_STATUS)
-            ->whereNotNull('jam_request')
-            ->get(['tgl_request', 'jam_request'])
-            ->groupBy(fn ($a) => \Illuminate\Support\Carbon::parse($a->tgl_request)->toDateString())
-            ->map(fn ($g) => $g->map(fn ($a) => substr((string) $a->jam_request, 0, 5))
+            ->whereRaw(Appointment::SQL_TGL_BERLAKU . ' BETWEEN ? AND ?', [$awal->toDateString(), $akhir->toDateString()])
+            ->whereRaw(Appointment::SQL_JAM_BERLAKU . ' IS NOT NULL')
+            ->selectRaw(Appointment::SQL_TGL_BERLAKU . ' as tgl_slot')
+            ->selectRaw(Appointment::SQL_JAM_BERLAKU . ' as jam_slot')
+            ->get()
+            ->groupBy(fn ($a) => \Illuminate\Support\Carbon::parse($a->tgl_slot)->toDateString())
+            ->map(fn ($g) => $g->map(fn ($a) => substr((string) $a->jam_slot, 0, 5))
                 ->filter(fn ($j) => in_array($j, $slotKerja, true))->unique()->values()->all());
 
         // Slot terpakai per tanggal = gabungan slot appointment + slot yang
@@ -246,11 +174,14 @@ class AppointmentController extends Controller
     {
         $request->validate(['tgl' => 'required|date']);
 
-        $booked = Appointment::where('tgl_request', $request->tgl)
+        // Dibaca dari jadwal BERLAKU, sejalan dengan ketersediaan() di atas.
+        $booked = Appointment::query()
             ->whereIn('status', self::SLOT_BLOCKING_STATUS)
-            ->whereNotNull('jam_request')
-            ->pluck('jam_request')
-            ->map(fn ($t) => substr($t, 0, 5))
+            ->whereRaw(Appointment::SQL_TGL_BERLAKU . ' = ?', [\Illuminate\Support\Carbon::parse($request->tgl)->toDateString()])
+            ->whereRaw(Appointment::SQL_JAM_BERLAKU . ' IS NOT NULL')
+            ->selectRaw(Appointment::SQL_JAM_BERLAKU . ' as jam_slot')
+            ->pluck('jam_slot')
+            ->map(fn ($t) => substr((string) $t, 0, 5))
             ->values()
             ->all();
 
@@ -285,19 +216,29 @@ class AppointmentController extends Controller
         ]);
     }
 
+    /**
+     * Batas laju per klien untuk aksi yang memicu email ke tim (buat
+     * appointment, usul jadwal, minta penyesuaian penawaran). Jendelanya satu
+     * jam; pesan galat ditaruh di kolom yang relevan pada tiap form.
+     */
+    private function batasiLaju(string $kunci, int $maks, string $field): void
+    {
+        if (RateLimiter::tooManyAttempts($kunci, $maks)) {
+            $detik = RateLimiter::availableIn($kunci);
+            throw ValidationException::withMessages([
+                $field => "Terlalu banyak permintaan. Coba lagi dalam {$detik} detik.",
+            ]);
+        }
+
+        RateLimiter::hit($kunci, 3600);
+    }
+
     public function store(Request $request)
     {
         $client = Auth::guard('client')->user();
 
         // Rate limiting — maks 5 appointment baru per jam per client
-        $rateLimitKey = 'appointment-store:' . $client->id;
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
-            $seconds = RateLimiter::availableIn($rateLimitKey);
-            throw ValidationException::withMessages([
-                'jenis_event' => "Terlalu banyak permintaan. Coba lagi dalam {$seconds} detik.",
-            ]);
-        }
-        RateLimiter::hit($rateLimitKey, 3600);
+        $this->batasiLaju('appointment-store:' . $client->id, 5, 'jenis_event');
 
         // Blokir jika profil belum lengkap (perusahaan hanya wajib utk tipe Perusahaan)
         if (! $client->profilLengkap()) {
@@ -380,6 +321,11 @@ class AppointmentController extends Controller
         $appointment->update([
             'status'               => 'Dibatalkan',
             'alasan_batal_client'  => $request->alasan,
+            // Usulan yang menggantung ikut dibersihkan — tidak ada lagi jadwal
+            // yang bisa diubah, jadi tim tak perlu meninjaunya.
+            'usulan_tgl'     => null,
+            'usulan_jam'     => null,
+            'usulan_catatan' => null,
         ]);
 
         return back()->with('success', 'Appointment berhasil dibatalkan.');
@@ -393,6 +339,10 @@ class AppointmentController extends Controller
     public function usulJadwal(Request $request, $id)
     {
         $client = Auth::guard('client')->user();
+
+        // Tiap usulan mengirim email ke PIC — dibatasi seperti pembuatan
+        // appointment, agar tidak bisa dipakai membanjiri kotak masuk tim.
+        $this->batasiLaju('appointment-usul:' . $client->id, 10, 'usulan_jam');
 
         $data = $request->validate([
             'usulan_tgl'     => ['required', 'date', 'after:today'],
@@ -408,19 +358,21 @@ class AppointmentController extends Controller
             ->whereIn('status', ['Pending', 'Dikonfirmasi', 'Reschedule'])
             ->firstOrFail();
 
-        // Slot usulan harus jam kerja, bukan Minggu, dan tidak bentrok dengan
-        // appointment lain maupun jadwal acara. validateSlot memakai kunci
-        // tgl_request/jam_request — dipetakan ke field usulan agar pesan error
-        // muncul di kolom yang benar pada form usulan.
-        try {
-            $this->validateSlot($data['usulan_tgl'], $data['usulan_jam']);
-        } catch (ValidationException $e) {
-            $errs  = $e->errors();
-            $remap = [];
-            if (isset($errs['tgl_request'])) $remap['usulan_tgl'] = $errs['tgl_request'];
-            if (isset($errs['jam_request'])) $remap['usulan_jam'] = $errs['jam_request'];
-            throw ValidationException::withMessages($remap ?: ['usulan_jam' => 'Slot yang diusulkan tidak tersedia.']);
-        }
+        // Slot usulan harus jam kerja, bukan Minggu, dan belum dipakai appointment
+        // lain maupun jadwal acara. Appointment ini sendiri dikecualikan supaya
+        // klien tidak dihalangi oleh jadwalnya sendiri.
+        //
+        // Usulan sengaja TIDAK mengunci slot: ia baru sebuah permintaan yang
+        // mungkin tidak disetujui, dan mengunci slot yang belum tentu terpakai
+        // akan menutup jadwal bagi klien lain. Kelayakannya dinilai ulang saat
+        // tim mengonfirmasi — lihat ManagesAppointment::konfirmasiAppointment.
+        \App\Support\SlotMeeting::periksa(
+            $data['usulan_tgl'],
+            $data['usulan_jam'],
+            $appointment->id,
+            'usulan_tgl',
+            'usulan_jam',
+        );
 
         $appointment->update([
             'usulan_tgl'     => $data['usulan_tgl'],
@@ -620,7 +572,8 @@ class AppointmentController extends Controller
     /**
      * Klien mengajukan pembatalan + refund acara yang sudah berjalan (Deal ke
      * atas). Pengajuan HANYA membuat permintaan berstatus Diajukan — acara belum
-     * batal. Alur lanjut: Manajemen menyetujui, lalu Finance memproses refund.
+     * batal. Alur lanjut berurutan: Event Marketing menyetujui, Finance
+     * menetapkan nominal refund, lalu Manajemen menyetujui terakhir.
      */
     public function ajukanPembatalan(Request $request, $id_event)
     {
@@ -800,6 +753,9 @@ class AppointmentController extends Controller
      */
     public function ajukanPenyesuaian(Request $request, $id_event)
     {
+        // Tiap permintaan mengirim email ke PIC — dibatasi lajunya.
+        $this->batasiLaju('penawaran-penyesuaian:' . Auth::guard('client')->id(), 10, 'pesan');
+
         $data = $request->validate([
             'pesan'         => 'required|string|min:5|max:1000',
             'minta_meeting' => 'boolean',

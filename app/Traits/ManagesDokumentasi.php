@@ -5,7 +5,6 @@ namespace App\Traits;
 use App\Models\Event;
 use App\Models\EventDokumentasi;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 /**
  * Unggah & hapus foto dokumentasi acara. Dipakai bersama Event Marketing dan
@@ -48,8 +47,15 @@ trait ManagesDokumentasi
             if (! $file->isValid()) {
                 continue;
             }
-            $ext      = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-            $filename = 'dok_' . $event->id_event . '_' . Str::random(24) . '.' . $ext;
+            // Nama berkas WAJIB dari hashName(): ekstensinya diturunkan dari MIME
+            // hasil pembacaan isi berkas, bukan dari nama kiriman pengguna.
+            // Memakai getClientOriginalExtension() membuat berkas bisa mendarat
+            // di public/ dengan ekstensi apa pun — termasuk .php, yang dieksekusi
+            // Nginx (location ~ \.php$ tidak dibatasi direktori). Aturan "image"
+            // hanya memeriksa ISI, jadi gambar yang di dalamnya diselipkan kode
+            // dan dinamai .php akan lolos. Sejalan dengan unggahan poster & bukti
+            // pembayaran yang sudah memakai hashName().
+            $filename = 'dok_' . $event->id_event . '_' . $file->hashName();
             $file->move($dir, $filename);
 
             EventDokumentasi::create([
