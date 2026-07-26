@@ -162,6 +162,11 @@ Schedule::call(function () {
     foreach ([3, 1, 0, -1, -7] as $offset) {
         $invoices = \App\Models\Invoice::with('event.client')
             ->where('status', \App\Models\Invoice::STATUS_BELUM)
+            // Acara yang sudah dibatalkan tidak ditagih lagi. Pengaman kedua:
+            // alur pembatalan sudah menghapus tagihan yang belum dibayar, tapi
+            // baris lama yang terlanjur yatim jangan sampai terus mengirim
+            // "tagihan lewat jatuh tempo" untuk acara yang sudah batal.
+            ->whereHas('event', fn ($q) => $q->where('status_event', '!=', Event::STATUS_BATAL))
             ->whereDate('tgl_jatuh_tempo', now()->addDays($offset)->toDateString())
             ->get();
 

@@ -39,6 +39,9 @@ class PembatalanController extends Controller
     {
         $this->checkEventMarketing();
 
-        return $this->tolakPembatalan($request, $id, 'Event Marketing');
+        // Peran dikirim dalam bentuk kanonis (tanpa spasi), sama seperti nilai
+        // yang dikembalikan EventPembatalan::giliran() — itulah yang dipakai
+        // trait untuk menentukan giliran. Labelnya dirapikan di sana.
+        return $this->tolakPembatalan($request, $id, 'EventMarketing');
     }
 }

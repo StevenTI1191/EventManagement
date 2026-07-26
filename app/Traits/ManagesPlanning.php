@@ -272,6 +272,12 @@ trait ManagesPlanning
                 $event->area_event,
                 $event->id_event,
                 $event->tgl_selesai_event,
+                // Loading in/out acara ini ikut diperhitungkan. Tanpa keduanya,
+                // rentang sibuk acara internal menyusut jadi sekadar jam acara,
+                // padahal jadwal acara lain sudah dibandingkan memakai rentang
+                // loading-nya — perbandingannya jadi berat sebelah.
+                $event->loading_in,
+                $event->loading_out,
             );
 
             if ($bentrok) {

@@ -264,6 +264,19 @@ class Event extends Model
         return $kurang;
     }
 
+    /**
+     * Aturan validasi kolom jam: "HH:MM" atau "HH:MM:SS".
+     *
+     * Kolom jam sebelumnya hanya divalidasi sebagai string sepanjang 8 karakter,
+     * padahal nilainya diteruskan ke Carbon::parse() di checkBentrok(). Isian
+     * yang bukan jam ("25:00", "besok") membuat parse melempar exception —
+     * pengguna dapat halaman 500, bukan pesan validasi.
+     *
+     * Mengandung "|" sehingga harus dipakai dalam bentuk array, bukan rangkaian
+     * aturan berpemisah pipa.
+     */
+    public const ATURAN_JAM = 'regex:/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/';
+
     /** Semua tugas event ini sudah Done (dipakai untuk menutup event). */
     public function tugasTuntas(): bool
     {
@@ -356,16 +369,22 @@ class Event extends Model
         $batasAkhir = $selesai->copy()->addMinutes(self::BUFFER_JADWAL_MENIT);
 
         // Rentang acara lain juga memakai loading in/out-nya (fallback jam acara).
+        $mulaiSql = "CAST(CONCAT(tgl_mulai_event, ' ', COALESCE(loading_in, jam_mulai)) AS DATETIME)";
+        $akhirSql = "CAST(CONCAT(COALESCE(tgl_selesai_event, tgl_mulai_event), ' ', COALESCE(loading_out, jam_selesai)) AS DATETIME)";
+
+        // Acara lintas tengah malam yang disimpan tanpa tanggal selesai (mis.
+        // resepsi 20:00–02:00, atau bongkar sampai loading_out 01:00) punya jam
+        // akhir lebih kecil daripada jam mulai. Tanpa koreksi ini rentangnya
+        // terbaca terbalik, sehingga acara tersebut berhenti memblokir slot mana
+        // pun — termasuk slot yang benar-benar ditempatinya. Koreksi yang sama
+        // sudah dilakukan pada rentang kandidat di atas; keduanya harus memakai
+        // aturan yang sama agar perbandingannya adil.
+        $akhirSql = "CASE WHEN {$akhirSql} <= {$mulaiSql} THEN {$akhirSql} + INTERVAL 1 DAY ELSE {$akhirSql} END";
+
         $query = self::where('area_event', $area)
             ->whereNotIn('status_event', [self::STATUS_DONE, self::STATUS_BATAL])
-            ->whereRaw(
-                "CAST(CONCAT(tgl_mulai_event, ' ', COALESCE(loading_in, jam_mulai)) AS DATETIME) < ?",
-                [$batasAkhir->toDateTimeString()]
-            )
-            ->whereRaw(
-                "CAST(CONCAT(COALESCE(tgl_selesai_event, tgl_mulai_event), ' ', COALESCE(loading_out, jam_selesai)) AS DATETIME) > ?",
-                [$batasAwal->toDateTimeString()]
-            );
+            ->whereRaw("{$mulaiSql} < ?", [$batasAkhir->toDateTimeString()])
+            ->whereRaw("{$akhirSql} > ?", [$batasAwal->toDateTimeString()]);
 
         if ($exclude_id) {
             $query->where('id_event', '!=', $exclude_id);

@@ -652,15 +652,20 @@ class AppointmentController extends Controller
         $jejak = '📩 Klien mengajukan pembatalan (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['alasan']);
         $event->update(['note_event' => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak]);
 
-        // Kabari Manajemen (pengguna internal) via email untuk ditinjau.
-        $this->kabariRole('Manajemen',
+        // Persetujuan berurutan Event Marketing → Finance → Manajemen, jadi yang
+        // dikabari adalah peran yang mendapat giliran PERTAMA. Sebelumnya email
+        // ini masih dikirim ke Manajemen (sisa alur dua pihak yang lama):
+        // Event Marketing tak pernah tahu ada pengajuan masuk, sedangkan
+        // Manajemen diminta bertindak padahal tombolnya belum aktif untuknya.
+        $this->kabariRole('EventMarketing',
             '📩 Pengajuan Pembatalan Acara — ' . $event->nama_event,
             "Klien " . ($client->nama_client ?? '-') . " mengajukan pembatalan acara \"{$event->nama_event}\".\n\n"
             . "Alasan: {$data['alasan']}\n\n"
-            . "Silakan tinjau (setujui/tolak) di menu Pembatalan pada dashboard Manajemen."
+            . "Anda mendapat giliran pertama. Silakan tinjau (setujui/tolak) di menu Pembatalan; "
+            . "setelah disetujui, pengajuan diteruskan ke Finance lalu Manajemen."
         );
 
-        return back()->with('success', 'Pengajuan pembatalan terkirim. Tim Manajemen kami akan meninjaunya.');
+        return back()->with('success', 'Pengajuan pembatalan terkirim. Tim kami akan meninjaunya.');
     }
 
     /**

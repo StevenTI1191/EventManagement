@@ -48,10 +48,54 @@ trait ManagesPembatalan
         ]);
     }
 
+    /**
+     * Status yang harus disandang pengajuan agar sebuah peran boleh bertindak
+     * atasnya. Satu-satunya penentu giliran di sisi server — halaman hanya
+     * menyembunyikan tombolnya, dan rutenya tetap bisa dipanggil langsung.
+     */
+    private function statusGiliran(string $peran): string
+    {
+        return match ($peran) {
+            'EventMarketing' => EventPembatalan::STATUS_DIAJUKAN,
+            'Finance'        => EventPembatalan::STATUS_DISETUJUI_EM,
+            'Manajemen'      => EventPembatalan::STATUS_DISETUJUI_FIN,
+        };
+    }
+
+    /** Nama peran sebagaimana ditampilkan ke pengguna. */
+    private function labelPeran(string $peran): string
+    {
+        return $peran === 'EventMarketing' ? 'Event Marketing' : $peran;
+    }
+
+    /**
+     * Ambil pengajuan yang memang giliran peran ini. Mengembalikan null bila
+     * bukan gilirannya — mis. pengajuan sudah ditangani orang lain di tab yang
+     * terbuka sejak tadi, atau rutenya dipanggil di luar urutan.
+     */
+    private function pengajuanGiliran($id, string $peran): ?EventPembatalan
+    {
+        $p = EventPembatalan::with('event')->findOrFail($id);
+
+        return $p->status === $this->statusGiliran($peran) ? $p : null;
+    }
+
+    /** Pesan seragam saat pengajuan bukan giliran peran yang menekan tombol. */
+    private function bukanGiliran($id)
+    {
+        $status = EventPembatalan::whereKey($id)->value('status');
+
+        return back()->with('error',
+            'Pengajuan ini bukan giliran Anda' . ($status ? " (status sekarang: {$status})" : '') . '.');
+    }
+
     /** Event Marketing menyetujui (tahap 1) → lanjut ke Finance. */
     protected function accEM($id)
     {
-        $p = EventPembatalan::with('event')->where('status', EventPembatalan::STATUS_DIAJUKAN)->findOrFail($id);
+        $p = $this->pengajuanGiliran($id, 'EventMarketing');
+        if (! $p) {
+            return $this->bukanGiliran($id);
+        }
 
         $p->update([
             'status'  => EventPembatalan::STATUS_DISETUJUI_EM,
@@ -70,7 +114,10 @@ trait ManagesPembatalan
     /** Finance menyetujui + menetapkan nominal refund (tahap 2) → lanjut ke Manajemen. */
     protected function accFinance(Request $request, $id)
     {
-        $p = EventPembatalan::with('event')->where('status', EventPembatalan::STATUS_DISETUJUI_EM)->findOrFail($id);
+        $p = $this->pengajuanGiliran($id, 'Finance');
+        if (! $p) {
+            return $this->bukanGiliran($id);
+        }
 
         $dibayar = (float) Transaksi::where('id_event', $p->id_event)->sum('nominal');
 
@@ -99,16 +146,29 @@ trait ManagesPembatalan
     /** Manajemen menyetujui terakhir (tahap 3) → refund diproses, acara Batal. */
     protected function accManajemen($id)
     {
-        $p = EventPembatalan::with('event')->where('status', EventPembatalan::STATUS_DISETUJUI_FIN)->findOrFail($id);
-
-        $event  = $p->event;
-        $refund = (float) $p->refund_nominal;
-
-        if (! $event) {
-            return back()->with('error', 'Acara untuk pengajuan ini tidak ditemukan.');
+        if (! $this->pengajuanGiliran($id, 'Manajemen')) {
+            return $this->bukanGiliran($id);
         }
 
-        DB::transaction(function () use ($event, $p, $refund) {
+        // Pemeriksaan status di atas dan pencatatan refund di bawah adalah dua
+        // langkah terpisah: dua klik "Setujui" yang tiba nyaris bersamaan bisa
+        // sama-sama lolos, lalu mencatat transaksi refund dua kali. Baris
+        // pengajuan dikunci dan statusnya diperiksa ULANG di dalam transaksi,
+        // sehingga hanya permintaan pertama yang mengerjakannya.
+        $hasil = DB::transaction(function () use ($id) {
+            $p = EventPembatalan::whereKey($id)->lockForUpdate()->first();
+
+            if (! $p || $p->status !== EventPembatalan::STATUS_DISETUJUI_FIN) {
+                return null;
+            }
+
+            $event  = $p->event;
+            $refund = (float) $p->refund_nominal;
+
+            if (! $event) {
+                return null;
+            }
+
             if ($refund > 0) {
                 Transaksi::create([
                     'id_event'   => $event->id_event,
@@ -118,6 +178,16 @@ trait ManagesPembatalan
                     'keterangan' => 'Refund pembatalan acara — ' . trim($p->alasan),
                 ]);
             }
+
+            // Tagihan yang belum dibayar ikut dihapus, sama seperti saat prospek
+            // ditandai "tidak jadi" di papan pipeline. Tanpa ini invoice-nya
+            // menggantung: acara Batal tidak lagi muncul di halaman Invoice
+            // Finance (jadi tak ada cara membereskannya dari aplikasi), tetapi
+            // penjadwal reminder tetap menemukannya dan terus menagih klien
+            // untuk acara yang justru baru saja dibatalkan.
+            \App\Models\Invoice::where('id_event', $event->id_event)
+                ->where('status', \App\Models\Invoice::STATUS_BELUM)
+                ->delete();
 
             $jejak = '💸 Disetujui Manajemen & refund diproses (' . now()->translatedFormat('d M Y H:i') . ')'
                 . ($refund > 0 ? ' — Rp ' . number_format($refund, 0, ',', '.') : ' — tanpa pengembalian dana') . '. Acara dibatalkan.';
@@ -132,7 +202,17 @@ trait ManagesPembatalan
                 'manajemen_pada' => now(),
                 'diproses_pada'  => now(),
             ]);
+
+            return $p;
         });
+
+        if (! $hasil) {
+            return back()->with('error', 'Pengajuan sudah diproses atau acaranya tidak ditemukan.');
+        }
+
+        $p      = $hasil;
+        $event  = $p->event;
+        $refund = (float) $p->refund_nominal;
 
         if ($p->client_id) {
             Notifikasi::create([
@@ -153,22 +233,34 @@ trait ManagesPembatalan
         return back()->with('success', $pesan);
     }
 
-    /** Tolak pengajuan di tahap mana pun (menghentikan alur), klien diberi tahu. */
+    /**
+     * Tolak pengajuan pada giliran peran ini — penolakan menghentikan seluruh
+     * alur, tidak diteruskan ke tahap berikutnya. Klien diberi tahu alasannya.
+     */
     protected function tolakPembatalan(Request $request, $id, string $peran)
     {
         $data = $request->validate([
             'catatan' => 'required|string|min:5|max:500',
         ], ['catatan.required' => 'Sertakan alasan penolakan agar klien mengerti.']);
 
-        $p = EventPembatalan::with('event')->aktif()->findOrFail($id);
+        // Dulu cukup berstatus aktif mana pun, sehingga Finance atau Manajemen
+        // bisa menolak pengajuan yang bahkan belum ditinjau Event Marketing —
+        // urutan persetujuannya jadi tidak berarti. Halaman memang sudah
+        // menyembunyikan tombolnya, tapi rutenya tetap bisa dipanggil langsung.
+        $p = $this->pengajuanGiliran($id, $peran);
+        if (! $p) {
+            return $this->bukanGiliran($id);
+        }
+
+        $label = $this->labelPeran($peran);
 
         $p->update([
             'status'        => EventPembatalan::STATUS_DITOLAK,
             'catatan_tolak' => $data['catatan'],
-            'ditolak_peran' => $peran,
+            'ditolak_peran' => $label,
         ]);
 
-        $this->jejakPembatalan($p, "❌ Ditolak {$peran}: " . trim($data['catatan']));
+        $this->jejakPembatalan($p, "❌ Ditolak {$label}: " . trim($data['catatan']));
 
         if ($p->client_id) {
             Notifikasi::create([
