@@ -82,6 +82,34 @@ class Invoice extends Model
     public const HARI_BATAS_LUNAS = 3;
 
     /**
+     * Selaraskan jatuh tempo tagihan yang BELUM dibayar dengan tanggal acara.
+     *
+     * Dipakai ketika jadwal acara berpindah: tanpa ini jatuh temponya tetap
+     * mengacu tanggal lama, sehingga acara yang diundur akan ditagih jauh
+     * sebelum waktunya dan penjadwal pengingat menganggapnya menunggak.
+     *
+     * Tagihan yang sudah lunas tidak disentuh — riwayat pembayarannya harus
+     * tetap mencerminkan keadaan saat itu.
+     */
+    public static function selaraskanJatuhTempo(Event $event): int
+    {
+        if (blank($event->tgl_mulai_event)) {
+            return 0;
+        }
+
+        $batas = \Illuminate\Support\Carbon::parse($event->tgl_mulai_event)
+            ->subDays(self::HARI_BATAS_LUNAS);
+
+        if ($batas->lt(now())) {
+            $batas = now();
+        }
+
+        return self::where('id_event', $event->id_event)
+            ->where('status', self::STATUS_BELUM)
+            ->update(['tgl_jatuh_tempo' => $batas->toDateString()]);
+    }
+
+    /**
      * Terbitkan satu invoice (DP atau Pelunasan) untuk sebuah event — inti
      * pembuatan yang dipakai bersama jalur manual (Finance) & otomatis. Tanpa
      * validasi kelayakan; pemanggil yang menjaganya. Nominal & jatuh tempo

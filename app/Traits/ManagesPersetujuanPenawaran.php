@@ -28,6 +28,15 @@ trait ManagesPersetujuanPenawaran
     {
         $event = Event::eksternal()->with('client')->findOrFail($id_event);
 
+        // Acara yang sudah dibatalkan tidak boleh lagi diputuskan penawarannya.
+        // Statusnya memang dibersihkan saat prospek ditandai tidak jadi, tetapi
+        // penjagaan ini menutup baris lama maupun jalur lain yang terlewat.
+        if ($event->status_event === Event::STATUS_BATAL) {
+            throw ValidationException::withMessages([
+                'penawaran' => 'Acara ini sudah dibatalkan, penawarannya tidak dapat diproses lagi.',
+            ]);
+        }
+
         if ($event->penawaran_status !== Event::PENAWARAN_DIAJUKAN) {
             throw ValidationException::withMessages([
                 'penawaran' => 'Penawaran ini tidak sedang menunggu persetujuan (status: '

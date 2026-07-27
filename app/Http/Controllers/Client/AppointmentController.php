@@ -668,6 +668,16 @@ class AppointmentController extends Controller
                 ->where('status', \App\Models\Invoice::STATUS_BELUM)
                 ->delete();
 
+            // Permintaan ganti tanggal yang masih menunggu ikut ditutup. Tanpa
+            // ini ia mengendap di antrean Manajemen — ikut terhitung badge, dan
+            // bila disetujui akan memindahkan jadwal acara yang sudah batal.
+            \App\Models\EventReschedule::where('id_event', $event->id_event)
+                ->menunggu()
+                ->update([
+                    'status'        => \App\Models\EventReschedule::STATUS_DITOLAK,
+                    'catatan_tolak' => 'Acara dibatalkan klien sebelum permintaan ini ditinjau.',
+                ]);
+
             $jejak = 'Dibatalkan klien (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['alasan'])
                 . ($hangus > 0 ? ' — uang muka Rp ' . number_format($hangus, 0, ',', '.') . ' hangus.' : '.');
 

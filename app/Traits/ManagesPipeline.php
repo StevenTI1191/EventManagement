@@ -317,7 +317,13 @@ trait ManagesPipeline
 
         $event->update([
             'status_event' => Event::STATUS_BATAL,
-            'note_event'   => $event->note_event
+            // Penawaran yang masih menunggu keputusan ikut ditutup. Tanpa ini,
+            // prospek yang sudah tidak jadi tetap mengendap di antrean
+            // persetujuan Manajemen — ikut terhitung badge, dan bila disetujui
+            // penawarannya benar-benar terkirim ke klien.
+            'penawaran_status'  => null,
+            'penawaran_catatan' => null,
+            'note_event'        => $event->note_event
                 ? $event->note_event . ' | ' . $jejak
                 : $jejak,
         ]);

@@ -69,6 +69,14 @@ class RescheduleController extends Controller
             return back()->with('error', 'Acara untuk pengajuan ini tidak ditemukan.');
         }
 
+        // Acara yang sudah dibatalkan atau ditutup tidak punya jadwal untuk
+        // dipindahkan. Tanpa penjagaan ini, pengajuan yang menggantung sejak
+        // sebelum acaranya batal masih bisa disetujui dan menggeser tanggalnya.
+        if (! in_array($event->status_event, [Event::STATUS_DEAL, Event::STATUS_UPCOMING], true)) {
+            return back()->with('error',
+                "Acara \"{$event->nama_event}\" berstatus {$event->status_event}, jadwalnya tidak dapat dipindahkan lagi.");
+        }
+
         // Tanggal baru harus benar-benar kosong. Diperiksa DI SINI, bukan hanya
         // saat klien mengajukan — slot bisa terisi acara lain di sela-selanya.
         $bentrok = Event::checkBentrok(
@@ -105,6 +113,12 @@ class RescheduleController extends Controller
                 'manajemen_oleh' => Auth::guard('pegawai')->id(),
                 'manajemen_pada' => now(),
             ]);
+
+            // Jatuh tempo tagihan yang belum dibayar ikut bergeser mengikuti
+            // tanggal acara yang baru. Tanpa ini, acara yang diundur akan
+            // ditagih jauh sebelum waktunya dan dianggap menunggak oleh
+            // penjadwal pengingat.
+            \App\Models\Invoice::selaraskanJatuhTempo($event->refresh());
         });
 
         if ($r->client_id) {
