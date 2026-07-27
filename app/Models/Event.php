@@ -74,6 +74,74 @@ class Event extends Model
                 \App\Support\TugasTemplate::generate($event);
             }
         });
+
+        // Baris anak (dokumentasi, bukti pembayaran, transaksi) terhapus sendiri
+        // lewat cascade di basis data, tetapi BERKAS FISIKNYA tidak. Yang paling
+        // penting foto dokumentasi: ia tersimpan di public/posters dan disajikan
+        // langsung Nginx, jadi tanpa pembersihan ini foto acara yang sudah dihapus
+        // masih bisa dibuka lewat URL-nya. Sisanya persoalan ruang disk — satu
+        // acara bisa menyimpan 12 foto berukuran sampai 8 MB.
+        //
+        // Dipasang di model, bukan di controller, supaya berlaku lewat jalur
+        // penghapusan mana pun dan tidak perlu ditulis ulang di tiap peran.
+        static::deleting(function (self $event) {
+            $event->hapusBerkasFisik();
+        });
+    }
+
+    /**
+     * Hapus berkas milik acara ini dari disk. Dipanggil sesaat sebelum barisnya
+     * dihapus, ketika relasinya masih bisa dibaca.
+     */
+    private function hapusBerkasFisik(): void
+    {
+        // ── Berkas publik di public/posters ───────────────────────────────────
+        $dirPublik = realpath(public_path('posters'));
+
+        $publik = $this->dokumentasi()->pluck('file_path')->all();
+        if ($this->poster_event) {
+            $publik[] = $this->poster_event;
+        }
+
+        foreach ($publik as $relatif) {
+            $penuh = realpath(public_path($relatif));
+            // Pastikan hasil resolusinya masih di dalam public/posters — mencegah
+            // nilai kolom yang aneh menghapus berkas di luar direktori itu.
+            if ($dirPublik && $penuh && str_starts_with($penuh, $dirPublik . DIRECTORY_SEPARATOR)) {
+                @unlink($penuh);
+            }
+        }
+
+        // ── Berkas privat di storage/app/private ──────────────────────────────
+        // Path disk sudah berakar di app/private, jadi jangan tambah 'private/'.
+        $privat = [];
+
+        if ($this->kontrak_file) {
+            $privat[] = 'kontrak/' . $this->kontrak_file;
+        }
+
+        // Bukti unggahan klien menyimpan path lengkap ("bukti-pembayaran/xxx").
+        foreach ($this->buktiPembayaran()->pluck('file_bukti')->all() as $berkas) {
+            if (filled($berkas)) {
+                $privat[] = $berkas;
+            }
+        }
+
+        // Bukti transaksi biasanya hanya nama berkas, tetapi baris yang lahir dari
+        // verifikasi bukti klien menyalin path lengkapnya — keduanya ditangani.
+        foreach ($this->transaksis()->pluck('bukti_file')->all() as $berkas) {
+            if (filled($berkas)) {
+                $privat[] = str_contains($berkas, '/') ? $berkas : 'bukti-transaksi/' . $berkas;
+            }
+        }
+
+        foreach (array_unique($privat) as $path) {
+            try {
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($path);
+            } catch (\Throwable $e) {
+                \Log::warning("Gagal menghapus berkas acara {$path}: " . $e->getMessage());
+            }
+        }
     }
 
     // ── Status ────────────────────────────────────────────────────────────────

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Manajemen;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use App\Traits\ChecksPegawaiRole;
 use App\Traits\ManagesDokumentasi;
@@ -349,21 +348,11 @@ class EventController extends Controller
 
         $event = Event::findOrFail($id);
 
-        // Hapus poster (public) — validasi path dulu
-        if ($event->poster_event) {
-            $safePosterDir = realpath(public_path('posters'));
-            $resolvedPoster = realpath(public_path($event->poster_event));
-            if ($safePosterDir && $resolvedPoster && str_starts_with($resolvedPoster, $safePosterDir)) {
-                @unlink($resolvedPoster);
-            }
-        }
-
-        // Hapus kontrak (private storage)
-        if ($event->kontrak_file) {
-            Storage::disk('local')->delete('kontrak/' . $event->kontrak_file);
-        }
-
+        // Pembersihan berkas (poster, dokumentasi, bukti pembayaran & transaksi)
+        // ditangani hook deleting di model Event, agar berlaku lewat jalur
+        // penghapusan mana pun dan tidak tertinggal di salah satu peran.
         $event->delete();
+
         return redirect()->route('manajemen.event.index');
     }
 
