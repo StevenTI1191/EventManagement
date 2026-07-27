@@ -17,6 +17,7 @@ import {
     Ban,
     Menu,
     X,
+    Building,
 } from 'lucide-react';
 
 export default function EventMarketingLayout({ children }) {
@@ -53,6 +54,12 @@ export default function EventMarketingLayout({ children }) {
             active: currentPath.includes('/event-marketing/pipeline'),
         },
         {
+            name: 'Fasilitas Venue',
+            icon: Building,
+            href: route('em.venue.index'),
+            active: currentPath.includes('/event-marketing/venue'),
+        },
+        {
             name: 'Planning Event',
             icon: ClipboardList,
             href: route('em.planning.index'),
@@ -81,13 +88,6 @@ export default function EventMarketingLayout({ children }) {
             icon: CalendarCheck,
             href: route('em.appointment.index'),
             active: currentPath.includes('/event-marketing/appointment'),
-        },
-        {
-            name: 'Pembatalan',
-            icon: Ban,
-            href: route('em.pembatalan.index'),
-            active: currentPath.includes('/event-marketing/pembatalan'),
-            badge: badges.pembatalanMenunggu || 0,
         },
     ];
 

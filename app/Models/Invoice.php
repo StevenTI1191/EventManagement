@@ -75,11 +75,18 @@ class Invoice extends Model
     }
 
     /**
+     * Batas akhir pembayaran: seluruh tagihan acara harus lunas paling lambat
+     * H-3 sebelum hari pelaksanaan, supaya tim punya jeda memastikan
+     * pembayarannya beres sebelum masuk persiapan hari-H.
+     */
+    public const HARI_BATAS_LUNAS = 3;
+
+    /**
      * Terbitkan satu invoice (DP atau Pelunasan) untuk sebuah event — inti
      * pembuatan yang dipakai bersama jalur manual (Finance) & otomatis. Tanpa
      * validasi kelayakan; pemanggil yang menjaganya. Nominal & jatuh tempo
-     * dihitung seragam: DP maks 7 hari sejak terbit tapi tak melewati H-1,
-     * pelunasan H-1; keduanya tak pernah jatuh di masa lampau.
+     * dihitung seragam: DP maks 7 hari sejak terbit, pelunasan langsung di
+     * batas akhir; keduanya tak pernah melewati H-3 maupun jatuh di masa lampau.
      */
     public static function buat(Event $event, string $tipe, ?int $idPegawai = null): self
     {
@@ -87,16 +94,16 @@ class Invoice extends Model
         $dp      = self::nominalDp($total);
         $nominal = $tipe === self::TIPE_DP ? $dp : ($total - $dp);
 
-        $mulai   = \Illuminate\Support\Carbon::parse($event->tgl_mulai_event);
-        $hMinus1 = $mulai->copy()->subDay();
+        $mulai      = \Illuminate\Support\Carbon::parse($event->tgl_mulai_event);
+        $batasAkhir = $mulai->copy()->subDays(self::HARI_BATAS_LUNAS);
 
         if ($tipe === self::TIPE_DP) {
             $jatuhTempo = now()->addDays(7);
-            if ($jatuhTempo->gt($hMinus1)) {
-                $jatuhTempo = $hMinus1;
+            if ($jatuhTempo->gt($batasAkhir)) {
+                $jatuhTempo = $batasAkhir;
             }
         } else {
-            $jatuhTempo = $hMinus1;
+            $jatuhTempo = $batasAkhir;
         }
         if ($jatuhTempo->lt(now())) {
             $jatuhTempo = now();

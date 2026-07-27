@@ -89,11 +89,11 @@ export default function ManajemenLayout({ children }) {
             active: currentPath.includes('/manajemen/appointment'),
         },
         {
-            name: 'Pembatalan',
+            name: 'Ganti Tanggal',
             icon: Ban,
-            href: route('manajemen.pembatalan.index'),
-            active: currentPath.includes('/manajemen/pembatalan'),
-            badge: badges.pembatalanMenunggu || 0,
+            href: route('manajemen.reschedule.index'),
+            active: currentPath.includes('/manajemen/ganti-tanggal'),
+            badge: badges.rescheduleMenunggu || 0,
         },
         {
             name: 'Evaluasi Kinerja',

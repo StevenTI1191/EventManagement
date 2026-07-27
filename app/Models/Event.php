@@ -38,6 +38,13 @@ class Event extends Model
         'status_event',
         'respon_klien',     // Diterima | Ditolak — respon klien atas penawaran
         'tgl_respon_klien',
+        // Persetujuan Manajemen atas penawaran sebelum dikirim ke klien.
+        'penawaran_status',
+        'penawaran_diajukan_oleh',
+        'penawaran_diajukan_pada',
+        'penawaran_ditinjau_oleh',
+        'penawaran_ditinjau_pada',
+        'penawaran_catatan',
         'tipe_event',       // Internal (dari Planning Event) | Eksternal (dari klien)
         'dari_planning',    // lahir dari Planning Event — penentu boleh punya target
         'is_public',
@@ -195,6 +202,37 @@ class Event extends Model
 
     public const TIPE_INTERNAL  = 'Internal';
     public const TIPE_EKSTERNAL = 'Eksternal';
+
+    /**
+     * Persetujuan penawaran oleh Pihak Manajemen. Penawaran baru dikirimkan ke
+     * klien setelah disetujui — sebelum itu ia hanya menunggu di papan pipeline.
+     * NULL berarti belum pernah diajukan.
+     */
+    public const PENAWARAN_DIAJUKAN  = 'Diajukan';
+    public const PENAWARAN_DISETUJUI = 'Disetujui';
+    public const PENAWARAN_DITOLAK   = 'Ditolak';
+
+    /** Penawaran sudah boleh dilihat & direspon klien. */
+    public function penawaranDisetujui(): bool
+    {
+        return $this->penawaran_status === self::PENAWARAN_DISETUJUI;
+    }
+
+    /** Penawaran yang sedang menunggu keputusan Manajemen. */
+    public function scopePenawaranMenunggu($q)
+    {
+        return $q->where('penawaran_status', self::PENAWARAN_DIAJUKAN);
+    }
+
+    public function penawaranDiajukanOleh(): BelongsTo
+    {
+        return $this->belongsTo(Pegawai::class, 'penawaran_diajukan_oleh', 'id_pegawai');
+    }
+
+    public function penawaranDitinjauOleh(): BelongsTo
+    {
+        return $this->belongsTo(Pegawai::class, 'penawaran_ditinjau_oleh', 'id_pegawai');
+    }
 
     /**
      * Dua jenis rencana di menu Planning Event. Pembedanya cuma satu:
@@ -482,17 +520,26 @@ class Event extends Model
             ->orderBy('urutan')->orderBy('id');
     }
 
-    /** Riwayat pengajuan pembatalan + refund acara ini. */
+    /** Riwayat pembatalan acara ini (pembatalan berlaku seketika). */
     public function pembatalan()
     {
         return $this->hasMany(EventPembatalan::class, 'id_event', 'id_event')->latest();
     }
 
-    /** Pengajuan pembatalan yang masih berjalan (Diajukan/Disetujui), bila ada. */
-    public function pembatalanAktif()
+    /** Riwayat pengajuan ganti tanggal acara ini. */
+    public function reschedule()
     {
-        return $this->hasOne(EventPembatalan::class, 'id_event', 'id_event')
-            ->whereIn('status', EventPembatalan::STATUS_AKTIF)
+        return $this->hasMany(EventReschedule::class, 'id_event', 'id_event')->latest();
+    }
+
+    /**
+     * Pengajuan ganti tanggal yang masih menunggu keputusan Manajemen, bila ada.
+     * Dipakai untuk memblokir pengajuan ganda dan menampilkan statusnya ke klien.
+     */
+    public function rescheduleMenunggu()
+    {
+        return $this->hasOne(EventReschedule::class, 'id_event', 'id_event')
+            ->where('status', EventReschedule::STATUS_DIAJUKAN)
             ->latestOfMany();
     }
 }

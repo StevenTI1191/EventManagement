@@ -201,6 +201,11 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_event')->name('manajemen.pipeline.penawaran');
         Route::put('/manajemen/pipeline/{id_event}/batal', [\App\Http\Controllers\Manajemen\PipelineController::class, 'batal'])
             ->whereNumber('id_event')->name('manajemen.pipeline.batal');
+        // Persetujuan penawaran — dokumen baru dikirim ke klien setelah disetujui.
+        Route::patch('/manajemen/pipeline/{id_event}/penawaran/setujui', [\App\Http\Controllers\Manajemen\PipelineController::class, 'setujuiPenawaranAksi'])
+            ->whereNumber('id_event')->name('manajemen.penawaran.setujui');
+        Route::patch('/manajemen/pipeline/{id_event}/penawaran/tolak', [\App\Http\Controllers\Manajemen\PipelineController::class, 'tolakPenawaranAksi'])
+            ->whereNumber('id_event')->name('manajemen.penawaran.tolak');
         Route::get('/manajemen/task-divisi', [\App\Http\Controllers\Manajemen\TaskDivisiController::class, 'index'])
             ->name('manajemen.task-divisi.index');
 
@@ -268,13 +273,15 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         Route::delete('/manajemen/appointment/{id}', [\App\Http\Controllers\Manajemen\AppointmentController::class, 'hapus'])
             ->whereNumber('id')->name('manajemen.appointment.hapus');
 
-        // Persetujuan pengajuan pembatalan + refund dari klien
-        Route::get('/manajemen/pembatalan', [\App\Http\Controllers\Manajemen\PembatalanController::class, 'index'])
-            ->name('manajemen.pembatalan.index');
-        Route::patch('/manajemen/pembatalan/{id}/setujui', [\App\Http\Controllers\Manajemen\PembatalanController::class, 'setujui'])
-            ->whereNumber('id')->name('manajemen.pembatalan.setujui');
-        Route::patch('/manajemen/pembatalan/{id}/tolak', [\App\Http\Controllers\Manajemen\PembatalanController::class, 'tolak'])
-            ->whereNumber('id')->name('manajemen.pembatalan.tolak');
+        // Pengajuan ganti tanggal acara dari klien + riwayat pembatalan.
+        // Pembatalan sendiri berlaku seketika (uang muka hangus) sehingga tidak
+        // lagi perlu ditinjau; hanya pemindahan jadwal yang butuh persetujuan.
+        Route::get('/manajemen/ganti-tanggal', [\App\Http\Controllers\Manajemen\RescheduleController::class, 'index'])
+            ->name('manajemen.reschedule.index');
+        Route::patch('/manajemen/ganti-tanggal/{id}/setujui', [\App\Http\Controllers\Manajemen\RescheduleController::class, 'setujui'])
+            ->whereNumber('id')->name('manajemen.reschedule.setujui');
+        Route::patch('/manajemen/ganti-tanggal/{id}/tolak', [\App\Http\Controllers\Manajemen\RescheduleController::class, 'tolak'])
+            ->whereNumber('id')->name('manajemen.reschedule.tolak');
 
         // --- MANAJEMEN PEGAWAI ---
         Route::get('/manajemen/pegawai', [\App\Http\Controllers\Manajemen\PegawaiController::class, 'index'])
@@ -336,13 +343,6 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         Route::delete('/event-marketing/appointments/{id}', [\App\Http\Controllers\EventMarketing\AppointmentController::class, 'hapus'])
             ->whereNumber('id')->name('em.appointment.hapus');
 
-        // Persetujuan pembatalan tahap 1 (Event Marketing)
-        Route::get('/event-marketing/pembatalan', [\App\Http\Controllers\EventMarketing\PembatalanController::class, 'index'])
-            ->name('em.pembatalan.index');
-        Route::patch('/event-marketing/pembatalan/{id}/setujui', [\App\Http\Controllers\EventMarketing\PembatalanController::class, 'setujui'])
-            ->whereNumber('id')->name('em.pembatalan.setujui');
-        Route::patch('/event-marketing/pembatalan/{id}/tolak', [\App\Http\Controllers\EventMarketing\PembatalanController::class, 'tolak'])
-            ->whereNumber('id')->name('em.pembatalan.tolak');
 
         // --- EVENT MARKETING: EVENT CRUD ---
         Route::get('/event-marketing/event', [EMEventController::class, 'index'])
@@ -401,6 +401,19 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_event')->name('em.pipeline.penawaran');
         Route::put('/event-marketing/pipeline/{id_event}/batal', [\App\Http\Controllers\EventMarketing\PipelineController::class, 'batal'])
             ->whereNumber('id_event')->name('em.pipeline.batal');
+        // --- FASILITAS VENUE (tampil di halaman depan klien) ---
+        Route::get('/event-marketing/venue', [\App\Http\Controllers\EventMarketing\VenueFasilitasController::class, 'index'])
+            ->name('em.venue.index');
+        Route::post('/event-marketing/venue', [\App\Http\Controllers\EventMarketing\VenueFasilitasController::class, 'store'])
+            ->name('em.venue.store');
+        Route::post('/event-marketing/venue/{id}', [\App\Http\Controllers\EventMarketing\VenueFasilitasController::class, 'update'])
+            ->whereNumber('id')->name('em.venue.update');
+        Route::delete('/event-marketing/venue/{id}', [\App\Http\Controllers\EventMarketing\VenueFasilitasController::class, 'destroy'])
+            ->whereNumber('id')->name('em.venue.destroy');
+
+        // Ajukan ulang penawaran ke Manajemen setelah diperbaiki.
+        Route::patch('/event-marketing/pipeline/{id_event}/penawaran/ajukan', [\App\Http\Controllers\EventMarketing\PipelineController::class, 'ajukanPenawaran'])
+            ->whereNumber('id_event')->name('em.penawaran.ajukan');
         Route::get('/event-marketing/task-divisi', [\App\Http\Controllers\EventMarketing\TaskDivisiController::class, 'index'])
             ->name('em.task-divisi.index');
 
@@ -464,13 +477,6 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_invoice')->name('finance.invoice.update');
         Route::patch('/finance/invoice/{id_invoice}/lunas', [\App\Http\Controllers\Finance\InvoiceController::class, 'lunas'])
             ->whereNumber('id_invoice')->name('finance.invoice.lunas');
-        // Persetujuan pembatalan tahap 2 (Finance menetapkan nominal refund)
-        Route::get('/finance/pembatalan', [\App\Http\Controllers\Finance\PembatalanController::class, 'index'])
-            ->name('finance.pembatalan.index');
-        Route::patch('/finance/pembatalan/{id}/setujui', [\App\Http\Controllers\Finance\PembatalanController::class, 'setujui'])
-            ->whereNumber('id')->name('finance.pembatalan.setujui');
-        Route::patch('/finance/pembatalan/{id}/tolak', [\App\Http\Controllers\Finance\PembatalanController::class, 'tolak'])
-            ->whereNumber('id')->name('finance.pembatalan.tolak');
 
         Route::get('/finance/event', [\App\Http\Controllers\Finance\EventController::class, 'index'])
             ->name('finance.event.index');
@@ -660,8 +666,12 @@ Route::domain(config('app.domain'))->group(function () {
         Route::get('/invoice/{id_invoice}/pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadInvoice'])
             ->whereNumber('id_invoice')->name('client.invoice.pdf');
 
-        Route::post('/event/{id_event}/ajukan-pembatalan', [\App\Http\Controllers\Client\AppointmentController::class, 'ajukanPembatalan'])
-            ->whereNumber('id_event')->name('client.event.ajukan-pembatalan');
+        // Membatalkan acara berlaku seketika & uang muka hangus; mengganti
+        // tanggal menjaga uang muka tetap berlaku tapi menunggu Manajemen.
+        Route::post('/event/{id_event}/batalkan', [\App\Http\Controllers\Client\AppointmentController::class, 'ajukanPembatalan'])
+            ->whereNumber('id_event')->name('client.event.batalkan');
+        Route::post('/event/{id_event}/ganti-tanggal', [\App\Http\Controllers\Client\AppointmentController::class, 'ajukanReschedule'])
+            ->whereNumber('id_event')->name('client.event.ganti-tanggal');
         Route::get('/event/{id_event}/detail-pdf', [\App\Http\Controllers\Client\AppointmentController::class, 'downloadDetailEvent'])
             ->whereNumber('id_event')->name('client.event.detail-pdf');
 

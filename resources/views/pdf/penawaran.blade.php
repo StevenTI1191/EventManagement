@@ -111,9 +111,10 @@
     @endif
 
     <div class="note" style="margin-top:16px;">
-        Pembayaran dilakukan dua tahap dan <b>keduanya harus lunas sebelum hari-H acara</b>:
-        <b>DP 50%</b> segera setelah penawaran disetujui, dan <b>pelunasan 50%</b> paling lambat
-        sehari sebelum acara berlangsung. Penawaran ini berlaku 14 hari sejak tanggal terbit.
+        Pembayaran dilakukan dua tahap dan <b>keduanya harus lunas paling lambat H-3</b> —
+        tiga hari sebelum hari pelaksanaan acara: <b>DP 50%</b> segera setelah penawaran
+        disetujui, dan <b>pelunasan 50%</b> selambat-lambatnya pada batas tersebut.
+        Penawaran ini berlaku 14 hari sejak tanggal terbit.
     </div>
 
     <div class="foot">

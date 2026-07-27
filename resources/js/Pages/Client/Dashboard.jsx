@@ -6,7 +6,7 @@ import {
     Plus, Calendar, Clock, CheckCircle, XCircle,
     AlertCircle, LogOut, Home, Upload, FileText,
     ChevronDown, ChevronUp, X, Eye, Bell, Trash2, CheckCheck,
-    User, Timer, Download, Music, Utensils, Info, Wallet
+    User, Timer, Download, Music, Utensils, Info, Wallet, MessageCircle
 } from 'lucide-react';
 
 export default function ClientDashboard({
@@ -96,10 +96,18 @@ export default function ClientDashboard({
     const [usulForm, setUsulForm]           = useState({ usulan_tgl: '', usulan_jam: '', usulan_catatan: '' });
     const [usulLoading, setUsulLoading]     = useState(false);
     const [usulErrors, setUsulErrors]       = useState({});
-    // Pengajuan pembatalan + refund acara.
+    // Acara tidak jadi di tanggal semula: klien memilih memindahkan jadwalnya
+    // (uang muka tetap berlaku) atau membatalkan (uang muka hangus).
     const [pembatalanModal, setPembatalanModal] = useState(null);
     const [pembatalanAlasan, setPembatalanAlasan] = useState('');
+    const [pembatalanSadar, setPembatalanSadar] = useState(false);
     const [pembatalanLoading, setPembatalanLoading] = useState(false);
+
+    const [gantiModal, setGantiModal] = useState(null);
+    const [gantiTgl, setGantiTgl] = useState('');
+    const [gantiTglSelesai, setGantiTglSelesai] = useState('');
+    const [gantiAlasan, setGantiAlasan] = useState('');
+    const [gantiLoading, setGantiLoading] = useState(false);
     const [deleteBuktiId, setDeleteBuktiId] = useState(null);
     const [deletingBukti, setDeletingBukti] = useState(false);
     const [tolakModal, setTolakModal]       = useState(null); // event penawaran yang ditolak
@@ -273,13 +281,28 @@ export default function ClientDashboard({
 
     const submitPembatalan = (e) => {
         e.preventDefault();
-        if (pembatalanLoading) return;
+        if (pembatalanLoading || !pembatalanSadar) return;
         setPembatalanLoading(true);
-        router.post(route('client.event.ajukan-pembatalan', pembatalanModal.id_event), { alasan: pembatalanAlasan }, {
-            preserveScroll: true,
-            onSuccess: () => { setPembatalanModal(null); setPembatalanAlasan(''); },
-            onFinish: () => setPembatalanLoading(false),
-        });
+        // "HANGUS" adalah penanda bahwa peringatan uang muka benar-benar
+        // ditampilkan & dicentang; server menolak permintaan tanpa penanda ini.
+        router.post(route('client.event.batalkan', pembatalanModal.id_event),
+            { alasan: pembatalanAlasan, konfirmasi: 'HANGUS' }, {
+                preserveScroll: true,
+                onSuccess: () => { setPembatalanModal(null); setPembatalanAlasan(''); setPembatalanSadar(false); },
+                onFinish: () => setPembatalanLoading(false),
+            });
+    };
+
+    const submitGantiTanggal = (e) => {
+        e.preventDefault();
+        if (gantiLoading) return;
+        setGantiLoading(true);
+        router.post(route('client.event.ganti-tanggal', gantiModal.id_event),
+            { tgl_baru: gantiTgl, tgl_selesai_baru: gantiTglSelesai || null, alasan: gantiAlasan }, {
+                preserveScroll: true,
+                onSuccess: () => { setGantiModal(null); setGantiTgl(''); setGantiTglSelesai(''); setGantiAlasan(''); },
+                onFinish: () => setGantiLoading(false),
+            });
     };
 
     const bersihkanPreview = () => {
@@ -1279,6 +1302,26 @@ export default function ClientDashboard({
                                                                 })}
                                                             </div>
                                                             <p className="mt-2 text-[10px] text-muted-2">Progres ini diperbarui oleh tim kami seiring persiapan acara berjalan.</p>
+
+                                                            {/* Satu jalur kontak: PIC acara. Pesannya sudah terisi
+                                                                lengkap — nama acara, tanggal, dan capaian persiapan —
+                                                                jadi klien tinggal mengirim. */}
+                                                            {event.pic?.nama_pegawai && (
+                                                                <div className="flex items-center justify-between gap-2 px-3 py-2 mt-3 rounded-lg bg-paper">
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-[10px] tracking-wider uppercase text-muted-2">Penanggung jawab acara</p>
+                                                                        <p className="text-xs font-bold truncate text-ink">{event.pic.nama_pegawai}</p>
+                                                                    </div>
+                                                                    {event.wa_pic ? (
+                                                                        <a href={event.wa_pic} target="_blank" rel="noopener noreferrer"
+                                                                            className="flex items-center gap-1 flex-shrink-0 px-2.5 py-1.5 text-[10px] font-bold text-white rounded-lg bg-[#25D366] hover:brightness-95 transition-all">
+                                                                            <MessageCircle size={11} /> Tanya progres
+                                                                        </a>
+                                                                    ) : (
+                                                                        <span className="text-[10px] text-muted-2 flex-shrink-0">No. WA belum ada</span>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })()}
@@ -1332,20 +1375,36 @@ export default function ClientDashboard({
                                                     </div>
                                                 )}
 
-                                                {/* Pengajuan pembatalan + refund acara */}
-                                                {event.pembatalan_aktif ? (
+                                                {/* Acara tidak jadi di tanggal ini? Dua jalan keluar, dengan
+                                                    akibat yang sengaja dibuat kontras: memindahkan jadwal
+                                                    menjaga uang muka, membatalkan menghanguskannya. */}
+                                                {event.reschedule_menunggu ? (
                                                     <div className="mb-4 p-3 rounded-xl border bg-gold-soft/60 border-gold-2">
-                                                        <p className="text-xs font-bold text-ink">📩 Pengajuan pembatalan sedang diproses</p>
+                                                        <p className="text-xs font-bold text-ink">Permintaan ganti tanggal sedang ditinjau</p>
                                                         <p className="mt-1 text-[11px] text-muted">
-                                                            Status: <b>{event.pembatalan_aktif.status}</b>. Pengajuan Anda ditinjau secara berjenjang oleh tim kami (Event Marketing → Finance → Manajemen).
+                                                            Tanggal yang Anda minta: <b>{formatTanggal(event.reschedule_menunggu.tgl_baru)}</b>.
+                                                            Uang muka Anda tetap berlaku selama menunggu keputusan tim kami.
                                                         </p>
                                                     </div>
                                                 ) : ['Deal', 'Upcoming', 'Penyelesaian'].includes(event.status_event) && (
-                                                    <div className="mb-4">
-                                                        <button onClick={() => { setPembatalanAlasan(''); setPembatalanModal(event); }}
-                                                            className="text-[11px] font-bold text-danger border border-danger/30 px-3 py-1.5 rounded-lg hover:bg-danger-bg transition-colors">
-                                                            Ajukan Pembatalan &amp; Refund
-                                                        </button>
+                                                    <div className="mb-4 p-3 border rounded-xl border-line bg-paper/60">
+                                                        <p className="text-[11px] font-bold text-ink">Acara tidak jadi di tanggal ini?</p>
+                                                        <div className="flex flex-wrap gap-2 mt-2">
+                                                            {['Deal', 'Upcoming'].includes(event.status_event) && (
+                                                                <button onClick={() => { setGantiTgl(''); setGantiTglSelesai(''); setGantiAlasan(''); setGantiModal(event); }}
+                                                                    className="text-[11px] font-bold text-ink border border-gold-2 bg-gold-soft/60 px-3 py-1.5 rounded-lg hover:brightness-95 transition-all">
+                                                                    Ganti Tanggal Acara
+                                                                </button>
+                                                            )}
+                                                            <button onClick={() => { setPembatalanAlasan(''); setPembatalanSadar(false); setPembatalanModal(event); }}
+                                                                className="text-[11px] font-bold text-danger border border-danger/30 px-3 py-1.5 rounded-lg hover:bg-danger-bg transition-colors">
+                                                                Batalkan Acara
+                                                            </button>
+                                                        </div>
+                                                        <p className="mt-2 text-[10px] text-muted">
+                                                            Mengganti tanggal menjaga uang muka Anda tetap berlaku. Membatalkan acara
+                                                            membuat uang muka <b className="text-danger">hangus</b>.
+                                                        </p>
                                                     </div>
                                                 )}
 
@@ -1833,7 +1892,7 @@ export default function ClientDashboard({
                     <div className="w-full max-w-md p-6 bg-surface border border-line shadow-xl rounded-2xl">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h2 className="text-lg font-extrabold text-ink">Ajukan Pembatalan &amp; Refund</h2>
+                                <h2 className="text-lg font-extrabold text-ink">Batalkan Acara</h2>
                                 <p className="text-xs text-muted mt-0.5">{pembatalanModal.nama_event}</p>
                             </div>
                             <button onClick={() => setPembatalanModal(null)} className="p-1.5 text-muted hover:bg-paper rounded-lg">
@@ -1841,10 +1900,17 @@ export default function ClientDashboard({
                             </button>
                         </div>
 
-                        <div className="p-3 mb-4 text-xs border bg-gold-soft/60 border-gold-2 rounded-xl text-muted">
-                            Pengajuan ini akan <b className="text-ink">ditinjau tim Manajemen</b> terlebih dahulu. Bila disetujui,
-                            tim <b className="text-ink">Finance</b> memproses pengembalian dana. Acara <b className="text-ink">belum</b> dibatalkan
-                            sampai proses tersebut selesai.
+                        <div className="p-3 mb-4 text-xs border rounded-xl bg-danger-bg border-danger/30">
+                            <p className="font-black text-danger">Uang muka Anda akan HANGUS.</p>
+                            <p className="mt-1 text-muted">
+                                Sesuai ketentuan, pembayaran yang sudah masuk <b className="text-ink">tidak dikembalikan</b> bila
+                                acara dibatalkan. Pembatalan ini <b className="text-ink">berlaku seketika</b> dan tidak dapat
+                                dibatalkan kembali.
+                            </p>
+                            <p className="mt-2 text-muted">
+                                Bila acara hanya tidak jadi di tanggal ini, pilih <b className="text-ink">Ganti Tanggal Acara</b>
+                                {' '}— uang muka Anda tetap berlaku.
+                            </p>
                         </div>
 
                         <form onSubmit={submitPembatalan}>
@@ -1857,14 +1923,77 @@ export default function ClientDashboard({
                             <div className="flex justify-end mt-1">
                                 <p className="text-[10px] text-muted-2">{pembatalanAlasan.length}/1000</p>
                             </div>
+
+                            <label className="flex items-start gap-2 p-3 mt-2 border rounded-xl border-danger/30 bg-danger-bg cursor-pointer">
+                                <input type="checkbox" checked={pembatalanSadar}
+                                    onChange={(e) => setPembatalanSadar(e.target.checked)}
+                                    className="mt-0.5 accent-red-600" />
+                                <span className="text-[11px] font-bold text-ink">
+                                    Saya mengerti uang muka yang sudah saya bayarkan tidak akan dikembalikan.
+                                </span>
+                            </label>
                             <div className="flex gap-3 mt-3">
                                 <button type="button" onClick={() => setPembatalanModal(null)}
                                     className="flex-1 py-2.5 border border-line text-muted font-bold rounded-xl hover:bg-paper transition-colors text-sm">
                                     Kembali
                                 </button>
-                                <button type="submit" disabled={pembatalanLoading || pembatalanAlasan.trim().length < 10}
+                                <button type="submit" disabled={pembatalanLoading || !pembatalanSadar || pembatalanAlasan.trim().length < 10}
                                     className="flex-1 py-2.5 bg-danger text-white font-black rounded-xl hover:brightness-110 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                                    {pembatalanLoading ? 'Mengirim…' : 'Kirim Pengajuan'}
+                                    {pembatalanLoading ? 'Membatalkan…' : 'Ya, batalkan acara'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {gantiModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
+                    <div className="w-full max-w-md p-6 border shadow-xl bg-surface border-line rounded-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 className="text-lg font-extrabold text-ink">Ganti Tanggal Acara</h2>
+                                <p className="text-xs text-muted mt-0.5">{gantiModal.nama_event}</p>
+                            </div>
+                            <button onClick={() => setGantiModal(null)} className="p-1.5 text-muted hover:bg-paper rounded-lg">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="p-3 mb-4 text-xs border bg-gold-soft/60 border-gold-2 rounded-xl text-muted">
+                            <b className="text-ink">Uang muka Anda tetap berlaku.</b> Jadwal baru perlu disetujui tim kami
+                            karena menyangkut ketersediaan venue. Jam acara tidak berubah — bila jamnya juga perlu
+                            digeser, sampaikan pada kolom alasan.
+                        </div>
+
+                        <form onSubmit={submitGantiTanggal}>
+                            <label className="block mb-2 text-xs font-bold tracking-wider uppercase text-muted">
+                                Tanggal baru <span className="font-normal normal-case text-danger">* wajib</span>
+                            </label>
+                            <input type="date" value={gantiTgl} onChange={(e) => setGantiTgl(e.target.value)} required
+                                className="w-full px-4 py-3 text-sm border text-ink bg-surface border-line rounded-xl focus:border-gold-2 focus:outline-none" />
+
+                            <label className="block mt-3 mb-2 text-xs font-bold tracking-wider uppercase text-muted">
+                                Tanggal selesai <span className="font-normal normal-case text-muted-2">(bila acara lebih dari sehari)</span>
+                            </label>
+                            <input type="date" value={gantiTglSelesai} onChange={(e) => setGantiTglSelesai(e.target.value)}
+                                className="w-full px-4 py-3 text-sm border text-ink bg-surface border-line rounded-xl focus:border-gold-2 focus:outline-none" />
+
+                            <label className="block mt-3 mb-2 text-xs font-bold tracking-wider uppercase text-muted">
+                                Alasan <span className="font-normal normal-case text-danger">* wajib</span>
+                            </label>
+                            <textarea rows={3} value={gantiAlasan} onChange={(e) => setGantiAlasan(e.target.value)}
+                                placeholder="Jelaskan mengapa jadwalnya perlu dipindahkan (min. 10 karakter)…"
+                                className="w-full px-4 py-3 text-sm border resize-none text-ink placeholder-muted-2 bg-surface border-line rounded-xl focus:border-gold-2 focus:outline-none" />
+
+                            <div className="flex gap-3 mt-4">
+                                <button type="button" onClick={() => setGantiModal(null)}
+                                    className="flex-1 py-2.5 border border-line text-muted font-bold rounded-xl hover:bg-paper transition-colors text-sm">
+                                    Kembali
+                                </button>
+                                <button type="submit" disabled={gantiLoading || !gantiTgl || gantiAlasan.trim().length < 10}
+                                    className="flex-1 py-2.5 bg-gold-grad text-white font-black rounded-xl hover:brightness-95 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {gantiLoading ? 'Mengirim…' : 'Ajukan Ganti Tanggal'}
                                 </button>
                             </div>
                         </form>

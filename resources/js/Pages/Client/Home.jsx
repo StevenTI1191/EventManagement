@@ -26,12 +26,13 @@ const IconYoutube = () => (
     </svg>
 );
 
-export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
+export default function Home({ portfolio, upcoming, venue = [], stats, isLoggedIn, auth }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen]     = useState(false);
     const [selectedEvent, setSelectedEvent]   = useState(null);
     const [lightbox, setLightbox]             = useState(null); // index foto dokumentasi yang diperbesar
     const [portfolioFilter, setPortfolioFilter] = useState('all');
+    const [venueZoom, setVenueZoom]           = useState(null); // foto fasilitas venue yang diperbesar
 
     const BASE_URL = window.location.origin;
 
@@ -312,6 +313,62 @@ export default function Home({ portfolio, upcoming, stats, isLoggedIn, auth }) {
                     </div>
                 </div>
             </section>
+
+            {/* ── FASILITAS VENUE ────────────────────────────────── */}
+            {/* Wujud tempatnya: panggung, videotron, sound & lighting, dan
+                seterusnya — sama seperti yang dicantumkan pada surat penawaran.
+                Isinya dikelola tim Event Marketing, jadi bagian ini hilang
+                dengan sendirinya bila belum ada fasilitas yang didaftarkan. */}
+            {venue.length > 0 && (
+                <section id="venue" className="py-24 bg-surface border-t border-line">
+                    <div className="px-6 mx-auto max-w-7xl">
+                        <div className="mb-16 text-center">
+                            <p className="mb-4 text-sm font-bold tracking-widest uppercase text-gold">Sudah Tersedia di Tempat</p>
+                            <h2 className="text-4xl font-black text-ink md:text-5xl">Fasilitas <span className="text-gold">Venue</span></h2>
+                            <p className="max-w-2xl mx-auto mt-4 text-muted">
+                                Anda tidak perlu menyewa terpisah — fasilitas berikut sudah menjadi bagian dari venue kami.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {venue.map((v) => (
+                                <button key={v.id} type="button" onClick={() => v.foto && setVenueZoom(v)}
+                                    className="overflow-hidden text-left transition-all duration-300 border bg-surface border-line rounded-2xl hover:border-gold-2 hover:-translate-y-1 group">
+                                    {v.foto ? (
+                                        <div className="overflow-hidden aspect-video bg-paper">
+                                            <img src={`/${v.foto}`} alt={v.nama} loading="lazy"
+                                                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center text-4xl aspect-video bg-paper">🏛️</div>
+                                    )}
+                                    <div className="p-5">
+                                        <h3 className="text-lg font-bold transition-colors text-ink group-hover:text-gold-dim">{v.nama}</h3>
+                                        {v.spesifikasi && <p className="text-xs font-black tracking-wide text-gold mt-0.5">{v.spesifikasi}</p>}
+                                        {v.keterangan && <p className="mt-2 text-sm leading-relaxed text-muted">{v.keterangan}</p>}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* Foto fasilitas diperbesar */}
+            {venueZoom && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm"
+                    onClick={() => setVenueZoom(null)}>
+                    <div className="w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
+                        <img src={`/${venueZoom.foto}`} alt={venueZoom.nama}
+                            className="w-full max-h-[75vh] object-contain rounded-2xl" />
+                        <div className="mt-4 text-center">
+                            <p className="text-xl font-black text-white">{venueZoom.nama}</p>
+                            {venueZoom.spesifikasi && <p className="mt-1 text-sm font-bold text-gold">{venueZoom.spesifikasi}</p>}
+                            {venueZoom.keterangan && <p className="max-w-2xl mx-auto mt-2 text-sm text-white/70">{venueZoom.keterangan}</p>}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── CARA KERJA ─────────────────────────────────────── */}
             {/* Panduan alur untuk klien: apa yang terjadi setelah mereka

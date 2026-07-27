@@ -127,11 +127,12 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                                 <div className="text-right">
                                     <p className="text-[10px] font-bold tracking-wide text-gray-400 uppercase">Total Nilai Acara</p>
                                     <p className="text-lg font-extrabold text-[#FF2D55]">{rupiah(ev.deal_harga_event)}</p>
-                                    {ev.pembatalan_aktif && (
-                                        <a href={route('finance.pembatalan.index')}
-                                            className="inline-block mt-2 px-2.5 py-1 text-[10px] font-bold text-amber-700 border border-amber-200 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">
-                                            ⚠ Ada pengajuan pembatalan · {ev.pembatalan_aktif.status}
-                                        </a>
+                                    {/* Jadwal acara bisa berpindah bila Manajemen menyetujui
+                                        permintaan klien — jatuh tempo tagihan ikut bergeser. */}
+                                    {ev.reschedule_menunggu && (
+                                        <span className="inline-block mt-2 px-2.5 py-1 text-[10px] font-bold text-amber-700 border border-amber-200 rounded-lg bg-amber-50">
+                                            ⚠ Menunggu persetujuan ganti tanggal
+                                        </span>
                                     )}
                                 </div>
                             </div>

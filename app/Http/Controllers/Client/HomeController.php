@@ -46,9 +46,16 @@ class HomeController extends Controller
             'totalKategori'  => Event::distinct()->whereNotNull('kategori_event')->count('kategori_event'),
         ];
 
+        // Fasilitas venue (panggung, videotron, sound & lighting, area indoor,
+        // VIP room, …) — sama seperti yang dicantumkan pada surat penawaran,
+        // supaya calon klien tahu apa saja yang sudah tersedia di tempat.
+        $venue = \App\Models\VenueFasilitas::tampil()
+            ->get(['id', 'nama', 'spesifikasi', 'keterangan', 'foto']);
+
         return Inertia::render('Client/Home', [
             'portfolio'  => $portfolio,
             'upcoming'   => $upcoming,
+            'venue'      => $venue,
             'stats'      => $stats,
             'isLoggedIn' => auth('client')->check(),
             'auth'       => ['user' => auth('client')->user()],

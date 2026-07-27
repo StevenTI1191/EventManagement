@@ -29,7 +29,6 @@ export default function FinanceLayout({ children }) {
         { name: 'Transaksi',        icon: CreditCard,      href: route('finance.transaksi.index'), active: currentPath.includes('/finance/transaksi') },
         { name: 'Invoice',          icon: FileText,        href: route('finance.invoice.index'),   active: currentPath.includes('/finance/invoice') },
         { name: 'Bukti Pembayaran', icon: Receipt,         href: route('finance.bukti.index'),     active: currentPath.includes('/finance/bukti-pembayaran') },
-        { name: 'Pembatalan',       icon: Ban,             href: route('finance.pembatalan.index'), active: currentPath.includes('/finance/pembatalan'), badge: badges.pembatalanMenunggu || 0 },
         { name: 'Laporan',          icon: FileBarChart,    href: route('finance.laporan.index'),   active: currentPath.includes('/finance/laporan') },
     ];
 

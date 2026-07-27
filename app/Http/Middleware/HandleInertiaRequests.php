@@ -43,15 +43,13 @@ class HandleInertiaRequests extends Middleware
         $posisi = strtolower(str_replace(' ', '', (string) $pegawai->posisi_pegawai));
         $badges = [];
 
-        // Pengajuan pembatalan yang menunggu giliran peran ini.
-        $giliranStatus = match ($posisi) {
-            'eventmarketing' => \App\Models\EventPembatalan::STATUS_DIAJUKAN,
-            'finance'        => \App\Models\EventPembatalan::STATUS_DISETUJUI_EM,
-            'manajemen'      => \App\Models\EventPembatalan::STATUS_DISETUJUI_FIN,
-            default          => null,
-        };
-        if ($giliranStatus) {
-            $badges['pembatalanMenunggu'] = \App\Models\EventPembatalan::where('status', $giliranStatus)->count();
+        // Antrean yang menunggu keputusan Manajemen. Pembatalan tidak lagi
+        // ditinjau siapa pun (uang muka hangus, berlaku seketika), jadi yang
+        // tersisa hanyalah permintaan ganti tanggal dan persetujuan penawaran.
+        if ($posisi === 'manajemen') {
+            $badges['rescheduleMenunggu'] = \App\Models\EventReschedule::menunggu()->count();
+            // Penawaran yang belum boleh dikirim ke klien sebelum disetujui.
+            $badges['penawaranMenunggu']  = \App\Models\Event::penawaranMenunggu()->count();
         }
 
         return $badges;

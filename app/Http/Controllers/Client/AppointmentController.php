@@ -46,23 +46,43 @@ class AppointmentController extends Controller
                 'invoices' => fn($q) => $q->orderBy('tgl_terbit'),
                 'buktiPembayaran' => fn($q) => $q->where('client_id', $client->id),
                 // To-do persiapan acara — hanya kolom yang aman ditampilkan ke
-                // klien (tanpa PIC/catatan internal), agar klien bisa memantau
-                // sejauh mana persiapan acaranya.
+                // klien (tanpa PIC per tugas maupun catatan internal), agar klien
+                // bisa memantau sejauh mana persiapan acaranya.
                 'tugas' => fn($q) => $q
                     ->select('id_tugas', 'id_event', 'nama_tugas', 'kategori', 'status_tugas', 'progress', 'deadline_tugas', 'urutan')
                     ->orderBy('urutan')->orderBy('id_tugas'),
-                // Status pengajuan pembatalan yang sedang berjalan (bila ada).
-                'pembatalanAktif',
+                // Permintaan ganti tanggal yang sedang ditinjau Manajemen (bila ada).
+                'rescheduleMenunggu',
             ])
             ->latest('tgl_mulai_event')
             ->take(50)
             ->get();
+
+        // Satu jalur kontak per acara: PIC acara. Klien tidak dihadapkan pada
+        // daftar pelaksana per tugas — cukup satu orang yang memang ditunjuk
+        // menangani acaranya, dan itu juga menjaga kontak pegawai lain tetap
+        // internal.
+        //
+        // Nomor mentahnya TIDAK ikut dikirim ke browser: klien hanya mendapat
+        // tautan siap tekan, bukan nomor yang bisa dipanen.
+        $events->each(function (Event $event) use ($client) {
+            $event->wa_pic = \App\Support\Wa::link(
+                $event->pic?->no_hp_pegawai,
+                $this->pesanTanyaProgres($event, $client),
+            );
+
+            if ($event->pic) {
+                $event->pic->makeHidden('no_hp_pegawai');
+            }
+        });
 
         // Penawaran = event eksternal milik client yang masih di tahap Negotiation.
         // Klien bisa melihat detail ringkas + PDF harga, lalu menerima/menolak.
         $penawaran = Event::where('id_client', $client->id)
             ->eksternal()
             ->where('status_event', Event::STATUS_NEGOTIATION)
+            // Hanya penawaran yang sudah disetujui Manajemen yang tampil.
+            ->where('penawaran_status', Event::PENAWARAN_DISETUJUI)
             ->with('pic:id_pegawai,nama_pegawai')
             ->latest('updated_at')
             ->get();
@@ -89,6 +109,35 @@ class AppointmentController extends Controller
             'eventProses'       => $milikKlien()->whereIn('status_event', $proses)->count(),
             'eventPraDeal'      => $milikKlien()->whereIn('status_event', $praDeal)->count(),
         ]);
+    }
+
+    /**
+     * Template pesan klien untuk menanyakan progres acara kepada PIC-nya.
+     * Disiapkan lengkap — nama acara, tanggal, dan capaian persiapannya — supaya
+     * klien tidak perlu menjelaskan ulang, dan nadanya seragam & sopan.
+     */
+    private function pesanTanyaProgres(Event $event, $client): string
+    {
+        $tanggal = $event->tgl_mulai_event
+            ? \Illuminate\Support\Carbon::parse($event->tgl_mulai_event)->translatedFormat('d F Y')
+            : null;
+
+        $asal = filled($client->perusahaan_client) ? " dari {$client->perusahaan_client}" : '';
+
+        $pesan  = 'Halo ' . ($event->pic?->nama_pegawai ?: 'Kak') . ', saya '
+                . ($client->nama_client ?: 'klien') . "{$asal}.\n\n";
+        $pesan .= "Saya ingin menanyakan progres persiapan acara *{$event->nama_event}*"
+                . ($tanggal ? " ({$tanggal})" : '') . '.';
+
+        $total = $event->tugas->count();
+        if ($total > 0) {
+            $selesai = $event->tugas->where('status_tugas', 'Done')->count();
+            $pesan  .= "\n\nDi portal saya terlihat {$selesai} dari {$total} bagian persiapan sudah selesai.";
+        }
+
+        $pesan .= "\n\nBagaimana perkembangannya ya? Terima kasih banyak. 🙏";
+
+        return $pesan;
     }
 
     /**
@@ -580,45 +629,141 @@ class AppointmentController extends Controller
         $client = Auth::guard('client')->user();
 
         $data = $request->validate([
-            'alasan' => 'required|string|min:10|max:1000',
+            'alasan'     => 'required|string|min:10|max:1000',
+            // Peringatan uang muka hangus harus benar-benar disadari klien.
+            // Dijaga di server, bukan hanya lewat centang di layar.
+            'konfirmasi' => ['required', 'in:HANGUS'],
         ], [
-            'alasan.required' => 'Mohon sertakan alasan pembatalan.',
-            'alasan.min'      => 'Alasan terlalu singkat (minimal 10 karakter).',
+            'alasan.required'     => 'Mohon sertakan alasan pembatalan.',
+            'alasan.min'          => 'Alasan terlalu singkat (minimal 10 karakter).',
+            'konfirmasi.required' => 'Centang pernyataan bahwa Anda memahami uang muka akan hangus.',
+            'konfirmasi.in'       => 'Konfirmasi tidak sah.',
         ]);
 
         $event = Event::where('id_client', $client->id)
             ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
             ->findOrFail($id_event);
 
-        // Satu pengajuan aktif per acara.
-        if (\App\Models\EventPembatalan::where('id_event', $event->id_event)->aktif()->exists()) {
-            return back()->with('error', 'Sudah ada pengajuan pembatalan yang sedang diproses untuk acara ini.');
+        // Uang yang sudah masuk tidak dikembalikan dan TIDAK dihapus dari buku
+        // kas — ia menjadi pendapatan atas pembatalan. Nilainya disalin ke
+        // catatan pembatalan supaya tetap terbaca di riwayat.
+        $hangus = (float) \App\Models\Transaksi::where('id_event', $event->id_event)->sum('nominal');
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($event, $client, $data, $hangus) {
+            \App\Models\EventPembatalan::create([
+                'id_event'      => $event->id_event,
+                'client_id'     => $client->id,
+                'alasan'        => trim($data['alasan']),
+                'dp_hangus'     => $hangus,
+                'status'        => \App\Models\EventPembatalan::STATUS_SELESAI,
+                'diproses_pada' => now(),
+            ]);
+
+            // Tagihan yang belum dibayar dibersihkan agar penjadwal pengingat
+            // tidak terus menagih acara yang sudah batal.
+            \App\Models\Invoice::where('id_event', $event->id_event)
+                ->where('status', \App\Models\Invoice::STATUS_BELUM)
+                ->delete();
+
+            $jejak = 'Dibatalkan klien (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['alasan'])
+                . ($hangus > 0 ? ' — uang muka Rp ' . number_format($hangus, 0, ',', '.') . ' hangus.' : '.');
+
+            $event->update([
+                'status_event' => Event::STATUS_BATAL,
+                'note_event'   => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
+            ]);
+        });
+
+        // Pembatalan berlaku seketika, jadi tim dikabari sebagai pemberitahuan —
+        // bukan permintaan persetujuan.
+        $nilai = $hangus > 0 ? 'Rp ' . number_format($hangus, 0, ',', '.') : 'tidak ada pembayaran masuk';
+        foreach (['EventMarketing', 'Finance'] as $peran) {
+            $this->kabariRole($peran,
+                'Acara Dibatalkan Klien — ' . $event->nama_event,
+                'Klien ' . ($client->nama_client ?? '-') . " membatalkan acara \"{$event->nama_event}\".\n\n"
+                . 'Alasan: ' . trim($data['alasan']) . "\n\n"
+                . "Uang muka yang hangus: {$nilai}.\n\n"
+                . 'Acara sudah berstatus Batal dan jadwalnya dilepas. Tagihan yang belum dibayar telah dihapus.'
+            );
         }
 
-        \App\Models\EventPembatalan::create([
-            'id_event'  => $event->id_event,
-            'client_id' => $client->id,
-            'alasan'    => $data['alasan'],
-            'status'    => \App\Models\EventPembatalan::STATUS_DIAJUKAN,
+        return back()->with('success',
+            'Acara telah dibatalkan. Sesuai ketentuan, uang muka yang sudah dibayarkan tidak dikembalikan.');
+    }
+
+    /**
+     * Klien meminta acara DIPINDAH ke tanggal lain — jalan keluar agar uang
+     * mukanya tidak hangus. Permintaan ini tidak langsung berlaku: jadwal baru
+     * harus disetujui Pihak Manajemen karena menyangkut ketersediaan venue.
+     */
+    public function ajukanReschedule(Request $request, $id_event)
+    {
+        $client = Auth::guard('client')->user();
+
+        $data = $request->validate([
+            'tgl_baru'         => ['required', 'date', 'after:today'],
+            'tgl_selesai_baru' => ['nullable', 'date', 'after_or_equal:tgl_baru'],
+            'alasan'           => ['required', 'string', 'min:10', 'max:1000'],
+        ], [
+            'tgl_baru.required' => 'Pilih tanggal baru untuk acara Anda.',
+            'tgl_baru.after'    => 'Tanggal baru harus setelah hari ini.',
+            'alasan.required'   => 'Mohon sertakan alasan pemindahan jadwal.',
+            'alasan.min'        => 'Alasan terlalu singkat (minimal 10 karakter).',
         ]);
 
-        $jejak = '📩 Klien mengajukan pembatalan (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['alasan']);
-        $event->update(['note_event' => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak]);
+        $event = Event::where('id_client', $client->id)
+            ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING])
+            ->findOrFail($id_event);
 
-        // Persetujuan berurutan Event Marketing → Finance → Manajemen, jadi yang
-        // dikabari adalah peran yang mendapat giliran PERTAMA. Sebelumnya email
-        // ini masih dikirim ke Manajemen (sisa alur dua pihak yang lama):
-        // Event Marketing tak pernah tahu ada pengajuan masuk, sedangkan
-        // Manajemen diminta bertindak padahal tombolnya belum aktif untuknya.
-        $this->kabariRole('EventMarketing',
-            '📩 Pengajuan Pembatalan Acara — ' . $event->nama_event,
-            "Klien " . ($client->nama_client ?? '-') . " mengajukan pembatalan acara \"{$event->nama_event}\".\n\n"
-            . "Alasan: {$data['alasan']}\n\n"
-            . "Anda mendapat giliran pertama. Silakan tinjau (setujui/tolak) di menu Pembatalan; "
-            . "setelah disetujui, pengajuan diteruskan ke Finance lalu Manajemen."
+        if (\App\Models\EventReschedule::where('id_event', $event->id_event)->menunggu()->exists()) {
+            return back()->with('error', 'Sudah ada permintaan ganti tanggal yang sedang ditinjau untuk acara ini.');
+        }
+
+        // Bentrok diperiksa lebih awal supaya klien langsung tahu, walau
+        // Manajemen tetap memeriksanya ulang saat menyetujui.
+        $bentrok = Event::checkBentrok(
+            $data['tgl_baru'],
+            $event->jam_mulai,
+            $event->jam_selesai,
+            $event->area_event,
+            $event->id_event,
+            $data['tgl_selesai_baru'] ?? null,
+            $event->loading_in,
+            $event->loading_out,
         );
 
-        return back()->with('success', 'Pengajuan pembatalan terkirim. Tim kami akan meninjaunya.');
+        if ($bentrok) {
+            throw ValidationException::withMessages([
+                'tgl_baru' => 'Maaf, tanggal tersebut sudah terisi acara lain. Silakan pilih tanggal lain.',
+            ]);
+        }
+
+        \App\Models\EventReschedule::create([
+            'id_event'         => $event->id_event,
+            'client_id'        => $client->id,
+            'tgl_lama'         => $event->tgl_mulai_event,
+            'tgl_baru'         => $data['tgl_baru'],
+            'tgl_selesai_baru' => $data['tgl_selesai_baru'] ?? null,
+            'alasan'           => trim($data['alasan']),
+            'status'           => \App\Models\EventReschedule::STATUS_DIAJUKAN,
+        ]);
+
+        $tglBaru = \Illuminate\Support\Carbon::parse($data['tgl_baru'])->translatedFormat('d F Y');
+        $jejak   = 'Klien meminta ganti tanggal ke ' . $tglBaru
+                 . ' (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['alasan']);
+        $event->update(['note_event' => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak]);
+
+        $this->kabariRole('Manajemen',
+            'Permintaan Ganti Tanggal — ' . $event->nama_event,
+            'Klien ' . ($client->nama_client ?? '-') . " meminta acara \"{$event->nama_event}\" dipindahkan.\n\n"
+            . 'Dari : ' . \Illuminate\Support\Carbon::parse($event->tgl_mulai_event)->translatedFormat('d F Y') . "\n"
+            . "Ke   : {$tglBaru}\n\n"
+            . 'Alasan: ' . trim($data['alasan']) . "\n\n"
+            . 'Silakan tinjau di menu Ganti Tanggal. Uang muka klien tetap berlaku bila disetujui.'
+        );
+
+        return back()->with('success',
+            'Permintaan ganti tanggal terkirim. Uang muka Anda tetap berlaku sambil menunggu persetujuan tim kami.');
     }
 
     /**
@@ -677,6 +822,10 @@ class AppointmentController extends Controller
         return Event::eksternal()
             ->where('id_client', $client->id)
             ->whereIn('status_event', $status)
+            // Penawaran baru boleh dilihat & direspon klien setelah disetujui
+            // Pihak Manajemen. Penjagaan ditaruh di satu tempat ini agar berlaku
+            // untuk unduh dokumen, terima, tolak, maupun ajukan penyesuaian.
+            ->where('penawaran_status', Event::PENAWARAN_DISETUJUI)
             ->with(['client', 'pic'])
             ->findOrFail($id_event);
     }

@@ -49,7 +49,7 @@ class InvoiceController extends Controller
                         ->whereHas('invoices', fn ($i) => $i->where('status', Invoice::STATUS_BELUM));
                   });
             })
-            ->with(['client:id,nama_client,perusahaan_client,no_telp_client', 'invoices', 'pembatalanAktif'])
+            ->with(['client:id,nama_client,perusahaan_client,no_telp_client', 'invoices', 'rescheduleMenunggu'])
             ->withSum('transaksis as total_dibayar', 'nominal')
             ->orderByDesc('updated_at')
             ->get()

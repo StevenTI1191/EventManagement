@@ -3,6 +3,7 @@ import { Head, router, Link } from '@inertiajs/react';
 import {
     GitBranch, Eye, Building2, CalendarDays, MapPin, User, GripVertical,
     FileDown, MessageCircle, XCircle, X, LayoutGrid, Table2, Lightbulb, Lock, ChevronDown,
+    Clock, CheckCircle2, Send,
 } from 'lucide-react';
 
 // Tiga tahap pertama boleh digeser. Sisanya ditentukan pembayaran & jadwal,
@@ -13,7 +14,7 @@ import {
 // dari warnanya saja, tanpa perlu membaca judul kolomnya.
 const KOLOM = [
     { key: 'Lead',         judul: 'Lead',         grad: 'from-slate-400 to-slate-500',    aksen: 'bg-slate-400',   tint: 'bg-slate-50/60',   ket: 'Calon & rencana bertarget klien', geser: true },
-    { key: 'Negotiation',  judul: 'Negotiation',  grad: 'from-amber-400 to-orange-500',   aksen: 'bg-amber-400',   tint: 'bg-amber-50/60',   ket: 'Penawaran dikirim',                geser: true },
+    { key: 'Negotiation',  judul: 'Negotiation',  grad: 'from-amber-400 to-orange-500',   aksen: 'bg-amber-400',   tint: 'bg-amber-50/60',   ket: 'Penawaran — disetujui Manajemen',  geser: true },
     { key: 'Deal',         judul: 'Deal',         grad: 'from-emerald-400 to-emerald-600', aksen: 'bg-emerald-500', tint: 'bg-emerald-50/60', ket: 'Disetujui — menunggu DP',          geser: true },
     { key: 'Upcoming',     judul: 'Upcoming',     grad: 'from-sky-400 to-blue-600',       aksen: 'bg-blue-500',    tint: 'bg-blue-50/60',    ket: 'DP lunas — acara berjalan',        geser: false },
     { key: 'Penyelesaian', judul: 'Penyelesaian', grad: 'from-orange-400 to-rose-500',    aksen: 'bg-orange-500',  tint: 'bg-orange-50/60',  ket: 'Acara lewat, belum tuntas',        geser: false },
@@ -43,6 +44,33 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
     const [batalKartu, setBatalKartu] = useState(null);
     const [alasan, setAlasan] = useState('');
     const [submitBatal, setSubmitBatal] = useState(false);
+
+    // Persetujuan penawaran oleh Manajemen.
+    const [setujuiKartu, setSetujuiKartu] = useState(null);
+    const [tolakKartu, setTolakKartu] = useState(null);
+    const [catatanTolak, setCatatanTolak] = useState('');
+    const [submitPenawaran, setSubmitPenawaran] = useState(false);
+
+    const aksiPenawaran = (namaRute, kartu, data, tutup) => {
+        if (submitPenawaran) return;
+        setSubmitPenawaran(true);
+        setError('');
+        router.patch(route(namaRute, kartu.id_event), data, {
+            preserveScroll: true,
+            onSuccess: () => tutup(),
+            onError: (err) => setError(Object.values(err)[0] || 'Gagal memproses penawaran.'),
+            onFinish: () => setSubmitPenawaran(false),
+        });
+    };
+
+    const setujuiPenawaran = () =>
+        aksiPenawaran(routes.setujuiPenawaran, setujuiKartu, {}, () => setSetujuiKartu(null));
+
+    const tolakPenawaran = () =>
+        aksiPenawaran(routes.tolakPenawaran, tolakKartu, { catatan: catatanTolak }, () => setTolakKartu(null));
+
+    const ajukanPenawaran = (kartu) =>
+        aksiPenawaran(routes.ajukanPenawaran, kartu, {}, () => {});
 
     const [expandedCard, setExpandedCard] = useState(null);
 
@@ -269,7 +297,45 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                                                 <Lock size={10} className="shrink-0" /> Penawaran diterima
                                                             </p>
                                                         )}
+                                                        {/* Penawaran hanya sampai ke klien setelah disetujui Manajemen,
+                                                            jadi tahapnya perlu terbaca langsung dari kartu. */}
+                                                        {k.key === 'Negotiation' && e.penawaran_status === 'Diajukan' && (
+                                                            <p className="flex items-center gap-1 font-bold text-amber-700">
+                                                                <Clock size={10} className="shrink-0" /> Menunggu persetujuan Manajemen
+                                                            </p>
+                                                        )}
+                                                        {k.key === 'Negotiation' && e.penawaran_status === 'Ditolak' && (
+                                                            <p className="flex items-start gap-1 font-bold text-red-600">
+                                                                <XCircle size={10} className="mt-0.5 shrink-0" />
+                                                                <span>Ditolak Manajemen{e.penawaran_catatan ? `: ${e.penawaran_catatan}` : ''}</span>
+                                                            </p>
+                                                        )}
                                                     </div>
+
+                                                    {/* Aksi persetujuan penawaran. Manajemen memutuskan; Event
+                                                        Marketing mengajukan ulang setelah memperbaiki. */}
+                                                    {k.key === 'Negotiation' && (routes.setujuiPenawaran || routes.ajukanPenawaran) && (
+                                                        <div className="flex flex-wrap gap-1 mt-2" onClick={(ev) => ev.stopPropagation()}>
+                                                            {routes.setujuiPenawaran && e.penawaran_status === 'Diajukan' && (
+                                                                <>
+                                                                    <button type="button" onClick={() => setSetujuiKartu(e)}
+                                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-white rounded bg-emerald-600 hover:bg-emerald-700">
+                                                                        <CheckCircle2 size={10} /> Setujui penawaran
+                                                                    </button>
+                                                                    <button type="button" onClick={() => { setError(''); setCatatanTolak(''); setTolakKartu(e); }}
+                                                                        className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-red-600 rounded bg-red-50 hover:bg-red-100">
+                                                                        <XCircle size={10} /> Tolak
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            {routes.ajukanPenawaran && e.penawaran_status !== 'Disetujui' && e.penawaran_status !== 'Diajukan' && (
+                                                                <button type="button" onClick={() => ajukanPenawaran(e)}
+                                                                    className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-white rounded bg-amber-600 hover:bg-amber-700">
+                                                                    <Send size={10} /> Ajukan ke Manajemen
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
 
                                                     {canEdit && routes.penawaran && (k.key === 'Negotiation' || k.key === 'Deal') && (
                                                         <div className="flex flex-wrap gap-1 mt-2" onClick={(ev) => ev.stopPropagation()}>
@@ -368,6 +434,86 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                             </tfoot>
                         )}
                     </table>
+                </div>
+            )}
+
+            {/* Menyetujui penawaran = mengirimkannya ke klien saat itu juga,
+                jadi dikonfirmasi dulu agar tidak terkirim karena salah klik. */}
+            {setujuiKartu && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                    onClick={() => !submitPenawaran && setSetujuiKartu(null)}>
+                    <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl" onClick={(ev) => ev.stopPropagation()}>
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 size={20} className="text-emerald-600" />
+                                <h3 className="text-lg font-extrabold text-gray-900">Setujui penawaran</h3>
+                            </div>
+                            <button type="button" onClick={() => !submitPenawaran && setSetujuiKartu(null)}
+                                className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                        </div>
+
+                        <p className="mt-3 text-sm text-gray-600">
+                            Penawaran untuk <span className="font-bold text-gray-900">"{setujuiKartu.nama_event}"</span> senilai{' '}
+                            <span className="font-bold text-gray-900">{rupiah(setujuiKartu.deal_harga_event)}</span> akan
+                            <b> langsung dikirimkan ke klien</b> beserta dokumen PDF-nya, dan tampil di dashboard klien
+                            untuk diterima atau ditolak.
+                        </p>
+
+                        {error && <p className="p-2 mt-3 text-xs font-bold text-red-600 rounded-lg bg-red-50">{error}</p>}
+
+                        <div className="flex justify-end gap-2 mt-5">
+                            <button type="button" onClick={() => setSetujuiKartu(null)} disabled={submitPenawaran}
+                                className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-60">
+                                Batal
+                            </button>
+                            <button type="button" onClick={setujuiPenawaran} disabled={submitPenawaran}
+                                className="px-4 py-2 text-sm font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-60">
+                                {submitPenawaran ? 'Mengirim…' : 'Setujui & kirim'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {tolakKartu && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                    onClick={() => !submitPenawaran && setTolakKartu(null)}>
+                    <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl" onClick={(ev) => ev.stopPropagation()}>
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <XCircle size={20} className="text-rose-600" />
+                                <h3 className="text-lg font-extrabold text-gray-900">Tolak penawaran</h3>
+                            </div>
+                            <button type="button" onClick={() => !submitPenawaran && setTolakKartu(null)}
+                                className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                        </div>
+
+                        <p className="mt-3 text-sm text-gray-600">
+                            Penawaran <span className="font-bold text-gray-900">"{tolakKartu.nama_event}"</span> tidak
+                            dikirimkan ke klien. Kartunya tetap di tahap Negotiation agar Event Marketing bisa
+                            memperbaiki lalu mengajukannya kembali.
+                        </p>
+
+                        <label className="block mt-4 mb-1.5 text-xs font-bold tracking-wide text-gray-500 uppercase">
+                            Catatan perbaikan <span className="text-red-500">* wajib</span>
+                        </label>
+                        <textarea value={catatanTolak} onChange={(ev) => setCatatanTolak(ev.target.value)} rows={3} maxLength={500}
+                            placeholder="Mis. harga di bawah margin minimum, jumlah pax belum sesuai kesepakatan…"
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200" />
+
+                        {error && <p className="p-2 mt-3 text-xs font-bold text-red-600 rounded-lg bg-red-50">{error}</p>}
+
+                        <div className="flex justify-end gap-2 mt-5">
+                            <button type="button" onClick={() => setTolakKartu(null)} disabled={submitPenawaran}
+                                className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-60">
+                                Batal
+                            </button>
+                            <button type="button" onClick={tolakPenawaran} disabled={submitPenawaran || catatanTolak.trim().length < 5}
+                                className="px-4 py-2 text-sm font-bold text-white rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50">
+                                {submitPenawaran ? 'Menyimpan…' : 'Tolak penawaran'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

@@ -7,6 +7,7 @@ use App\Support\Wa;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +22,9 @@ use Illuminate\Validation\ValidationException;
  */
 trait ManagesPipeline
 {
+    // Pengajuan penawaran mengabari Manajemen lewat email.
+    use KabariRole;
+
     /**
      * Isi papan pipeline, dikelompokkan per kolom.
      *
@@ -105,7 +109,8 @@ trait ManagesPipeline
         $pesan .= "Rincian lengkap kami lampirkan dalam berkas *PDF penawaran* pada pesan ini. Silakan ditinjau; "
                 . "bila berkenan, Anda dapat menerima atau menolak penawaran melalui portal klien kami.\n\n";
         $pesan .= "Pembayaran dua tahap: *DP 50%* setelah penawaran disetujui, dan *pelunasan 50%* paling lambat "
-                . "sebelum hari-H acara. Penawaran ini berlaku 14 hari sejak tanggal terbit.\n\n";
+                . "*H-3 sebelum acara* (tiga hari sebelum hari pelaksanaan). "
+                . "Penawaran ini berlaku 14 hari sejak tanggal terbit.\n\n";
         $pesan .= "Kami tunggu kabar baiknya. 🙏\n";
         $pesan .= "— PT Laksamana Muda Bersatu";
 
@@ -193,15 +198,27 @@ trait ManagesPipeline
 
         $event->update($ubah);
 
-        // Naik ke Negotiation = penawaran resmi dikirimkan. Email + lampiran PDF
-        // penawaran dan notifikasi in-app dikirim sekali saat MAJU ke tahap ini
-        // (bukan saat kartu ditarik mundur dari Deal ke Negotiation).
+        // Naik ke Negotiation = penawaran DIAJUKAN, bukan langsung dikirim.
+        // Penawaran wajib disetujui Pihak Manajemen lebih dulu; pengirimannya ke
+        // klien terjadi pada saat persetujuan itu (lihat ManagesPersetujuanPenawaran).
+        // Penawaran yang sudah disetujui tidak diajukan ulang saat kartu bergerak.
         $pesanExtra = '';
-        if ($baru === Event::STATUS_NEGOTIATION && $sekarang < $tujuan) {
-            $terkirim = $this->kirimPenawaranKeKlien($event);
-            $pesanExtra = $terkirim
-                ? ' Penawaran beserta dokumen PDF telah dikirim ke email klien.'
-                : ' Klien belum memiliki email — silakan kirim penawaran secara manual.';
+        if ($baru === Event::STATUS_NEGOTIATION && $sekarang < $tujuan
+            && ! $event->penawaranDisetujui()) {
+            $event->update([
+                'penawaran_status'        => Event::PENAWARAN_DIAJUKAN,
+                'penawaran_diajukan_oleh' => Auth::guard('pegawai')->id(),
+                'penawaran_diajukan_pada' => now(),
+                'penawaran_catatan'       => null,
+            ]);
+
+            $this->kabariRole('Manajemen',
+                '📝 Penawaran menunggu persetujuan — ' . $event->nama_event,
+                "Penawaran untuk acara \"{$event->nama_event}\" telah disiapkan dan menunggu persetujuan Anda.\n\n"
+                . 'Nilai penawaran: Rp ' . number_format((float) ($event->deal_harga_event ?? 0), 0, ',', '.') . ".\n\n"
+                . 'Silakan tinjau di papan Pipeline. Penawaran baru dikirimkan ke klien setelah Anda menyetujuinya.');
+
+            $pesanExtra = ' Penawaran diajukan ke Manajemen — akan dikirim ke klien setelah disetujui.';
         }
 
         // Deal tercapai → appointment asal (bila ada) otomatis ditandai Selesai,
