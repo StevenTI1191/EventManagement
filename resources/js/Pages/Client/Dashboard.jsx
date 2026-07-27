@@ -11,6 +11,7 @@ import {
 
 export default function ClientDashboard({
     appointments, events, penawaran = [], totalAppointments, totalEvents, slots = [],
+    rekening = {},
 }) {
     const { auth, flash } = usePage().props;
 
@@ -1402,8 +1403,37 @@ export default function ClientDashboard({
                                                             </button>
                                                         </div>
                                                         <p className="mt-2 text-[10px] text-muted">
-                                                            Mengganti tanggal menjaga uang muka Anda tetap berlaku. Membatalkan acara
-                                                            membuat uang muka <b className="text-danger">hangus</b>.
+                                                            Mengganti tanggal menjaga uang muka Anda tetap berlaku — jadwal barunya
+                                                            ditinjau Pihak Manajemen lebih dulu. Membatalkan acara membuat uang muka
+                                                            <b className="text-danger"> hangus</b> dan berlaku seketika.
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Rekening tujuan transfer. Ditaruh tepat sebelum tombol
+                                                    unggah bukti — urutannya mengikuti apa yang dilakukan
+                                                    klien: transfer dulu, baru unggah buktinya. */}
+                                                {rekening?.rekening && sisa > 0 && (
+                                                    <div className="p-3 mb-4 border rounded-xl border-gold-2 bg-gold-soft/60">
+                                                        <p className="text-[10px] font-black tracking-wider uppercase text-gold mb-1.5">
+                                                            Pembayaran via transfer ke
+                                                        </p>
+                                                        <div className="space-y-0.5 text-[11px]">
+                                                            <p className="flex gap-2">
+                                                                <span className="w-24 shrink-0 text-muted">Bank</span>
+                                                                <span className="font-bold text-ink">: {rekening.nama}</span>
+                                                            </p>
+                                                            <p className="flex gap-2">
+                                                                <span className="w-24 shrink-0 text-muted">No. Rekening</span>
+                                                                <span className="font-black text-ink">: {rekening.rekening}</span>
+                                                            </p>
+                                                            <p className="flex gap-2">
+                                                                <span className="w-24 shrink-0 text-muted">Atas Nama</span>
+                                                                <span className="font-bold text-ink">: {rekening.atas_nama}</span>
+                                                            </p>
+                                                        </div>
+                                                        <p className="mt-2 text-[10px] text-muted">
+                                                            Setelah transfer, unggah bukti pembayarannya di bawah ini agar segera kami verifikasi.
                                                         </p>
                                                     </div>
                                                 )}
@@ -1909,7 +1939,8 @@ export default function ClientDashboard({
                             </p>
                             <p className="mt-2 text-muted">
                                 Bila acara hanya tidak jadi di tanggal ini, pilih <b className="text-ink">Ganti Tanggal Acara</b>
-                                {' '}— uang muka Anda tetap berlaku.
+                                {' '}— uang muka Anda <b className="text-ink">tetap berlaku</b>. Tanggal penggantinya akan
+                                ditinjau lebih dulu oleh Pihak Manajemen karena menyangkut ketersediaan venue.
                             </p>
                         </div>
 

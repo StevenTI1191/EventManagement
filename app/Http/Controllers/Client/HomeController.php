@@ -56,6 +56,9 @@ class HomeController extends Controller
             'portfolio'  => $portfolio,
             'upcoming'   => $upcoming,
             'venue'      => $venue,
+            // Nilai fasilitas yang disediakan tanpa biaya tambahan — jadi
+            // sorotan utama bagian venue. 0 berarti nominalnya disembunyikan.
+            'venueNilai' => (int) config('perusahaan.venue.nilai_fasilitas'),
             'stats'      => $stats,
             'isLoggedIn' => auth('client')->check(),
             'auth'       => ['user' => auth('client')->user()],

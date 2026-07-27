@@ -26,7 +26,7 @@ const IconYoutube = () => (
     </svg>
 );
 
-export default function Home({ portfolio, upcoming, venue = [], stats, isLoggedIn, auth }) {
+export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, stats, isLoggedIn, auth }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen]     = useState(false);
     const [selectedEvent, setSelectedEvent]   = useState(null);
@@ -322,13 +322,32 @@ export default function Home({ portfolio, upcoming, venue = [], stats, isLoggedI
             {venue.length > 0 && (
                 <section id="venue" className="py-24 bg-surface border-t border-line">
                     <div className="px-6 mx-auto max-w-7xl">
-                        <div className="mb-16 text-center">
-                            <p className="mb-4 text-sm font-bold tracking-widest uppercase text-gold">Sudah Tersedia di Tempat</p>
-                            <h2 className="text-4xl font-black text-ink md:text-5xl">Fasilitas <span className="text-gold">Venue</span></h2>
+                        <div className="mb-12 text-center">
+                            <span className="inline-block px-4 py-1.5 mb-4 text-xs font-black tracking-widest text-white uppercase rounded-full bg-gold-grad shadow-gold">
+                                Free of Charge
+                            </span>
+                            <h2 className="text-4xl font-black text-ink md:text-5xl">
+                                Gratis <span className="text-gold">Fasilitas Venue</span>
+                            </h2>
                             <p className="max-w-2xl mx-auto mt-4 text-muted">
-                                Anda tidak perlu menyewa terpisah — fasilitas berikut sudah menjadi bagian dari venue kami.
+                                Sebagai bentuk dukungan penuh dari kami, seluruh fasilitas berikut sudah tersedia di tempat
+                                <b className="text-ink"> tanpa biaya tambahan</b> — Anda tidak perlu menyewanya terpisah.
                             </p>
                         </div>
+
+                        {/* Nilai fasilitas dijadikan angka besar: inilah yang paling
+                            terasa bagi calon klien saat membandingkan penawaran. */}
+                        {venueNilai > 0 && (
+                            <div className="max-w-3xl p-8 mx-auto mb-12 text-center border bg-gradient-to-r from-gold-soft to-transparent border-gold-2 rounded-3xl">
+                                <p className="text-xs font-black tracking-widest uppercase text-muted">Total nilai fasilitas yang Anda hemat</p>
+                                <p className="mt-2 text-4xl font-black md:text-5xl text-gold">
+                                    ±Rp {venueNilai.toLocaleString('id-ID')}
+                                </p>
+                                <p className="mt-3 text-sm text-muted">
+                                    Sudah termasuk dalam kerja sama, bukan biaya tambahan.
+                                </p>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                             {venue.map((v) => (

@@ -102,9 +102,18 @@
         <div class="note"><b>Catatan:</b> {{ $invoice->keterangan }}</div>
     @endif
 
-    <div class="note" style="margin-top:16px;">
-        Mohon lakukan pembayaran ke rekening resmi PT Laksamana Muda Bersatu, lalu unggah bukti pembayaran
-        melalui akun klien Anda pada sistem agar dapat segera kami verifikasi.
+    {{-- Rekening tujuan dicantumkan langsung pada dokumen supaya klien tidak
+         perlu menanyakannya lagi. Datanya dari config/perusahaan.php. --}}
+    <div class="sec" style="margin-top:16px;">Pembayaran via Transfer ke</div>
+    <table class="detail">
+        <tr><td class="k">Bank</td><td class="v">{{ config('perusahaan.bank.nama') }}</td></tr>
+        <tr><td class="k">No. Rekening</td><td class="v"><b>{{ config('perusahaan.bank.rekening') }}</b></td></tr>
+        <tr><td class="k">Atas Nama</td><td class="v">{{ config('perusahaan.bank.atas_nama') }}</td></tr>
+    </table>
+
+    <div class="note" style="margin-top:12px;">
+        Setelah melakukan transfer, mohon unggah bukti pembayaran melalui akun klien Anda pada sistem
+        agar dapat segera kami verifikasi. Pembayaran hanya kami terima melalui rekening di atas.
     </div>
 
     <div class="foot">

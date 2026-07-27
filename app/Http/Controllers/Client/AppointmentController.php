@@ -99,6 +99,9 @@ class AppointmentController extends Controller
                     Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN];
 
         return Inertia::render('Client/Dashboard', [
+            // Rekening tujuan pembayaran — ditampilkan pada panel Pembayaran
+            // supaya klien tak perlu menanyakan ke mana harus mentransfer.
+            'rekening'          => config('perusahaan.bank'),
             'appointments'      => $appointments,
             'events'            => $events,
             'penawaran'         => $penawaran,
