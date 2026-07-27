@@ -55,7 +55,7 @@ const CustomPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, n
     );
 };
 
-export default function Dashboard({ auth, stats, recentEvents, salesChart, kategoriChart, clientTrend, topPic, statusChart }) {
+export default function Dashboard({ auth, stats, recentEvents, salesChart, kategoriChart, clientTrend, topPic, omsetPic = [] }) {
 
     return (
         <ManajemenLayout>
@@ -105,36 +105,45 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
                     </ResponsiveContainer>
                 </div>
 
-                {/* Donut status event */}
+                {/* Capaian tiap PIC Event Marketing.
+                    Menggantikan donut "Status Event": banyaknya acara sudah
+                    terwakili kartu ringkasan di atas, sedangkan yang perlu
+                    dibandingkan Manajemen adalah kontribusi tiap PIC. Nilai
+                    deal disandingkan dengan uang yang benar-benar masuk agar
+                    selisih penagihannya langsung terlihat. */}
                 <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-                    <h3 className="mb-1 text-base font-extrabold text-gray-900">Status Event</h3>
-                    <p className="mb-4 text-xs text-gray-400">Distribusi berdasarkan status</p>
-                    {statusChart?.length > 0 ? (
+                    <h3 className="mb-1 text-base font-extrabold text-gray-900">Capaian Event Marketing</h3>
+                    <p className="mb-4 text-xs text-gray-400">Nilai deal &amp; uang masuk per PIC</p>
+                    {omsetPic?.length > 0 ? (
                         <>
-                            <ResponsiveContainer width="100%" height={170}>
-                                <PieChart>
-                                    <Pie data={statusChart} cx="50%" cy="50%"
-                                        innerRadius={45} outerRadius={80}
-                                        dataKey="value" labelLine={false}
-                                        label={CustomPieLabel}>
-                                        {statusChart.map((_, i) => (
-                                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip formatter={(v, n) => [v + ' event', n]} />
-                                </PieChart>
+                            <ResponsiveContainer width="100%" height={Math.max(170, omsetPic.length * 46)}>
+                                <BarChart data={omsetPic} layout="vertical"
+                                    margin={{ top: 0, right: 12, left: 0, bottom: 0 }} barGap={2}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                                    <XAxis type="number" tickFormatter={fmtShort}
+                                        tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                    <YAxis type="category" dataKey="nama" width={92}
+                                        tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                                    <Tooltip formatter={(v, n) => [fmt(v), n]} />
+                                    <Bar dataKey="nilai_deal" name="Nilai deal" fill="#FF2D55" radius={[0, 4, 4, 0]} />
+                                    <Bar dataKey="uang_masuk" name="Uang masuk" fill="#10b981" radius={[0, 4, 4, 0]} />
+                                </BarChart>
                             </ResponsiveContainer>
-                            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
-                                {statusChart.map((item, i) => (
-                                    <span key={i} className="flex items-center gap-1 text-[11px] text-gray-500">
-                                        <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                                        {item.name} ({item.value})
-                                    </span>
-                                ))}
+                            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
+                                <span className="flex items-center gap-1 text-[11px] text-gray-500">
+                                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#FF2D55' }} />
+                                    Nilai deal
+                                </span>
+                                <span className="flex items-center gap-1 text-[11px] text-gray-500">
+                                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#10b981' }} />
+                                    Uang masuk
+                                </span>
                             </div>
                         </>
                     ) : (
-                        <p className="py-10 text-sm text-center text-gray-400">Belum ada data.</p>
+                        <p className="py-10 text-sm text-center text-gray-400">
+                            Belum ada acara yang ditangani Event Marketing.
+                        </p>
                     )}
                 </div>
             </div>

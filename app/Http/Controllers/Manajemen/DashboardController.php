@@ -72,12 +72,51 @@ class DashboardController extends Controller
                 'total'  => $p->events_count,
             ]);
 
-        // ── Chart 5: Event per status (donut) ────────────────────────────
-        $statusChart = Event::selectRaw('COALESCE(status_event, "Upcoming") as status, COUNT(*) as total')
-            ->terkonfirmasi()
-            ->groupBy('status')
-            ->get()
-            ->map(fn($r) => ['name' => $r->status, 'value' => (int) $r->total]);
+        // ── Chart 5: Capaian omset tiap PIC Event Marketing ──────────────
+        // Menggantikan donut "Status Event" yang hanya menghitung banyaknya
+        // acara — angka itu sudah terwakili kartu ringkasan di atas. Yang
+        // dibutuhkan Manajemen adalah membandingkan kontribusi tiap PIC.
+        //
+        // Definisinya sengaja dibuat sama persis dengan halaman Evaluasi
+        // Kinerja, supaya satu pegawai tidak menunjukkan angka berbeda di dua
+        // layar:
+        //   Nilai deal — kesepakatan acara yang sudah terikat komitmen.
+        //   Uang masuk — pembayaran yang benar-benar tercatat di buku kas.
+        $emIds = Pegawai::whereRaw("LOWER(REPLACE(posisi_pegawai, ' ', '')) = 'eventmarketing'")
+            ->pluck('nama_pegawai', 'id_pegawai');
+
+        if ($emIds->isEmpty()) {
+            $omsetPic = collect();
+        } else {
+            $kunci = $emIds->keys()->all();
+
+            $deal = Event::untukFinance()
+                ->whereIn('id_pegawai', $kunci)
+                ->selectRaw('id_pegawai, SUM(deal_harga_event) as total')
+                ->groupBy('id_pegawai')
+                ->pluck('total', 'id_pegawai');
+
+            // Uang masuk ditarik lewat acara yang dipegang PIC, bukan lewat
+            // pencatat transaksinya — yang diukur kontribusi penanganan acara.
+            $masuk = \App\Models\Transaksi::join('events', 'events.id_event', '=', 'transaksis.id_event')
+                ->whereIn('events.id_pegawai', $kunci)
+                ->selectRaw('events.id_pegawai as pic, SUM(transaksis.nominal) as total')
+                ->groupBy('events.id_pegawai')
+                ->pluck('total', 'pic');
+
+            $omsetPic = $emIds
+                ->map(fn ($nama, $id) => [
+                    'nama'       => $nama,
+                    'nilai_deal' => (float) ($deal[$id] ?? 0),
+                    'uang_masuk' => (float) ($masuk[$id] ?? 0),
+                ])
+                ->values()
+                // Yang belum menghasilkan apa pun tidak ditampilkan agar
+                // grafiknya tetap terbaca; jumlahnya tetap terlihat di Evaluasi.
+                ->filter(fn ($r) => $r['nilai_deal'] > 0 || $r['uang_masuk'] > 0)
+                ->sortByDesc('nilai_deal')
+                ->values();
+        }
 
         return Inertia::render('Manajemen/Dashboard', [
             'stats' => [
@@ -93,7 +132,7 @@ class DashboardController extends Controller
             'kategoriChart' => $kategoriChart,
             'clientTrend'   => $clientTrend,
             'topPic'        => $topPic,
-            'statusChart'   => $statusChart,
+            'omsetPic'      => $omsetPic,
         ]);
     }
 }
