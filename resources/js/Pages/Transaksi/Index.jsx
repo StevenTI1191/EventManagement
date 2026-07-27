@@ -16,7 +16,13 @@ import { ChevronDown, ChevronUp, Plus, Trash2, X, Pencil } from 'lucide-react';
 // dan Manajemen, jadi judulnya ikut prefix, bukan selalu "Finance".
 const LABEL_PERAN = { finance: 'Finance', em: 'Event Marketing', manajemen: 'Manajemen' };
 
-export default function TransaksiIndex({ Layout, prefix, auth, events, filters = {}, counts = {} }) {
+// `bolehUbah` memisahkan peran yang membukukan dari peran yang hanya memantau.
+// Event Marketing memakainya dengan nilai false: ia perlu melihat posisi
+// pembayaran acara yang ditanganinya, tetapi pencatatan, perubahan, dan
+// penghapusan transaksi adalah wewenang Finance. Rute tulisnya pun tidak ada
+// untuk peran itu, jadi menyembunyikan tombolnya di sini mencegah pengguna
+// menekan tombol yang pasti gagal.
+export default function TransaksiIndex({ Layout, prefix, auth, events, filters = {}, counts = {}, bolehUbah = true }) {
     const labelPeran = LABEL_PERAN[prefix] ?? 'Finance';
     const [expandedEvent, setExpandedEvent] = useState(null);
     const [expandedTab, setExpandedTab]     = useState('pembayaran');
@@ -630,10 +636,12 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                 <div>
                                                     <div className="flex items-center justify-between mb-3">
                                                         <p className="text-xs font-bold tracking-widest text-gray-400 uppercase">Rincian Pembayaran</p>
-                                                        <button onClick={() => { setModalBayar(event); formBayar.setData('id_event', event.id_event); }}
-                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FF2D55] text-white text-xs font-bold rounded-lg hover:bg-red-600">
-                                                            <Plus size={12} /> Tambah Pembayaran
-                                                        </button>
+                                                        {bolehUbah && (
+                                                            <button onClick={() => { setModalBayar(event); formBayar.setData('id_event', event.id_event); }}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FF2D55] text-white text-xs font-bold rounded-lg hover:bg-red-600">
+                                                                <Plus size={12} /> Tambah Pembayaran
+                                                            </button>
+                                                        )}
                                                     </div>
                                                     {event.pembayarans.length > 0 ? (
                                                         <table className="w-full mb-4">
@@ -660,16 +668,18 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                                                 : <span className="text-xs text-gray-300">-</span>}
                                                                         </td>
                                                                         <td className="py-2">
-                                                                            <div className="flex items-center gap-1">
-                                                                                <button onClick={() => openEditBayar(p)}
-                                                                                    className="p-1 text-blue-400 rounded-lg hover:text-blue-600 hover:bg-blue-50">
-                                                                                    <Pencil size={13} />
-                                                                                </button>
-                                                                                <button onClick={() => handleDeleteBayar(p.id_transaksi)}
-                                                                                    className="p-1 text-red-400 rounded-lg hover:text-red-600 hover:bg-red-50">
-                                                                                    <Trash2 size={13} />
-                                                                                </button>
-                                                                            </div>
+                                                                            {bolehUbah && (
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <button onClick={() => openEditBayar(p)}
+                                                                                        className="p-1 text-blue-400 rounded-lg hover:text-blue-600 hover:bg-blue-50">
+                                                                                        <Pencil size={13} />
+                                                                                    </button>
+                                                                                    <button onClick={() => handleDeleteBayar(p.id_transaksi)}
+                                                                                        className="p-1 text-red-400 rounded-lg hover:text-red-600 hover:bg-red-50">
+                                                                                        <Trash2 size={13} />
+                                                                                    </button>
+                                                                                </div>
+                                                                            )}
                                                                         </td>
                                                                     </tr>
                                                                 ))}
@@ -700,10 +710,12 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                 <div>
                                                     <div className="flex items-center justify-between mb-3">
                                                         <p className="text-xs font-bold tracking-widest text-gray-400 uppercase">Rincian Pengeluaran & Pemasukan</p>
-                                                        <button onClick={() => { setModalItem(event); formItem.setData('id_event', event.id_event); }}
-                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700">
-                                                            <Plus size={12} /> Tambah Item
-                                                        </button>
+                                                        {bolehUbah && (
+                                                            <button onClick={() => { setModalItem(event); formItem.setData('id_event', event.id_event); }}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700">
+                                                                <Plus size={12} /> Tambah Item
+                                                            </button>
+                                                        )}
                                                     </div>
                                                     {event.pengeluarans.length > 0 ? (
                                                         <table className="w-full mb-4">
@@ -732,16 +744,18 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                                         <td className="py-2 text-sm font-bold text-gray-800">{formatRupiah(item.total)}</td>
                                                                         <td className="py-2 text-sm text-gray-400">{item.keterangan || '-'}</td>
                                                                         <td className="py-2">
-                                                                            <div className="flex items-center gap-1">
-                                                                                <button onClick={() => openEditItem(item)}
-                                                                                    className="p-1 text-blue-400 rounded-lg hover:text-blue-600 hover:bg-blue-50">
-                                                                                    <Pencil size={13} />
-                                                                                </button>
-                                                                                <button onClick={() => handleDeleteItem(item.id_item)}
-                                                                                    className="p-1 text-red-400 rounded-lg hover:text-red-600 hover:bg-red-50">
-                                                                                    <Trash2 size={13} />
-                                                                                </button>
-                                                                            </div>
+                                                                            {bolehUbah && (
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <button onClick={() => openEditItem(item)}
+                                                                                        className="p-1 text-blue-400 rounded-lg hover:text-blue-600 hover:bg-blue-50">
+                                                                                        <Pencil size={13} />
+                                                                                    </button>
+                                                                                    <button onClick={() => handleDeleteItem(item.id_item)}
+                                                                                        className="p-1 text-red-400 rounded-lg hover:text-red-600 hover:bg-red-50">
+                                                                                        <Trash2 size={13} />
+                                                                                    </button>
+                                                                                </div>
+                                                                            )}
                                                                         </td>
                                                                     </tr>
                                                                 ))}
