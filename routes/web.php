@@ -201,6 +201,12 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id_event')->name('manajemen.pipeline.penawaran');
         Route::put('/manajemen/pipeline/{id_event}/batal', [\App\Http\Controllers\Manajemen\PipelineController::class, 'batal'])
             ->whereNumber('id_event')->name('manajemen.pipeline.batal');
+        // --- PERSETUJUAN PENAWARAN (antrean tersendiri, di luar papan) ---
+        // Aksinya tetap memakai rute manajemen.penawaran.setujui / .tolak di
+        // bawah, supaya aturannya tidak terduplikasi di dua tempat.
+        Route::get('/manajemen/persetujuan-penawaran', [\App\Http\Controllers\Manajemen\PersetujuanPenawaranController::class, 'index'])
+            ->name('manajemen.penawaran.index');
+
         // Persetujuan penawaran — dokumen baru dikirim ke klien setelah disetujui.
         Route::patch('/manajemen/pipeline/{id_event}/penawaran/setujui', [\App\Http\Controllers\Manajemen\PipelineController::class, 'setujuiPenawaranAksi'])
             ->whereNumber('id_event')->name('manajemen.penawaran.setujui');

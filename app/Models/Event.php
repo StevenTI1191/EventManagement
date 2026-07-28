@@ -54,6 +54,11 @@ class Event extends Model
     protected $casts = [
         'is_public'     => 'boolean',
         'dari_planning' => 'boolean',
+        // Tanpa cast ini keduanya kembali sebagai string, dan pemanggilan
+        // seperti optional($event->penawaran_diajukan_pada)?->format() gagal
+        // diam-diam menjadi null alih-alih menampilkan tanggalnya.
+        'penawaran_diajukan_pada' => 'datetime',
+        'penawaran_ditinjau_pada' => 'datetime',
     ];
 
     /**

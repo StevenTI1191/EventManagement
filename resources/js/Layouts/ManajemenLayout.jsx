@@ -14,6 +14,7 @@ import {
     ListChecks,
     GitBranch,
     Ban,
+    FileCheck2,
     Menu,
     X,
 } from 'lucide-react';
@@ -57,6 +58,15 @@ export default function ManajemenLayout({ children }) {
             icon: GitBranch,
             href: route('manajemen.pipeline.index'),
             active: currentPath.includes('/manajemen/pipeline'),
+        },
+        {
+            // Antrean yang menunggu keputusan; persetujuannya juga masih bisa
+            // dilakukan dari kartu di papan Pipeline.
+            name: 'Persetujuan Penawaran',
+            icon: FileCheck2,
+            href: route('manajemen.penawaran.index'),
+            active: currentPath.includes('/manajemen/persetujuan-penawaran'),
+            badge: badges.penawaranMenunggu || 0,
         },
         {
             name: 'Planning Event',
