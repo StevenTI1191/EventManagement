@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\VenueFasilitas;
 use App\Traits\ChecksPegawaiRole;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 /**
@@ -21,6 +22,9 @@ class VenueFasilitasController extends Controller
     /** Batas foto: cukup besar untuk tampilan galeri, tidak membebani halaman. */
     private const MAKS_KB = 8192;
 
+    /** Format yang dapat ditampilkan langsung oleh peramban sebagai galeri. */
+    private const FORMAT = ['jpg', 'jpeg', 'png', 'webp'];
+
     public function index()
     {
         $this->checkEventMarketing();
@@ -35,10 +39,18 @@ class VenueFasilitasController extends Controller
         $this->checkEventMarketing();
 
         $data = $this->validasi($request, wajibFoto: true);
-        $data['foto'] = $this->simpanFoto($request);
-        $data['urutan'] = $data['urutan'] ?? ((int) VenueFasilitas::max('urutan') + 1);
+        $data['urutan'] = $this->urutan($data, null);
+        $data['aktif']  = $request->boolean('aktif');
+        $data['foto']   = $this->simpanFoto($request);
 
-        VenueFasilitas::create($data);
+        try {
+            VenueFasilitas::create($data);
+        } catch (\Throwable $e) {
+            // Berkas sudah pindah ke disk sebelum barisnya ditulis; kalau
+            // penulisannya gagal, jangan tinggalkan foto yatim di public/venue.
+            VenueFasilitas::hapusBerkas($data['foto']);
+            throw $e;
+        }
 
         return back()->with('success', 'Fasilitas venue ditambahkan.');
     }
@@ -48,16 +60,34 @@ class VenueFasilitasController extends Controller
         $this->checkEventMarketing();
 
         $fasilitas = VenueFasilitas::findOrFail($id);
-        $data = $this->validasi($request, wajibFoto: false);
 
-        // Foto lama baru dibuang setelah yang baru berhasil tersimpan.
-        if ($request->hasFile('foto')) {
-            $baru = $this->simpanFoto($request);
-            $fasilitas->hapusFoto();
-            $data['foto'] = $baru;
+        $data = $this->validasi($request, wajibFoto: false);
+        $data['urutan'] = $this->urutan($data, $fasilitas);
+        $data['aktif']  = $request->boolean('aktif');
+
+        $fotoLama = $fasilitas->foto;
+        $fotoBaru = $request->hasFile('foto') ? $this->simpanFoto($request) : null;
+
+        if ($fotoBaru) {
+            $data['foto'] = $fotoBaru;
+        } else {
+            // Formulir selalu mengirim kolom foto, kosong pun. Tanpa ini,
+            // menyunting nama fasilitas akan menghapus fotonya.
+            unset($data['foto']);
         }
 
-        $fasilitas->update($data);
+        try {
+            $fasilitas->update($data);
+        } catch (\Throwable $e) {
+            VenueFasilitas::hapusBerkas($fotoBaru);
+            throw $e;
+        }
+
+        // Foto lama baru dibuang setelah barisnya benar-benar tersimpan, supaya
+        // kegagalan penyimpanan tidak meninggalkan baris tanpa foto.
+        if ($fotoBaru) {
+            VenueFasilitas::hapusBerkas($fotoLama);
+        }
 
         return back()->with('success', 'Fasilitas venue diperbarui.');
     }
@@ -79,12 +109,38 @@ class VenueFasilitasController extends Controller
             'keterangan'  => ['nullable', 'string', 'max:500'],
             'urutan'      => ['nullable', 'integer', 'min:0', 'max:999'],
             'aktif'       => ['nullable', 'boolean'],
-            'foto'        => [$wajibFoto ? 'required' : 'nullable', 'file', 'image', 'max:' . self::MAKS_KB],
+            // Sengaja memakai `mimes`, bukan `image`. Aturan `image` ikut
+            // meloloskan SVG, dan SVG yang disajikan dari domain sendiri dapat
+            // menjalankan skrip di peramban pengunjung. `mimes` pun menebak
+            // format dari ISI berkas, bukan dari nama kiriman pengguna.
+            'foto'        => [
+                $wajibFoto ? 'required' : 'nullable',
+                'file',
+                'mimes:' . implode(',', self::FORMAT),
+                'max:' . self::MAKS_KB,
+            ],
         ], [
             'foto.required' => 'Unggah foto fasilitasnya.',
-            'foto.image'    => 'Berkas harus berupa gambar.',
+            'foto.mimes'    => 'Format foto harus JPG, PNG, atau WEBP. Foto dari iPhone berformat HEIC perlu diubah dulu ke JPG.',
             'foto.max'      => 'Ukuran foto maksimal 8 MB.',
+            // Muncul ketika PHP sendiri menolak unggahannya, biasanya karena
+            // upload_max_filesize di server lebih kecil daripada batas di atas.
+            'foto.uploaded' => 'Foto gagal diunggah. Ukurannya kemungkinan melebihi batas yang diizinkan server.',
         ]);
+    }
+
+    /**
+     * Kolom urutan NOT NULL, sedangkan formulir mengirimkannya kosong ketika
+     * pengguna tidak mengisinya. Kosong berarti: pertahankan urutan yang sudah
+     * ada, atau letakkan di posisi terakhir untuk fasilitas baru.
+     */
+    private function urutan(array $data, ?VenueFasilitas $fasilitas): int
+    {
+        if (($data['urutan'] ?? null) !== null) {
+            return (int) $data['urutan'];
+        }
+
+        return $fasilitas->urutan ?? ((int) VenueFasilitas::max('urutan') + 1);
     }
 
     /**
@@ -92,17 +148,24 @@ class VenueFasilitasController extends Controller
      * diturunkan dari MIME hasil pembacaan isi, bukan dari nama kiriman pengguna,
      * supaya berkas tidak bisa mendarat sebagai .php dan dieksekusi Nginx.
      */
-    private function simpanFoto(Request $request): ?string
+    private function simpanFoto(Request $request): string
     {
-        if (! $request->hasFile('foto')) {
-            return null;
-        }
-
         $file = $request->file('foto');
         $dir  = public_path('venue');
 
-        if (! file_exists($dir)) {
-            mkdir($dir, 0755, true);
+        // Di server, public/ sering dimiliki pengguna lain daripada yang
+        // menjalankan PHP. Tanpa pemeriksaan ini galatnya muncul sebagai layar
+        // 500 tanpa keterangan; dengan ini penyebabnya terbaca di formulir.
+        if (! is_dir($dir) && ! @mkdir($dir, 0755, true) && ! is_dir($dir)) {
+            throw ValidationException::withMessages([
+                'foto' => 'Folder penyimpanan foto tidak dapat dibuat. Periksa izin tulis pada folder public.',
+            ]);
+        }
+
+        if (! is_writable($dir)) {
+            throw ValidationException::withMessages([
+                'foto' => 'Folder penyimpanan foto tidak dapat ditulisi. Periksa izin folder public/venue.',
+            ]);
         }
 
         $nama = $file->hashName();

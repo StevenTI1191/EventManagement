@@ -33,15 +33,26 @@ class VenueFasilitas extends Model
         });
     }
 
-    /** Hapus berkas foto dari disk, dijaga agar tak keluar dari public/venue. */
+    /** Hapus berkas foto milik baris ini dari disk. */
     public function hapusFoto(): void
     {
-        if (blank($this->foto)) {
+        self::hapusBerkas($this->foto);
+    }
+
+    /**
+     * Hapus satu berkas foto dari disk, dijaga agar tak keluar dari
+     * public/venue. Dibuat statis karena controller juga perlu membuang berkas
+     * yang terlanjur tersimpan ketika penulisan barisnya gagal — saat itu belum
+     * ada model yang memilikinya.
+     */
+    public static function hapusBerkas(?string $path): void
+    {
+        if (blank($path)) {
             return;
         }
 
         $dir   = realpath(public_path('venue'));
-        $penuh = realpath(public_path($this->foto));
+        $penuh = realpath(public_path($path));
 
         if ($dir && $penuh && str_starts_with($penuh, $dir . DIRECTORY_SEPARATOR)) {
             @unlink($penuh);

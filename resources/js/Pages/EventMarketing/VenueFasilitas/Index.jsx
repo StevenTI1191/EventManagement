@@ -8,19 +8,40 @@ import { Building, Plus, Pencil, Trash2, X, Eye, EyeOff, ImageOff } from 'lucide
  * "Fasilitas Venue" pada surat penawaran, tetapi dapat diubah sewaktu-waktu
  * tanpa menyentuh kode.
  */
+/** Pesan galat satu kolom, tampil tepat di bawah isiannya. */
+const Galat = ({ pesan }) => pesan
+    ? <p className="mb-3 -mt-2 text-xs font-semibold text-red-600">{pesan}</p>
+    : null;
+
 export default function VenueFasilitasIndex({ fasilitas = [] }) {
-    const { flash, errors = {} } = usePage().props;
+    const { flash } = usePage().props;
     const [modal, setModal] = useState(null);   // null | 'baru' | objek fasilitas
     const [hapus, setHapus] = useState(null);
     const [preview, setPreview] = useState(null);
+    // Dinaikkan tiap kali modal dibuka agar isian berkas ikut bersih; menyetel
+    // ulang state form saja tidak mengosongkan elemen <input type="file">.
+    const [kunciFoto, setKunciFoto] = useState(0);
 
     const form = useForm({
         nama: '', spesifikasi: '', keterangan: '', urutan: '', aktif: true, foto: null,
     });
 
+    // Pratinjau berkas lokal memakai blob URL yang harus dilepas sendiri.
+    const gantiPreview = (url) => setPreview((lama) => {
+        if (lama?.startsWith('blob:')) URL.revokeObjectURL(lama);
+        return url;
+    });
+
+    const tutupModal = () => {
+        gantiPreview(null);
+        setModal(null);
+    };
+
     const bukaBaru = () => {
         form.reset(); form.clearErrors();
-        setPreview(null); setModal('baru');
+        gantiPreview(null);
+        setKunciFoto((k) => k + 1);
+        setModal('baru');
     };
 
     const bukaEdit = (f) => {
@@ -29,7 +50,8 @@ export default function VenueFasilitasIndex({ fasilitas = [] }) {
             urutan: f.urutan ?? '', aktif: !!f.aktif, foto: null,
         });
         form.clearErrors();
-        setPreview(f.foto ? `/${f.foto}` : null);
+        gantiPreview(f.foto ? `/${f.foto}` : null);
+        setKunciFoto((k) => k + 1);
         setModal(f);
     };
 
@@ -37,12 +59,13 @@ export default function VenueFasilitasIndex({ fasilitas = [] }) {
         const file = e.target.files?.[0];
         if (!file) return;
         form.setData('foto', file);
-        setPreview(URL.createObjectURL(file));
+        form.clearErrors('foto');
+        gantiPreview(URL.createObjectURL(file));
     };
 
     const simpan = (e) => {
         e.preventDefault();
-        const opsi = { forceFormData: true, preserveScroll: true, onSuccess: () => setModal(null) };
+        const opsi = { forceFormData: true, preserveScroll: true, onSuccess: () => tutupModal() };
         // Rute update memakai POST karena unggahan berkas tidak terkirim lewat PUT.
         if (modal === 'baru') form.post(route('em.venue.store'), opsi);
         else form.post(route('em.venue.update', modal.id), opsi);
@@ -72,9 +95,12 @@ export default function VenueFasilitasIndex({ fasilitas = [] }) {
                 {flash?.success && (
                     <div className="p-3 mb-4 text-sm font-medium text-green-700 border border-green-200 rounded-xl bg-green-50">{flash.success}</div>
                 )}
-                {Object.keys(errors).length > 0 && (
+                {/* Hanya ditampilkan saat modal tertutup — kalau modal terbuka,
+                    kotak ini tertutup lapisan gelapnya dan tidak terbaca.
+                    Galat formulir ditampilkan di dalam modal. */}
+                {!modal && Object.keys(form.errors).length > 0 && (
                     <div className="p-3 mb-4 text-sm font-medium text-red-700 border border-red-200 rounded-xl bg-red-50">
-                        {Object.values(errors).map((m, i) => <p key={i}>{m}</p>)}
+                        {Object.values(form.errors).map((m, i) => <p key={i}>{m}</p>)}
                     </div>
                 )}
 
@@ -119,20 +145,30 @@ export default function VenueFasilitasIndex({ fasilitas = [] }) {
             </div>
 
             {modal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => form.processing || setModal(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => form.processing || tutupModal()}>
                     <div className="w-full max-w-lg p-6 bg-white shadow-xl rounded-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-start justify-between mb-4">
                             <h2 className="text-lg font-extrabold text-gray-900">
                                 {modal === 'baru' ? 'Tambah Fasilitas Venue' : 'Ubah Fasilitas Venue'}
                             </h2>
-                            <button onClick={() => setModal(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                            <button onClick={tutupModal} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
                         </div>
+
+                        {/* Ringkasan galat di dalam modal — dulu kotak ini berada di
+                            halaman belakang sehingga penyimpanan seolah gagal diam-diam. */}
+                        {Object.keys(form.errors).length > 0 && (
+                            <div className="p-3 mb-4 text-sm font-medium text-red-700 border border-red-200 rounded-xl bg-red-50">
+                                <p className="mb-1 font-bold">Fasilitas belum tersimpan:</p>
+                                {Object.values(form.errors).map((m, i) => <p key={i}>• {m}</p>)}
+                            </div>
+                        )}
 
                         <form onSubmit={simpan}>
                             <label className="block mb-1.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Nama fasilitas *</label>
                             <input type="text" value={form.data.nama} onChange={(e) => form.setData('nama', e.target.value)} required
                                 placeholder="Mis. Panggung Utama"
-                                className="w-full px-4 py-2.5 mb-3 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none" />
+                                className={`w-full px-4 py-2.5 mb-3 text-sm border rounded-xl focus:outline-none ${form.errors.nama ? 'border-red-300 focus:border-red-400' : 'border-gray-200 focus:border-[#FF2D55]'}`} />
+                            <Galat pesan={form.errors.nama} />
 
                             <label className="block mb-1.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
                                 Spesifikasi <span className="font-normal normal-case text-gray-400">(opsional)</span>
@@ -151,9 +187,9 @@ export default function VenueFasilitasIndex({ fasilitas = [] }) {
                             <div className="flex gap-3 mb-3">
                                 <div className="flex-1">
                                     <label className="block mb-1.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Urutan</label>
-                                    <input type="number" min={0} value={form.data.urutan} onChange={(e) => form.setData('urutan', e.target.value)}
-                                        placeholder="otomatis"
-                                        className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:border-[#FF2D55] focus:outline-none" />
+                                    <input type="number" min={0} max={999} value={form.data.urutan} onChange={(e) => form.setData('urutan', e.target.value)}
+                                        placeholder={modal === 'baru' ? 'otomatis' : 'tidak diubah'}
+                                        className={`w-full px-4 py-2.5 text-sm border rounded-xl focus:outline-none ${form.errors.urutan ? 'border-red-300 focus:border-red-400' : 'border-gray-200 focus:border-[#FF2D55]'}`} />
                                 </div>
                                 <label className="flex items-end gap-2 pb-3 cursor-pointer">
                                     <input type="checkbox" checked={form.data.aktif} onChange={(e) => form.setData('aktif', e.target.checked)}
@@ -165,14 +201,19 @@ export default function VenueFasilitasIndex({ fasilitas = [] }) {
                             <label className="block mb-1.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
                                 Foto {modal === 'baru' ? '*' : <span className="font-normal normal-case text-gray-400">(kosongkan bila tidak diganti)</span>}
                             </label>
-                            <input type="file" accept="image/*" onChange={pilihFoto}
+                            {/* Format dibatasi di sini juga, bukan hanya di server: dengan
+                                image/* peramban ikut menawarkan HEIC bawaan iPhone yang
+                                nanti ditolak. Menyebut jpeg membuat iOS mengubahnya sendiri. */}
+                            <input key={kunciFoto} type="file" accept="image/jpeg,image/png,image/webp" onChange={pilihFoto}
                                 className="w-full text-xs text-gray-600 file:mr-3 file:px-3 file:py-2 file:text-xs file:font-bold file:border-0 file:rounded-lg file:bg-gray-100" />
+                            <p className="mt-1.5 mb-1 text-[11px] text-gray-400">Format JPG, PNG, atau WEBP. Ukuran maksimal 8 MB.</p>
+                            <Galat pesan={form.errors.foto} />
                             {preview && (
-                                <img src={preview} alt="Pratinjau" className="object-cover w-full mt-3 rounded-xl aspect-video" />
+                                <img src={preview} alt="Pratinjau" className="object-cover w-full mt-2 rounded-xl aspect-video" />
                             )}
 
                             <div className="flex gap-3 mt-5">
-                                <button type="button" onClick={() => setModal(null)} disabled={form.processing}
+                                <button type="button" onClick={tutupModal} disabled={form.processing}
                                     className="flex-1 py-2.5 text-sm font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-60">
                                     Kembali
                                 </button>
