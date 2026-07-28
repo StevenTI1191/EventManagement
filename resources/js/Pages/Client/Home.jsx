@@ -417,7 +417,7 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                             { judul: 'Persiapan berjalan',
                               isi: 'Begitu pembayaran diverifikasi, acara Anda masuk tahap persiapan. Technical meeting dan gladi resik dijadwalkan dan bisa Anda lihat di portal.' },
                             { judul: 'Hari-H & pelunasan',
-                              isi: 'Acara berlangsung sesuai rencana. Sisa pembayaran ditagihkan lewat invoice pelunasan.' },
+                              isi: 'Acara berlangsung sesuai rencana. Pembayaran yang belum terselesaikan ditagihkan lewat invoice pelunasan.' },
                         ].map((l, i) => (
                             <li key={l.judul} className="flex gap-5 p-6 transition-all bg-surface border border-line rounded-2xl hover:border-gold-2">
                                 <span className="flex items-center justify-center w-10 h-10 text-sm font-black text-white rounded-full bg-gold-grad shadow-gold shrink-0">

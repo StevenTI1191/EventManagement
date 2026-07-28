@@ -168,7 +168,7 @@
                 <td class="r">Rp {{ number_format($totalDibayar, 0, ',', '.') }}</td>
             </tr>
             <tr class="sisa">
-                <td colspan="3">{{ $sisa > 0 ? 'Sisa pembayaran' : 'Status' }}</td>
+                <td colspan="3">{{ $sisa > 0 ? 'Belum terbayar' : 'Status' }}</td>
                 <td class="r">{{ $sisa > 0 ? 'Rp ' . number_format($sisa, 0, ',', '.') : 'LUNAS' }}</td>
             </tr>
         </table>

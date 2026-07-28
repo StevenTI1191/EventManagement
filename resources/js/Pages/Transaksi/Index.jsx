@@ -552,7 +552,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Pax</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Deal</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Terbayar</th>
-                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Sisa</th>
+                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Belum Terbayar</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Laba Bersih</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Status</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Aksi</th>
@@ -698,7 +698,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                             <p className="text-sm font-extrabold text-green-600">{formatRupiah(event.total_dibayar)}</p>
                                                         </div>
                                                         <div className="p-3 bg-red-50 rounded-xl">
-                                                            <p className="text-xs text-red-400">Sisa</p>
+                                                            <p className="text-xs text-red-400">Belum Terbayar</p>
                                                             <p className="text-sm font-extrabold text-red-500">{formatRupiah(event.sisa)}</p>
                                                         </div>
                                                     </div>

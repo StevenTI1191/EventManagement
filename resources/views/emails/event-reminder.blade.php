@@ -95,7 +95,7 @@
                     <td>
                         Pelunasan pembayaran
                         @if($sisa > 0)
-                            <strong style="color:#ef4444">(Sisa: Rp {{ number_format($sisa, 0, ',', '.') }})</strong>
+                            <strong style="color:#ef4444">(Belum terbayar: Rp {{ number_format($sisa, 0, ',', '.') }})</strong>
                         @else
                             <strong style="color:#16a34a">(Lunas)</strong>
                         @endif

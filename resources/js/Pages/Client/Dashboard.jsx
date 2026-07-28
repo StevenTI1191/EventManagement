@@ -1167,7 +1167,7 @@ export default function ClientDashboard({
                                                         </div>
                                                         {!lunas && (
                                                             <p className="mt-1 text-[11px] text-orange-700 font-bold">
-                                                                Sisa tagihan: {formatBudget(sisa)}
+                                                                Belum terbayar: {formatBudget(sisa)}
                                                             </p>
                                                         )}
                                                     </div>
@@ -1361,7 +1361,7 @@ export default function ClientDashboard({
                                                             <p className="text-sm font-black text-ok">{formatBudget(dibayar)}</p>
                                                         </div>
                                                         <div className="p-3 bg-paper rounded-xl">
-                                                            <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-0.5">Sisa Tagihan</p>
+                                                            <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-0.5">Belum Terbayar</p>
                                                             <p className={`text-sm font-black ${lunas ? 'text-ok' : 'text-orange-700'}`}>
                                                                 {lunas ? '✓ Lunas' : formatBudget(sisa)}
                                                             </p>
@@ -1566,7 +1566,7 @@ export default function ClientDashboard({
                                         <p className="text-xl font-black text-ok">{formatBudget(totalTerbayar)}</p>
                                     </div>
                                     <div className="p-5 bg-orange-500/5 border border-orange-500/20 rounded-2xl">
-                                        <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Sisa Tagihan</p>
+                                        <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Belum Terbayar</p>
                                         <p className="text-xl font-black text-orange-700">{totalSisa === 0 ? '✓ Lunas' : formatBudget(totalSisa)}</p>
                                     </div>
                                 </div>
@@ -1604,7 +1604,7 @@ export default function ClientDashboard({
                                                 <p className="text-sm font-bold text-ok">{formatBudget(dibayar)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Sisa Tagihan</p>
+                                                <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Belum Terbayar</p>
                                                 <p className={`text-sm font-bold ${lunas ? 'text-ok' : 'text-orange-700'}`}>{lunas ? '✓' : formatBudget(sisa)}</p>
                                             </div>
                                         </div>

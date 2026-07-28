@@ -73,7 +73,7 @@ export default function FinanceDashboard({ kpi, chartData, recentTransaksi, topE
             border: kpi.labaBersih >= 0 ? 'border-blue-100' : 'border-orange-100',
         },
         {
-            label: 'Piutang (Sisa Belum Bayar)',
+            label: 'Piutang (Belum Terbayar)',
             value: fmtShort(kpi.totalPiutang),
             full: fmt(kpi.totalPiutang),
             icon: <AlertCircle size={22} />,
@@ -197,7 +197,7 @@ export default function FinanceDashboard({ kpi, chartData, recentTransaksi, topE
                                 <th className="pb-3 text-xs font-bold text-left text-gray-400">Client</th>
                                 <th className="pb-3 text-xs font-bold text-right text-gray-400">Deal</th>
                                 <th className="pb-3 text-xs font-bold text-right text-gray-400">Terbayar</th>
-                                <th className="pb-3 text-xs font-bold text-right text-gray-400">Sisa</th>
+                                <th className="pb-3 text-xs font-bold text-right text-gray-400">Belum Terbayar</th>
                                 <th className="pb-3 text-xs font-bold text-center text-gray-400">Status</th>
                             </tr>
                         </thead>
