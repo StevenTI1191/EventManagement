@@ -1,0 +1,4 @@
+Folder ini menampung foto fasilitas venue yang diunggah Tim Event Marketing.
+Berkas ini menjaga foldernya tetap ada setelah clone maupun deploy, sebab Git
+tidak melacak folder kosong dan aplikasi tidak boleh bergantung pada izin
+membuat folder baru di dalam public/ pada saat berjalan.

@@ -29,3 +29,8 @@ Thumbs.db
 # Sisa folder upload publik lama (bukti kini di private storage) — jangan track
 /public/bukti-pembayaran/
 /public/bukti/
+
+# Foto fasilitas venue diunggah pengguna: foldernya ikut dilacak agar selalu
+# ada setelah deploy, isinya tidak.
+/public/venue/*
+!/public/venue/.gitkeep

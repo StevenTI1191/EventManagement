@@ -82,11 +82,18 @@ COPY . .
 COPY --from=assets /app/public/build ./public/build
 
 # Set proper permissions
-# Hanya storage & bootstrap/cache yang perlu ditulis www-data (PHP-FPM).
+# Hanya folder yang benar-benar ditulis www-data (PHP-FPM) yang diberikan.
 # JANGAN chown -R seluruh /var/www/html: di overlayfs itu memaksa copy-up
 # puluhan ribu file vendor/ → build bisa macet berjam-jam di VPS disk lambat.
-RUN chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+#
+# public/posters dan public/venue menampung berkas unggahan dan keduanya
+# dipasangi volume bersama di docker-compose. Docker menyalin isi folder
+# BESERTA kepemilikannya saat volume dibuat pertama kali, jadi bila di sini
+# masih milik root, www-data tidak akan pernah bisa menulis ke volumenya.
+# Isinya sedikit, sehingga copy-up-nya murah.
+RUN mkdir -p public/posters public/venue \
+    && chown -R www-data:www-data storage bootstrap/cache public/posters public/venue \
+    && chmod -R 775 storage bootstrap/cache public/posters public/venue
 
 # Copy PHP production settings
 COPY docker/php/php.ini $PHP_INI_DIR/conf.d/99-app.ini

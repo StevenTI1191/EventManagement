@@ -180,11 +180,11 @@ export default function ClientDashboard({
     // Status untuk Event
     const getEventStatusColor = (status) => {
         if (status === 'Deal')      return 'bg-gold-soft text-gold-dim border-gold-2';
-        if (status === 'Upcoming')    return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+        if (status === 'Upcoming')    return 'bg-blue-500/20 text-info border-blue-500/30';
         if (status === 'Penyelesaian') return 'bg-warn-bg text-warn border-warn/30';
-        if (status === 'Done')      return 'bg-green-500/20 text-green-300 border-ok/30';
+        if (status === 'Done')      return 'bg-green-500/20 text-ok border-ok/30';
         if (status === 'Pending')   return 'bg-gold-soft text-gold border-gold-2';
-        if (status === 'Cancelled') return 'bg-red-500/20 text-red-300 border-danger/30';
+        if (status === 'Cancelled') return 'bg-red-500/20 text-danger border-danger/30';
         return 'bg-paper text-muted border-line';
     };
 
@@ -583,7 +583,7 @@ export default function ClientDashboard({
                             <div className="flex items-center gap-3 min-w-0">
                                 <span className="text-xl flex-shrink-0">📋</span>
                                 <div className="min-w-0">
-                                    <p className="text-sm font-bold text-blue-300">Lengkapi profil Anda</p>
+                                    <p className="text-sm font-bold text-info">Lengkapi profil Anda</p>
                                     <p className="text-xs text-info/70 mt-0.5 leading-relaxed">
                                         {kurangPerusahaan && kurangHp
                                             ? 'Nama perusahaan & nomor HP belum diisi — wajib untuk membuat appointment.'
@@ -594,7 +594,7 @@ export default function ClientDashboard({
                                 </div>
                             </div>
                             <Link href={route('client.profile')}
-                                className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-blue-300 border border-blue-500/40 rounded-lg hover:bg-blue-500/15 transition-colors whitespace-nowrap">
+                                className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-info border border-blue-500/40 rounded-lg hover:bg-blue-500/15 transition-colors whitespace-nowrap">
                                 Isi Sekarang →
                             </Link>
                         </div>
@@ -618,25 +618,26 @@ export default function ClientDashboard({
                         const bagian = [];
                         if (perluDP.length)        bagian.push(`uang muka untuk ${perluDP.length} acara`);
                         if (perluPelunasan.length) bagian.push(`pelunasan untuk ${perluPelunasan.length} acara`);
-                        const judul = perluDP.length && !perluPelunasan.length ? 'Segera lunasi DP'
-                                    : !perluDP.length && perluPelunasan.length ? 'Segera lunasi pelunasan'
-                                    : 'Ada tagihan menunggu pembayaran';
+                        const judul = perluDP.length && !perluPelunasan.length ? 'Uang muka menunggu pembayaran'
+                                    : !perluDP.length && perluPelunasan.length ? 'Pelunasan menunggu pembayaran'
+                                    : 'Tagihan menunggu pembayaran';
 
                         return (
-                            <div className="flex flex-col gap-3 p-4 mb-6 border sm:flex-row sm:items-center sm:justify-between bg-orange-500/10 border-orange-500/30 rounded-xl">
+                            <div className="flex flex-col gap-3 p-4 mb-6 border sm:flex-row sm:items-center sm:justify-between bg-warn-bg border-warn/40 rounded-xl">
                                 <div className="flex items-start gap-3 min-w-0">
                                     <span className="flex-shrink-0 text-xl">💳</span>
                                     <div className="min-w-0">
-                                        <p className="text-sm font-bold text-orange-300">{judul}</p>
-                                        <p className="mt-0.5 text-xs leading-relaxed text-orange-200/80">
-                                            Finance sudah menerbitkan invoice {bagian.join(' dan ')}. Mohon dilunasi
-                                            paling lambat sehari sebelum acara agar jadwal Anda tetap aman.
+                                        <p className="text-sm font-bold text-ink">{judul}</p>
+                                        <p className="mt-0.5 text-xs leading-relaxed text-muted">
+                                            Tim Finance telah menerbitkan invoice {bagian.join(' dan ')}. Seluruh
+                                            tagihan kami terima paling lambat tiga hari sebelum pelaksanaan acara,
+                                            sehingga persiapan acara Anda dapat berjalan sesuai jadwal.
                                         </p>
                                     </div>
                                 </div>
                                 <button onClick={() => setActiveTab('payments')}
                                     className="self-start flex-shrink-0 px-3 py-1.5 text-xs font-bold text-white transition-all bg-gold-grad shadow-gold rounded-lg hover:brightness-110 whitespace-nowrap sm:self-auto">
-                                    Lunasi Sekarang →
+                                    Lihat Tagihan →
                                 </button>
                             </div>
                         );
@@ -718,7 +719,7 @@ export default function ClientDashboard({
                                         green:  'bg-ok-bg border-ok/30 hover:shadow-green-500/10',
                                     };
                                     const valueCls = card.accent === 'orange'
-                                        ? 'text-orange-400'
+                                        ? 'text-orange-700'
                                         : card.accent === 'green'
                                             ? 'text-ok'
                                             : 'text-ink';
@@ -774,10 +775,10 @@ export default function ClientDashboard({
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-2 mb-4 sm:grid-cols-4">
-                                        <div><p className="text-[10px] text-muted uppercase tracking-wider">Tanggal</p><p className="text-sm font-bold text-ink">{formatTanggal(p.tgl_mulai_event)}</p></div>
-                                        <div><p className="text-[10px] text-muted uppercase tracking-wider">Lokasi</p><p className="text-sm font-bold text-ink">{p.area_event || '-'}</p></div>
-                                        <div><p className="text-[10px] text-muted uppercase tracking-wider">Tamu</p><p className="text-sm font-bold text-ink">{p.jumlah_pax ? `${p.jumlah_pax} orang` : '-'}</p></div>
-                                        <div><p className="text-[10px] text-muted uppercase tracking-wider">Total</p><p className="text-sm font-black text-gold-dim">{formatBudget(p.deal_harga_event)}</p></div>
+                                        <div><p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Tanggal</p><p className="text-sm font-bold text-ink">{formatTanggal(p.tgl_mulai_event)}</p></div>
+                                        <div><p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Lokasi</p><p className="text-sm font-bold text-ink">{p.area_event || '-'}</p></div>
+                                        <div><p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Tamu</p><p className="text-sm font-bold text-ink">{p.jumlah_pax ? `${p.jumlah_pax} orang` : '-'}</p></div>
+                                        <div><p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Total</p><p className="text-sm font-black text-gold-dim">{formatBudget(p.deal_harga_event)}</p></div>
                                     </div>
 
                                     {p.deskripsi_event && <p className="mb-4 text-sm leading-relaxed text-muted whitespace-pre-line">{p.deskripsi_event}</p>}
@@ -928,19 +929,19 @@ export default function ClientDashboard({
 
                                             <div className="grid grid-cols-2 gap-4 mb-3 md:grid-cols-4">
                                                 <div>
-                                                    <p className="text-[10px] text-muted uppercase tracking-wider">Tanggal Request</p>
+                                                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Tanggal Request</p>
                                                     <p className="text-sm font-bold text-muted">{formatTanggal(apt.tgl_request)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-muted uppercase tracking-wider">Jam</p>
+                                                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Jam</p>
                                                     <p className="text-sm font-bold text-muted">{apt.jam_request || '-'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-muted uppercase tracking-wider">Jumlah Tamu</p>
+                                                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Jumlah Tamu</p>
                                                     <p className="text-sm font-bold text-muted">{apt.jumlah_tamu ? apt.jumlah_tamu + ' orang' : '-'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-muted uppercase tracking-wider">Est. Budget</p>
+                                                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Est. Budget</p>
                                                     <p className="text-sm font-bold text-muted">{formatBudget(apt.estimasi_budget)}</p>
                                                 </div>
                                             </div>
@@ -948,7 +949,7 @@ export default function ClientDashboard({
                                             {apt.status === 'Dikonfirmasi' && apt.tgl_konfirmasi && (
                                                 <div className="p-3 border bg-ok-bg border-green-500/20 rounded-xl">
                                                     <p className="mb-1 text-xs font-bold text-ok">✅ Meeting Dikonfirmasi</p>
-                                                    <p className="text-sm text-green-300">{formatTanggal(apt.tgl_konfirmasi)} {apt.jam_konfirmasi && `pukul ${apt.jam_konfirmasi}`}</p>
+                                                    <p className="text-sm text-ok">{formatTanggal(apt.tgl_konfirmasi)} {apt.jam_konfirmasi && `pukul ${apt.jam_konfirmasi}`}</p>
                                                     {apt.pegawai && (
                                                         <p className="mt-1 text-xs text-green-500/70">
                                                             👤 Dikonfirmasi oleh: <span className="font-bold text-ok">{apt.pegawai.nama_pegawai}</span>
@@ -959,7 +960,7 @@ export default function ClientDashboard({
                                             {apt.status === 'Reschedule' && apt.tgl_konfirmasi && (
                                                 <div className="p-3 border bg-blue-500/10 border-blue-500/20 rounded-xl">
                                                     <p className="mb-1 text-xs font-bold text-info">🔄 Jadwal Diubah</p>
-                                                    <p className="text-sm text-blue-300">{formatTanggal(apt.tgl_konfirmasi)} {apt.jam_konfirmasi && `pukul ${apt.jam_konfirmasi}`}</p>
+                                                    <p className="text-sm text-info">{formatTanggal(apt.tgl_konfirmasi)} {apt.jam_konfirmasi && `pukul ${apt.jam_konfirmasi}`}</p>
                                                     {apt.pegawai && (
                                                         <p className="mt-1 text-xs text-blue-500/70">
                                                             👤 Di-reschedule oleh: <span className="font-bold text-info">{apt.pegawai.nama_pegawai}</span>
@@ -976,14 +977,14 @@ export default function ClientDashboard({
                                             )}
                                             {apt.catatan_em && (
                                                 <div className="p-3 mt-3 bg-paper rounded-xl">
-                                                    <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Catatan dari Tim</p>
+                                                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Catatan dari Tim</p>
                                                     <p className="text-sm text-muted">{apt.catatan_em}</p>
                                                 </div>
                                             )}
                                             {apt.status === 'Dibatalkan' && apt.alasan_batal_client && (
                                                 <div className="p-3 mt-3 bg-danger-bg border border-red-500/20 rounded-xl">
                                                     <p className="text-[10px] text-danger font-bold uppercase tracking-wider mb-1">Alasan Pembatalan (dari kamu)</p>
-                                                    <p className="text-sm text-red-300">{apt.alasan_batal_client}</p>
+                                                    <p className="text-sm text-danger">{apt.alasan_batal_client}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -1165,8 +1166,8 @@ export default function ClientDashboard({
                                                                 style={{ width: `${pct}%`, background: lunas ? '#22c55e' : pct >= 50 ? '#eab308' : '#f97316' }} />
                                                         </div>
                                                         {!lunas && (
-                                                            <p className="mt-1 text-[10px] text-orange-400 font-bold">
-                                                                Kekurangan: {formatBudget(sisa)}
+                                                            <p className="mt-1 text-[11px] text-orange-700 font-bold">
+                                                                Sisa tagihan: {formatBudget(sisa)}
                                                             </p>
                                                         )}
                                                     </div>
@@ -1352,21 +1353,21 @@ export default function ClientDashboard({
                                                 {dealHarga > 0 && (
                                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
                                                         <div className="p-3 bg-paper rounded-xl">
-                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Total Deal</p>
+                                                            <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-0.5">Total Deal</p>
                                                             <p className="text-sm font-black text-gold-dim">{formatBudget(dealHarga)}</p>
                                                         </div>
                                                         <div className="p-3 bg-paper rounded-xl">
-                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Terbayar</p>
+                                                            <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-0.5">Terbayar</p>
                                                             <p className="text-sm font-black text-ok">{formatBudget(dibayar)}</p>
                                                         </div>
                                                         <div className="p-3 bg-paper rounded-xl">
-                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Kekurangan</p>
-                                                            <p className={`text-sm font-black ${lunas ? 'text-ok' : 'text-orange-400'}`}>
+                                                            <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-0.5">Sisa Tagihan</p>
+                                                            <p className={`text-sm font-black ${lunas ? 'text-ok' : 'text-orange-700'}`}>
                                                                 {lunas ? '✓ Lunas' : formatBudget(sisa)}
                                                             </p>
                                                         </div>
                                                         <div className="p-3 bg-paper rounded-xl">
-                                                            <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Progress</p>
+                                                            <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Progress</p>
                                                             <div className="w-full h-1.5 bg-gold-soft rounded-full overflow-hidden">
                                                                 <div className="h-1.5 rounded-full"
                                                                     style={{ width: `${pct}%`, background: lunas ? '#22c55e' : pct >= 50 ? '#eab308' : '#f97316' }} />
@@ -1557,16 +1558,16 @@ export default function ClientDashboard({
                                 {/* Ringkasan keuangan */}
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                     <div className="p-5 bg-surface border border-line rounded-2xl">
-                                        <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Total Tagihan</p>
+                                        <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Total Tagihan</p>
                                         <p className="text-xl font-black text-gold-dim">{formatBudget(totalTagihan)}</p>
                                     </div>
                                     <div className="p-5 bg-green-500/5 border border-green-500/20 rounded-2xl">
-                                        <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Total Terbayar</p>
+                                        <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Total Terbayar</p>
                                         <p className="text-xl font-black text-ok">{formatBudget(totalTerbayar)}</p>
                                     </div>
                                     <div className="p-5 bg-orange-500/5 border border-orange-500/20 rounded-2xl">
-                                        <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Kekurangan</p>
-                                        <p className="text-xl font-black text-orange-400">{totalSisa === 0 ? '✓ Lunas' : formatBudget(totalSisa)}</p>
+                                        <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Sisa Tagihan</p>
+                                        <p className="text-xl font-black text-orange-700">{totalSisa === 0 ? '✓ Lunas' : formatBudget(totalSisa)}</p>
                                     </div>
                                 </div>
 
@@ -1589,22 +1590,22 @@ export default function ClientDashboard({
                                             </div>
                                             {lunas
                                                 ? <span className="px-2 py-1 text-[10px] font-black text-ok bg-ok-bg border border-ok/30 rounded-full flex-shrink-0">✓ LUNAS</span>
-                                                : <span className="px-2 py-1 text-[10px] font-black text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-full flex-shrink-0">{pct}%</span>
+                                                : <span className="px-2 py-1 text-[10px] font-black text-orange-700 bg-orange-500/10 border border-orange-500/30 rounded-full flex-shrink-0">{pct}%</span>
                                             }
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-2 mb-3">
                                             <div>
-                                                <p className="text-[10px] text-muted uppercase tracking-wider">Total</p>
+                                                <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Total</p>
                                                 <p className="text-sm font-bold text-gold-dim">{formatBudget(dealHarga)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] text-muted uppercase tracking-wider">Terbayar</p>
+                                                <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Terbayar</p>
                                                 <p className="text-sm font-bold text-ok">{formatBudget(dibayar)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] text-muted uppercase tracking-wider">Kekurangan</p>
-                                                <p className={`text-sm font-bold ${lunas ? 'text-ok' : 'text-orange-400'}`}>{lunas ? '✓' : formatBudget(sisa)}</p>
+                                                <p className="text-[11px] font-semibold text-muted uppercase tracking-wider">Sisa Tagihan</p>
+                                                <p className={`text-sm font-bold ${lunas ? 'text-ok' : 'text-orange-700'}`}>{lunas ? '✓' : formatBudget(sisa)}</p>
                                             </div>
                                         </div>
 
@@ -1627,7 +1628,7 @@ export default function ClientDashboard({
                                                                 <p className="text-[10px] text-muted truncate">
                                                                     {inv.nomor_invoice}
                                                                     {inv.tgl_jatuh_tempo && inv.status !== 'Lunas' && (
-                                                                        <span className="ml-1 text-orange-400">· jatuh tempo {new Date(inv.tgl_jatuh_tempo).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                                                        <span className="ml-1 text-orange-700">· jatuh tempo {new Date(inv.tgl_jatuh_tempo).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                                                     )}
                                                                 </p>
                                                             </div>
@@ -1805,7 +1806,7 @@ export default function ClientDashboard({
 
                         <div className="p-3 mb-4 bg-danger-bg border border-red-500/20 rounded-xl">
                             <p className="text-xs text-danger font-bold">⚠️ Perhatian</p>
-                            <p className="text-xs text-red-300 mt-1">Appointment yang dibatalkan tidak dapat dikembalikan. Tim kami akan menerima notifikasi pembatalan ini.</p>
+                            <p className="text-xs text-danger mt-1">Appointment yang dibatalkan tidak dapat dikembalikan. Tim kami akan menerima notifikasi pembatalan ini.</p>
                         </div>
 
                         <div className="mb-4">

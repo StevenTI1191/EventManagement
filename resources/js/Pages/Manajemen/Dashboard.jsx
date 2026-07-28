@@ -27,14 +27,22 @@ const fmtShort = (v) => {
 
 const PIE_COLORS = ['#FF2D55','#ff6b35','#fbbf24','#34d399','#60a5fa','#a78bfa','#f472b6'];
 
-const CustomTooltip = ({ active, payload, label }) => {
+/**
+ * Tiap grafik menentukan sendiri cara menulis nilainya lewat `format`. Dulu
+ * tooltip menebak dari besar angkanya — nilai di atas 999 selalu disingkat,
+ * sehingga penjualan terbaca "Rp 22,5 Jt" dan jumlah klien pun akan ikut
+ * berlabel rupiah begitu melewati seribu. Nominal uang kini ditulis utuh
+ * beserta titik pemisah ribuannya, karena di tooltip-lah angka persisnya dibaca.
+ */
+const CustomTooltip = ({ active, payload, label, format }) => {
     if (!active || !payload?.length) return null;
+    const tulis = format ?? ((v) => v);
     return (
         <div className="px-4 py-3 text-sm bg-white border border-gray-100 shadow-xl rounded-2xl">
             <p className="mb-1 font-bold text-gray-700">{label}</p>
             {payload.map((p, i) => (
                 <p key={i} style={{ color: p.color }} className="font-semibold">
-                    {p.name}: {typeof p.value === 'number' && p.value > 999 ? fmtShort(p.value) : p.value}
+                    {p.name}: {tulis(p.value)}
                 </p>
             ))}
         </div>
@@ -98,8 +106,10 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
                         <BarChart data={salesChart} barCategoryGap="35%">
                             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                             <XAxis dataKey="bulan" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                            <YAxis tickFormatter={fmtShort} tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={65} />
-                            <Tooltip content={<CustomTooltip />} />
+                            {/* Sumbu tetap disingkat supaya labelnya tidak saling
+                                menimpa; nominal utuhnya dibaca di tooltip. */}
+                            <YAxis tickFormatter={fmtShort} tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={72} />
+                            <Tooltip content={<CustomTooltip format={fmt} />} cursor={{ fill: '#fff1f4' }} />
                             <Bar dataKey="total" name="Penjualan" fill="#FF2D55" radius={[6,6,0,0]} />
                         </BarChart>
                     </ResponsiveContainer>
@@ -195,7 +205,7 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
                             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                             <XAxis dataKey="bulan" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                             <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={30} />
-                            <Tooltip content={<CustomTooltip />} />
+                            <Tooltip content={<CustomTooltip format={(v) => `${Number(v).toLocaleString('id-ID')} klien`} />} />
                             <Line type="monotone" dataKey="total" name="Client Baru"
                                 stroke="#FF2D55" strokeWidth={2.5}
                                 dot={{ fill: '#FF2D55', r: 4 }}

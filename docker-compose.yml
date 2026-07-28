@@ -27,6 +27,10 @@ services:
       # Poster event di-upload ke public/posters. Harus volume bersama agar
       # (1) persisten saat container recreate, (2) bisa dibaca Nginx.
       - posters_data:/var/www/html/public/posters
+      # Foto fasilitas venue, alasannya sama dengan poster. Tanpa volume ini
+      # foto tersimpan di lapisan container dan hilang begitu container dibuat
+      # ulang, lagi pula Nginx menyajikan ./public milik host — bukan milik app.
+      - venue_data:/var/www/html/public/venue
     env_file: .env
     depends_on:
       mysql:
@@ -49,6 +53,7 @@ services:
     volumes:
       - ./public:/var/www/html/public:ro          # Static files (CSS/JS/img)
       - posters_data:/var/www/html/public/posters:ro  # Poster event (volume bersama dgn app)
+      - venue_data:/var/www/html/public/venue:ro      # Foto fasilitas venue (volume bersama dgn app)
       - storage_data:/var/www/html/storage:ro     # Uploaded files (bukti pembayaran dll)
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro # Config (bisa ganti tanpa rebuild)
       - certbot_conf:/etc/letsencrypt:ro          # SSL certificates
@@ -193,6 +198,8 @@ volumes:
   storage_data:
     driver: local
   posters_data:
+    driver: local
+  venue_data:
     driver: local
   certbot_conf:
     driver: local
