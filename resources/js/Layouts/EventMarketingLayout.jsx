@@ -18,6 +18,7 @@ import {
     Menu,
     X,
     Building,
+    MessagesSquare,
 } from 'lucide-react';
 
 export default function EventMarketingLayout({ children }) {
@@ -52,6 +53,14 @@ export default function EventMarketingLayout({ children }) {
             icon: GitBranch,
             href: route('em.pipeline.index'),
             active: currentPath.includes('/event-marketing/pipeline'),
+        },
+        {
+            // Permintaan penyesuaian penawaran dari klien sebelum ia menerima.
+            name: 'Negosiasi Klien',
+            icon: MessagesSquare,
+            href: route('em.negosiasi.index'),
+            active: currentPath.includes('/event-marketing/negosiasi'),
+            badge: badges.negosiasiMenunggu || 0,
         },
         {
             name: 'Fasilitas Venue',

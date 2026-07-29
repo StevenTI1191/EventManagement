@@ -11,6 +11,7 @@ use App\Traits\BuatKwitansi;
 use App\Traits\KabariRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
@@ -102,6 +103,27 @@ class AppointmentController extends Controller
             // Rekening tujuan pembayaran — ditampilkan pada panel Pembayaran
             // supaya klien tak perlu menanyakan ke mana harus mentransfer.
             'rekening'          => config('perusahaan.bank'),
+            // Negosiasi lanjutan yang sedang berjalan: klien perlu melihat
+            // permintaannya sudah ditanggapi atau belum, dan menerima jadwal
+            // pembahasan bila tim menawarkannya.
+            'negosiasi'         => \App\Models\EventNegosiasi::with('appointment:id,tgl_request,jam_request,status')
+                ->where('client_id', $client->id)
+                ->berjalan()
+                ->latest()
+                ->get()
+                ->map(fn ($n) => [
+                    'id'            => $n->id,
+                    'id_event'      => $n->id_event,
+                    'pesan'         => $n->pesan,
+                    'status'        => $n->status,
+                    'balasan'       => $n->balasan,
+                    'diajukan_pada' => $n->created_at?->translatedFormat('d M Y H:i'),
+                    'meeting'       => $n->appointment ? [
+                        'tanggal' => \Illuminate\Support\Carbon::parse($n->appointment->tgl_request)->translatedFormat('l, d F Y'),
+                        'jam'     => substr($n->appointment->jam_request, 0, 5),
+                    ] : null,
+                ])
+                ->values(),
             'appointments'      => $appointments,
             'events'            => $events,
             'penawaran'         => $penawaran,
@@ -926,8 +948,27 @@ class AppointmentController extends Controller
         $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
         $mintaMeeting = $request->boolean('minta_meeting');
 
+        // Satu permintaan aktif per acara. Tanpa penjagaan ini klien bisa
+        // menumpuk permintaan yang sama dan antrean tim jadi penuh duplikat.
+        if (\App\Models\EventNegosiasi::where('id_event', $event->id_event)->berjalan()->exists()) {
+            return back()->with('error',
+                'Permintaan penyesuaian Anda sebelumnya masih ditangani tim. Mohon tunggu tanggapannya.');
+        }
+
         $jejak = '💬 Klien minta penyesuaian penawaran (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['pesan'])
             . ($mintaMeeting ? ' [minta dijadwalkan meeting ulang]' : '');
+
+        // Dicatat sebagai baris tersendiri, bukan sekadar jejak teks: tim perlu
+        // daftar yang bisa ditindaklanjuti dan klien perlu tahu status
+        // permintaannya. Jejak pada catatan acara tetap ditulis agar riwayat
+        // acara terbaca utuh dalam satu tempat.
+        \App\Models\EventNegosiasi::create([
+            'id_event'      => $event->id_event,
+            'client_id'     => Auth::guard('client')->id(),
+            'pesan'         => trim($data['pesan']),
+            'minta_meeting' => $mintaMeeting,
+            'status'        => \App\Models\EventNegosiasi::DIAJUKAN,
+        ]);
 
         $event->update([
             'tgl_respon_klien' => now(),
@@ -949,6 +990,55 @@ class AppointmentController extends Controller
 
         return back()->with('success', 'Permintaan penyesuaian terkirim. Tim kami akan menindaklanjuti'
             . ($mintaMeeting ? ' dan menjadwalkan meeting ulang.' : '.'));
+    }
+
+    /**
+     * Klien menerima jadwal pembahasan yang ditawarkan tim.
+     *
+     * Appointment-nya sudah dibuat sejak tim membalas — di sini statusnya
+     * dinaikkan menjadi Dikonfirmasi dan jadwal berlakunya ditetapkan, sehingga
+     * pertemuan itu tampil pada kalender seperti appointment lain.
+     */
+    public function terimaJadwalNegosiasi($id)
+    {
+        $negosiasi = \App\Models\EventNegosiasi::with(['appointment', 'event'])
+            ->where('client_id', Auth::guard('client')->id())
+            ->findOrFail($id);
+
+        if ($negosiasi->status !== \App\Models\EventNegosiasi::DIJADWALKAN) {
+            return back()->with('error', 'Tidak ada usulan jadwal yang menunggu persetujuan Anda.');
+        }
+
+        $apt = $negosiasi->appointment;
+        if (! $apt) {
+            return back()->with('error', 'Jadwal pertemuannya tidak ditemukan. Silakan hubungi tim kami.');
+        }
+
+        DB::transaction(function () use ($negosiasi, $apt) {
+            $apt->update([
+                'status'         => 'Dikonfirmasi',
+                'tgl_konfirmasi' => $apt->tgl_request,
+                'jam_konfirmasi' => $apt->jam_request,
+            ]);
+
+            $negosiasi->update(['status' => \App\Models\EventNegosiasi::SELESAI]);
+
+            $jejak = '✅ Klien menerima jadwal pembahasan penawaran ('
+                . now()->translatedFormat('d M Y H:i') . ')';
+            $negosiasi->event?->update([
+                'note_event' => $negosiasi->event->note_event
+                    ? $negosiasi->event->note_event . ' | ' . $jejak : $jejak,
+            ]);
+        });
+
+        $this->kabariRole('EventMarketing',
+            '✅ Jadwal Pembahasan Diterima — ' . ($negosiasi->event?->nama_event ?? '-'),
+            'Klien menerima usulan jadwal pembahasan penawaran pada '
+            . \Illuminate\Support\Carbon::parse($apt->tgl_request)->translatedFormat('l, d F Y')
+            . ' pukul ' . substr($apt->jam_request, 0, 5) . ".\n\n"
+            . 'Pertemuan sudah tercatat pada daftar appointment.');
+
+        return back()->with('success', 'Jadwal pembahasan diterima. Sampai jumpa di pertemuan tersebut.');
     }
 
     /** Kirim email pemberitahuan jelas ke PIC/EM saat klien merespon penawaran. */

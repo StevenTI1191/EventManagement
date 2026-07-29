@@ -11,7 +11,7 @@ import {
 
 export default function ClientDashboard({
     appointments, events, penawaran = [], totalAppointments, totalEvents, slots = [],
-    rekening = {},
+    rekening = {}, negosiasi = [],
 }) {
     const { auth, flash } = usePage().props;
 
@@ -764,7 +764,10 @@ export default function ClientDashboard({
                                 <span className="px-2 py-0.5 text-[10px] font-black bg-gold text-white rounded-full">{penawaran.length}</span>
                             </div>
                             <p className="-mt-1 text-sm text-muted">Tim kami mengirimkan penawaran acara berikut. Tinjau detail &amp; harga, lalu terima atau tolak.</p>
-                            {penawaran.map(p => (
+                            {penawaran.map(p => {
+                                // Permintaan penyesuaian yang sedang berjalan untuk acara ini.
+                                const neg = negosiasi.find(n => n.id_event === p.id_event);
+                                return (
                                 <div key={p.id_event} className="p-5 border-2 shadow-lm bg-surface border-gold-2 rounded-2xl">
                                     <div className="flex items-start justify-between gap-3 mb-3">
                                         <div className="min-w-0">
@@ -817,8 +820,59 @@ export default function ClientDashboard({
                                             </button>
                                         )}
                                     </div>
+
+                                    {/* Negosiasi lanjutan yang sedang berjalan untuk acara ini.
+                                        Ditampilkan agar klien tahu permintaannya sudah ditanggapi
+                                        atau belum, dan dapat menerima jadwal pembahasan. */}
+                                    {neg && (
+                                        <div className="p-4 mt-4 border border-line rounded-xl bg-paper">
+                                            <div className="flex items-center justify-between gap-2 mb-2">
+                                                <p className="text-[11px] font-black tracking-wider uppercase text-muted">
+                                                    Permintaan penyesuaian Anda
+                                                </p>
+                                                <span className={`px-2 py-0.5 text-[10px] font-black rounded-full ${
+                                                    neg.status === 'Diajukan'    ? 'bg-warn-bg text-warn'
+                                                  : neg.status === 'Dijadwalkan' ? 'bg-info-bg text-info'
+                                                  :                                'bg-ok-bg text-ok'}`}>
+                                                    {neg.status === 'Diajukan' ? 'Menunggu tanggapan tim' : neg.status}
+                                                </span>
+                                            </div>
+
+                                            <p className="text-sm text-ink whitespace-pre-line">{neg.pesan}</p>
+                                            <p className="mt-1 text-[11px] text-muted">Diajukan {neg.diajukan_pada}</p>
+
+                                            {neg.balasan && (
+                                                <div className="pt-3 mt-3 border-t border-line">
+                                                    <p className="text-[11px] font-black tracking-wider uppercase text-muted mb-1">Tanggapan tim</p>
+                                                    <p className="text-sm text-ink whitespace-pre-line">{neg.balasan}</p>
+                                                </div>
+                                            )}
+
+                                            {neg.status === 'Dijadwalkan' && neg.meeting && (
+                                                <div className="p-3 mt-3 border rounded-xl border-gold-2 bg-gold-soft">
+                                                    <p className="text-xs font-bold text-ink">
+                                                        📅 Usulan jadwal pembahasan: {neg.meeting.tanggal} pukul {neg.meeting.jam}
+                                                    </p>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (prosesPenawaran) return;
+                                                            setProsesPenawaran(p.id_event);
+                                                            router.post(route('client.negosiasi.terima-jadwal', neg.id), {}, {
+                                                                preserveScroll: true,
+                                                                onFinish: () => setProsesPenawaran(null),
+                                                            });
+                                                        }}
+                                                        disabled={prosesPenawaran === p.id_event}
+                                                        className="w-full py-2 mt-3 text-xs font-black text-white transition-all bg-gold-grad shadow-gold rounded-lg hover:brightness-110 disabled:opacity-60">
+                                                        {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Jadwal Ini'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="py-20 text-center border-2 border-line border-dashed rounded-3xl">
