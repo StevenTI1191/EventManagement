@@ -135,6 +135,17 @@ trait ManagesAppointment
             throw $e;
         }
 
+        // Pertemuan yang lahir dari negosiasi penawaran boleh ditawar balik:
+        // klien mengusulkan hari lain lewat appointment ini, lalu tim
+        // menyetujuinya di sini. Negosiasinya dianggap tuntas begitu jadwalnya
+        // benar-benar disepakati, dari jalur mana pun kesepakatan itu datang —
+        // bukan hanya ketika klien menekan "Terima Jadwal Ini".
+        if (! $reschedule) {
+            \App\Models\EventNegosiasi::where('id_appointment', $appointment->id)
+                ->where('status', \App\Models\EventNegosiasi::DIJADWALKAN)
+                ->update(['status' => \App\Models\EventNegosiasi::SELESAI]);
+        }
+
         $appointment->load('client');
         $tanggal = Carbon::parse($appointment->tgl_konfirmasi)->translatedFormat('d F Y');
 
@@ -169,9 +180,28 @@ trait ManagesAppointment
     {
         $data = $request->validate(['catatan_meeting' => 'nullable|string|max:5000']);
 
-        Appointment::whereIn('status', [...self::SUDAH_DIJADWALKAN, 'Selesai'])
-            ->findOrFail($id)
-            ->update(['catatan_meeting' => $data['catatan_meeting']]);
+        $appointment = Appointment::whereIn('status', [...self::SUDAH_DIJADWALKAN, 'Selesai'])
+            ->findOrFail($id);
+
+        $sebelumnyaKosong = blank($appointment->catatan_meeting);
+
+        $appointment->update(['catatan_meeting' => $data['catatan_meeting']]);
+
+        // Catatan hasil pertemuan kini juga terbaca klien pada riwayat
+        // appointment-nya. Klien dikabari hanya saat catatannya PERTAMA KALI
+        // diisi — penyuntingan berikutnya tidak memberitahu lagi, supaya
+        // memperbaiki salah ketik tidak berubah jadi banjir notifikasi.
+        if ($sebelumnyaKosong && filled($data['catatan_meeting']) && $appointment->client_id) {
+            Notifikasi::create([
+                'judul'        => '📝 Hasil Pertemuan Dicatat',
+                'pesan'        => 'Tim kami mencatat hasil pertemuan "' . $appointment->jenis_event
+                    . '". Silakan tinjau pada riwayat appointment Anda.',
+                'tipe'         => 'appointment',
+                'reference_id' => $appointment->id,
+                'client_id'    => $appointment->client_id,
+                'is_read'      => false,
+            ]);
+        }
 
         return back()->with('success', 'Catatan meeting tersimpan.');
     }

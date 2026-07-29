@@ -866,6 +866,13 @@ export default function ClientDashboard({
                                                         className="w-full py-2 mt-3 text-xs font-black text-white transition-all bg-gold-grad shadow-gold rounded-lg hover:brightness-110 disabled:opacity-60">
                                                         {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Jadwal Ini'}
                                                     </button>
+                                                    {/* Penawaran jadwal berlaku dua arah: bila harinya
+                                                        tidak cocok, klien mengusulkan hari lain dari kartu
+                                                        appointment-nya, lalu tim menyetujuinya. */}
+                                                    <button type="button" onClick={() => setActiveTab('appointments')}
+                                                        className="w-full py-2 mt-2 text-xs font-bold transition-colors border rounded-lg text-gold-dim border-gold-2 hover:bg-surface">
+                                                        Tidak cocok? Usulkan hari lain
+                                                    </button>
                                                 </div>
                                             )}
                                         </div>
@@ -1033,6 +1040,17 @@ export default function ClientDashboard({
                                                 <div className="p-3 mt-3 bg-paper rounded-xl">
                                                     <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Catatan dari Tim</p>
                                                     <p className="text-sm text-muted">{apt.catatan_em}</p>
+                                                </div>
+                                            )}
+                                            {/* Hasil pembahasan yang dicatat tim seusai pertemuan.
+                                                Sebelumnya hanya terbaca di sisi internal, sehingga
+                                                klien tidak pernah tahu apa yang disepakati. */}
+                                            {apt.catatan_meeting && (
+                                                <div className="p-3 mt-3 border rounded-xl border-ok/30 bg-ok-bg">
+                                                    <p className="text-[11px] font-semibold text-ok uppercase tracking-wider mb-1">
+                                                        📝 Hasil Pertemuan
+                                                    </p>
+                                                    <p className="text-sm whitespace-pre-line text-ink">{apt.catatan_meeting}</p>
                                                 </div>
                                             )}
                                             {apt.status === 'Dibatalkan' && apt.alasan_batal_client && (
