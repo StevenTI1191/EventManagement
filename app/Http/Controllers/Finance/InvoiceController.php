@@ -134,13 +134,17 @@ class InvoiceController extends Controller
     {
         $this->checkFinance();
 
-        $invoice = Invoice::with('event')->findOrFail($id_invoice);
+        // Baris invoice dikunci LEBIH DULU, baru statusnya diperiksa. Sebelumnya
+        // pemeriksaan berada di luar transaksi: dua permintaan yang tiba nyaris
+        // bersamaan — mis. tombol ditekan dua kali, atau dua petugas Finance
+        // sekaligus — sama-sama lolos pemeriksaan lalu sama-sama mencatat
+        // transaksi pelunasan, sehingga uang yang sama masuk buku kas dua kali.
+        $invoice = DB::transaction(function () use ($id_invoice) {
+            $invoice = Invoice::with('event')->lockForUpdate()->findOrFail($id_invoice);
 
-        if ($invoice->status === Invoice::STATUS_LUNAS) {
-            return back()->with('error', 'Invoice ini sudah berstatus lunas.');
-        }
-
-        DB::transaction(function () use ($invoice) {
+            if ($invoice->status === Invoice::STATUS_LUNAS) {
+                return null;   // sudah diselesaikan permintaan lain
+            }
             // Catat pembayaran ke buku kas untuk sisa tagihan invoice ini yang
             // belum tertutup bukti. Tanpa transaksi ini: (1) uangnya tidak masuk
             // laporan Finance, dan (2) status Lunas bisa terbalik jadi Belum saat
@@ -169,7 +173,13 @@ class InvoiceController extends Controller
                 $invoice->event->update(['status_event' => Event::STATUS_UPCOMING]);
                 Invoice::terbitkanPelunasanOtomatis($invoice->event->refresh());
             }
+
+            return $invoice;
         });
+
+        if (! $invoice) {
+            return back()->with('error', 'Invoice ini sudah berstatus lunas.');
+        }
 
         $pesan = $invoice->tipe === Invoice::TIPE_DP
             ? 'DP ditandai lunas & tercatat di buku kas. Status event berubah menjadi Upcoming.'

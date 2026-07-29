@@ -216,15 +216,55 @@ Schedule::call(function () {
 |--------------------------------------------------------------------------
 */
 Schedule::call(function () {
-    foreach ([14, 30] as $hari) {
+    // Sudah ditegur pada putaran ini — supaya prospek yang melewati kedua
+    // ambang sekaligus hanya menerima teguran ambang tertingginya.
+    $sudah = [];
+
+    // Ambang terbesar didahulukan agar prospek yang mandek 40 hari menerima
+    // teguran "30 hari", bukan "14 hari".
+    foreach ([30, 14] as $hari) {
+        // Dulu dicocokkan pada tanggal PERSIS. Bila penjadwal tidak berjalan
+        // hari itu — server mati, container dibuat ulang, atau deploy — prospek
+        // yang jatuh tepat pada hari tersebut tidak akan pernah ditegur sama
+        // sekali. Kini yang dipakai adalah "sudah melewati ambang", lalu
+        // pengulangannya dijaga kunci sekali-kirim di bawah.
         $events = Event::with('pic')
             ->prospekAktif()
-            ->whereDate('updated_at', now()->subDays($hari)->toDateString())
+            ->whereDate('updated_at', '<=', now()->subDays($hari)->toDateString())
             ->get();
 
         foreach ($events as $event) {
+            if (isset($sudah[$event->id_event])) {
+                continue;
+            }
+
+            // Satu ambang satu kali. Kuncinya menyertakan tanggal pergerakan
+            // terakhir, jadi prospek yang sempat bergerak lalu mandek lagi tetap
+            // bisa ditegur ulang pada ambang yang sama.
+            $kunci = "mandek:{$event->id_event}:{$hari}:"
+                . optional($event->updated_at)->toDateString();
+
+            if (! \Illuminate\Support\Facades\Cache::add($kunci, true, now()->addDays(120))) {
+                continue;
+            }
+
+            // Ambang yang lebih rendah ikut ditandai terpakai. Tanpa ini,
+            // prospek yang sudah ditegur pada ambang 30 akan ditegur lagi
+            // keesokan harinya pada ambang 14 — sebab penjaga $sudah hanya
+            // berlaku dalam satu putaran, sedangkan kuncinya per ambang.
+            foreach ([14] as $lebihRendah) {
+                if ($lebihRendah < $hari) {
+                    \Illuminate\Support\Facades\Cache::add(
+                        "mandek:{$event->id_event}:{$lebihRendah}:" . optional($event->updated_at)->toDateString(),
+                        true, now()->addDays(120));
+                }
+            }
+
+            $sudah[$event->id_event] = true;
+
             $email = $event->pic?->email_pegawai;
             if (! $email) {
+                \Log::warning("Prospek mandek tanpa email PIC: {$event->nama_event} ({$hari} hari).");
                 continue;
             }
 
@@ -333,6 +373,32 @@ Schedule::call(function () {
             } catch (\Exception $e) {
                 \Log::warning('Email pengingat follow-up gagal: ' . $e->getMessage());
             }
+        } else {
+            // Tidak ada tujuan surel. Kolom email pegawai wajib diisi, jadi
+            // keadaan ini praktis hanya muncul ketika pencatatnya SUDAH DIHAPUS
+            // — relasi id_pegawai memang dilepas menjadi null, bukan ikut
+            // menghapus catatan follow-up-nya. Sebelumnya pengingat itu langsung
+            // ditandai terkirim sehingga lenyap tanpa seorang pun tahu. Kini
+            // dialihkan ke seluruh Tim Event Marketing agar tetap ditindaklanjuti.
+            $konteks = $f->event ? " untuk event \"{$f->event->nama_event}\"" : '';
+            $pesan   = "Waktunya follow-up {$klien}{$konteks}, namun pencatatnya "
+                     . ($f->pegawai?->nama_pegawai ? "({$f->pegawai->nama_pegawai}) " : '')
+                     . "belum memiliki alamat email.\n\n"
+                     . "Catatan terakhir:\n\"{$f->catatan}\"\n\n"
+                     . ($f->client?->no_telp_client ? "No. WhatsApp: {$f->client->no_telp_client}\n\n" : '')
+                     . 'Mohon ada yang menindaklanjuti.';
+
+            foreach (\App\Models\Pegawai::whereRaw("LOWER(REPLACE(posisi_pegawai, ' ', '')) = 'eventmarketing'")
+                        ->whereNotNull('email_pegawai')->pluck('email_pegawai') as $tujuan) {
+                try {
+                    Mail::raw($pesan . "\n\n— Sistem Laksamana Muda",
+                        fn ($m) => $m->to($tujuan)->subject("🔔 Follow-up tanpa PIC beremail — {$klien}"));
+                } catch (\Exception $e) {
+                    \Log::warning('Email pengalihan follow-up gagal: ' . $e->getMessage());
+                }
+            }
+
+            \Log::warning("Follow-up dialihkan ke tim: pencatat tanpa email (klien {$klien}).");
         }
 
         // Tandai terkirim walau email gagal, agar tidak menumpuk percobaan tiap hari.
