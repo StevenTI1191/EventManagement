@@ -69,8 +69,18 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
     const tolakPenawaran = () =>
         aksiPenawaran(routes.tolakPenawaran, tolakKartu, { catatan: catatanTolak }, () => setTolakKartu(null));
 
-    const ajukanPenawaran = (kartu) =>
+    const ajukanPenawaran = (kartu) => {
+        // Mengajukan revisi berarti penawaran yang SUDAH sampai ke klien
+        // digantikan. Dikonfirmasi lebih dulu agar tidak tertekan tanpa sengaja.
+        if (kartu.penawaran_status === 'Disetujui'
+            && ! window.confirm(
+                `Ajukan REVISI penawaran untuk "${kartu.nama_event}"?\n\n`
+                + 'Penawaran yang sudah disetujui akan digantikan dan harus ditinjau '
+                + 'Pihak Manajemen lagi. Dokumen terbaru dikirim ke klien setelah disetujui.')) {
+            return;
+        }
         aksiPenawaran(routes.ajukanPenawaran, kartu, {}, () => {});
+    };
 
     const [expandedCard, setExpandedCard] = useState(null);
 
@@ -332,6 +342,17 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                                                                 <button type="button" onClick={() => ajukanPenawaran(e)}
                                                                     className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-white rounded bg-amber-600 hover:bg-amber-700">
                                                                     <Send size={10} /> Ajukan ke Manajemen
+                                                                </button>
+                                                            )}
+                                                            {/* Penawaran kedua sesudah pembahasan dengan klien.
+                                                                Harga atau lingkupnya berubah, jadi wajib melewati
+                                                                Manajemen lagi — dokumen barunya menyusul setelah
+                                                                disetujui. */}
+                                                            {routes.ajukanPenawaran && e.penawaran_status === 'Disetujui' && (
+                                                                <button type="button" onClick={() => ajukanPenawaran(e)}
+                                                                    title="Ajukan penawaran revisi ke Manajemen setelah pembahasan dengan klien"
+                                                                    className="flex items-center gap-0.5 px-1.5 py-1 text-[9px] font-bold text-white rounded bg-violet-600 hover:bg-violet-700">
+                                                                    <Send size={10} /> Ajukan Revisi
                                                                 </button>
                                                             )}
                                                         </div>

@@ -117,11 +117,13 @@ trait ManagesPersetujuanPenawaran
             ->whereIn('status_event', [Event::STATUS_NEGOTIATION, Event::STATUS_DEAL])
             ->findOrFail($id_event);
 
-        if ($event->penawaranDisetujui()) {
-            throw ValidationException::withMessages([
-                'penawaran' => 'Penawaran ini sudah disetujui dan terkirim ke klien.',
-            ]);
-        }
+        // Penawaran yang sudah disetujui boleh diajukan lagi sebagai REVISI —
+        // inilah jalur penawaran kedua sesudah pembahasan dengan klien. Harga
+        // atau lingkupnya berubah, jadi dokumennya tidak boleh langsung
+        // terkirim; ia harus melewati Pihak Manajemen sekali lagi seperti
+        // penawaran pertama. Dokumen barunya terbentuk sendiri saat persetujuan
+        // karena PDF disusun dari data acara terkini.
+        $revisi = $event->penawaranDisetujui();
 
         if ($event->penawaran_status === Event::PENAWARAN_DIAJUKAN) {
             throw ValidationException::withMessages([
@@ -141,17 +143,32 @@ trait ManagesPersetujuanPenawaran
             'penawaran_diajukan_oleh' => Auth::guard('pegawai')->id(),
             'penawaran_diajukan_pada' => now(),
             'penawaran_catatan'       => null,
+            // Keputusan klien atas penawaran LAMA tidak berlaku lagi bagi
+            // penawaran yang isinya sudah berubah. Tanpa pengosongan ini, klien
+            // yang sebelumnya menolak tidak akan pernah bisa merespons revisinya.
+            'respon_klien'            => $revisi ? null : $event->respon_klien,
+            'tgl_respon_klien'        => $revisi ? null : $event->tgl_respon_klien,
         ]);
 
-        $this->jejakPenawaran($event, '📝 Penawaran diajukan ulang ke Manajemen');
+        $this->jejakPenawaran($event, $revisi
+            ? '📝 Revisi penawaran diajukan ke Manajemen'
+            : '📝 Penawaran diajukan ulang ke Manajemen');
 
         $this->kabariRole('Manajemen',
-            '📝 Penawaran menunggu persetujuan — ' . $event->nama_event,
-            "Penawaran untuk acara \"{$event->nama_event}\" diajukan kembali setelah diperbaiki.\n\n"
+            ($revisi ? '📝 Revisi penawaran menunggu persetujuan — ' : '📝 Penawaran menunggu persetujuan — ')
+            . $event->nama_event,
+            ($revisi
+                ? "Penawaran untuk acara \"{$event->nama_event}\" DIREVISI setelah pembahasan dengan klien.\n\n"
+                : "Penawaran untuk acara \"{$event->nama_event}\" diajukan kembali setelah diperbaiki.\n\n")
             . 'Nilai penawaran: Rp ' . number_format((float) ($event->deal_harga_event ?? 0), 0, ',', '.') . ".\n\n"
+            . ($revisi
+                ? 'Dokumen penawaran terbaru akan dikirimkan ke klien setelah Anda menyetujuinya. '
+                : '')
             . 'Silakan tinjau di papan Pipeline.');
 
-        return back()->with('success', 'Penawaran diajukan ke Manajemen. Akan dikirim ke klien setelah disetujui.');
+        return back()->with('success', $revisi
+            ? 'Revisi penawaran diajukan ke Manajemen. Dokumen terbaru dikirim ke klien setelah disetujui.'
+            : 'Penawaran diajukan ke Manajemen. Akan dikirim ke klien setelah disetujui.');
     }
 
     private function jejakPenawaran(Event $event, string $teks): void
