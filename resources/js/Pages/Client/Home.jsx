@@ -330,8 +330,8 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                                 Gratis <span className="text-gold">Fasilitas Venue</span>
                             </h2>
                             <p className="max-w-2xl mx-auto mt-4 text-muted">
-                                Sebagai bentuk dukungan penuh dari kami, seluruh fasilitas berikut sudah tersedia di tempat
-                                <b className="text-ink"> tanpa biaya tambahan</b> — Anda tidak perlu menyewanya terpisah.
+                                Sebagai bentuk dukungan penuh dari kami, Laksamana Muda menyediakan seluruh fasilitas
+                                berikut <b className="text-ink">tanpa biaya tambahan</b> — Anda tidak perlu menyewanya terpisah.
                             </p>
                         </div>
 
