@@ -28,8 +28,13 @@ docker compose build app queue
 echo "      Restarting services..."
 docker compose up -d --no-deps app queue reverb scheduler
 
-# ── 4. Reload nginx (config/static files mungkin berubah) ─────────────────
-echo "[4/4] Reloading nginx..."
+# ── 4. Terapkan perubahan pada nginx ──────────────────────────────────────
+# `nginx -s reload` HANYA memuat ulang berkas config. Perubahan pada daftar
+# volume — misalnya folder unggahan baru yang harus ikut disajikan Nginx —
+# tidak akan berlaku sebelum containernya dibuat ulang. `up -d` hanya membuat
+# ulang bila definisi servicenya memang berubah, jadi aman dipanggil rutin.
+echo "[4/4] Menerapkan perubahan nginx..."
+docker compose up -d --no-deps nginx
 docker compose exec nginx nginx -s reload
 
 echo ""
