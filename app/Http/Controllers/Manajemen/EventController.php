@@ -263,6 +263,15 @@ class EventController extends Controller
         // Hanya bila jadwalnya sudah utuh; event pipeline yang baru terisi
         // sebagian belum bisa dibandingkan.
         if ($request->filled(['tgl_mulai_event', 'jam_mulai', 'jam_selesai', 'area_event'])) {
+            // Formulir yang tidak menyertakan kolom loading — mis. panel sunting
+            // pada halaman detail acara — tetap harus diperiksa memakai rentang
+            // loading yang TERSIMPAN. Tanpa cadangan ini, pemeriksaannya jatuh ke
+            // jam acara saja sehingga rentangnya lebih sempit daripada rentang
+            // yang sebenarnya ditempati acara itu, dan jadwal yang bentrok bisa
+            // lolos tersimpan.
+            $loadingIn  = $request->input('loading_in',  $event->loading_in);
+            $loadingOut = $request->input('loading_out', $event->loading_out);
+
             $bentrok = Event::checkBentrok(
                 $request->tgl_mulai_event,
                 $request->jam_mulai,
@@ -270,8 +279,8 @@ class EventController extends Controller
                 $request->area_event,
                 $id,
                 $request->tgl_selesai_event,
-                $request->loading_in,
-                $request->loading_out
+                $loadingIn,
+                $loadingOut
             );
 
             if ($bentrok) {

@@ -154,6 +154,10 @@ export default function EventDetail({
         tgl_selesai_event: event.tgl_selesai_event ? String(event.tgl_selesai_event).slice(0, 10) : '',
         jam_mulai: event.jam_mulai ? String(event.jam_mulai).slice(0, 5) : '',
         jam_selesai: event.jam_selesai ? String(event.jam_selesai).slice(0, 5) : '',
+        // Rentang inilah yang menentukan bentrok antar acara di area yang sama,
+        // bukan jam acaranya. Boleh dikosongkan — sistem memakai jam acara.
+        loading_in: event.loading_in ? String(event.loading_in).slice(0, 5) : '',
+        loading_out: event.loading_out ? String(event.loading_out).slice(0, 5) : '',
         area_event: event.area_event || '',
         jumlah_pax: event.jumlah_pax ?? '',
         harga_per_pax: event.harga_per_pax ?? '',
@@ -644,6 +648,20 @@ export default function EventDetail({
                         </Field>
                         <Field label="Jam Selesai" error={errors.jam_selesai}>
                             <TimePicker value={data.jam_selesai} onChange={(v) => setData('jam_selesai', v)} />
+                        </Field>
+                    </div>
+
+                    {/* Rentang loading menentukan bentrok jadwal di area yang sama —
+                        tim sudah menguasai tempat sejak bongkar-pasang, di luar jam
+                        acara. Dikosongkan berarti memakai jam acara. */}
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <Field label="Loading In" hint="Opsional — jam tim mulai masuk lokasi. Kosong berarti mengikuti jam mulai acara."
+                            error={errors.loading_in}>
+                            <TimePicker value={data.loading_in} onChange={(v) => setData('loading_in', v)} />
+                        </Field>
+                        <Field label="Loading Out" hint="Opsional — jam tim selesai membongkar. Kosong berarti mengikuti jam selesai acara."
+                            error={errors.loading_out}>
+                            <TimePicker value={data.loading_out} onChange={(v) => setData('loading_out', v)} />
                         </Field>
                     </div>
 
