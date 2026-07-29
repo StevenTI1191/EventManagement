@@ -86,6 +86,17 @@ export default function ClientDashboard({
     const [expandedEvent, setExpandedEvent] = useState(null);
     const panelOpen   = (id, tab) => expandedEvent?.id === id && expandedEvent?.tab === tab;
     const togglePanel = (id, tab) => setExpandedEvent(prev => (prev?.id === id && prev?.tab === tab) ? null : { id, tab });
+
+    // Kategori to-do yang sedang dibuka. Sengaja terpisah dari panelOpen di atas
+    // yang hanya menyimpan satu panel: klien sering perlu membandingkan dua
+    // kategori sekaligus, jadi beberapa boleh terbuka bersamaan. Kuncinya
+    // menyertakan id acara supaya dua acara tidak saling mempengaruhi.
+    const [katBuka, setKatBuka] = useState({});
+    const katOpen   = (idEvent, kat) => !!katBuka[`${idEvent}::${kat}`];
+    const toggleKat = (idEvent, kat) => setKatBuka(prev => {
+        const k = `${idEvent}::${kat}`;
+        return { ...prev, [k]: !prev[k] };
+    });
     const [uploadModal, setUploadModal]     = useState(null);
     // Validasi bukti di sisi klien saat file dipilih (tipe/ukuran + pratinjau).
     const [buktiWarning, setBuktiWarning]   = useState('');
@@ -1366,14 +1377,22 @@ export default function ClientDashboard({
                                                     const selesai = tugas.filter(t => t.status_tugas === 'Done').length;
                                                     const persenSiap = total ? Math.round((selesai / total) * 100) : 0;
 
+                                                    // Daftar tugasnya ikut disimpan per kategori, bukan
+                                                    // hanya hitungannya, supaya rinciannya bisa dibuka.
                                                     const perKat = {};
                                                     tugas.forEach(t => {
                                                         const k = t.kategori || 'Lainnya';
-                                                        if (!perKat[k]) perKat[k] = { total: 0, done: 0, ongoing: 0 };
+                                                        if (!perKat[k]) perKat[k] = { total: 0, done: 0, ongoing: 0, items: [] };
                                                         perKat[k].total++;
+                                                        perKat[k].items.push(t);
                                                         if (t.status_tugas === 'Done') perKat[k].done++;
                                                         else if ((t.progress || 0) > 0) perKat[k].ongoing++;
                                                     });
+
+                                                    // Urutan tampil mengikuti urutan yang ditetapkan tim.
+                                                    Object.values(perKat).forEach(c => c.items.sort(
+                                                        (a, b) => (a.urutan ?? 0) - (b.urutan ?? 0)
+                                                    ));
 
                                                     const statusKat = (c) =>
                                                         c.done === c.total ? { label: 'Selesai', cls: 'bg-ok-bg text-ok border-ok/30' }
@@ -1392,13 +1411,54 @@ export default function ClientDashboard({
                                                             <div className="space-y-1.5">
                                                                 {Object.entries(perKat).map(([kat, c]) => {
                                                                     const s = statusKat(c);
+                                                                    const buka = katOpen(event.id_event, kat);
+                                                                    const persenKat = c.total ? Math.round((c.done / c.total) * 100) : 0;
+
                                                                     return (
-                                                                        <div key={kat} className="flex items-center justify-between gap-2 px-3 py-2 bg-paper rounded-lg">
-                                                                            <span className="text-xs font-bold truncate text-ink">{kat}</span>
-                                                                            <div className="flex items-center flex-shrink-0 gap-2">
-                                                                                <span className="text-[10px] text-muted">{c.done}/{c.total}</span>
-                                                                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${s.cls}`}>{s.label}</span>
-                                                                            </div>
+                                                                        <div key={kat} className="overflow-hidden rounded-lg bg-paper">
+                                                                            <button type="button" onClick={() => toggleKat(event.id_event, kat)}
+                                                                                aria-expanded={buka}
+                                                                                className="flex items-center justify-between w-full gap-2 px-3 py-2 text-left transition-colors hover:bg-line/40">
+                                                                                <span className="flex items-center min-w-0 gap-1.5">
+                                                                                    <ChevronDown size={13}
+                                                                                        className={`text-muted-2 flex-shrink-0 transition-transform ${buka ? 'rotate-180' : ''}`} />
+                                                                                    <span className="text-xs font-bold truncate text-ink">{kat}</span>
+                                                                                </span>
+                                                                                <span className="flex items-center flex-shrink-0 gap-2">
+                                                                                    <span className="text-[10px] text-muted">{c.done}/{c.total}</span>
+                                                                                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${s.cls}`}>{s.label}</span>
+                                                                                </span>
+                                                                            </button>
+
+                                                                            {buka && (
+                                                                                <div className="px-3 pt-1 pb-3 border-t border-line">
+                                                                                    <div className="w-full h-1 my-2 overflow-hidden rounded-full bg-line">
+                                                                                        <div className="h-1 rounded-full bg-gold-grad" style={{ width: `${persenKat}%` }} />
+                                                                                    </div>
+                                                                                    <ul className="space-y-1.5">
+                                                                                        {c.items.map(t => {
+                                                                                            const done = t.status_tugas === 'Done';
+                                                                                            const jalan = !done && (t.progress || 0) > 0;
+                                                                                            return (
+                                                                                                <li key={t.id_tugas} className="flex items-start gap-2">
+                                                                                                    <span className={`mt-0.5 flex-shrink-0 text-[11px] ${done ? 'text-ok' : jalan ? 'text-info' : 'text-muted-2'}`}>
+                                                                                                        {done ? '✓' : jalan ? '◐' : '○'}
+                                                                                                    </span>
+                                                                                                    <span className="min-w-0">
+                                                                                                        <span className={`block text-[11px] leading-snug ${done ? 'text-muted line-through' : 'text-ink'}`}>
+                                                                                                            {t.nama_tugas}
+                                                                                                        </span>
+                                                                                                        <span className="text-[10px] text-muted-2">
+                                                                                                            {done ? 'Selesai' : jalan ? `Berjalan ${t.progress}%` : 'Belum dimulai'}
+                                                                                                            {t.deadline_tugas && ` · target ${formatTanggal(t.deadline_tugas)}`}
+                                                                                                        </span>
+                                                                                                    </span>
+                                                                                                </li>
+                                                                                            );
+                                                                                        })}
+                                                                                    </ul>
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     );
                                                                 })}
