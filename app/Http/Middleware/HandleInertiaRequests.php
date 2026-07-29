@@ -52,9 +52,14 @@ class HandleInertiaRequests extends Middleware
             $badges['penawaranMenunggu']  = \App\Models\Event::penawaranMenunggu()->count();
         }
 
-        // Permintaan penyesuaian penawaran dari klien yang belum ditanggapi.
+        // Negosiasi yang menunggu tindakan tim: permintaan baru yang belum
+        // ditanggapi, ditambah jadwal pembahasan yang ditawar balik klien —
+        // keduanya sama-sama menggantung sampai tim memutuskan.
         if ($posisi === 'eventmarketing') {
-            $badges['negosiasiMenunggu'] = \App\Models\EventNegosiasi::menungguTim()->count();
+            $badges['negosiasiMenunggu'] = \App\Models\EventNegosiasi::menungguTim()->count()
+                + \App\Models\EventNegosiasi::where('status', \App\Models\EventNegosiasi::DIJADWALKAN)
+                    ->whereHas('appointment', fn ($q) => $q->whereNotNull('usulan_tgl'))
+                    ->count();
         }
 
         return $badges;

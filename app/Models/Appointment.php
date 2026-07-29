@@ -30,6 +30,18 @@ class Appointment extends Model
     public const SQL_JAM_BERLAKU = '(CASE WHEN tgl_konfirmasi IS NOT NULL AND jam_konfirmasi IS NOT NULL THEN jam_konfirmasi ELSE jam_request END)';
 
     /** Versi PHP dari aturan di atas: ['tgl' => 'Y-m-d', 'jam' => 'H:i'] atau null. */
+    /**
+     * Negosiasi penawaran yang melahirkan pertemuan ini, bila ada.
+     *
+     * Inilah penanda yang membedakan pertemuan hasil negosiasi dari appointment
+     * biasa — tanpa perlu kolom tambahan, sebab keterkaitannya memang sudah
+     * tercatat di sisi negosiasi.
+     */
+    public function negosiasi(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(EventNegosiasi::class, 'id_appointment', 'id');
+    }
+
     public function jadwalBerlaku(): ?array
     {
         $pakaiKonfirmasi = filled($this->tgl_konfirmasi) && filled($this->jam_konfirmasi);

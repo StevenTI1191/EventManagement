@@ -31,6 +31,9 @@ class AppointmentController extends Controller
         $client = Auth::guard('client')->user();
 
         $appointments = Appointment::with('pegawai')
+            // Pertemuan yang lahir dari negosiasi penawaran ditandai supaya klien
+            // dapat membedakannya dari janji temu biasa yang ia pesan sendiri.
+            ->withExists('negosiasi as dari_negosiasi')
             ->where('client_id', $client->id)
             ->latest()
             ->take(50)
@@ -106,23 +109,39 @@ class AppointmentController extends Controller
             // Negosiasi lanjutan yang sedang berjalan: klien perlu melihat
             // permintaannya sudah ditanggapi atau belum, dan menerima jadwal
             // pembahasan bila tim menawarkannya.
-            'negosiasi'         => \App\Models\EventNegosiasi::with('appointment:id,tgl_request,jam_request,status')
+            'negosiasi'         => \App\Models\EventNegosiasi::with('appointment')
                 ->where('client_id', $client->id)
                 ->berjalan()
                 ->latest()
                 ->get()
-                ->map(fn ($n) => [
-                    'id'            => $n->id,
-                    'id_event'      => $n->id_event,
-                    'pesan'         => $n->pesan,
-                    'status'        => $n->status,
-                    'balasan'       => $n->balasan,
-                    'diajukan_pada' => $n->created_at?->translatedFormat('d M Y H:i'),
-                    'meeting'       => $n->appointment ? [
-                        'tanggal' => \Illuminate\Support\Carbon::parse($n->appointment->tgl_request)->translatedFormat('l, d F Y'),
-                        'jam'     => substr($n->appointment->jam_request, 0, 5),
-                    ] : null,
-                ])
+                ->map(function ($n) {
+                    // Jadwal yang DITAMPILKAN harus jadwal yang berlaku, bukan
+                    // tanggal usulan pertama. Setelah dijadwalkan ulang, membaca
+                    // tgl_request saja membuat panel ini terus menunjukkan
+                    // tanggal lama padahal pertemuannya sudah pindah.
+                    $berlaku = $n->appointment?->jadwalBerlaku();
+
+                    return [
+                        'id'            => $n->id,
+                        'id_event'      => $n->id_event,
+                        'pesan'         => $n->pesan,
+                        'status'        => $n->status,
+                        'balasan'       => $n->balasan,
+                        'diajukan_pada' => $n->created_at?->translatedFormat('d M Y H:i'),
+                        'meeting'       => $berlaku ? [
+                            'tanggal' => \Illuminate\Support\Carbon::parse($berlaku['tgl'])->translatedFormat('l, d F Y'),
+                            'jam'     => $berlaku['jam'],
+                            'status'  => $n->appointment->status,
+                        ] : null,
+                        // Usulan klien yang belum ditinjau tim — supaya klien
+                        // tahu permintaannya sedang berjalan dan tidak
+                        // mengusulkan berulang kali.
+                        'usulan' => filled($n->appointment?->usulan_tgl) ? [
+                            'tanggal' => \Illuminate\Support\Carbon::parse($n->appointment->usulan_tgl)->translatedFormat('l, d F Y'),
+                            'jam'     => substr((string) $n->appointment->usulan_jam, 0, 5),
+                        ] : null,
+                    ];
+                })
                 ->values(),
             'appointments'      => $appointments,
             'events'            => $events,

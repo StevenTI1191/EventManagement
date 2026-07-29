@@ -22,7 +22,7 @@ const Rinci = ({ icon: Icon, children }) => (
     </span>
 );
 
-export default function NegosiasiIndex({ menunggu = [], riwayat = [], slots = [] }) {
+export default function NegosiasiIndex({ menunggu = [], usulan = [], riwayat = [], slots = [] }) {
     const { flash, errors = {} } = usePage().props;
     const [aksi, setAksi] = useState(null);       // { n, tipe: 'balas' | 'tutup' }
     const [balasan, setBalasan] = useState('');
@@ -154,6 +154,59 @@ export default function NegosiasiIndex({ menunggu = [], riwayat = [], slots = []
                             </div>
                         ))}
                     </div>
+                )}
+
+                {/* Klien menawar hari lain atas jadwal yang kita usulkan.
+                    Keputusannya diambil di halaman Appointment, karena di sanalah
+                    pemeriksaan slot dan konfirmasi jadwal berada. */}
+                {usulan.length > 0 && (
+                    <>
+                        <h2 className="mt-10 mb-3 text-sm font-black tracking-wider uppercase text-violet-600">
+                            Klien Mengusulkan Hari Lain ({usulan.length})
+                        </h2>
+                        <div className="space-y-3">
+                            {usulan.map((n) => (
+                                <div key={n.id} className="p-5 border shadow-sm bg-violet-50/60 border-violet-200 rounded-2xl">
+                                    <div className="flex flex-wrap items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                            <p className="text-base font-extrabold text-gray-900">{n.nama_event}</p>
+                                            <p className="text-[11px] text-gray-500">{n.client || '—'} • PIC {n.pic || '—'}</p>
+                                        </div>
+                                        <span className={`px-2 py-0.5 text-[11px] font-bold rounded-full ${badgeStatus(n.status)}`}>
+                                            {n.status}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-3 mt-4 sm:grid-cols-2">
+                                        <div className="p-3 bg-white border border-gray-200 rounded-xl">
+                                            <p className="text-[10px] font-black tracking-wider text-gray-400 uppercase mb-1">Jadwal yang kita tawarkan</p>
+                                            <p className="text-sm font-bold text-gray-700">
+                                                {n.meeting ? `${n.meeting.tanggal} • ${n.meeting.jam}` : '—'}
+                                            </p>
+                                        </div>
+                                        <div className="p-3 bg-white border rounded-xl border-violet-300">
+                                            <p className="text-[10px] font-black tracking-wider text-violet-500 uppercase mb-1">Usulan klien</p>
+                                            <p className="text-sm font-black text-violet-700">
+                                                {n.usulan_klien.tanggal} • {n.usulan_klien.jam}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {n.usulan_klien.catatan && (
+                                        <p className="mt-3 text-xs italic text-gray-600">"{n.usulan_klien.catatan}"</p>
+                                    )}
+
+                                    <a href={route('em.appointment.index')}
+                                        className="flex items-center justify-center w-full gap-1.5 px-3 py-2 mt-4 text-xs font-black text-white bg-violet-600 rounded-xl hover:brightness-110">
+                                        <CalendarCheck2 size={14} /> Tinjau di halaman Appointment
+                                    </a>
+                                    <p className="mt-2 text-[11px] text-center text-gray-500">
+                                        Setujui atau tolak usulannya di sana — jadwalnya diperiksa terhadap slot yang sudah terpakai.
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </>
                 )}
 
                 {riwayat.length > 0 && (

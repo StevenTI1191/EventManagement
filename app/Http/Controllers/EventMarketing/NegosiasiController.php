@@ -38,7 +38,8 @@ class NegosiasiController extends Controller
             'event:id_event,nama_event,status_event,tgl_mulai_event,area_event,jumlah_pax,deal_harga_event,id_client,id_pegawai',
             'event.pic:id_pegawai,nama_pegawai',
             'client:id,nama_client,perusahaan_client,email_client',
-            'appointment:id,tgl_request,jam_request,tgl_konfirmasi,jam_konfirmasi,status',
+            // Kolom usulan ikut diperlukan, jadi appointment dimuat utuh.
+            'appointment',
             'penangan:id_pegawai,nama_pegawai',
         ];
 
@@ -46,13 +47,26 @@ class NegosiasiController extends Controller
         $menunggu = EventNegosiasi::with($relasi)->menungguTim()
             ->orderBy('created_at')->get()->map(fn ($n) => $this->baris($n));
 
+        // Klien menawar hari lain atas jadwal yang kita usulkan. Dipisahkan
+        // sebagai antrean tersendiri: statusnya memang sudah Dijadwalkan, tetapi
+        // bila hanya masuk riwayat, permintaan itu tidak akan pernah terlihat
+        // sebagai sesuatu yang menunggu keputusan tim.
+        $usulan = EventNegosiasi::with($relasi)
+            ->where('status', EventNegosiasi::DIJADWALKAN)
+            ->whereHas('appointment', fn ($q) => $q->whereNotNull('usulan_tgl'))
+            ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
+
+        $sudahTampil = $menunggu->pluck('id')->merge($usulan->pluck('id'))->all();
+
         $riwayat = EventNegosiasi::with($relasi)
+            ->whereNotIn('id', $sudahTampil)
             ->where('status', '!=', EventNegosiasi::DIAJUKAN)
             ->orderByDesc('updated_at')->take(self::RIWAYAT)
             ->get()->map(fn ($n) => $this->baris($n));
 
         return Inertia::render('EventMarketing/Negosiasi/Index', [
             'menunggu' => $menunggu->values(),
+            'usulan'   => $usulan->values(),
             'riwayat'  => $riwayat->values(),
             'slots'    => SlotMeeting::kerja(),
         ]);
@@ -243,10 +257,20 @@ class NegosiasiController extends Controller
             'ditangani_oleh' => $n->penangan?->nama_pegawai,
             'ditangani_pada' => $n->ditangani_pada?->translatedFormat('d M Y H:i'),
 
-            'meeting' => $apt ? [
-                'tanggal' => \Illuminate\Support\Carbon::parse($apt->tgl_konfirmasi ?: $apt->tgl_request)->translatedFormat('d M Y'),
-                'jam'     => substr($apt->jam_konfirmasi ?: $apt->jam_request, 0, 5),
+            'id_appointment' => $apt?->id,
+
+            'meeting' => $apt?->jadwalBerlaku() ? [
+                'tanggal' => \Illuminate\Support\Carbon::parse($apt->jadwalBerlaku()['tgl'])->translatedFormat('d M Y'),
+                'jam'     => $apt->jadwalBerlaku()['jam'],
                 'status'  => $apt->status,
+            ] : null,
+
+            // Klien menawar hari lain. Ditandai di sini supaya tim tidak perlu
+            // membuka halaman Appointment satu per satu untuk mengetahuinya.
+            'usulan_klien' => filled($apt?->usulan_tgl) ? [
+                'tanggal' => \Illuminate\Support\Carbon::parse($apt->usulan_tgl)->translatedFormat('d M Y'),
+                'jam'     => substr((string) $apt->usulan_jam, 0, 5),
+                'catatan' => $apt->usulan_catatan,
             ] : null,
         ];
     }

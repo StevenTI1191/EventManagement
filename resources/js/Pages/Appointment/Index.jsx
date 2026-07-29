@@ -121,7 +121,16 @@ export default function ManajemenAppointmentIndex({ Layout, routes = {},  auth, 
                             <div className="flex-1 min-w-0">
                                 {/* Header row */}
                                 <div className="flex flex-wrap items-center gap-3 mb-3">
-                                    <h3 className="text-base font-extrabold text-gray-900">{apt.jenis_event}</h3>
+                                    <h3 className="text-base font-extrabold text-gray-900">
+                                        {apt.jenis_event}
+                                        {/* Dibedakan dari janji temu biasa: pertemuan ini lahir
+                                            dari negosiasi penawaran dan menentukan kelanjutannya. */}
+                                        {apt.dari_negosiasi && (
+                                            <span className="ml-2 px-2 py-0.5 align-middle text-[10px] font-black rounded-full bg-violet-100 text-violet-700">
+                                                NEGOSIASI PENAWARAN
+                                            </span>
+                                        )}
+                                    </h3>
                                     <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full border ${statusColor(apt.status)}`}>
                                         {apt.status}
                                     </span>

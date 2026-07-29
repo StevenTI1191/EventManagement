@@ -43,7 +43,11 @@ trait ManagesAppointment
             'search' => 'nullable|string|max:255',
         ]);
 
-        $query = Appointment::with(['client', 'pegawai'])->latest();
+        // Pertemuan hasil negosiasi penawaran ditandai agar tim tahu konteksnya
+        // tanpa harus menebak dari deskripsinya.
+        $query = Appointment::with(['client', 'pegawai'])
+            ->withExists('negosiasi as dari_negosiasi')
+            ->latest();
 
         if ($request->filled('status') && $request->status !== 'Semua') {
             $query->where('status', $request->status);

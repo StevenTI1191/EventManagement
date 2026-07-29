@@ -848,7 +848,26 @@ export default function ClientDashboard({
                                                 </div>
                                             )}
 
-                                            {neg.status === 'Dijadwalkan' && neg.meeting && (
+                                            {/* Usulan klien yang masih ditinjau tim: jadwal belum
+                                                berubah, jadi tombol menerima tidak ditampilkan agar
+                                                klien tidak menyetujui tanggal yang sudah ia tolak. */}
+                                            {neg.status === 'Dijadwalkan' && neg.usulan && (
+                                                <div className="p-3 mt-3 border rounded-xl border-info/30 bg-info-bg">
+                                                    <p className="text-xs font-bold text-ink">
+                                                        🔄 Usulan hari lain dari Anda: {neg.usulan.tanggal} pukul {neg.usulan.jam}
+                                                    </p>
+                                                    {neg.meeting && (
+                                                        <p className="mt-1 text-[11px] text-muted">
+                                                            Jadwal yang masih berlaku: {neg.meeting.tanggal} pukul {neg.meeting.jam}.
+                                                        </p>
+                                                    )}
+                                                    <p className="mt-1 text-[11px] text-muted">
+                                                        Menunggu tim meninjau. Jadwal pembahasan belum berubah sampai disetujui.
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {neg.status === 'Dijadwalkan' && neg.meeting && !neg.usulan && (
                                                 <div className="p-3 mt-3 border rounded-xl border-gold-2 bg-gold-soft">
                                                     <p className="text-xs font-bold text-ink">
                                                         📅 Usulan jadwal pembahasan: {neg.meeting.tanggal} pukul {neg.meeting.jam}
@@ -957,7 +976,16 @@ export default function ClientDashboard({
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-3 mb-3 flex-wrap">
-                                                <h3 className="text-base font-black text-ink sm:text-lg">{apt.jenis_event}</h3>
+                                                <h3 className="text-base font-black text-ink sm:text-lg">
+                                                    {apt.jenis_event}
+                                                    {/* Pertemuan hasil negosiasi penawaran, bukan
+                                                        janji temu yang klien pesan sendiri. */}
+                                                    {apt.dari_negosiasi && (
+                                                        <span className="ml-2 px-2 py-0.5 align-middle text-[10px] font-black rounded-full bg-info-bg text-info">
+                                                            PEMBAHASAN PENAWARAN
+                                                        </span>
+                                                    )}
+                                                </h3>
                                                 <span className={`flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full border ${getStatusColor(apt.status)}`}>
                                                     {getStatusIcon(apt.status)}
                                                     {getAptStatusLabel(apt.status)}
