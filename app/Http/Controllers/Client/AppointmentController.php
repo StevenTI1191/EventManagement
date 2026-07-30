@@ -483,13 +483,22 @@ class AppointmentController extends Controller
         if ($appointment->id_pegawai && ($email = optional($appointment->pegawai)->email_pegawai)) {
             $tglUsul = \Illuminate\Support\Carbon::parse($data['usulan_tgl'])->translatedFormat('d F Y');
             try {
-                Mail::raw(
-                    "Klien {$client->nama_client} mengusulkan jadwal meeting alternatif untuk \"{$appointment->jenis_event}\": "
-                        . "{$tglUsul} pukul {$data['usulan_jam']}."
-                        . (! empty($data['usulan_catatan']) ? "\n\nCatatan klien: {$data['usulan_catatan']}" : '')
-                        . "\n\nSilakan tinjau & konfirmasi di menu Appointment.",
-                    fn ($m) => $m->to($email)->subject('🔄 Usulan Jadwal Meeting dari Klien — ' . $appointment->jenis_event)
-                );
+                Mail::to($email)->send(new \App\Mail\PesanSistem(
+                    judul:    'Usulan Jadwal Meeting dari Klien',
+                    subjudul: $appointment->jenis_event,
+                    ikon:     '🔄',
+                    nada:     'jingga',
+                    paragraf: ['Klien mengusulkan jadwal pertemuan yang berbeda dari yang ditetapkan tim.'],
+                    sorotan:  $tglUsul . ' pukul ' . $data['usulan_jam'],
+                    detail:   array_filter([
+                        'Klien'        => $client->nama_client,
+                        'Jenis'        => $appointment->jenis_event,
+                        'Usulan klien' => $tglUsul . ', ' . $data['usulan_jam'],
+                    ]),
+                    catatan:  $data['usulan_catatan'] ?? null,
+                    penutup:  'Silakan tinjau dan konfirmasi melalui menu Appointment.',
+                    subjek:   'Usulan jadwal dari klien — ' . $appointment->jenis_event,
+                ));
             } catch (\Exception $e) {
                 \Log::warning('Email usulan jadwal gagal: ' . $e->getMessage());
             }
@@ -1006,7 +1015,22 @@ class AppointmentController extends Controller
                  . "\n\nSilakan tindak lanjuti — sesuaikan penawaran lalu kirim ulang, atau jadwalkan meeting.\n\n"
                  . '— Sistem Laksamana Muda';
             try {
-                Mail::raw($isi, fn ($m) => $m->to($email)->subject('💬 Permintaan Penyesuaian Penawaran — ' . $event->nama_event));
+                Mail::to($email)->send(new \App\Mail\PesanSistem(
+                    judul:    'Permintaan Penyesuaian Penawaran',
+                    subjudul: $event->nama_event,
+                    ikon:     '💬',
+                    nada:     'jingga',
+                    paragraf: ['Klien meminta penyesuaian atas penawaran yang sudah dikirimkan.'],
+                    detail:   array_filter([
+                        'Acara'          => $event->nama_event,
+                        'Klien'          => $event->client?->nama_client,
+                        'Nilai saat ini' => 'Rp ' . number_format((float) ($event->deal_harga_event ?? 0), 0, ',', '.'),
+                        'Minta pertemuan'=> $mintaMeeting ? 'Ya' : 'Tidak',
+                    ]),
+                    catatan:  trim($data['pesan']),
+                    penutup:  'Tanggapi dari menu Negosiasi Klien — sesuaikan penawaran, atau tawarkan jadwal pembahasan.',
+                    subjek:   'Permintaan penyesuaian — ' . $event->nama_event,
+                ));
             } catch (\Exception $e) {
                 \Log::warning('Email penyesuaian penawaran gagal: ' . $e->getMessage());
             }
@@ -1160,9 +1184,20 @@ class AppointmentController extends Controller
         }
 
         try {
-            Mail::raw($isi, function ($m) use ($email, $subjek) {
-                $m->to($email)->subject($subjek);
-            });
+            $diterima = $aksi === 'Diterima';
+            Mail::to($email)->send(new \App\Mail\PesanSistem(
+                judul:    $diterima ? 'Penawaran Diterima Klien' : 'Penawaran Ditolak Klien',
+                subjudul: $nama,
+                ikon:     $diterima ? '✅' : '❌',
+                nada:     $diterima ? 'hijau' : 'merah',
+                paragraf: [$isi],
+                detail:   array_filter([
+                    'Acara'     => $nama,
+                    'Keputusan' => $aksi,
+                ]),
+                catatan:  $alasan ?: null,
+                subjek:   $subjek,
+            ));
         } catch (\Exception $e) {
             \Log::warning('Email respon penawaran ke PIC gagal: ' . $e->getMessage());
         }

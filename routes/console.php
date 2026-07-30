@@ -139,9 +139,21 @@ Schedule::call(function () {
                        . "berstatus Done.\n\n— Sistem Laksamana Muda";
 
                 try {
-                    Mail::raw($pesan, function ($m) use ($email, $event) {
-                        $m->to($email)->subject("🔧 Belum tuntas — {$event->nama_event}");
-                    });
+                    Mail::to($email)->send(new \App\Mail\PesanSistem(
+                        judul:    'Acara Belum Dapat Ditutup',
+                        subjudul: $event->nama_event,
+                        ikon:     '🔧',
+                        nada:     'jingga',
+                        paragraf: [$pesan],
+                        detail:   [
+                            'Acara'           => $event->nama_event,
+                            'Berakhir'        => \Illuminate\Support\Carbon::parse($tglAkhir)->translatedFormat('d F Y'),
+                            'Belum tuntas'    => implode(', ', $kurang),
+                            'Status saat ini' => 'Penyelesaian',
+                        ],
+                        penutup:  'Setelah semuanya beres, acara otomatis berstatus Done.',
+                        subjek:   'Belum tuntas — ' . $event->nama_event,
+                    ));
                 } catch (\Exception $e) {
                     \Log::warning('Email event penyelesaian gagal: ' . $e->getMessage());
                 }
@@ -184,9 +196,26 @@ Schedule::call(function () {
 
             if ($email = $client?->email_client) {
                 try {
-                    Mail::raw($pesan . "\n\nTerima kasih.\n— PT Laksamana Muda Bersatu", function ($m) use ($email, $judul) {
-                        $m->to($email)->subject($judul . ' — Laksamana Muda');
-                    });
+                    $bank = config('perusahaan.bank');
+                    Mail::to($email)->send(new \App\Mail\PesanSistem(
+                        judul:    $lewat ? 'Tagihan Lewat Jatuh Tempo' : 'Pengingat Pembayaran',
+                        subjudul: $nama,
+                        ikon:     $lewat ? '⏰' : '💳',
+                        nada:     $lewat ? 'merah' : 'emas',
+                        sapaan:   'Halo, ' . ($client?->nama_client ?? 'Klien') . '!',
+                        paragraf: [$pesan],
+                        sorotan:  'Jumlah yang harus dibayar: ' . $nominal,
+                        detail:   [
+                            'Acara'         => $nama,
+                            'Jenis tagihan' => $inv->tipe,
+                            'Jatuh tempo'   => $tempo,
+                            'Bank'          => $bank['nama'],
+                            'No. Rekening'  => $bank['rekening'],
+                            'Atas Nama'     => $bank['atas_nama'],
+                        ],
+                        penutup:  'Setelah melakukan transfer, mohon unggah bukti pembayaran melalui portal klien agar dapat segera kami verifikasi.',
+                        subjek:   $lewat ? 'Tagihan lewat jatuh tempo' : 'Pengingat pembayaran',
+                    ));
                 } catch (\Exception $e) {
                     \Log::warning('Email reminder invoice gagal: ' . $e->getMessage());
                 }
@@ -282,10 +311,21 @@ Schedule::call(function () {
                     . "di papan Pipeline bila prospek tidak dilanjutkan.\n\n— Sistem Laksamana Muda";
 
             try {
-                Mail::raw($pesan, function ($m) use ($email, $event, $belumDiajukan) {
-                    $awalan = $belumDiajukan ? '💡 Rencana belum diajukan' : '⏳ Prospek mandek';
-                    $m->to($email)->subject("{$awalan} — {$event->nama_event}");
-                });
+                Mail::to($email)->send(new \App\Mail\PesanSistem(
+                    judul:    $belumDiajukan ? 'Rencana Belum Diajukan' : 'Prospek Tanpa Pergerakan',
+                    subjudul: $event->nama_event,
+                    ikon:     $belumDiajukan ? '💡' : '⏳',
+                    nada:     $hari >= 30 ? 'merah' : 'jingga',
+                    paragraf: [$pesan],
+                    sorotan:  'Sudah ' . $hari . ' hari tanpa pergerakan',
+                    detail:   [
+                        'Acara'    => $event->nama_event,
+                        'Tahap'    => $event->status_event,
+                        'Nilai'    => 'Rp ' . number_format((float) ($event->deal_harga_event ?? 0), 0, ',', '.'),
+                        'Terakhir bergerak' => optional($event->updated_at)->translatedFormat('d F Y'),
+                    ],
+                    subjek:   ($belumDiajukan ? 'Rencana belum diajukan' : 'Prospek mandek') . ' — ' . $event->nama_event,
+                ));
                 \Log::info("Reminder prospek mandek: {$event->nama_event} ({$hari} hari).");
             } catch (\Exception $e) {
                 \Log::warning('Email prospek mandek gagal: ' . $e->getMessage());
@@ -327,9 +367,23 @@ Schedule::call(function () {
                    . "di papan To-Do.\n\n— Sistem Laksamana Muda";
 
             try {
-                Mail::raw($pesan, function ($m) use ($email, $t) {
-                    $m->to($email)->subject("📌 Deadline tugas — {$t->nama_tugas}");
-                });
+                Mail::to($email)->send(new \App\Mail\PesanSistem(
+                    judul:    'Tenggat Tugas Mendekat',
+                    subjudul: $t->nama_tugas,
+                    ikon:     '📌',
+                    nada:     'biru',
+                    paragraf: [$pesan],
+                    detail:   array_filter([
+                        'Tugas'    => $t->nama_tugas,
+                        'Acara'    => $t->event?->nama_event,
+                        'Kategori' => $t->kategori,
+                        'Tenggat'  => optional($t->deadline_tugas)
+                            ? \Illuminate\Support\Carbon::parse($t->deadline_tugas)->translatedFormat('d F Y') : null,
+                        'Status'   => $t->status_tugas,
+                        'Progres'  => $t->progress !== null ? $t->progress . '%' : null,
+                    ]),
+                    subjek:   'Tenggat tugas — ' . $t->nama_tugas,
+                ));
             } catch (\Exception $e) {
                 \Log::warning('Email deadline tugas gagal: ' . $e->getMessage());
             }
@@ -367,9 +421,21 @@ Schedule::call(function () {
                    . "— Sistem Laksamana Muda";
 
             try {
-                Mail::raw($pesan, function ($m) use ($email, $klien) {
-                    $m->to($email)->subject("🔔 Waktunya follow-up — {$klien}");
-                });
+                Mail::to($email)->send(new \App\Mail\PesanSistem(
+                    judul:    'Waktunya Follow-up Klien',
+                    subjudul: $klien,
+                    ikon:     '🔔',
+                    nada:     'emas',
+                    paragraf: ['Jadwal follow-up yang Anda tetapkan sudah tiba.'],
+                    detail:   array_filter([
+                        'Klien'       => $klien,
+                        'Acara'       => $f->event?->nama_event,
+                        'Tahap'       => $f->event?->status_event,
+                        'No. WhatsApp'=> $f->client?->no_telp_client,
+                    ]),
+                    catatan:  $f->catatan,
+                    subjek:   'Waktunya follow-up — ' . $klien,
+                ));
             } catch (\Exception $e) {
                 \Log::warning('Email pengingat follow-up gagal: ' . $e->getMessage());
             }
@@ -391,8 +457,21 @@ Schedule::call(function () {
             foreach (\App\Models\Pegawai::whereRaw("LOWER(REPLACE(posisi_pegawai, ' ', '')) = 'eventmarketing'")
                         ->whereNotNull('email_pegawai')->pluck('email_pegawai') as $tujuan) {
                 try {
-                    Mail::raw($pesan . "\n\n— Sistem Laksamana Muda",
-                        fn ($m) => $m->to($tujuan)->subject("🔔 Follow-up tanpa PIC beremail — {$klien}"));
+                    Mail::to($tujuan)->send(new \App\Mail\PesanSistem(
+                        judul:    'Follow-up Tanpa Penanggung Jawab',
+                        subjudul: $klien,
+                        ikon:     '🔔',
+                        nada:     'jingga',
+                        paragraf: [$pesan],
+                        detail:   array_filter([
+                            'Klien'        => $klien,
+                            'Acara'        => $f->event?->nama_event,
+                            'No. WhatsApp' => $f->client?->no_telp_client,
+                        ]),
+                        catatan:  $f->catatan,
+                        penutup:  'Mohon ada yang menindaklanjuti karena pencatat aslinya tidak dapat dihubungi.',
+                        subjek:   'Follow-up tanpa penanggung jawab — ' . $klien,
+                    ));
                 } catch (\Exception $e) {
                     \Log::warning('Email pengalihan follow-up gagal: ' . $e->getMessage());
                 }
@@ -439,9 +518,22 @@ Schedule::call(function () {
                     $pesanPic   = "Pengingat: {$label} untuk acara \"{$event->nama_event}\" {$kapan} "
                                 . "({$jam} WIB){$lokasi}.\n\nMohon pastikan persiapan & kehadiran tim.\n\n— Sistem Laksamana Muda";
                     try {
-                        Mail::raw($pesanPic, function ($m) use ($emailPic, $subjectPic) {
-                            $m->to($emailPic)->subject($subjectPic);
-                        });
+                        Mail::to($emailPic)->send(new \App\Mail\PesanSistem(
+                            judul:    $label . ' ' . $kapan,
+                            subjudul: $event->nama_event,
+                            ikon:     '📋',
+                            nada:     'biru',
+                            paragraf: [$pesanPic],
+                            sorotan:  $label . ' ' . $kapan . ' pukul ' . $jam . ' WIB',
+                            detail:   array_filter([
+                                'Acara'  => $event->nama_event,
+                                'Agenda' => $label,
+                                'Waktu'  => $kapan . ', ' . $jam . ' WIB',
+                                'Lokasi' => trim(str_replace(['di ', '.'], '', $lokasi)) ?: null,
+                            ]),
+                            penutup:  'Mohon pastikan persiapan dan kehadiran tim.',
+                            subjek:   $label . ' ' . $kapan . ' — ' . $event->nama_event,
+                        ));
                     } catch (\Exception $e) {
                         \Log::warning("Email reminder {$label} (PIC) gagal: " . $e->getMessage());
                     }
@@ -455,9 +547,23 @@ Schedule::call(function () {
                     if ($emailKlien = $client->email_client) {
                         $subjectKlien = "📋 {$label} — {$event->nama_event}";
                         try {
-                            Mail::raw($pesanKlien . "\n\nTerima kasih.\n— PT Laksamana Muda Bersatu", function ($m) use ($emailKlien, $subjectKlien) {
-                                $m->to($emailKlien)->subject($subjectKlien);
-                            });
+                            Mail::to($emailKlien)->send(new \App\Mail\PesanSistem(
+                                judul:    $label,
+                                subjudul: $event->nama_event,
+                                ikon:     '📋',
+                                nada:     'emas',
+                                sapaan:   'Halo, ' . ($client->nama_client ?? 'Klien') . '!',
+                                paragraf: [$pesanKlien],
+                                sorotan:  $label . ' ' . $kapan . ' pukul ' . $jam . ' WIB',
+                                detail:   array_filter([
+                                    'Acara'  => $event->nama_event,
+                                    'Agenda' => $label,
+                                    'Waktu'  => $kapan . ', ' . $jam . ' WIB',
+                                    'Lokasi' => trim(str_replace(['di ', '.'], '', $lokasi)) ?: null,
+                                ]),
+                                penutup:  'Kami menantikan kehadiran Anda.',
+                                subjek:   $label . ' — ' . $event->nama_event,
+                            ));
                         } catch (\Exception $e) {
                             \Log::warning("Email reminder {$label} (klien) gagal: " . $e->getMessage());
                         }

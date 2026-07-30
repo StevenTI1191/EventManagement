@@ -258,7 +258,18 @@ trait ManagesAppointment
 
         if ($email = $appointment->client?->email_client) {
             try {
-                Mail::raw($pesan, fn ($m) => $m->to($email)->subject('Usulan Jadwal Meeting'));
+                Mail::to($email)->send(new \App\Mail\PesanSistem(
+                    judul:    'Usulan Jadwal Belum Dapat Dipenuhi',
+                    subjudul: $appointment->jenis_event,
+                    ikon:     '🔄',
+                    nada:     'jingga',
+                    sapaan:   'Halo, ' . ($appointment->client?->nama_client ?? 'Klien') . '!',
+                    paragraf: [$pesan],
+                    detail:   array_filter([
+                        'Jenis pertemuan' => $appointment->jenis_event,
+                    ]),
+                    subjek:   'Usulan jadwal meeting',
+                ));
             } catch (\Exception $e) {
                 \Log::warning('Email tolak usulan gagal: ' . $e->getMessage());
             }

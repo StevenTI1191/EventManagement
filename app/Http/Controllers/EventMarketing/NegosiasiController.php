@@ -43,8 +43,12 @@ class NegosiasiController extends Controller
             'penangan:id_pegawai,nama_pegawai',
         ];
 
-        // Yang paling lama menunggu didahulukan — ini antrean kerja.
-        $menunggu = EventNegosiasi::with($relasi)->menungguTim()
+        // HANYA permintaan yang belum ditanggapi. Sengaja tidak memakai
+        // menungguTim() — cakupannya kini juga meliputi UsulanKlien, dan itu
+        // sudah punya antreannya sendiri di bawah. Memakainya di sini membuat
+        // satu negosiasi tampil dua kali pada halaman yang sama.
+        $menunggu = EventNegosiasi::with($relasi)
+            ->where('status', EventNegosiasi::DIAJUKAN)
             ->orderBy('created_at')->get()->map(fn ($n) => $this->baris($n));
 
         // Klien menawar jadwal lain — giliran tim memutuskan.
@@ -311,8 +315,15 @@ class NegosiasiController extends Controller
 
         if ($email = $negosiasi->client?->email_client) {
             try {
-                Mail::raw($pesan . "\n\n— PT Laksamana Muda Bersatu",
-                    fn ($m) => $m->to($email)->subject($judul . ' — Laksamana Muda'));
+                Mail::to($email)->send(new \App\Mail\PesanSistem(
+                    judul:    $judul,
+                    subjudul: $negosiasi->event?->nama_event,
+                    ikon:     str_contains($judul, 'Disepakati') ? '✅' : '🔄',
+                    nada:     str_contains($judul, 'Disepakati') ? 'hijau' : 'jingga',
+                    sapaan:   'Halo, ' . ($negosiasi->client?->nama_client ?? 'Klien') . '!',
+                    paragraf: [$pesan],
+                    subjek:   $judul,
+                ));
             } catch (\Exception $e) {
                 \Log::warning('Email jadwal negosiasi gagal: ' . $e->getMessage());
             }
@@ -386,8 +397,27 @@ class NegosiasiController extends Controller
         // Email gagal tidak boleh menggagalkan balasannya — dicatat saja.
         if ($email = $negosiasi->client?->email_client) {
             try {
-                Mail::raw($pesan . "\n\n— PT Laksamana Muda Bersatu",
-                    fn ($m) => $m->to($email)->subject($judul . ' — Laksamana Muda'));
+                Mail::to($email)->send(new \App\Mail\PesanSistem(
+                    judul:    $jadwalkan ? 'Usulan Jadwal Pembahasan' : 'Tanggapan atas Permintaan Anda',
+                    subjudul: $event->nama_event,
+                    ikon:     $jadwalkan ? '📅' : '💬',
+                    nada:     $jadwalkan ? 'biru' : 'emas',
+                    sapaan:   'Halo, ' . ($negosiasi->client?->nama_client ?? 'Klien') . '!',
+                    paragraf: ['Tim kami menanggapi permintaan penyesuaian penawaran Anda.'],
+                    catatan:  trim($data['balasan']),
+                    sorotan:  $jadwalkan
+                        ? \Illuminate\Support\Carbon::parse($data['tgl_meeting'])->translatedFormat('l, d F Y')
+                            . ' pukul ' . substr($data['jam_meeting'], 0, 5)
+                        : null,
+                    detail:   array_filter([
+                        'Acara'           => $event->nama_event,
+                        'Nilai penawaran' => 'Rp ' . number_format((float) ($event->deal_harga_event ?? 0), 0, ',', '.'),
+                    ]),
+                    penutup:  $jadwalkan
+                        ? 'Silakan buka portal untuk menerima jadwal tersebut, atau usulkan waktu lain bila belum cocok.'
+                        : null,
+                    subjek:   $jadwalkan ? 'Usulan jadwal pembahasan' : 'Tanggapan permintaan penyesuaian',
+                ));
             } catch (\Exception $e) {
                 \Log::warning('Email balasan negosiasi gagal: ' . $e->getMessage());
             }
