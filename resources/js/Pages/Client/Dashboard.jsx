@@ -87,6 +87,12 @@ export default function ClientDashboard({
     const panelOpen   = (id, tab) => expandedEvent?.id === id && expandedEvent?.tab === tab;
     const togglePanel = (id, tab) => setExpandedEvent(prev => (prev?.id === id && prev?.tab === tab) ? null : { id, tab });
 
+    // Formulir usulan jadwal pembahasan, dibuka per negosiasi.
+    const [usulNeg, setUsulNeg]         = useState(null);
+    const [usulTgl, setUsulTgl]         = useState('');
+    const [usulJam, setUsulJam]         = useState('');
+    const [usulCatatan, setUsulCatatan] = useState('');
+
     // Kategori to-do yang sedang dibuka. Sengaja terpisah dari panelOpen di atas
     // yang hanya menyimpan satu panel: klien sering perlu membandingkan dua
     // kategori sekaligus, jadi beberapa boleh terbuka bersamaan. Kuncinya
@@ -862,27 +868,31 @@ export default function ClientDashboard({
                                             {/* Usulan klien yang masih ditinjau tim: jadwal belum
                                                 berubah, jadi tombol menerima tidak ditampilkan agar
                                                 klien tidak menyetujui tanggal yang sudah ia tolak. */}
-                                            {neg.status === 'Dijadwalkan' && neg.usulan && (
+                                            {/* Giliran ada di tim — klien menunggu, jadi tidak ada
+                                                tombol apa pun. Sebelumnya tombol terima tetap tampil
+                                                sehingga klien bisa menyetujui tanggal yang baru saja
+                                                ia tolak sendiri. */}
+                                            {neg.status === 'UsulanKlien' && neg.usulan && (
                                                 <div className="p-3 mt-3 border rounded-xl border-info/30 bg-info-bg">
                                                     <p className="text-xs font-bold text-ink">
-                                                        🔄 Usulan hari lain dari Anda: {neg.usulan.tanggal} pukul {neg.usulan.jam}
+                                                        🔄 Usulan Anda: {neg.usulan.tanggal} pukul {neg.usulan.jam}
                                                     </p>
-                                                    {neg.meeting && (
-                                                        <p className="mt-1 text-[11px] text-muted">
-                                                            Jadwal yang masih berlaku: {neg.meeting.tanggal} pukul {neg.meeting.jam}.
-                                                        </p>
-                                                    )}
                                                     <p className="mt-1 text-[11px] text-muted">
-                                                        Menunggu tim meninjau. Jadwal pembahasan belum berubah sampai disetujui.
+                                                        Sedang ditinjau tim kami. Jadwal belum berubah sampai disetujui,
+                                                        dan Anda akan dikabari begitu ada keputusan.
                                                     </p>
                                                 </div>
                                             )}
 
-                                            {neg.status === 'Dijadwalkan' && neg.meeting && !neg.usulan && (
+                                            {neg.status === 'Dijadwalkan' && neg.meeting && (
                                                 <div className="p-3 mt-3 border rounded-xl border-gold-2 bg-gold-soft">
                                                     <p className="text-xs font-bold text-ink">
                                                         📅 Usulan jadwal pembahasan: {neg.meeting.tanggal} pukul {neg.meeting.jam}
                                                     </p>
+                                                    {neg.catatan_tim && (
+                                                        <p className="mt-1 text-[11px] italic text-muted">"{neg.catatan_tim}"</p>
+                                                    )}
+
                                                     <button
                                                         onClick={() => {
                                                             if (prosesPenawaran) return;
@@ -896,13 +906,49 @@ export default function ClientDashboard({
                                                         className="w-full py-2 mt-3 text-xs font-black text-white transition-all bg-gold-grad shadow-gold rounded-lg hover:brightness-110 disabled:opacity-60">
                                                         {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Jadwal Ini'}
                                                     </button>
-                                                    {/* Penawaran jadwal berlaku dua arah: bila harinya
-                                                        tidak cocok, klien mengusulkan hari lain dari kartu
-                                                        appointment-nya, lalu tim menyetujuinya. */}
-                                                    <button type="button" onClick={() => setActiveTab('appointments')}
-                                                        className="w-full py-2 mt-2 text-xs font-bold transition-colors border rounded-lg text-gold-dim border-gold-2 hover:bg-surface">
-                                                        Tidak cocok? Usulkan hari lain
-                                                    </button>
+
+                                                    {/* Tawar-menawar berlangsung di panel ini juga, bukan
+                                                        di tab Appointment — pembahasan penawaran memang
+                                                        tidak ditampilkan di sana. */}
+                                                    {usulNeg === neg.id ? (
+                                                        <div className="p-3 mt-2 border rounded-lg bg-surface border-line">
+                                                            <div className="flex gap-2">
+                                                                <input type="date" value={usulTgl} onChange={(e) => setUsulTgl(e.target.value)}
+                                                                    className="flex-1 px-2 py-1.5 text-xs border rounded-lg border-line focus:border-gold-2 focus:outline-none" />
+                                                                <input type="time" value={usulJam} onChange={(e) => setUsulJam(e.target.value)}
+                                                                    className="w-28 px-2 py-1.5 text-xs border rounded-lg border-line focus:border-gold-2 focus:outline-none" />
+                                                            </div>
+                                                            <input type="text" value={usulCatatan} onChange={(e) => setUsulCatatan(e.target.value)}
+                                                                placeholder="Alasan singkat (opsional)"
+                                                                className="w-full px-2 py-1.5 mt-2 text-xs border rounded-lg border-line focus:border-gold-2 focus:outline-none" />
+                                                            <div className="flex gap-2 mt-2">
+                                                                <button type="button" onClick={() => setUsulNeg(null)}
+                                                                    className="flex-1 py-1.5 text-[11px] font-bold border rounded-lg text-muted border-line hover:bg-paper">
+                                                                    Batal
+                                                                </button>
+                                                                <button type="button"
+                                                                    disabled={!usulTgl || !usulJam || prosesPenawaran === p.id_event}
+                                                                    onClick={() => {
+                                                                        setProsesPenawaran(p.id_event);
+                                                                        router.post(route('client.negosiasi.usul-jadwal', neg.id),
+                                                                            { usulan_tgl: usulTgl, usulan_jam: usulJam, usulan_catatan: usulCatatan },
+                                                                            {
+                                                                                preserveScroll: true,
+                                                                                onSuccess: () => { setUsulNeg(null); setUsulTgl(''); setUsulJam(''); setUsulCatatan(''); },
+                                                                                onFinish: () => setProsesPenawaran(null),
+                                                                            });
+                                                                    }}
+                                                                    className="flex-1 py-1.5 text-[11px] font-black text-white rounded-lg bg-gold-grad disabled:opacity-50">
+                                                                    Kirim usulan
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <button type="button" onClick={() => setUsulNeg(neg.id)}
+                                                            className="w-full py-2 mt-2 text-xs font-bold transition-colors border rounded-lg text-gold-dim border-gold-2 hover:bg-surface">
+                                                            Tidak cocok? Usulkan waktu lain
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

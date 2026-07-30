@@ -188,6 +188,26 @@ trait ManagesPipeline
             }
         }
 
+        // Deal berarti kesepakatan, dan kesepakatan hanya sah bila klien memang
+        // sudah menyetujui penawarannya. Tanpa penjagaan ini kartu bisa digeser
+        // ke Deal sepihak — invoice uang muka terbit dan tagihan berjalan untuk
+        // penawaran yang belum pernah diterima siapa pun.
+        if ($baru === Event::STATUS_DEAL) {
+            if (! $event->penawaranDisetujui()) {
+                throw ValidationException::withMessages([
+                    'status_event' => 'Penawarannya belum disetujui Pihak Manajemen, jadi belum pernah sampai ke klien.',
+                ]);
+            }
+
+            if ($event->respon_klien !== 'Diterima') {
+                throw ValidationException::withMessages([
+                    'status_event' => $event->respon_klien === 'Ditolak'
+                        ? 'Klien menolak penawaran ini. Ajukan penawaran revisi lebih dulu.'
+                        : 'Klien belum menerima penawarannya. Tahap Deal baru dapat ditetapkan setelah klien menyetujui.',
+                ]);
+            }
+        }
+
         $ubah = ['status_event' => $baru];
 
         // Rencana yang mulai digarap sebagai prospek resmi menjadi event klien,

@@ -414,6 +414,14 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id')->name('em.negosiasi.balas');
         Route::patch('/event-marketing/negosiasi/{id}/tutup', [\App\Http\Controllers\EventMarketing\NegosiasiController::class, 'tutup'])
             ->whereNumber('id')->name('em.negosiasi.tutup');
+        // Tawar-menawar jadwal: tim menerima usulan klien, atau menolaknya
+        // sambil menawarkan waktu pengganti.
+        Route::patch('/event-marketing/negosiasi/{id}/terima-usulan', [\App\Http\Controllers\EventMarketing\NegosiasiController::class, 'terimaUsulan'])
+            ->whereNumber('id')->name('em.negosiasi.terima-usulan');
+        Route::patch('/event-marketing/negosiasi/{id}/tolak-usulan', [\App\Http\Controllers\EventMarketing\NegosiasiController::class, 'tolakUsulan'])
+            ->whereNumber('id')->name('em.negosiasi.tolak-usulan');
+        Route::get('/event-marketing/negosiasi/ketersediaan', [\App\Http\Controllers\EventMarketing\NegosiasiController::class, 'ketersediaan'])
+            ->name('em.negosiasi.ketersediaan');
 
         // --- FASILITAS VENUE (tampil di halaman depan klien) ---
         Route::get('/event-marketing/venue', [\App\Http\Controllers\EventMarketing\VenueFasilitasController::class, 'index'])
@@ -699,6 +707,9 @@ Route::domain(config('app.domain'))->group(function () {
         // Klien menerima jadwal pembahasan yang ditawarkan tim.
         Route::post('/negosiasi/{id}/terima-jadwal', [\App\Http\Controllers\Client\AppointmentController::class, 'terimaJadwalNegosiasi'])
             ->whereNumber('id')->name('client.negosiasi.terima-jadwal');
+        // Klien menawar jadwal pembahasan ke waktu lain.
+        Route::post('/negosiasi/{id}/usul-jadwal', [\App\Http\Controllers\Client\AppointmentController::class, 'usulJadwalNegosiasi'])
+            ->whereNumber('id')->name('client.negosiasi.usul-jadwal');
         Route::post('/penawaran/{id_event}/tolak', [\App\Http\Controllers\Client\AppointmentController::class, 'tolakPenawaran'])
             ->whereNumber('id_event')->name('client.penawaran.tolak');
     }); // auth:client

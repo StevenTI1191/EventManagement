@@ -27,24 +27,32 @@ class EventNegosiasi extends Model
         'ditangani_pada' => 'datetime',
     ];
 
-    public const DIAJUKAN    = 'Diajukan';
-    public const DIJAWAB     = 'Dijawab';
-    public const DIJADWALKAN = 'Dijadwalkan';
-    public const SELESAI     = 'Selesai';
-    public const DITUTUP     = 'Ditutup';
+    public const DIAJUKAN     = 'Diajukan';
+    public const DIJAWAB      = 'Dijawab';
+    public const DIJADWALKAN  = 'Dijadwalkan';
+    /** Klien menawar jadwal lain — giliran tim memutuskan. */
+    public const USULAN_KLIEN = 'UsulanKlien';
+    public const SELESAI      = 'Selesai';
+    public const DITUTUP      = 'Ditutup';
 
     /** Yang masih menunggu tindakan tim. */
-    public const PERLU_TIM = [self::DIAJUKAN];
+    public const PERLU_TIM = [self::DIAJUKAN, self::USULAN_KLIEN];
 
     /** Yang masih menunggu tindakan klien. */
     public const PERLU_KLIEN = [self::DIJADWALKAN];
 
     /** Belum tuntas — dipakai untuk lencana maupun penjagaan pengajuan ganda. */
-    public const BERJALAN = [self::DIAJUKAN, self::DIJAWAB, self::DIJADWALKAN];
+    public const BERJALAN = [
+        self::DIAJUKAN, self::DIJAWAB, self::DIJADWALKAN, self::USULAN_KLIEN,
+    ];
 
+    /**
+     * Antrean kerja tim: permintaan baru yang belum ditanggapi DAN jadwal yang
+     * ditawar balik klien. Keduanya sama-sama menggantung sampai tim bertindak.
+     */
     public function scopeMenungguTim($q)
     {
-        return $q->where('status', self::DIAJUKAN);
+        return $q->whereIn('status', self::PERLU_TIM);
     }
 
     public function scopeBerjalan($q)

@@ -43,10 +43,13 @@ trait ManagesAppointment
             'search' => 'nullable|string|max:255',
         ]);
 
-        // Pertemuan hasil negosiasi penawaran ditandai agar tim tahu konteksnya
-        // tanpa harus menebak dari deskripsinya.
+        // Pembahasan penawaran TIDAK ditampilkan di sini. Ia punya alur sendiri
+        // — tawar-menawar jadwal dua arah yang berujung pada penawaran revisi —
+        // dan dikelola sepenuhnya dari halaman Negosiasi Klien. Mencampurnya ke
+        // daftar ini membuat tim melihat dua tombol konfirmasi untuk satu
+        // pertemuan yang sama, dengan aturan yang berbeda pula.
         $query = Appointment::with(['client', 'pegawai'])
-            ->withExists('negosiasi as dari_negosiasi')
+            ->whereDoesntHave('negosiasi')
             ->latest();
 
         if ($request->filled('status') && $request->status !== 'Semua') {
@@ -61,13 +64,13 @@ trait ManagesAppointment
 
         return Inertia::render($komponen, [
             'appointments' => $query->paginate(15)->withQueryString(),
-            'counts'       => [
-                'pending'      => Appointment::where('status', 'Pending')->count(),
-                'dikonfirmasi' => Appointment::where('status', 'Dikonfirmasi')->count(),
-                'reschedule'   => Appointment::where('status', 'Reschedule')->count(),
-                'selesai'      => Appointment::where('status', 'Selesai')->count(),
-                'dibatalkan'   => Appointment::where('status', 'Dibatalkan')->count(),
-            ],
+            // Hitungannya mengikuti daftar di atas — pembahasan negosiasi tidak
+            // ikut, supaya angkanya cocok dengan yang benar-benar tampil.
+            'counts'       => collect(['pending' => 'Pending', 'dikonfirmasi' => 'Dikonfirmasi',
+                    'reschedule' => 'Reschedule', 'selesai' => 'Selesai', 'dibatalkan' => 'Dibatalkan'])
+                ->map(fn ($status) => Appointment::where('status', $status)
+                    ->whereDoesntHave('negosiasi')->count())
+                ->all(),
             'filters'      => $request->only(['status', 'search']),
             'routes'       => $routes,
         ]);

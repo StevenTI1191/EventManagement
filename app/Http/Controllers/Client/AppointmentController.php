@@ -31,9 +31,11 @@ class AppointmentController extends Controller
         $client = Auth::guard('client')->user();
 
         $appointments = Appointment::with('pegawai')
-            // Pertemuan yang lahir dari negosiasi penawaran ditandai supaya klien
-            // dapat membedakannya dari janji temu biasa yang ia pesan sendiri.
-            ->withExists('negosiasi as dari_negosiasi')
+            // Pembahasan penawaran tidak ditampilkan di tab Appointment: alur
+            // terima/usulkan jadwalnya berbeda dan sepenuhnya dijalankan dari
+            // panel penawaran, sehingga menampilkannya di dua tempat justru
+            // memberi klien dua tombol berbeda untuk pertemuan yang sama.
+            ->whereDoesntHave('negosiasi')
             ->where('client_id', $client->id)
             ->latest()
             ->take(50)
@@ -133,6 +135,9 @@ class AppointmentController extends Controller
                             'jam'     => $berlaku['jam'],
                             'status'  => $n->appointment->status,
                         ] : null,
+                        // Catatan tim ketika usulan sebelumnya belum dapat dipenuhi.
+                        'catatan_tim'   => $n->appointment?->catatan_em,
+                        'hasil_meeting' => $n->appointment?->catatan_meeting,
                         // Usulan klien yang belum ditinjau tim — supaya klien
                         // tahu permintaannya sedang berjalan dan tidak
                         // mengusulkan berulang kali.
@@ -1024,8 +1029,13 @@ class AppointmentController extends Controller
             ->where('client_id', Auth::guard('client')->id())
             ->findOrFail($id);
 
+        // Hanya ketika giliran memang ada di klien. Bila ia sudah mengusulkan
+        // waktu lain, giliran berpindah ke tim — menerima jadwal lama di saat
+        // itu justru membatalkan usulannya sendiri secara diam-diam.
         if ($negosiasi->status !== \App\Models\EventNegosiasi::DIJADWALKAN) {
-            return back()->with('error', 'Tidak ada usulan jadwal yang menunggu persetujuan Anda.');
+            return back()->with('error', $negosiasi->status === \App\Models\EventNegosiasi::USULAN_KLIEN
+                ? 'Usulan jadwal Anda sedang ditinjau tim. Mohon tunggu tanggapannya.'
+                : 'Tidak ada usulan jadwal yang menunggu persetujuan Anda.');
         }
 
         $apt = $negosiasi->appointment;
@@ -1058,6 +1068,71 @@ class AppointmentController extends Controller
             . 'Pertemuan sudah tercatat pada daftar appointment.');
 
         return back()->with('success', 'Jadwal pembahasan diterima. Sampai jumpa di pertemuan tersebut.');
+    }
+
+    /**
+     * Klien mengusulkan jadwal pembahasan yang lain.
+     *
+     * Giliran berpindah ke tim: jadwal lama BELUM berubah, dan klien tidak lagi
+     * ditawari menerima sampai timnya memutuskan. Tanpa perpindahan giliran ini,
+     * klien bisa mengusulkan tanggal baru lalu menekan "Terima" pada tanggal
+     * lama, dan kedua sisi melihat jadwal yang berbeda.
+     */
+    public function usulJadwalNegosiasi(Request $request, $id)
+    {
+        $data = $request->validate([
+            'usulan_tgl'     => ['required', 'date', 'after_or_equal:today'],
+            'usulan_jam'     => ['required', 'string', 'max:8', Event::ATURAN_JAM],
+            'usulan_catatan' => ['nullable', 'string', 'max:500'],
+        ], [
+            'usulan_tgl.required'       => 'Pilih tanggal yang Anda usulkan.',
+            'usulan_tgl.after_or_equal' => 'Tanggal usulan tidak boleh di masa lalu.',
+            'usulan_jam.required'       => 'Pilih jam yang Anda usulkan.',
+        ]);
+
+        $negosiasi = \App\Models\EventNegosiasi::with(['appointment', 'event'])
+            ->where('client_id', Auth::guard('client')->id())
+            ->findOrFail($id);
+
+        if ($negosiasi->status !== \App\Models\EventNegosiasi::DIJADWALKAN) {
+            return back()->with('error', 'Tidak ada jadwal yang dapat diusulkan ulang saat ini.');
+        }
+
+        if (! $negosiasi->appointment) {
+            return back()->with('error', 'Jadwal pertemuannya tidak ditemukan.');
+        }
+
+        $jam = substr($data['usulan_jam'], 0, 5);
+
+        DB::transaction(function () use ($negosiasi, $data, $jam) {
+            $negosiasi->appointment->update([
+                'usulan_tgl'     => $data['usulan_tgl'],
+                'usulan_jam'     => $jam,
+                'usulan_catatan' => $data['usulan_catatan'] ?? null,
+            ]);
+
+            $negosiasi->update(['status' => \App\Models\EventNegosiasi::USULAN_KLIEN]);
+
+            $jejak = '🔄 Klien mengusulkan jadwal pembahasan '
+                . \Illuminate\Support\Carbon::parse($data['usulan_tgl'])->translatedFormat('d M Y')
+                . ' ' . $jam . ' (' . now()->translatedFormat('d M Y H:i') . ')';
+
+            $negosiasi->event?->update([
+                'note_event' => $negosiasi->event->note_event
+                    ? $negosiasi->event->note_event . ' | ' . $jejak : $jejak,
+            ]);
+        });
+
+        $this->kabariRole('EventMarketing',
+            '🔄 Klien Mengusulkan Jadwal Lain — ' . ($negosiasi->event?->nama_event ?? '-'),
+            'Klien mengusulkan pembahasan penawaran dipindahkan ke '
+            . \Illuminate\Support\Carbon::parse($data['usulan_tgl'])->translatedFormat('l, d F Y')
+            . ' pukul ' . $jam . ".\n\n"
+            . (filled($data['usulan_catatan'] ?? null) ? 'Catatan klien: ' . $data['usulan_catatan'] . "\n\n" : '')
+            . 'Silakan terima atau tawarkan waktu lain dari menu Negosiasi Klien.');
+
+        return back()->with('success',
+            'Usulan jadwal terkirim. Tim kami akan meninjau dan mengabari Anda.');
     }
 
     /** Kirim email pemberitahuan jelas ke PIC/EM saat klien merespon penawaran. */

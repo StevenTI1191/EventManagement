@@ -127,6 +127,134 @@ class SlotMeeting
             ->exists();
     }
 
+    /** Jam kerja kantor sebagai menit sejak tengah malam. */
+    public const KERJA_MULAI   = 9 * 60;        // 09:00
+    public const KERJA_SELESAI = 17 * 60;       // 17:00
+
+    /**
+     * Rentang jam yang masih kosong pada satu tanggal, dalam bentuk pasangan
+     * "HH:MM"–"HH:MM".
+     *
+     * Dipakai tim saat menawarkan jadwal pembahasan. Berbeda dengan klien yang
+     * memilih dari slot tetap, tim boleh menentukan jam bebas — jadi yang
+     * dibutuhkan bukan daftar slot melainkan gambaran kapan saja masih lowong.
+     *
+     * @return array<array{mulai:string,selesai:string}>
+     */
+    public static function rentangKosong(string $tgl): array
+    {
+        $tanggal = Carbon::parse($tgl);
+
+        if ($tanggal->isSunday()) {
+            return [];
+        }
+
+        $sibuk = [];
+
+        // Appointment lain yang masih menempati jadwal pada tanggal ini.
+        foreach (Appointment::whereIn('status', self::STATUS_MENEMPATI)
+                    ->whereRaw(Appointment::SQL_TGL_BERLAKU . ' = ?', [$tanggal->toDateString()])
+                    ->get() as $a) {
+            if ($berlaku = $a->jadwalBerlaku()) {
+                $m = self::keMenit($berlaku['jam'], 0);
+                $sibuk[] = [$m, $m + self::MENIT];
+            }
+        }
+
+        // Jendela sibuk acara memakai loading in/out, sama seperti terhalangEvent().
+        foreach (self::terhalangEvent($tanggal->toDateString()) as $slot) {
+            $m = self::keMenit($slot, 0);
+            $sibuk[] = [$m, $m + self::MENIT];
+        }
+
+        usort($sibuk, fn ($a, $b) => $a[0] <=> $b[0]);
+
+        $hasil = [];
+        $kursor = self::KERJA_MULAI;
+
+        foreach ($sibuk as [$mulai, $akhir]) {
+            if ($mulai > $kursor) {
+                $hasil[] = [$kursor, min($mulai, self::KERJA_SELESAI)];
+            }
+            $kursor = max($kursor, $akhir);
+        }
+
+        if ($kursor < self::KERJA_SELESAI) {
+            $hasil[] = [$kursor, self::KERJA_SELESAI];
+        }
+
+        $jam = fn (int $m) => sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
+
+        return array_values(array_map(
+            fn ($r) => ['mulai' => $jam($r[0]), 'selesai' => $jam($r[1])],
+            // Rentang yang lebih pendek daripada satu pertemuan tidak berguna.
+            array_filter($hasil, fn ($r) => $r[1] - $r[0] >= self::MENIT)
+        ));
+    }
+
+    /**
+     * Periksa jadwal yang ditentukan tim secara BEBAS — tidak harus jatuh pada
+     * slot tetap milik klien, tetapi tetap tidak boleh bertabrakan.
+     *
+     * Dipakai untuk pembahasan negosiasi: tim menyesuaikan jam dengan klien,
+     * sehingga memaksanya ke enam slot baku justru menghalangi kesepakatan.
+     */
+    public static function periksaBebas(
+        string $tgl,
+        string $jam,
+        ?int $kecualiId = null,
+        string $fieldTgl = 'tgl_meeting',
+        string $fieldJam = 'jam_meeting',
+    ): void {
+        $tanggal = Carbon::parse($tgl);
+
+        if ($tanggal->isSunday()) {
+            throw ValidationException::withMessages([
+                $fieldTgl => 'Hari Minggu libur. Pilih hari Senin–Sabtu.',
+            ]);
+        }
+
+        $menit = self::keMenit($jam, -1);
+
+        if ($menit < self::KERJA_MULAI || $menit + self::MENIT > self::KERJA_SELESAI) {
+            throw ValidationException::withMessages([
+                $fieldJam => 'Pertemuan hanya dapat dijadwalkan pada jam kerja, 09:00–17:00.',
+            ]);
+        }
+
+        // Bertabrakan dengan appointment lain? Dibandingkan sebagai rentang
+        // selama durasi pertemuan, bukan kecocokan jam persis — menawarkan
+        // 10:15 saat sudah ada pertemuan 10:00 tetap tumpang tindih.
+        $bentrok = Appointment::whereIn('status', self::STATUS_MENEMPATI)
+            ->whereRaw(Appointment::SQL_TGL_BERLAKU . ' = ?', [$tanggal->toDateString()])
+            ->when($kecualiId, fn ($q) => $q->where('id', '!=', $kecualiId))
+            ->get()
+            ->first(function ($a) use ($menit) {
+                $b = $a->jadwalBerlaku();
+                if (! $b) {
+                    return false;
+                }
+                $m = self::keMenit($b['jam'], 0);
+                return $menit < $m + self::MENIT && $menit + self::MENIT > $m;
+            });
+
+        if ($bentrok) {
+            throw ValidationException::withMessages([
+                $fieldJam => 'Jam ini bertabrakan dengan pertemuan lain yang sudah terjadwal. Pilih jam lain.',
+            ]);
+        }
+
+        // Tim sedang bertugas di acara? Jendela sibuknya memakai loading in/out.
+        foreach (self::terhalangEvent($tanggal->toDateString()) as $slot) {
+            $m = self::keMenit($slot, 0);
+            if ($menit < $m + self::MENIT && $menit + self::MENIT > $m) {
+                throw ValidationException::withMessages([
+                    $fieldJam => 'Jam ini bertepatan dengan jadwal acara, tim sedang bertugas. Pilih jam lain.',
+                ]);
+            }
+        }
+    }
+
     /**
      * Periksa kelayakan satu slot: bukan Minggu, di dalam jam kerja, tidak
      * dipakai appointment lain, dan tidak bertabrakan dengan jadwal acara.

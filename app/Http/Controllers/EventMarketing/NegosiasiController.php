@@ -47,28 +47,48 @@ class NegosiasiController extends Controller
         $menunggu = EventNegosiasi::with($relasi)->menungguTim()
             ->orderBy('created_at')->get()->map(fn ($n) => $this->baris($n));
 
-        // Klien menawar hari lain atas jadwal yang kita usulkan. Dipisahkan
-        // sebagai antrean tersendiri: statusnya memang sudah Dijadwalkan, tetapi
-        // bila hanya masuk riwayat, permintaan itu tidak akan pernah terlihat
-        // sebagai sesuatu yang menunggu keputusan tim.
+        // Klien menawar jadwal lain — giliran tim memutuskan.
         $usulan = EventNegosiasi::with($relasi)
-            ->where('status', EventNegosiasi::DIJADWALKAN)
-            ->whereHas('appointment', fn ($q) => $q->whereNotNull('usulan_tgl'))
+            ->where('status', EventNegosiasi::USULAN_KLIEN)
             ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
 
-        $sudahTampil = $menunggu->pluck('id')->merge($usulan->pluck('id'))->all();
+        // Sudah dijadwalkan, tinggal menunggu klien menerimanya.
+        $menungguKlien = EventNegosiasi::with($relasi)
+            ->where('status', EventNegosiasi::DIJADWALKAN)
+            ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
+
+        $sudahTampil = $menunggu->pluck('id')
+            ->merge($usulan->pluck('id'))
+            ->merge($menungguKlien->pluck('id'))->all();
 
         $riwayat = EventNegosiasi::with($relasi)
             ->whereNotIn('id', $sudahTampil)
-            ->where('status', '!=', EventNegosiasi::DIAJUKAN)
             ->orderByDesc('updated_at')->take(self::RIWAYAT)
             ->get()->map(fn ($n) => $this->baris($n));
 
         return Inertia::render('EventMarketing/Negosiasi/Index', [
-            'menunggu' => $menunggu->values(),
-            'usulan'   => $usulan->values(),
-            'riwayat'  => $riwayat->values(),
-            'slots'    => SlotMeeting::kerja(),
+            'menunggu'      => $menunggu->values(),
+            'usulan'        => $usulan->values(),
+            'menungguKlien' => $menungguKlien->values(),
+            'riwayat'       => $riwayat->values(),
+        ]);
+    }
+
+    /**
+     * Rentang jam yang masih kosong pada satu tanggal.
+     *
+     * Dipanggil dari formulir penawaran jadwal supaya tim melihat kapan saja
+     * masih lowong sebelum menentukan jamnya, tanpa harus menebak lalu ditolak.
+     */
+    public function ketersediaan(Request $request)
+    {
+        $this->checkEventMarketing();
+
+        $data = $request->validate(['tgl' => ['required', 'date']]);
+
+        return response()->json([
+            'tanggal' => $data['tgl'],
+            'rentang' => SlotMeeting::rentangKosong($data['tgl']),
         ]);
     }
 
@@ -103,11 +123,12 @@ class NegosiasiController extends Controller
         $jadwalkan = $request->boolean('jadwalkan');
         $pegawai   = Auth::guard('pegawai')->id();
 
-        // Slot diperiksa memakai aturan yang sama dengan pemesanan klien:
-        // bukan Minggu, di dalam jam kerja, belum dipakai appointment lain, dan
-        // tidak bertabrakan dengan jadwal acara yang sedang berjalan.
+        // Tim menentukan jam secara BEBAS — tidak dipaksa ke enam slot baku
+        // milik klien, sebab pembahasan penawaran justru perlu menyesuaikan
+        // waktu klien. Yang tetap dijaga: bukan Minggu, di dalam jam kerja, dan
+        // tidak bertabrakan dengan pertemuan lain maupun jadwal acara.
         if ($jadwalkan) {
-            SlotMeeting::periksa($data['tgl_meeting'], $data['jam_meeting'], null, 'tgl_meeting', 'jam_meeting');
+            SlotMeeting::periksaBebas($data['tgl_meeting'], $data['jam_meeting'], null, 'tgl_meeting', 'jam_meeting');
         }
 
         DB::transaction(function () use ($negosiasi, $data, $jadwalkan, $pegawai) {
@@ -152,6 +173,150 @@ class NegosiasiController extends Controller
         return back()->with('success', $jadwalkan
             ? 'Balasan terkirim beserta usulan jadwal pertemuan. Menunggu klien menerimanya.'
             : 'Balasan terkirim ke klien.');
+    }
+
+    /**
+     * Tim MENERIMA jadwal yang diusulkan klien. Pertemuan langsung disepakati:
+     * appointment-nya berpindah ke tanggal usulan dan negosiasinya tuntas.
+     */
+    public function terimaUsulan($id)
+    {
+        $this->checkEventMarketing();
+
+        $negosiasi = EventNegosiasi::with(['appointment', 'event'])->findOrFail($id);
+
+        if ($negosiasi->status !== EventNegosiasi::USULAN_KLIEN) {
+            throw ValidationException::withMessages([
+                'usulan' => 'Tidak ada usulan jadwal dari klien yang menunggu keputusan.',
+            ]);
+        }
+
+        $apt = $negosiasi->appointment;
+        if (! $apt || blank($apt->usulan_tgl)) {
+            throw ValidationException::withMessages(['usulan' => 'Usulan jadwalnya tidak ditemukan.']);
+        }
+
+        $tgl = \Illuminate\Support\Carbon::parse($apt->usulan_tgl)->toDateString();
+        $jam = substr((string) $apt->usulan_jam, 0, 5);
+
+        // Slot bisa saja terisi acara lain sejak klien mengusulkannya, jadi
+        // kelayakannya dinilai ULANG di sini — bukan saat usulan dikirim.
+        SlotMeeting::periksaBebas($tgl, $jam, $apt->id, 'usulan', 'usulan');
+
+        DB::transaction(function () use ($negosiasi, $apt, $tgl, $jam) {
+            $apt->update([
+                'tgl_konfirmasi' => $tgl,
+                'jam_konfirmasi' => $jam,
+                'status'         => 'Dikonfirmasi',
+                'usulan_tgl'     => null,
+                'usulan_jam'     => null,
+                'usulan_catatan' => null,
+                'id_pegawai'     => Auth::guard('pegawai')->id(),
+            ]);
+
+            $negosiasi->update(['status' => EventNegosiasi::SELESAI]);
+
+            $this->jejak($negosiasi->event,
+                '✅ Usulan jadwal klien diterima — pembahasan '
+                . \Illuminate\Support\Carbon::parse($tgl)->translatedFormat('d M Y') . ' ' . $jam);
+        });
+
+        $this->kabariJadwal($negosiasi, '✅ Jadwal Pembahasan Disepakati',
+            'Tim kami menyetujui usulan jadwal Anda. Pembahasan penawaran "'
+            . $negosiasi->event?->nama_event . '" dijadwalkan pada '
+            . \Illuminate\Support\Carbon::parse($tgl)->translatedFormat('l, d F Y') . ' pukul ' . $jam . '.');
+
+        return back()->with('success', 'Usulan klien diterima. Pertemuan sudah terjadwal.');
+    }
+
+    /**
+     * Tim MENOLAK usulan klien dan menawarkan jadwal pengganti. Tawar-menawar
+     * berlanjut sampai keduanya bertemu di jadwal yang sama.
+     */
+    public function tolakUsulan(Request $request, $id)
+    {
+        $this->checkEventMarketing();
+
+        $data = $request->validate([
+            'alasan'      => ['required', 'string', 'min:5', 'max:500'],
+            'tgl_meeting' => ['required', 'date'],
+            'jam_meeting' => ['required', 'string', 'max:8'],
+        ], [
+            'alasan.required'      => 'Sertakan alasan agar klien memahami penolakannya.',
+            'tgl_meeting.required' => 'Tawarkan tanggal penggantinya.',
+            'jam_meeting.required' => 'Tawarkan jam penggantinya.',
+        ]);
+
+        $negosiasi = EventNegosiasi::with(['appointment', 'event'])->findOrFail($id);
+
+        if ($negosiasi->status !== EventNegosiasi::USULAN_KLIEN) {
+            throw ValidationException::withMessages([
+                'alasan' => 'Tidak ada usulan jadwal dari klien yang menunggu keputusan.',
+            ]);
+        }
+
+        $apt = $negosiasi->appointment;
+        SlotMeeting::periksaBebas($data['tgl_meeting'], $data['jam_meeting'], $apt?->id, 'tgl_meeting', 'jam_meeting');
+
+        $jam = substr($data['jam_meeting'], 0, 5);
+
+        DB::transaction(function () use ($negosiasi, $apt, $data, $jam) {
+            $apt?->update([
+                'tgl_request'    => $data['tgl_meeting'],
+                'jam_request'    => $jam,
+                'tgl_konfirmasi' => null,
+                'jam_konfirmasi' => null,
+                'status'         => 'Pending',
+                'usulan_tgl'     => null,
+                'usulan_jam'     => null,
+                'usulan_catatan' => null,
+                'catatan_em'     => trim($data['alasan']),
+                'id_pegawai'     => Auth::guard('pegawai')->id(),
+            ]);
+
+            // Kembali menunggu klien — giliran berpindah lagi.
+            $negosiasi->update([
+                'status'         => EventNegosiasi::DIJADWALKAN,
+                'ditangani_oleh' => Auth::guard('pegawai')->id(),
+                'ditangani_pada' => now(),
+            ]);
+
+            $this->jejak($negosiasi->event,
+                '🔄 Usulan klien belum cocok, tim menawarkan '
+                . \Illuminate\Support\Carbon::parse($data['tgl_meeting'])->translatedFormat('d M Y') . ' ' . $jam);
+        });
+
+        $this->kabariJadwal($negosiasi, '🔄 Usulan Jadwal Baru dari Tim',
+            'Usulan jadwal Anda belum dapat kami penuhi. ' . trim($data['alasan'])
+            . "\n\nSebagai gantinya kami menawarkan "
+            . \Illuminate\Support\Carbon::parse($data['tgl_meeting'])->translatedFormat('l, d F Y')
+            . ' pukul ' . $jam . ". Silakan terima atau usulkan waktu lain lewat portal.");
+
+        return back()->with('success', 'Jadwal pengganti dikirim ke klien. Menunggu tanggapannya.');
+    }
+
+    /** Pemberitahuan perubahan jadwal ke klien — surel + notifikasi portal. */
+    private function kabariJadwal(EventNegosiasi $negosiasi, string $judul, string $pesan): void
+    {
+        if ($negosiasi->client_id) {
+            Notifikasi::create([
+                'judul'        => $judul,
+                'pesan'        => $pesan,
+                'tipe'         => 'negosiasi',
+                'reference_id' => $negosiasi->id,
+                'client_id'    => $negosiasi->client_id,
+                'is_read'      => false,
+            ]);
+        }
+
+        if ($email = $negosiasi->client?->email_client) {
+            try {
+                Mail::raw($pesan . "\n\n— PT Laksamana Muda Bersatu",
+                    fn ($m) => $m->to($email)->subject($judul . ' — Laksamana Muda'));
+            } catch (\Exception $e) {
+                \Log::warning('Email jadwal negosiasi gagal: ' . $e->getMessage());
+            }
+        }
     }
 
     /** Tutup permintaan yang tidak perlu dilanjutkan. */
@@ -252,8 +417,8 @@ class NegosiasiController extends Controller
             'balasan'       => $n->balasan,
 
             'diajukan_pada'  => $n->created_at?->translatedFormat('d M Y H:i'),
-            'menunggu_sejak' => $n->status === EventNegosiasi::DIAJUKAN
-                ? $n->created_at?->diffForHumans(null, true) : null,
+            'menunggu_sejak' => in_array($n->status, EventNegosiasi::PERLU_TIM, true)
+                ? $n->updated_at?->diffForHumans(null, true) : null,
             'ditangani_oleh' => $n->penangan?->nama_pegawai,
             'ditangani_pada' => $n->ditangani_pada?->translatedFormat('d M Y H:i'),
 
