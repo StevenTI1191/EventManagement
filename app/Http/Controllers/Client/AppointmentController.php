@@ -545,6 +545,36 @@ class AppointmentController extends Controller
             'keterangan'  => 'nullable|string|max:500',
         ]);
 
+        // ── Aturan pembayaran: DP dan pelunasan, TIDAK boleh dicicil ──────
+        // Tiap tagihan diselesaikan sekali bayar penuh. Sebelumnya nominal
+        // hanya divalidasi "angka dan tidak negatif", sehingga klien bisa
+        // menyetor separuh-separuh dan buku kas terisi cicilan yang tak pernah
+        // disepakati. Diperiksa di sini, bukan sekadar dituliskan sebagai
+        // keterangan, supaya aturannya benar-benar berlaku.
+        $idInvoice = $request->id_invoice ?: $this->invoiceTertagih($request->id_event);
+
+        if ($idInvoice && filled($request->nominal)) {
+            $invoice = \App\Models\Invoice::find($idInvoice);
+
+            if ($invoice) {
+                // Yang sudah tertutup bukti lain — termasuk yang masih menunggu
+                // verifikasi, agar dua unggahan separuh tidak lolos bersamaan.
+                $sudah = (float) BuktiPembayaran::where('id_invoice', $invoice->id_invoice)
+                    ->whereIn('status', ['Menunggu', 'Diverifikasi'])
+                    ->sum('nominal');
+
+                $kurang = (float) $invoice->nominal - $sudah;
+
+                if ($kurang > 0 && (float) $request->nominal + 0.01 < $kurang) {
+                    return back()->withErrors([
+                        'nominal' => 'Pembayaran tidak dapat dicicil. Tagihan '
+                            . $invoice->tipe . ' harus dibayar penuh sebesar Rp '
+                            . number_format($kurang, 0, ',', '.') . ' dalam satu kali transfer.',
+                    ])->withInput();
+                }
+            }
+        }
+
         $file     = $request->file('file_bukti');
         $filename = $file->hashName();
         Storage::disk('local')->putFileAs('bukti-pembayaran', $file, $filename);

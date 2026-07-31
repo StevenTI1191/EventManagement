@@ -1761,6 +1761,39 @@ export default function ClientDashboard({
 
                         return (
                             <div className="space-y-4">
+                                {/* Aturan pembayaran dinyatakan terbuka. Sebelumnya
+                                    aturannya hanya hidup di dalam kode — klien tidak
+                                    tahu boleh mencicil atau tidak, dan kapan batasnya,
+                                    sehingga pertanyaan yang sama terus ditanyakan
+                                    kepada tim. */}
+                                <div className="p-5 border bg-gold-soft/40 border-gold-2 rounded-2xl">
+                                    <p className="mb-3 text-sm font-black text-ink">Aturan Pembayaran</p>
+                                    <ol className="space-y-2 text-xs leading-relaxed text-muted">
+                                        <li className="flex gap-2">
+                                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gold-grad text-white text-[10px] font-black flex items-center justify-center">1</span>
+                                            <span><b className="text-ink">Uang muka 50%</b> dibayarkan di awal, setelah penawaran Anda terima. Acara baru masuk tahap persiapan setelah uang muka diterima.</span>
+                                        </li>
+                                        <li className="flex gap-2">
+                                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gold-grad text-white text-[10px] font-black flex items-center justify-center">2</span>
+                                            <span><b className="text-ink">Pelunasan 50%</b> sisanya dibayarkan setelah uang muka lunas.</span>
+                                        </li>
+                                        <li className="flex gap-2">
+                                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gold-grad text-white text-[10px] font-black flex items-center justify-center">3</span>
+                                            <span>Seluruh tagihan <b className="text-ink">harus lunas paling lambat H-3</b>, yaitu tiga hari sebelum hari pelaksanaan acara.</span>
+                                        </li>
+                                        <li className="flex gap-2">
+                                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-danger/15 text-danger text-[10px] font-black flex items-center justify-center">!</span>
+                                            <span><b className="text-danger">Pembayaran tidak dapat dicicil.</b> Setiap tagihan diselesaikan sekali bayar penuh — hanya ada dua kali pembayaran, yaitu uang muka dan pelunasan.</span>
+                                        </li>
+                                    </ol>
+                                    {rekening?.rekening && (
+                                        <p className="pt-3 mt-3 text-[11px] border-t text-muted border-gold-2/40">
+                                            Transfer ke <b className="text-ink">{rekening.nama}</b> {rekening.rekening} a.n. {rekening.atas_nama}.
+                                            Pembayaran hanya kami terima melalui rekening tersebut.
+                                        </p>
+                                    )}
+                                </div>
+
                                 {/* Ringkasan keuangan */}
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                     <div className="p-5 bg-surface border border-line rounded-2xl">
