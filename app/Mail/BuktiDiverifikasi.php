@@ -23,6 +23,24 @@ class BuktiDiverifikasi extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.bukti-diverifikasi');
+        $b = $this->bukti;
+
+        return new Content(view: 'emails.kerangka', with: [
+            'judul'    => 'Pembayaran Terverifikasi',
+            'subjudul' => $b->event?->nama_event,
+            'ikon'     => '✅',
+            'nada'     => 'hijau',
+            'sapaan'   => 'Halo, ' . ($b->client?->nama_client ?? 'Klien') . '!',
+            'paragraf' => ['Bukti pembayaran yang Anda unggah sudah kami periksa dan dinyatakan sah. Terima kasih atas pembayarannya.'],
+            'sorotan'  => 'Rp ' . number_format((float) $b->nominal, 0, ',', '.') . ' diterima',
+            'detail'   => array_filter([
+                'Acara'        => $b->event?->nama_event,
+                'Nominal'      => 'Rp ' . number_format((float) $b->nominal, 0, ',', '.'),
+                'Tanggal bayar'=> $b->tgl_bayar
+                    ? \Illuminate\Support\Carbon::parse($b->tgl_bayar)->translatedFormat('d F Y') : null,
+            ]),
+            'penutup'  => 'Kwitansi resmi dapat Anda unduh sendiri melalui portal klien.',
+            'catatan'  => null, 'tombol' => null,
+        ]);
     }
 }

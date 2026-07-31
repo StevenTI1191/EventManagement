@@ -23,6 +23,22 @@ class BuktiDitolak extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.bukti-ditolak');
+        $b = $this->bukti;
+
+        return new Content(view: 'emails.kerangka', with: [
+            'judul'    => 'Bukti Pembayaran Ditolak',
+            'subjudul' => $b->event?->nama_event,
+            'ikon'     => '❌',
+            'nada'     => 'merah',
+            'sapaan'   => 'Halo, ' . ($b->client?->nama_client ?? 'Klien') . '!',
+            'paragraf' => ['Mohon maaf, bukti pembayaran yang Anda unggah belum dapat kami terima. Silakan periksa kembali lalu unggah ulang melalui portal klien.'],
+            'detail'   => array_filter([
+                'Acara'   => $b->event?->nama_event,
+                'Nominal' => 'Rp ' . number_format((float) $b->nominal, 0, ',', '.'),
+            ]),
+            'catatan'  => $b->catatan_finance ?? null,
+            'penutup'  => 'Bila ada yang perlu ditanyakan, silakan hubungi tim kami.',
+            'sorotan'  => null, 'tombol' => null,
+        ]);
     }
 }

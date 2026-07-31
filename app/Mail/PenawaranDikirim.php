@@ -33,7 +33,29 @@ class PenawaranDikirim extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.penawaran-dikirim');
+        $e = $this->event;
+
+        return new Content(view: 'emails.kerangka', with: [
+            'judul'    => 'Penawaran Acara untuk Anda',
+            'subjudul' => $e->nama_event,
+            'ikon'     => '📩',
+            'nada'     => 'emas',
+            'sapaan'   => 'Halo, ' . ($e->client?->nama_client ?? 'Klien') . '!',
+            'paragraf' => ['Terima kasih atas kepercayaan Anda. Berikut penawaran yang kami siapkan — dokumen lengkapnya terlampir pada surel ini.'],
+            'sorotan'  => 'Total penawaran: Rp ' . number_format((float) ($e->deal_harga_event ?? 0), 0, ',', '.'),
+            'detail'   => array_filter([
+                'Acara'    => $e->nama_event,
+                'Kategori' => $e->kategori_event,
+                'Tanggal'  => $e->tgl_mulai_event
+                    ? \Illuminate\Support\Carbon::parse($e->tgl_mulai_event)->translatedFormat('l, d F Y') : null,
+                'Waktu'    => $e->jam_mulai
+                    ? substr((string) $e->jam_mulai, 0, 5) . ' – ' . substr((string) $e->jam_selesai, 0, 5) . ' WIB' : null,
+                'Lokasi'   => $e->area_event,
+                'Jumlah tamu' => $e->jumlah_pax ? $e->jumlah_pax . ' orang' : null,
+            ]),
+            'penutup'  => 'Silakan tinjau melalui portal klien, lalu terima penawaran ini atau ajukan penyesuaian bila ada yang ingin dibahas.',
+            'catatan'  => null, 'tombol' => null,
+        ]);
     }
 
     public function attachments(): array
