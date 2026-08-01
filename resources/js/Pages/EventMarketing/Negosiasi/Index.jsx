@@ -3,7 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import EventMarketingLayout from '@/Layouts/EventMarketingLayout';
 import {
     MessagesSquare, Building2, UserRound, MapPin, Users, Clock, CalendarPlus,
-    Inbox, X, Send, XCircle, CalendarCheck2, CheckCircle2, Hourglass,
+    Inbox, X, Send, XCircle, CalendarCheck2, CheckCircle2, Hourglass, FileUp,
 } from 'lucide-react';
 
 const rupiah = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
@@ -147,6 +147,33 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
         });
     };
 
+    /**
+     * Penawaran kedua sesudah pembahasan dengan klien. Rutenya sama dengan yang
+     * dipakai papan pipeline — di sini hanya disediakan pintunya, supaya tim
+     * tidak perlu berpindah halaman tepat setelah menutup pembahasan.
+     */
+    const ajukanRevisi = (n) => {
+        if (proses) return;
+        if (! window.confirm(
+            `Ajukan REVISI penawaran untuk "${n.nama_event}"?\n\n`
+            + 'Penawaran yang sudah disetujui akan digantikan dan harus ditinjau '
+            + 'Pihak Manajemen lagi. Dokumen terbaru dikirim ke klien setelah disetujui.')) {
+            return;
+        }
+        setProses(true);
+        router.patch(route('em.penawaran.ajukan', n.id_event), {}, {
+            preserveScroll: true, onFinish: () => setProses(false),
+        });
+    };
+
+    const TombolRevisi = ({ n }) => n.boleh_revisi ? (
+        <button onClick={() => ajukanRevisi(n)} disabled={proses}
+            title="Ajukan penawaran revisi ke Manajemen setelah pembahasan dengan klien"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-black text-white bg-violet-600 rounded-xl hover:bg-violet-700 disabled:opacity-50">
+            <FileUp size={14} /> Ajukan Revisi
+        </button>
+    ) : null;
+
     const Kepala = ({ n }) => (
         <>
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -231,6 +258,7 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
                                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-black text-gray-600 rounded-xl bg-gray-100 hover:bg-gray-200">
                                         <XCircle size={14} /> Tutup
                                     </button>
+                                    <TombolRevisi n={n} />
                                 </div>
                             </div>
                         ))}
@@ -339,6 +367,13 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
                                     <p className="mt-2 text-[11px] text-gray-400">
                                         Ditangani {n.ditangani_oleh || '—'} • {n.ditangani_pada || '—'}
                                     </p>
+                                    {/* Pembahasan sudah tuntas — inilah saatnya penawaran
+                                        keduanya diajukan, tanpa berpindah ke papan pipeline. */}
+                                    {n.boleh_revisi && (
+                                        <div className="pt-3 mt-3 border-t border-gray-100">
+                                            <TombolRevisi n={n} />
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

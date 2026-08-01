@@ -35,7 +35,7 @@ class NegosiasiController extends Controller
         $this->checkEventMarketing();
 
         $relasi = [
-            'event:id_event,nama_event,status_event,tgl_mulai_event,area_event,jumlah_pax,deal_harga_event,id_client,id_pegawai',
+            'event:id_event,nama_event,status_event,penawaran_status,tgl_mulai_event,area_event,jumlah_pax,deal_harga_event,id_client,id_pegawai',
             'event.pic:id_pegawai,nama_pegawai',
             'client:id,nama_client,perusahaan_client,email_client',
             // Kolom usulan ikut diperlukan, jadi appointment dimuat utuh.
@@ -440,6 +440,14 @@ class NegosiasiController extends Controller
             'client'     => $n->client?->perusahaan_client ?: $n->client?->nama_client,
             'client_pic' => $n->client?->nama_client,
             'pic'        => $n->event?->pic?->nama_pegawai,
+
+            // Penawaran kedua sesudah pembahasan. Tim mengajukannya dari sini
+            // supaya tidak perlu kembali ke papan pipeline hanya untuk itu —
+            // syaratnya sama persis dengan yang dijaga ajukanUlangPenawaran().
+            'boleh_revisi' => $n->event
+                && $n->event->penawaran_status === Event::PENAWARAN_DISETUJUI
+                && in_array($n->event->status_event,
+                    [Event::STATUS_NEGOTIATION, Event::STATUS_DEAL], true),
 
             'pesan'         => $n->pesan,
             'minta_meeting' => $n->minta_meeting,
