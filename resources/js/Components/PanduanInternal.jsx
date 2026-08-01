@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { BookOpen, ChevronDown, ShieldAlert } from 'lucide-react';
+import {
+    BookOpen, ChevronDown, ShieldAlert, Wallet, CalendarX2, CalendarClock,
+} from 'lucide-react';
 
 /**
  * Panduan alur sistem & ketentuan yang berlaku untuk tim internal.
@@ -22,17 +24,25 @@ const ALUR = [
     },
     {
         tahap: 'Negotiation',
-        isi: 'Penawaran dibuat dan dikirim ke klien (PDF + WhatsApp). Klien melihat penawaran yang sama di portalnya.',
+        isi: 'Menggeser kartu ke sini berarti MENGAJUKAN penawaran, bukan mengirimkannya. Penawaran masuk ke '
+            + 'Pihak Manajemen lebih dulu; dokumen PDF baru tersusun dan terkirim ke email serta portal klien '
+            + 'pada saat disetujui. Bila ditolak, tahapnya tidak turun — perbaiki lalu ajukan lagi dari papan Pipeline.',
+    },
+    {
+        tahap: 'Negosiasi lanjutan (bila ada)',
+        isi: 'Klien boleh meminta penyesuaian tanpa menolak penawaran. Permintaannya masuk ke menu Negosiasi Lanjutan '
+            + 'untuk dibalas, dan bila perlu dijadwalkan pertemuan. Penawaran hasil pembahasan tidak bisa langsung '
+            + 'dikirim — ajukan sebagai revisi dan Manajemen menyetujuinya sekali lagi.',
     },
     {
         tahap: 'Deal',
-        isi: 'Begitu klien menekan terima di portal, status naik sendiri ke Deal dan tidak bisa dimundurkan lagi. '
-            + 'Finance menerbitkan invoice uang muka 50%.',
+        isi: 'Hanya bisa dicapai setelah klien menekan terima di portalnya. Kartu tidak dapat digeser ke Deal secara '
+            + 'sepihak, dan setelah Deal tidak dapat ditarik mundur lagi. Invoice uang muka 50% terbit otomatis.',
     },
     {
         tahap: 'Upcoming',
-        isi: 'Setelah bukti pembayaran DP diverifikasi Finance, event naik ke Upcoming. To-do divisi dibuat otomatis '
-            + 'sesuai kategori acara, dan technical meeting serta gladi resik masuk kalender.',
+        isi: 'Setelah bukti pembayaran DP diverifikasi Finance, event naik ke Upcoming dan invoice pelunasan terbit. '
+            + 'To-do divisi dibuat otomatis sesuai kategori acara, dan technical meeting serta gladi resik masuk kalender.',
     },
     {
         tahap: 'Penyelesaian',
@@ -45,29 +55,76 @@ const ALUR = [
     },
 ];
 
+const PEMBAYARAN = [
+    'Uang muka 50% dari nilai kesepakatan, terbit otomatis begitu acara mencapai Deal. Pelunasan 50% sisanya terbit '
+        + 'setelah uang muka lunas.',
+    'Pelunasan paling lambat 3 hari sebelum hari pelaksanaan. Tanggal jatuh temponya dihitung sendiri oleh sistem '
+        + 'dari tanggal acara.',
+    'Tidak ada cicilan. Setiap tagihan dibayar penuh dalam satu kali transfer — pembayaran sebagian ditolak sistem '
+        + 'saat klien mengunggah buktinya.',
+    'Bukti pembayaran selalu diverifikasi Finance. Pembacaan nominal otomatis hanya membantu menyaring, tidak pernah '
+        + 'meloloskan pembayaran sendiri.',
+    'Bukti pembayaran menempel pada invoice tertentu, jadi pastikan klien memilih tagihan yang benar saat mengunggah.',
+];
+
+const PEMBATALAN = [
+    'Klien membatalkan acara sendiri dari portalnya. Pembatalan berlaku seketika tanpa persetujuan, dan UANG MUKA '
+        + 'YANG SUDAH DIBAYARKAN HANGUS. Klien wajib mencentang pernyataan bahwa ia memahaminya lebih dulu.',
+    'Sebagai gantinya klien dapat meminta acaranya dipindahkan ke tanggal lain. Uang mukanya tetap berlaku, '
+        + 'tidak hangus.',
+    'Permintaan ganti tanggal menunggu persetujuan Pihak Manajemen, dan hanya satu permintaan yang aktif per acara. '
+        + 'Ketersediaan tanggal tujuan diperiksa ulang saat disetujui.',
+    'Pembatalan menandai acara berstatus Batal, menghapus tagihan yang belum dibayar, dan melepas jadwalnya agar '
+        + 'slot itu bisa dipakai lagi.',
+];
+
+const JADWAL = [
+    'Dua acara tidak boleh bertabrakan pada area yang sama. Rentang yang dianggap terpakai dihitung dari loading in '
+        + 'sampai loading out — bukan dari jam acara — sehingga waktu bongkar pasang ikut terhitung.',
+    'Bila loading in dan loading out belum diisi, jam mulai dan jam selesai acara dipakai sebagai gantinya.',
+    'Di kedua ujung rentang itu berlaku jeda wajib 1 jam. Acara berstatus Done dan Batal tidak lagi memblokir slot.',
+    'Slot appointment 09:00–16:30 berjarak 1,5 jam, hari Minggu libur. Satu slot hanya untuk satu klien, dan slot '
+        + 'yang sudah terisi otomatis nonaktif pada pemilih jadwal klien.',
+    'Appointment yang lahir dari negosiasi lanjutan tidak muncul di halaman Appointment biasa, agar tidak tercampur '
+        + 'dengan permintaan meeting reguler.',
+];
+
 const KETENTUAN = [
     'Perpindahan tahap hanya lewat papan Pipeline. Menyimpan form detail tidak akan mengubah status — ini disengaja, '
         + 'supaya event tidak tercabut dari alurnya tanpa sadar.',
     'Event tidak bisa naik ke Negotiation atau Deal sebelum jam, area, jumlah pax, dan deal harga terisi. '
         + 'Daftar yang masih kosong tampil di halaman detail event.',
-    'Penawaran yang sudah diterima klien tidak boleh ditarik mundur. Bila acaranya batal, gunakan tombol "Tidak jadi", '
-        + 'bukan menggeser kartunya kembali.',
-    'Jadwal tidak boleh bentrok di area yang sama, termasuk jeda 3 jam sebelum dan sesudah acara untuk bongkar pasang.',
-    'Bukti pembayaran selalu diverifikasi Finance. Pembacaan otomatis hanya menyaring dan membantu — tidak pernah '
-        + 'meloloskan pembayaran sendiri.',
-    'Bukti pembayaran menempel pada invoice tertentu, jadi pastikan klien memilih tagihan yang benar saat mengunggah.',
+    'Acara yang sudah Deal tidak dapat dikembalikan ke tahap sebelumnya. Bila acaranya memang batal, gunakan tombol '
+        + '"Tidak jadi", bukan menggeser kartunya kembali.',
     'Event internal tidak masuk pipeline dan tidak menagih klien. Rencana bertarget klien baru muncul di papan To-Do '
         + 'setelah benar-benar jadi dan berstatus Upcoming.',
 ];
+
+/** Satu kelompok ketentuan: judul berikon + daftar butirnya. */
+const Bagian = ({ ikon: Ikon, judul, butir }) => (
+    <div className="mt-6 first:mt-0">
+        <p className="flex items-center gap-1.5 mb-3 text-[10px] font-bold tracking-wider text-gray-400 uppercase">
+            <Ikon size={12} /> {judul}
+        </p>
+        <ul className="space-y-2">
+            {butir.map((b, i) => (
+                <li key={i} className="flex gap-2 text-xs leading-relaxed text-gray-600">
+                    <span className="text-[#FF2D55] font-black shrink-0">•</span>
+                    <span>{b}</span>
+                </li>
+            ))}
+        </ul>
+    </div>
+);
 
 export default function PanduanInternal({ posisi }) {
     const [buka, setBuka] = useState(false);
 
     const peran = {
-        'Event Marketing': 'Kamu memegang prospek: melengkapi detail, mengirim penawaran, mencatat follow-up, dan menggeser kartu di pipeline.',
-        EventMarketing:    'Kamu memegang prospek: melengkapi detail, mengirim penawaran, mencatat follow-up, dan menggeser kartu di pipeline.',
-        Finance:           'Kamu memegang tagihan: menerbitkan invoice, memverifikasi bukti pembayaran, dan mencatat transaksi.',
-        Manajemen:         'Kamu memantau keseluruhan: pipeline, jadwal, evaluasi kinerja, dan catatan untuk tim.',
+        'Event Marketing': 'Kamu memegang prospek: melengkapi detail, mengajukan penawaran ke Manajemen, menanggapi negosiasi lanjutan, mencatat follow-up, dan menggeser kartu di pipeline.',
+        EventMarketing:    'Kamu memegang prospek: melengkapi detail, mengajukan penawaran ke Manajemen, menanggapi negosiasi lanjutan, mencatat follow-up, dan menggeser kartu di pipeline.',
+        Finance:           'Kamu memegang tagihan: memantau invoice yang terbit otomatis, memverifikasi bukti pembayaran, dan mencatat transaksi.',
+        Manajemen:         'Kamu memutuskan dan memantau: menyetujui penawaran serta permintaan ganti tanggal, lalu memantau pipeline, jadwal, dan evaluasi kinerja.',
     }[posisi];
 
     return (
@@ -105,17 +162,10 @@ export default function PanduanInternal({ posisi }) {
                         ))}
                     </ol>
 
-                    <p className="flex items-center gap-1.5 mb-3 text-[10px] font-bold tracking-wider text-gray-400 uppercase">
-                        <ShieldAlert size={12} /> Ketentuan yang Berlaku
-                    </p>
-                    <ul className="space-y-2">
-                        {KETENTUAN.map((k, i) => (
-                            <li key={i} className="flex gap-2 text-xs leading-relaxed text-gray-600">
-                                <span className="text-[#FF2D55] font-black shrink-0">•</span>
-                                <span>{k}</span>
-                            </li>
-                        ))}
-                    </ul>
+                    <Bagian ikon={Wallet} judul="Aturan Pembayaran" butir={PEMBAYARAN} />
+                    <Bagian ikon={CalendarX2} judul="Pembatalan & Ganti Tanggal" butir={PEMBATALAN} />
+                    <Bagian ikon={CalendarClock} judul="Bentrok Jadwal & Slot Meeting" butir={JADWAL} />
+                    <Bagian ikon={ShieldAlert} judul="Ketentuan Lain" butir={KETENTUAN} />
                 </div>
             )}
         </div>

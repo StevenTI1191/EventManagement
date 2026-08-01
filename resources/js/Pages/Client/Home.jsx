@@ -413,11 +413,11 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                             { judul: 'Terima penawaran',
                               isi: 'Penawaran lengkap beserta rinciannya dikirim dalam bentuk PDF dan tampil di portal. Anda bisa menerima atau menolaknya di sana.' },
                             { judul: 'Bayar uang muka 50%',
-                              isi: 'Setelah penawaran diterima, tagihan uang muka terbit. Unggah bukti transfernya di portal — pilih tagihan yang dibayar agar tercatat tepat.' },
+                              isi: 'Setelah penawaran diterima, tagihan uang muka terbit. Unggah bukti transfernya di portal — pilih tagihan yang dibayar agar tercatat tepat. Tagihan dibayar penuh sekali transfer, tanpa cicilan.' },
                             { judul: 'Persiapan berjalan',
                               isi: 'Begitu pembayaran diverifikasi, acara Anda masuk tahap persiapan. Technical meeting dan gladi resik dijadwalkan dan bisa Anda lihat di portal.' },
-                            { judul: 'Hari-H & pelunasan',
-                              isi: 'Acara berlangsung sesuai rencana. Pembayaran yang belum terselesaikan ditagihkan lewat invoice pelunasan.' },
+                            { judul: 'Pelunasan & hari-H',
+                              isi: 'Invoice pelunasan terbit setelah uang muka lunas, dan harus dibayar paling lambat 3 hari sebelum acara. Setelah itu acara berlangsung sesuai rencana.' },
                         ].map((l, i) => (
                             <li key={l.judul} className="flex gap-5 p-6 transition-all bg-surface border border-line rounded-2xl hover:border-gold-2">
                                 <span className="flex items-center justify-center w-10 h-10 text-sm font-black text-white rounded-full bg-gold-grad shadow-gold shrink-0">
@@ -431,7 +431,31 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                         ))}
                     </ol>
 
-                    <div className="p-8 mt-12 text-center border bg-gradient-to-r from-gold-soft to-transparent border-line rounded-3xl">
+                    {/* Aturan yang paling sering ditanyakan, dinyatakan di muka agar
+                        klien tidak perlu menebak — terutama soal uang muka. */}
+                    <div className="p-8 mt-12 border bg-surface border-line rounded-3xl">
+                        <h3 className="mb-5 text-lg font-bold text-ink">Ketentuan yang Perlu Diketahui</h3>
+                        <ul className="grid gap-4 md:grid-cols-2">
+                            {[
+                                ['Uang muka 50%', 'Dibayar setelah penawaran diterima, dan menjadi tanda acara Anda dikunci pada tanggal tersebut.'],
+                                ['Pelunasan paling lambat H-3', 'Sisa 50% dibayar selambatnya tiga hari sebelum acara berlangsung.'],
+                                ['Tanpa cicilan', 'Setiap tagihan dibayar penuh dalam satu kali transfer.'],
+                                ['Ganti tanggal — uang muka tetap berlaku', 'Ajukan pemindahan tanggal dari portal. Setelah disetujui, uang muka Anda ikut berpindah.'],
+                                ['Pembatalan — uang muka hangus', 'Pembatalan berlaku seketika dan uang muka yang sudah dibayarkan tidak dikembalikan. Bila hanya tanggalnya yang berubah, pilih ganti tanggal.'],
+                                ['Penyesuaian penawaran', 'Belum cocok dengan penawarannya? Ajukan penyesuaian dari portal tanpa harus menolaknya lebih dulu.'],
+                            ].map(([judul, isi]) => (
+                                <li key={judul} className="flex gap-3">
+                                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+                                    <div>
+                                        <p className="text-sm font-bold text-ink">{judul}</p>
+                                        <p className="text-sm leading-relaxed text-muted">{isi}</p>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div className="p-8 mt-8 text-center border bg-gradient-to-r from-gold-soft to-transparent border-line rounded-3xl">
                         <p className="mb-5 text-muted">Siap memulai? Langkah pertamanya hanya butuh beberapa menit.</p>
                         <a href={isLoggedIn ? `${BASE_URL}/appointment/create` : `${BASE_URL}/register`}
                             className="inline-block px-8 py-3 font-black text-white transition-all rounded-full bg-gold-grad shadow-gold hover:brightness-110 hover:scale-105">
