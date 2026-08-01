@@ -171,6 +171,22 @@ trait ManagesPipeline
         $sekarang = $urut[$event->status_event] ?? -1;
         $tujuan   = $urut[$baru] ?? -1;
 
+        // Deal adalah kesepakatan yang sudah berjalan: invoice uang muka terbit
+        // dan tagihannya jalan. Menariknya kembali membuat tagihan itu
+        // menggantung pada acara yang tahapnya seolah belum disepakati. Jalan
+        // keluar yang sah hanya "Tidak jadi".
+        //
+        // Penjagaan ini sengaja TIDAK bersandar pada respon_klien seperti
+        // penjagaan di bawahnya: mengajukan penawaran revisi mengosongkan
+        // respon_klien, sehingga acara yang sudah Deal sempat bisa ditarik
+        // mundur selama revisinya menunggu keputusan Manajemen.
+        if ($event->status_event === Event::STATUS_DEAL && $tujuan < $sekarang) {
+            throw ValidationException::withMessages([
+                'status_event' => 'Acara yang sudah Deal tidak dapat dikembalikan ke tahap sebelumnya. '
+                    . 'Bila acaranya memang batal, gunakan tombol "Tidak jadi".',
+            ]);
+        }
+
         if ($tujuan < $sekarang && $event->respon_klien === 'Diterima') {
             throw ValidationException::withMessages([
                 'status_event' => 'Penawaran sudah diterima klien, jadi tahapnya tidak bisa dimundurkan. '
