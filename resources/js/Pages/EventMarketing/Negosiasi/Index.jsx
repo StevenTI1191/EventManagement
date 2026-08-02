@@ -137,6 +137,12 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
             setProses(true);
             return router.patch(route('em.negosiasi.tutup', n.id), { alasan }, selesai);
         }
+
+        // Rutenya milik pipeline, dan sasarannya acara — bukan negosiasinya.
+        if (tipe === 'revisi') {
+            setProses(true);
+            return router.patch(route('em.penawaran.ajukan', n.id_event), {}, selesai);
+        }
     };
 
     const terimaUsulan = (n) => {
@@ -152,22 +158,8 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
      * dipakai papan pipeline — di sini hanya disediakan pintunya, supaya tim
      * tidak perlu berpindah halaman tepat setelah menutup pembahasan.
      */
-    const ajukanRevisi = (n) => {
-        if (proses) return;
-        if (! window.confirm(
-            `Ajukan REVISI penawaran untuk "${n.nama_event}"?\n\n`
-            + 'Penawaran yang sudah disetujui akan digantikan dan harus ditinjau '
-            + 'Pihak Manajemen lagi. Dokumen terbaru dikirim ke klien setelah disetujui.')) {
-            return;
-        }
-        setProses(true);
-        router.patch(route('em.penawaran.ajukan', n.id_event), {}, {
-            preserveScroll: true, onFinish: () => setProses(false),
-        });
-    };
-
     const TombolRevisi = ({ n }) => n.boleh_revisi ? (
-        <button onClick={() => ajukanRevisi(n)} disabled={proses}
+        <button onClick={() => buka(n, 'revisi')} disabled={proses}
             title="Ajukan penawaran revisi ke Manajemen setelah pembahasan dengan klien"
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-black text-white bg-violet-600 rounded-xl hover:bg-violet-700 disabled:opacity-50">
             <FileUp size={14} /> Ajukan Revisi
@@ -391,6 +383,7 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
                             <h3 className="text-lg font-extrabold text-gray-900">
                                 {aksi.tipe === 'balas' ? 'Tanggapi permintaan klien'
                                     : aksi.tipe === 'tolak-usulan' ? 'Tolak usulan & tawarkan waktu lain'
+                                    : aksi.tipe === 'revisi' ? 'Ajukan penawaran revisi'
                                     : 'Tutup permintaan'}
                             </h3>
                             <button onClick={() => setAksi(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
@@ -443,14 +436,34 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
                             </>
                         )}
 
+                        {aksi.tipe === 'revisi' && (
+                            <>
+                                <p className="mb-3 text-sm text-gray-600">
+                                    Penawaran hasil pembahasan diajukan ulang ke Pihak Manajemen.
+                                </p>
+                                <ul className="p-3 space-y-1.5 text-xs rounded-xl bg-violet-50 text-violet-800">
+                                    <li>• Penawaran yang sudah disetujui digantikan oleh versi ini.</li>
+                                    <li>• Dokumen PDF baru disusun dari data acara terkini, dan dikirim ke klien setelah Manajemen menyetujuinya.</li>
+                                    <li>• Jawaban klien atas penawaran lama dikosongkan supaya ia dapat merespons versi barunya.</li>
+                                </ul>
+                                <p className="mt-3 text-xs text-gray-500">
+                                    Pastikan harga dan rincian acaranya sudah dibetulkan sebelum diajukan.
+                                </p>
+                            </>
+                        )}
+
                         <div className="flex gap-3 mt-5">
                             <button onClick={() => setAksi(null)} disabled={proses}
                                 className="flex-1 py-2.5 text-sm font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-60">
                                 Kembali
                             </button>
                             <button onClick={kirim} disabled={proses}
-                                className="flex-1 py-2.5 text-sm font-black text-white bg-[#FF2D55] rounded-xl hover:brightness-110 disabled:opacity-50">
-                                {proses ? 'Mengirim…' : aksi.tipe === 'tutup' ? 'Ya, tutup' : 'Kirim'}
+                                className={`flex-1 py-2.5 text-sm font-black text-white rounded-xl hover:brightness-110 disabled:opacity-50 ${
+                                    aksi.tipe === 'revisi' ? 'bg-violet-600' : 'bg-[#FF2D55]'}`}>
+                                {proses ? 'Mengirim…'
+                                    : aksi.tipe === 'tutup' ? 'Ya, tutup'
+                                    : aksi.tipe === 'revisi' ? 'Ajukan revisi'
+                                    : 'Kirim'}
                             </button>
                         </div>
                     </div>

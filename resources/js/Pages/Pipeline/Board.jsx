@@ -3,7 +3,7 @@ import { Head, router, Link } from '@inertiajs/react';
 import {
     GitBranch, Eye, Building2, CalendarDays, MapPin, User, GripVertical,
     FileDown, MessageCircle, XCircle, X, LayoutGrid, Table2, Lightbulb, Lock, ChevronDown,
-    Clock, CheckCircle2, Send,
+    Clock, CheckCircle2, Send, FileUp,
 } from 'lucide-react';
 
 // Tiga tahap pertama boleh digeser. Sisanya ditentukan pembayaran & jadwal,
@@ -48,6 +48,7 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
     // Persetujuan penawaran oleh Manajemen.
     const [setujuiKartu, setSetujuiKartu] = useState(null);
     const [tolakKartu, setTolakKartu] = useState(null);
+    const [revisiKartu, setRevisiKartu] = useState(null);
     const [catatanTolak, setCatatanTolak] = useState('');
     const [submitPenawaran, setSubmitPenawaran] = useState(false);
 
@@ -71,16 +72,17 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
 
     const ajukanPenawaran = (kartu) => {
         // Mengajukan revisi berarti penawaran yang SUDAH sampai ke klien
-        // digantikan. Dikonfirmasi lebih dulu agar tidak tertekan tanpa sengaja.
-        if (kartu.penawaran_status === 'Disetujui'
-            && ! window.confirm(
-                `Ajukan REVISI penawaran untuk "${kartu.nama_event}"?\n\n`
-                + 'Penawaran yang sudah disetujui akan digantikan dan harus ditinjau '
-                + 'Pihak Manajemen lagi. Dokumen terbaru dikirim ke klien setelah disetujui.')) {
-            return;
+        // digantikan, jadi dikonfirmasi lebih dulu lewat dialognya sendiri.
+        // Pengajuan pertama tidak menggantikan apa pun, jadi langsung jalan.
+        if (kartu.penawaran_status === 'Disetujui') {
+            setError('');
+            return setRevisiKartu(kartu);
         }
         aksiPenawaran(routes.ajukanPenawaran, kartu, {}, () => {});
     };
+
+    const kirimRevisi = () =>
+        aksiPenawaran(routes.ajukanPenawaran, revisiKartu, {}, () => setRevisiKartu(null));
 
     const [expandedCard, setExpandedCard] = useState(null);
 
@@ -490,6 +492,53 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                             <button type="button" onClick={setujuiPenawaran} disabled={submitPenawaran}
                                 className="px-4 py-2 text-sm font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-60">
                                 {submitPenawaran ? 'Mengirim…' : 'Setujui & kirim'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Penawaran kedua sesudah pembahasan dengan klien. Yang lama sudah
+                sampai ke klien, jadi penggantiannya dinyatakan terang-terangan. */}
+            {revisiKartu && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                    onClick={() => !submitPenawaran && setRevisiKartu(null)}>
+                    <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl" onClick={(ev) => ev.stopPropagation()}>
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <FileUp size={20} className="text-violet-600" />
+                                <h3 className="text-lg font-extrabold text-gray-900">Ajukan penawaran revisi</h3>
+                            </div>
+                            <button type="button" onClick={() => !submitPenawaran && setRevisiKartu(null)}
+                                className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                        </div>
+
+                        <p className="mt-3 text-sm text-gray-600">
+                            Penawaran untuk <span className="font-bold text-gray-900">"{revisiKartu.nama_event}"</span> senilai{' '}
+                            <span className="font-bold text-gray-900">{rupiah(revisiKartu.deal_harga_event)}</span> akan
+                            diajukan ulang ke Pihak Manajemen.
+                        </p>
+
+                        <ul className="p-3 mt-3 space-y-1.5 text-xs text-violet-800 rounded-xl bg-violet-50">
+                            <li>• Penawaran yang sudah disetujui digantikan oleh versi ini.</li>
+                            <li>• Dokumen PDF baru disusun dari data acara terkini, dan dikirim ke klien setelah Manajemen menyetujuinya.</li>
+                            <li>• Jawaban klien atas penawaran lama dikosongkan supaya ia dapat merespons versi barunya.</li>
+                        </ul>
+
+                        <p className="mt-3 text-xs text-gray-500">
+                            Pastikan harga dan rincian acaranya sudah dibetulkan sebelum diajukan.
+                        </p>
+
+                        {error && <p className="p-2 mt-3 text-xs font-bold text-red-600 rounded-lg bg-red-50">{error}</p>}
+
+                        <div className="flex justify-end gap-2 mt-5">
+                            <button type="button" onClick={() => setRevisiKartu(null)} disabled={submitPenawaran}
+                                className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-60">
+                                Batal
+                            </button>
+                            <button type="button" onClick={kirimRevisi} disabled={submitPenawaran}
+                                className="px-4 py-2 text-sm font-bold text-white bg-violet-600 rounded-xl hover:bg-violet-700 disabled:opacity-60">
+                                {submitPenawaran ? 'Mengajukan…' : 'Ajukan revisi'}
                             </button>
                         </div>
                     </div>
