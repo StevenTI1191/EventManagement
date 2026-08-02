@@ -736,10 +736,29 @@ export default function EventDetail({
                         </Field>
                     </div>
 
-                    <Field label="Catatan" error={errors.note_event}>
+                    <Field label="Catatan" hint="Ikut tercetak pada dokumen penawaran dan detail acara yang diunduh klien."
+                        error={errors.note_event}>
                         <textarea className={`${inputCls} h-20`} value={data.note_event}
                             onChange={(e) => setData('note_event', e.target.value)} />
                     </Field>
+
+                    {/* Jejak sistem: hanya untuk tim, dan tidak dapat disunting supaya
+                        riwayatnya tetap dapat dipercaya. Tidak pernah masuk PDF klien. */}
+                    {event.jejak_event && (
+                        <div>
+                            <p className="mb-2 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                                Riwayat Sistem
+                            </p>
+                            <div className="p-4 space-y-1.5 overflow-y-auto border border-gray-200 rounded-2xl bg-gray-50 max-h-56">
+                                {event.jejak_event.split('\n').filter(Boolean).reverse().map((baris, i) => (
+                                    <p key={i} className="font-mono text-xs leading-relaxed text-gray-600">{baris}</p>
+                                ))}
+                            </div>
+                            <p className="mt-1.5 text-xs text-gray-400">
+                                Dicatat otomatis, terbaru di atas. Hanya terlihat oleh tim.
+                            </p>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <Field label="Poster" hint="Kosongkan bila tidak ingin mengganti poster." error={errors.poster_event}>

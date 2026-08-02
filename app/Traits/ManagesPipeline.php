@@ -343,7 +343,7 @@ trait ManagesPipeline
             }
         }
 
-        $jejak = 'Tidak jadi (' . now()->translatedFormat('d M Y') . ')'
+        $jejak = 'Prospek ditandai tidak jadi'
             . (filled($data['alasan'] ?? null) ? ': ' . trim($data['alasan']) : '.');
 
         // Bersihkan invoice yang belum dibayar (mis. DP otomatis saat Deal).
@@ -359,10 +359,9 @@ trait ManagesPipeline
             // penawarannya benar-benar terkirim ke klien.
             'penawaran_status'  => null,
             'penawaran_catatan' => null,
-            'note_event'        => $event->note_event
-                ? $event->note_event . ' | ' . $jejak
-                : $jejak,
         ]);
+
+        $event->catatJejak($jejak);
 
         return back()->with('success', "Prospek \"{$event->nama_event}\" ditandai tidak jadi.");
     }

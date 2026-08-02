@@ -166,10 +166,10 @@ class NegosiasiController extends Controller
             ]);
 
             $this->jejak($negosiasi->event, $jadwalkan
-                ? '💬 Tim membalas negosiasi & menawarkan pertemuan '
+                ? 'Tim membalas negosiasi dan menawarkan pertemuan '
                     . \Illuminate\Support\Carbon::parse($data['tgl_meeting'])->translatedFormat('d M Y')
-                    . ' ' . substr($data['jam_meeting'], 0, 5)
-                : '💬 Tim membalas negosiasi klien');
+                    . ' pukul ' . substr($data['jam_meeting'], 0, 5) . '.'
+                : 'Tim membalas negosiasi klien.');
 
             $this->kabariKlien($negosiasi, $jadwalkan, $data);
         });
@@ -221,8 +221,8 @@ class NegosiasiController extends Controller
             $negosiasi->update(['status' => EventNegosiasi::SELESAI]);
 
             $this->jejak($negosiasi->event,
-                '✅ Usulan jadwal klien diterima — pembahasan '
-                . \Illuminate\Support\Carbon::parse($tgl)->translatedFormat('d M Y') . ' ' . $jam);
+                'Usulan jadwal klien diterima, pembahasan '
+                . \Illuminate\Support\Carbon::parse($tgl)->translatedFormat('d M Y') . ' pukul ' . $jam . '.');
         });
 
         $this->kabariJadwal($negosiasi, '✅ Jadwal Pembahasan Disepakati',
@@ -286,8 +286,8 @@ class NegosiasiController extends Controller
             ]);
 
             $this->jejak($negosiasi->event,
-                '🔄 Usulan klien belum cocok, tim menawarkan '
-                . \Illuminate\Support\Carbon::parse($data['tgl_meeting'])->translatedFormat('d M Y') . ' ' . $jam);
+                'Usulan klien belum cocok, tim menawarkan '
+                . \Illuminate\Support\Carbon::parse($data['tgl_meeting'])->translatedFormat('d M Y') . ' pukul ' . $jam . '.');
         });
 
         $this->kabariJadwal($negosiasi, '🔄 Usulan Jadwal Baru dari Tim',
@@ -354,18 +354,15 @@ class NegosiasiController extends Controller
             'ditangani_pada' => now(),
         ]);
 
-        $this->jejak($negosiasi->event, '💬 Negosiasi ditutup: ' . trim($data['alasan']));
+        $this->jejak($negosiasi->event, 'Negosiasi ditutup: ' . trim($data['alasan']));
 
         return back()->with('success', 'Permintaan negosiasi ditutup.');
     }
 
-    /** Catat jejaknya pada catatan acara supaya riwayatnya tetap satu tempat. */
+    /** Catat jejaknya pada riwayat acara supaya urutannya tetap satu tempat. */
     private function jejak(Event $event, string $teks): void
     {
-        $baris = $teks . ' (' . now()->translatedFormat('d M Y H:i') . ')';
-        $event->update([
-            'note_event' => $event->note_event ? $event->note_event . ' | ' . $baris : $baris,
-        ]);
+        $event->catatJejak($teks);
     }
 
     private function kabariKlien(EventNegosiasi $negosiasi, bool $jadwalkan, array $data): void

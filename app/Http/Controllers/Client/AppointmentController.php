@@ -763,13 +763,11 @@ class AppointmentController extends Controller
                     'catatan_tolak' => 'Acara dibatalkan klien sebelum permintaan ini ditinjau.',
                 ]);
 
-            $jejak = 'Dibatalkan klien (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['alasan'])
-                . ($hangus > 0 ? ' — uang muka Rp ' . number_format($hangus, 0, ',', '.') . ' hangus.' : '.');
+            $jejak = 'Dibatalkan klien: ' . trim($data['alasan'])
+                . ($hangus > 0 ? ' Uang muka Rp ' . number_format($hangus, 0, ',', '.') . ' hangus.' : '');
 
-            $event->update([
-                'status_event' => Event::STATUS_BATAL,
-                'note_event'   => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
-            ]);
+            $event->update(['status_event' => Event::STATUS_BATAL]);
+            $event->catatJejak($jejak);
         });
 
         // Pembatalan berlaku seketika, jadi tim dikabari sebagai pemberitahuan —
@@ -847,9 +845,7 @@ class AppointmentController extends Controller
         ]);
 
         $tglBaru = \Illuminate\Support\Carbon::parse($data['tgl_baru'])->translatedFormat('d F Y');
-        $jejak   = 'Klien meminta ganti tanggal ke ' . $tglBaru
-                 . ' (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['alasan']);
-        $event->update(['note_event' => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak]);
+        $event->catatJejak('Klien meminta ganti tanggal ke ' . $tglBaru . ': ' . trim($data['alasan']));
 
         $this->kabariRole('Manajemen',
             'Permintaan Ganti Tanggal — ' . $event->nama_event,
@@ -949,14 +945,15 @@ class AppointmentController extends Controller
     {
         $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
 
-        $jejak = '✅ Penawaran DITERIMA klien (' . now()->translatedFormat('d M Y H:i') . ') — otomatis pindah ke Deal.';
+        $jejak = 'Penawaran diterima klien, acara otomatis pindah ke tahap Deal.';
 
         $event->update([
             'status_event'     => Event::STATUS_DEAL,
             'respon_klien'     => 'Diterima',
             'tgl_respon_klien' => now(),
-            'note_event'       => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
         ]);
+
+        $event->catatJejak($jejak);
 
         // Konsisten dengan alur pipeline: appointment terkait ditandai Selesai.
         Appointment::where('id_event', $event->id_event)
@@ -978,14 +975,15 @@ class AppointmentController extends Controller
 
         $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
 
-        $jejak = '❌ Penawaran DITOLAK klien (' . now()->translatedFormat('d M Y H:i') . ')'
+        $jejak = 'Penawaran ditolak klien'
             . (filled($data['alasan'] ?? null) ? ': ' . trim($data['alasan']) : '.');
 
         $event->update([
             'respon_klien'     => 'Ditolak',
             'tgl_respon_klien' => now(),
-            'note_event'       => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
         ]);
+
+        $event->catatJejak($jejak);
 
         $this->kabariPicPenawaran($event, 'ditolak', $data['alasan'] ?? null);
 
@@ -1033,10 +1031,8 @@ class AppointmentController extends Controller
             'status'        => \App\Models\EventNegosiasi::DIAJUKAN,
         ]);
 
-        $event->update([
-            'tgl_respon_klien' => now(),
-            'note_event'       => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
-        ]);
+        $event->update(['tgl_respon_klien' => now()]);
+        $event->catatJejak($jejak);
 
         if ($email = $event->pic?->email_pegawai) {
             $isi = "Klien meminta PENYESUAIAN atas penawaran acara \"{$event->nama_event}\".\n\n"
@@ -1106,12 +1102,8 @@ class AppointmentController extends Controller
 
             $negosiasi->update(['status' => \App\Models\EventNegosiasi::SELESAI]);
 
-            $jejak = '✅ Klien menerima jadwal pembahasan penawaran ('
-                . now()->translatedFormat('d M Y H:i') . ')';
-            $negosiasi->event?->update([
-                'note_event' => $negosiasi->event->note_event
-                    ? $negosiasi->event->note_event . ' | ' . $jejak : $jejak,
-            ]);
+            $jejak = 'Klien menerima jadwal pembahasan penawaran.';
+            $negosiasi->event?->catatJejak($jejak);
         });
 
         $this->kabariRole('EventMarketing',
@@ -1167,14 +1159,11 @@ class AppointmentController extends Controller
 
             $negosiasi->update(['status' => \App\Models\EventNegosiasi::USULAN_KLIEN]);
 
-            $jejak = '🔄 Klien mengusulkan jadwal pembahasan '
+            $jejak = 'Klien mengusulkan jadwal pembahasan '
                 . \Illuminate\Support\Carbon::parse($data['usulan_tgl'])->translatedFormat('d M Y')
-                . ' ' . $jam . ' (' . now()->translatedFormat('d M Y H:i') . ')';
+                . ' pukul ' . $jam . '.';
 
-            $negosiasi->event?->update([
-                'note_event' => $negosiasi->event->note_event
-                    ? $negosiasi->event->note_event . ' | ' . $jejak : $jejak,
-            ]);
+            $negosiasi->event?->catatJejak($jejak);
         });
 
         $this->kabariRole('EventMarketing',

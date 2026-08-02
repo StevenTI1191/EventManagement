@@ -68,7 +68,7 @@ trait ManagesPersetujuanPenawaran
             'penawaran_catatan'       => null,
         ]);
 
-        $this->jejakPenawaran($event, '✅ Penawaran disetujui Manajemen');
+        $this->jejakPenawaran($event, 'Penawaran disetujui Manajemen.');
 
         $terkirim = $this->kirimPenawaranKeKlien($event);
 
@@ -95,7 +95,7 @@ trait ManagesPersetujuanPenawaran
             'penawaran_catatan'       => trim($data['catatan']),
         ]);
 
-        $this->jejakPenawaran($event, '❌ Penawaran ditolak Manajemen: ' . trim($data['catatan']));
+        $this->jejakPenawaran($event, 'Penawaran ditolak Manajemen: ' . trim($data['catatan']));
 
         $this->kabariRole('EventMarketing',
             '❌ Penawaran perlu diperbaiki — ' . $event->nama_event,
@@ -151,8 +151,8 @@ trait ManagesPersetujuanPenawaran
         ]);
 
         $this->jejakPenawaran($event, $revisi
-            ? '📝 Revisi penawaran diajukan ke Manajemen'
-            : '📝 Penawaran diajukan ulang ke Manajemen');
+            ? 'Revisi penawaran diajukan ke Manajemen.'
+            : 'Penawaran diajukan ulang ke Manajemen.');
 
         $this->kabariRole('Manajemen',
             ($revisi ? '📝 Revisi penawaran menunggu persetujuan — ' : '📝 Penawaran menunggu persetujuan — ')
@@ -173,9 +173,6 @@ trait ManagesPersetujuanPenawaran
 
     private function jejakPenawaran(Event $event, string $teks): void
     {
-        $jejak = $teks . ' (' . now()->translatedFormat('d M Y H:i') . ')';
-        $event->update([
-            'note_event' => $event->note_event ? $event->note_event . ' | ' . $jejak : $jejak,
-        ]);
+        $event->catatJejak($teks);
     }
 }

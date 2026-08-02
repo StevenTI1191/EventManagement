@@ -29,6 +29,7 @@ class Event extends Model
         'target_pax',
         'target_omset',
         'note_event',
+        'jejak_event',
         'food_beverage_event',
         'entairtainment_event',
         'poster_event',
@@ -444,6 +445,26 @@ class Event extends Model
         // 'id_pegawai' adalah foreign key di tabel events
         return $this->belongsTo(Pegawai::class, 'id_pegawai');
     }
+    /**
+     * Catat satu peristiwa pada jejak acara.
+     *
+     * Jejak sengaja terpisah dari note_event: catatan itu ikut tercetak pada
+     * PDF penawaran maupun PDF detail acara yang diunduh klien, sedangkan
+     * jejak berisi keterangan internal seperti alasan penolakan Manajemen.
+     *
+     * Satu peristiwa satu baris, diawali waktunya, tanpa emoji — font PDF
+     * tidak memilikinya sehingga hanya tercetak sebagai kotak kosong.
+     */
+    public function catatJejak(string $teks): void
+    {
+        $teks  = preg_replace('/^[^\p{L}\p{N}]+/u', '', trim($teks));
+        $baris = '[' . now()->translatedFormat('d M Y H:i') . '] ' . $teks;
+
+        $this->update([
+            'jejak_event' => $this->jejak_event ? $this->jejak_event . "\n" . $baris : $baris,
+        ]);
+    }
+
     /**
      * Jeda wajib (menit) sebelum & sesudah acara di area yang sama, untuk
      * setup dan bongkar. Mencegah dua acara dijadwalkan mepet sehingga

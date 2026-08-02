@@ -104,9 +104,10 @@ class RescheduleController extends Controller
             $event->update([
                 'tgl_mulai_event'   => $r->tgl_baru->toDateString(),
                 'tgl_selesai_event' => optional($r->tgl_selesai_baru)->toDateString(),
-                'note_event'        => $this->jejak($event->note_event,
-                    "📅 Jadwal dipindah dari {$lama} ke {$baru} atas permintaan klien, disetujui Manajemen"),
             ]);
+
+            $event->catatJejak(
+                "Jadwal dipindah dari {$lama} ke {$baru} atas permintaan klien, disetujui Manajemen.");
 
             $r->update([
                 'status'         => EventReschedule::STATUS_DISETUJUI,
@@ -161,12 +162,8 @@ class RescheduleController extends Controller
             'catatan_tolak'  => trim($data['catatan']),
         ]);
 
-        if ($r->event) {
-            $r->event->update([
-                'note_event' => $this->jejak($r->event->note_event,
-                    '❌ Permintaan ganti tanggal ditolak Manajemen: ' . trim($data['catatan'])),
-            ]);
-        }
+        $r->event?->catatJejak(
+            'Permintaan ganti tanggal ditolak Manajemen: ' . trim($data['catatan']));
 
         if ($r->client_id) {
             Notifikasi::create([
@@ -183,10 +180,4 @@ class RescheduleController extends Controller
         return back()->with('success', 'Pengajuan ditolak. Klien telah diberi tahu.');
     }
 
-    private function jejak(?string $note, string $teks): string
-    {
-        $jejak = $teks . ' (' . now()->translatedFormat('d M Y H:i') . ')';
-
-        return $note ? $note . ' | ' . $jejak : $jejak;
-    }
 }
