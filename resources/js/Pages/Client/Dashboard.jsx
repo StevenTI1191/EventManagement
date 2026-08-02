@@ -823,22 +823,38 @@ export default function ClientDashboard({
                                         </div>
                                     )}
 
+                                    {/* Penyesuaian sudah diajukan: angka pada dokumen yang
+                                        terpampang belum tentu berlaku, jadi penawaran ini
+                                        tidak dapat diterima sampai revisinya dikirim. */}
+                                    {p.menunggu_revisi && (
+                                        <div className="flex items-start gap-2 p-3 mb-4 border bg-gold-soft border-gold-2 rounded-xl">
+                                            <Clock size={15} className="text-gold-dim mt-0.5 shrink-0" />
+                                            <p className="text-xs text-muted">
+                                                <span className="font-bold text-gold-dim">Permintaan penyesuaian Anda sedang dibahas.</span>{' '}
+                                                Penawaran ini belum dapat diterima sampai tim mengirimkan penawaran
+                                                terbarunya. Perkembangannya dapat Anda ikuti pada panel di bawah.
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="flex flex-wrap gap-2">
                                         <a href={route('client.penawaran.pdf', p.id_event)}
                                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gold-dim bg-gold-soft border border-gold-2 rounded-xl hover:brightness-95 transition-all">
                                             <Download size={14} /> Lihat Penawaran (PDF)
                                         </a>
-                                        <button onClick={() => { setSetujuKetentuan(false); setTerimaModal(p); }} disabled={prosesPenawaran === p.id_event}
-                                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white rounded-xl bg-emerald-600 shadow-md shadow-emerald-600/30 hover:bg-emerald-700 transition-all disabled:opacity-60">
-                                            <CheckCircle size={14} /> {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Penawaran'}
-                                        </button>
-                                        {p.respon_klien !== 'Ditolak' && (
+                                        {!p.menunggu_revisi && (
+                                            <button onClick={() => { setSetujuKetentuan(false); setTerimaModal(p); }} disabled={prosesPenawaran === p.id_event}
+                                                className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white rounded-xl bg-emerald-600 shadow-md shadow-emerald-600/30 hover:bg-emerald-700 transition-all disabled:opacity-60">
+                                                <CheckCircle size={14} /> {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Penawaran'}
+                                            </button>
+                                        )}
+                                        {!p.menunggu_revisi && p.respon_klien !== 'Ditolak' && (
                                             <button onClick={() => { setPenyesuaianPesan(''); setPenyesuaianMeeting(false); setPenyesuaianModal(p); }} disabled={prosesPenawaran === p.id_event}
                                                 className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gold-dim bg-surface border border-gold-2 rounded-xl hover:bg-gold-soft transition-all disabled:opacity-60">
                                                 💬 Ajukan Penyesuaian
                                             </button>
                                         )}
-                                        {p.respon_klien !== 'Ditolak' && (
+                                        {!p.menunggu_revisi && p.respon_klien !== 'Ditolak' && (
                                             <button onClick={() => { setAlasanTolak(''); setTolakModal(p); }} disabled={prosesPenawaran === p.id_event}
                                                 className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-danger bg-danger-bg border border-danger/30 rounded-xl hover:brightness-95 transition-all disabled:opacity-60">
                                                 <XCircle size={14} /> Tolak

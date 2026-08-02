@@ -93,6 +93,30 @@ class AppointmentController extends Controller
             ->latest('updated_at')
             ->get();
 
+        // Penawaran yang sedang dibahas ulang tidak boleh bisa diterima. Klien
+        // sudah meminta penyesuaian, jadi angka pada dokumen yang terpampang
+        // belum tentu berlaku — yang mengikat nanti adalah dokumen revisinya.
+        //
+        // Penandanya perbandingan waktu, bukan sekadar ada tidaknya negosiasi:
+        // negosiasi yang lebih tua daripada persetujuan terakhir berarti sudah
+        // dijawab oleh penawaran yang sekarang terpampang. Negosiasi yang
+        // ditutup tanpa revisi juga tidak menahan, sebab penawaran semula
+        // memang tetap berlaku.
+        $negoTerakhir = \App\Models\EventNegosiasi::whereIn('id_event', $penawaran->pluck('id_event'))
+            ->where('status', '!=', \App\Models\EventNegosiasi::DITUTUP)
+            ->selectRaw('id_event, MAX(created_at) AS terakhir')
+            ->groupBy('id_event')
+            ->pluck('terakhir', 'id_event');
+
+        $penawaran->each(function ($e) use ($negoTerakhir) {
+            $nego = $negoTerakhir[$e->id_event] ?? null;
+
+            $e->setAttribute('menunggu_revisi', $nego !== null && (
+                $e->penawaran_ditinjau_pada === null
+                || \Illuminate\Support\Carbon::parse($nego)->greaterThan($e->penawaran_ditinjau_pada)
+            ));
+        });
+
         // Hitungan acara dipisah tegas. "Total event" sebelumnya menjumlahkan
         // yang sudah selesai dengan yang baru disepakati, jadi angkanya tidak
         // bisa dibaca. Dihitung dari query sendiri, bukan dari $events di atas,
@@ -955,6 +979,12 @@ class AppointmentController extends Controller
 
         $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
 
+        // Halaman yang sudah basi bisa saja masih menampilkan tombolnya.
+        if ($event->menungguRevisi()) {
+            return back()->with('error', 'Permintaan penyesuaian Anda masih dibahas. '
+                . 'Penawaran dapat diterima setelah tim mengirimkan penawaran terbarunya.');
+        }
+
         $event->update([
             'status_event'     => Event::STATUS_DEAL,
             'respon_klien'     => 'Diterima',
@@ -985,6 +1015,13 @@ class AppointmentController extends Controller
         $data = $request->validate(['alasan' => 'nullable|string|max:500']);
 
         $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
+
+        // Sama seperti penerimaan: penawaran yang sedang dibahas ulang belum
+        // punya angka final, jadi belum ada yang layak ditolak.
+        if ($event->menungguRevisi()) {
+            return back()->with('error', 'Permintaan penyesuaian Anda masih dibahas. '
+                . 'Tunggu penawaran terbarunya sebelum memutuskan.');
+        }
 
         $jejak = 'Penawaran ditolak klien'
             . (filled($data['alasan'] ?? null) ? ': ' . trim($data['alasan']) : '.');

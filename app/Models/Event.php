@@ -446,6 +446,28 @@ class Event extends Model
         return $this->belongsTo(Pegawai::class, 'id_pegawai');
     }
     /**
+     * Penawaran yang terpampang sedang menunggu revisi.
+     *
+     * Klien sudah meminta penyesuaian sesudah penawaran ini disetujui, jadi
+     * angkanya belum tentu berlaku — yang mengikat nanti adalah dokumen
+     * revisinya. Negosiasi yang ditutup tanpa revisi tidak menahan, sebab
+     * penawaran semula memang tetap berlaku.
+     */
+    public function menungguRevisi(): bool
+    {
+        $terakhir = EventNegosiasi::where('id_event', $this->id_event)
+            ->where('status', '!=', EventNegosiasi::DITUTUP)
+            ->max('created_at');
+
+        if ($terakhir === null) {
+            return false;
+        }
+
+        return $this->penawaran_ditinjau_pada === null
+            || \Illuminate\Support\Carbon::parse($terakhir)->greaterThan($this->penawaran_ditinjau_pada);
+    }
+
+    /**
      * Catat satu peristiwa pada jejak acara.
      *
      * Jejak sengaja terpisah dari note_event: catatan itu ikut tercetak pada
