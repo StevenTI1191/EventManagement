@@ -441,7 +441,7 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                                 ['Pelunasan paling lambat H-3', 'Sisa 50% dibayar selambatnya tiga hari sebelum acara berlangsung.'],
                                 ['Tanpa cicilan', 'Setiap tagihan dibayar penuh dalam satu kali transfer.'],
                                 ['Ganti tanggal — uang muka tetap berlaku', 'Ajukan pemindahan tanggal dari portal. Setelah disetujui, uang muka Anda ikut berpindah.'],
-                                ['Pembatalan — uang muka hangus', 'Pembatalan berlaku seketika dan uang muka yang sudah dibayarkan tidak dikembalikan. Bila hanya tanggalnya yang berubah, pilih ganti tanggal.'],
+                                ['Pembatalan — uang muka hangus', 'Selama acara belum berlangsung, pembatalan berlaku seketika dan uang muka yang sudah dibayarkan tidak dikembalikan. Bila hanya tanggalnya yang berubah, pilih ganti tanggal.'],
                                 ['Penyesuaian penawaran', 'Belum cocok dengan penawarannya? Ajukan penyesuaian dari portal tanpa harus menolaknya lebih dulu.'],
                             ].map(([judul, isi]) => (
                                 <li key={judul} className="flex gap-3">

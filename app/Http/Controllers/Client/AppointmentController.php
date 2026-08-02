@@ -752,8 +752,13 @@ class AppointmentController extends Controller
             'konfirmasi.in'       => 'Konfirmasi tidak sah.',
         ]);
 
+        // Pembatalan hanya berlaku sebelum acara berlangsung. Acara berstatus
+        // Penyelesaian tanggalnya sudah lewat dan jasanya sudah dikerjakan;
+        // membatalkannya akan menghapus tagihan yang belum dibayar, sehingga
+        // klien lolos dari pelunasan atas acara yang sudah terlaksana. Acara
+        // berstatus Done sudah tuntas seluruhnya.
         $event = Event::where('id_client', $client->id)
-            ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])
+            ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING])
             ->findOrFail($id_event);
 
         // Uang yang sudah masuk tidak dikembalikan dan TIDAK dihapus dari buku

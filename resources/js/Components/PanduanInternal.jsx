@@ -68,14 +68,16 @@ const PEMBAYARAN = [
 ];
 
 const PEMBATALAN = [
-    'Klien membatalkan acara sendiri dari portalnya. Pembatalan berlaku seketika tanpa persetujuan, dan UANG MUKA '
-        + 'YANG SUDAH DIBAYARKAN HANGUS. Klien wajib mencentang pernyataan bahwa ia memahaminya lebih dulu.',
+    'Klien membatalkan acara sendiri dari portalnya, selama acaranya belum berlangsung (Deal atau Upcoming). '
+        + 'Pembatalan berlaku seketika tanpa persetujuan, dan UANG MUKA YANG SUDAH DIBAYARKAN HANGUS. Klien wajib '
+        + 'mencentang pernyataan bahwa ia memahaminya lebih dulu.',
     'Sebagai gantinya klien dapat meminta acaranya dipindahkan ke tanggal lain. Uang mukanya tetap berlaku, '
         + 'tidak hangus.',
     'Permintaan ganti tanggal menunggu persetujuan Pihak Manajemen, dan hanya satu permintaan yang aktif per acara. '
         + 'Ketersediaan tanggal tujuan diperiksa ulang saat disetujui.',
     'Pembatalan menandai acara berstatus Batal, menghapus tagihan yang belum dibayar, dan melepas jadwalnya agar '
-        + 'slot itu bisa dipakai lagi.',
+        + 'slot itu bisa dipakai lagi. Acara yang sudah berlangsung (Penyelesaian atau Done) tidak dapat dibatalkan, '
+        + 'sebab jasanya sudah dikerjakan dan sisa tagihannya tetap harus dilunasi.',
 ];
 
 const JADWAL = [

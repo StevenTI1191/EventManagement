@@ -1398,28 +1398,21 @@ export default function ClientDashboard({
                                                             Uang muka Anda tetap berlaku selama menunggu keputusan.
                                                         </p>
                                                     </div>
-                                                ) : ['Deal', 'Upcoming', 'Penyelesaian'].includes(event.status_event) && (
+                                                ) : ['Deal', 'Upcoming'].includes(event.status_event) && (
                                                     <>
                                                         <div className="flex gap-1.5 mt-1.5">
-                                                            {['Deal', 'Upcoming'].includes(event.status_event) && (
-                                                                <button onClick={() => { setGantiTgl(''); setGantiTglSelesai(''); setGantiAlasan(''); setGantiModal(event); }}
-                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-bold text-ink bg-paper border border-line rounded-xl hover:bg-gold-soft transition-colors">
-                                                                    <Calendar size={12} /> Ganti Tanggal
-                                                                </button>
-                                                            )}
+                                                            <button onClick={() => { setGantiTgl(''); setGantiTglSelesai(''); setGantiAlasan(''); setGantiModal(event); }}
+                                                                className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-bold text-ink bg-paper border border-line rounded-xl hover:bg-gold-soft transition-colors">
+                                                                <Calendar size={12} /> Ganti Tanggal
+                                                            </button>
                                                             <button onClick={() => { setPembatalanAlasan(''); setPembatalanSadar(false); setPembatalanModal(event); }}
                                                                 className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-bold text-danger bg-paper border border-danger/30 rounded-xl hover:bg-danger-bg transition-colors">
                                                                 <XCircle size={12} /> Batalkan Acara
                                                             </button>
                                                         </div>
-                                                        {/* Acara berstatus Penyelesaian sudah lewat tanggalnya,
-                                                            jadi tombol ganti tanggal tidak ada di sana. Keterangannya
-                                                            ikut menyesuaikan supaya tidak menyebut pilihan yang
-                                                            tidak tersedia. */}
                                                         <p className="mt-1.5 text-[10px] leading-relaxed text-muted">
-                                                            {['Deal', 'Upcoming'].includes(event.status_event)
-                                                                ? <>Ganti tanggal menjaga uang muka Anda; membatalkan membuatnya <b className="text-danger">hangus</b>.</>
-                                                                : <>Membatalkan acara membuat uang muka Anda <b className="text-danger">hangus</b> dan berlaku seketika.</>}
+                                                            Ganti tanggal menjaga uang muka Anda; membatalkan membuatnya
+                                                            <b className="text-danger"> hangus</b>.
                                                         </p>
                                                     </>
                                                 )}
@@ -2058,7 +2051,7 @@ export default function ClientDashboard({
 
                             <p className="mb-2 text-xs font-bold tracking-wide uppercase text-danger">Pembatalan</p>
                             <ul className="space-y-1.5 text-sm text-muted">
-                                <li>• Pembatalan berlaku seketika dan <span className="font-bold text-danger">uang muka yang telah dibayarkan hangus</span>.</li>
+                                <li>• Selama acara belum berlangsung, pembatalan berlaku seketika dan <span className="font-bold text-danger">uang muka yang telah dibayarkan hangus</span>.</li>
                                 <li>• Bila hanya tanggalnya yang berubah, gunakan penggantian tanggal agar uang muka tidak hangus.</li>
                             </ul>
                         </div>
