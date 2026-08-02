@@ -1384,6 +1384,40 @@ export default function ClientDashboard({
                                                         Unduh PDF Detail Event
                                                     </a>
                                                 </div>
+
+                                                {/* Ganti tanggal & pembatalan berada pada kartu acaranya, bukan
+                                                    di dalam panel Pembayaran: klien tidak akan menemukannya
+                                                    bila harus membuka panel lebih dulu. Akibat keduanya sengaja
+                                                    dibuat kontras — memindahkan jadwal menjaga uang muka,
+                                                    membatalkan menghanguskannya. */}
+                                                {event.reschedule_menunggu ? (
+                                                    <div className="p-2.5 mt-1.5 border rounded-xl bg-gold-soft/60 border-gold-2">
+                                                        <p className="text-[11px] font-bold text-ink">Permintaan ganti tanggal sedang ditinjau</p>
+                                                        <p className="mt-0.5 text-[10px] leading-relaxed text-muted">
+                                                            Tanggal yang Anda minta: <b>{formatTanggal(event.reschedule_menunggu.tgl_baru)}</b>.
+                                                            Uang muka Anda tetap berlaku selama menunggu keputusan.
+                                                        </p>
+                                                    </div>
+                                                ) : ['Deal', 'Upcoming', 'Penyelesaian'].includes(event.status_event) && (
+                                                    <>
+                                                        <div className="flex gap-1.5 mt-1.5">
+                                                            {['Deal', 'Upcoming'].includes(event.status_event) && (
+                                                                <button onClick={() => { setGantiTgl(''); setGantiTglSelesai(''); setGantiAlasan(''); setGantiModal(event); }}
+                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-bold text-ink bg-paper border border-line rounded-xl hover:bg-gold-soft transition-colors">
+                                                                    <Calendar size={12} /> Ganti Tanggal
+                                                                </button>
+                                                            )}
+                                                            <button onClick={() => { setPembatalanAlasan(''); setPembatalanSadar(false); setPembatalanModal(event); }}
+                                                                className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-bold text-danger bg-paper border border-danger/30 rounded-xl hover:bg-danger-bg transition-colors">
+                                                                <XCircle size={12} /> Batalkan Acara
+                                                            </button>
+                                                        </div>
+                                                        <p className="mt-1.5 text-[10px] leading-relaxed text-muted">
+                                                            Ganti tanggal menjaga uang muka Anda; membatalkan membuatnya
+                                                            <b className="text-danger"> hangus</b>.
+                                                        </p>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1604,40 +1638,6 @@ export default function ClientDashboard({
                                                             </div>
                                                             <p className="text-[10px] font-black text-gold-dim mt-0.5">{pct}%</p>
                                                         </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Acara tidak jadi di tanggal ini? Dua jalan keluar, dengan
-                                                    akibat yang sengaja dibuat kontras: memindahkan jadwal
-                                                    menjaga uang muka, membatalkan menghanguskannya. */}
-                                                {event.reschedule_menunggu ? (
-                                                    <div className="mb-4 p-3 rounded-xl border bg-gold-soft/60 border-gold-2">
-                                                        <p className="text-xs font-bold text-ink">Permintaan ganti tanggal sedang ditinjau</p>
-                                                        <p className="mt-1 text-[11px] text-muted">
-                                                            Tanggal yang Anda minta: <b>{formatTanggal(event.reschedule_menunggu.tgl_baru)}</b>.
-                                                            Uang muka Anda tetap berlaku selama menunggu keputusan tim kami.
-                                                        </p>
-                                                    </div>
-                                                ) : ['Deal', 'Upcoming', 'Penyelesaian'].includes(event.status_event) && (
-                                                    <div className="mb-4 p-3 border rounded-xl border-line bg-paper/60">
-                                                        <p className="text-[11px] font-bold text-ink">Acara tidak jadi di tanggal ini?</p>
-                                                        <div className="flex flex-wrap gap-2 mt-2">
-                                                            {['Deal', 'Upcoming'].includes(event.status_event) && (
-                                                                <button onClick={() => { setGantiTgl(''); setGantiTglSelesai(''); setGantiAlasan(''); setGantiModal(event); }}
-                                                                    className="text-[11px] font-bold text-ink border border-gold-2 bg-gold-soft/60 px-3 py-1.5 rounded-lg hover:brightness-95 transition-all">
-                                                                    Ganti Tanggal Acara
-                                                                </button>
-                                                            )}
-                                                            <button onClick={() => { setPembatalanAlasan(''); setPembatalanSadar(false); setPembatalanModal(event); }}
-                                                                className="text-[11px] font-bold text-danger border border-danger/30 px-3 py-1.5 rounded-lg hover:bg-danger-bg transition-colors">
-                                                                Batalkan Acara
-                                                            </button>
-                                                        </div>
-                                                        <p className="mt-2 text-[10px] text-muted">
-                                                            Mengganti tanggal menjaga uang muka Anda tetap berlaku — jadwal barunya
-                                                            ditinjau Pihak Manajemen lebih dulu. Membatalkan acara membuat uang muka
-                                                            <b className="text-danger"> hangus</b> dan berlaku seketika.
-                                                        </p>
                                                     </div>
                                                 )}
 
