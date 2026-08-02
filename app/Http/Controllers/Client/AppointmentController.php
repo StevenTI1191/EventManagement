@@ -941,11 +941,19 @@ class AppointmentController extends Controller
     }
 
     /** Klien MENERIMA penawaran → event otomatis pindah ke Deal + notifikasi PIC. */
-    public function terimaPenawaran($id_event)
+    public function terimaPenawaran(Request $request, $id_event)
     {
-        $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
+        // Menerima penawaran mengikat klien pada aturan pembayaran, penggantian
+        // tanggal, dan pembatalan. Persetujuannya dijaga di server, bukan hanya
+        // lewat centang di layar, supaya tidak bisa dilewati.
+        $request->validate([
+            'setuju_ketentuan' => ['required', 'accepted'],
+        ], [
+            'setuju_ketentuan.required' => 'Centang pernyataan bahwa Anda menyetujui ketentuan yang berlaku.',
+            'setuju_ketentuan.accepted' => 'Centang pernyataan bahwa Anda menyetujui ketentuan yang berlaku.',
+        ]);
 
-        $jejak = 'Penawaran diterima klien, acara otomatis pindah ke tahap Deal.';
+        $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
 
         $event->update([
             'status_event'     => Event::STATUS_DEAL,
@@ -953,7 +961,10 @@ class AppointmentController extends Controller
             'tgl_respon_klien' => now(),
         ]);
 
-        $event->catatJejak($jejak);
+        // Persetujuan ketentuan ikut dicatat: bila kelak ada perselisihan soal
+        // uang muka yang hangus, waktunya terbaca pada riwayat acara.
+        $event->catatJejak('Penawaran diterima klien beserta persetujuan ketentuan '
+            . 'pembayaran, penggantian tanggal, dan pembatalan. Acara otomatis pindah ke tahap Deal.');
 
         // Konsisten dengan alur pipeline: appointment terkait ditandai Selesai.
         Appointment::where('id_event', $event->id_event)

@@ -136,13 +136,21 @@ export default function ClientDashboard({
     const [penyesuaianPesan, setPenyesuaianPesan] = useState('');
     const [penyesuaianMeeting, setPenyesuaianMeeting] = useState(false);
 
-    const terimaPenawaran = (id_event) => {
-        if (prosesPenawaran) return;
-        setProsesPenawaran(id_event);
-        router.post(route('client.penawaran.terima', id_event), {}, {
-            preserveScroll: true,
-            onFinish: () => setProsesPenawaran(null),
-        });
+    // Menerima penawaran mengikat klien pada aturan pembayaran, penggantian
+    // tanggal, dan pembatalan. Ketentuannya dibacakan lebih dulu, lalu
+    // disetujui lewat centang yang juga diperiksa di sisi server.
+    const [terimaModal, setTerimaModal] = useState(null);
+    const [setujuKetentuan, setSetujuKetentuan] = useState(false);
+
+    const terimaPenawaran = () => {
+        if (!terimaModal || prosesPenawaran || !setujuKetentuan) return;
+        setProsesPenawaran(terimaModal.id_event);
+        router.post(route('client.penawaran.terima', terimaModal.id_event),
+            { setuju_ketentuan: true }, {
+                preserveScroll: true,
+                onSuccess: () => { setTerimaModal(null); setSetujuKetentuan(false); },
+                onFinish: () => setProsesPenawaran(null),
+            });
     };
 
     const submitTolakPenawaran = () => {
@@ -820,7 +828,7 @@ export default function ClientDashboard({
                                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gold-dim bg-gold-soft border border-gold-2 rounded-xl hover:brightness-95 transition-all">
                                             <Download size={14} /> Lihat Penawaran (PDF)
                                         </a>
-                                        <button onClick={() => terimaPenawaran(p.id_event)} disabled={prosesPenawaran === p.id_event}
+                                        <button onClick={() => { setSetujuKetentuan(false); setTerimaModal(p); }} disabled={prosesPenawaran === p.id_event}
                                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white rounded-xl bg-emerald-600 shadow-md shadow-emerald-600/30 hover:bg-emerald-700 transition-all disabled:opacity-60">
                                             <CheckCircle size={14} /> {prosesPenawaran === p.id_event ? 'Memproses…' : 'Terima Penawaran'}
                                         </button>
@@ -1992,6 +2000,72 @@ export default function ClientDashboard({
 
             {/* Modal Cancel Appointment */}
             {/* Modal tolak penawaran */}
+            {/* Ketentuan dibacakan sebelum penawaran diterima, bukan sesudahnya.
+                Sesudah diterima acara langsung menjadi Deal dan tagihan berjalan. */}
+            {terimaModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm"
+                    onClick={() => !prosesPenawaran && setTerimaModal(null)}>
+                    <div className="w-full max-w-lg p-6 border shadow-xl bg-surface border-line rounded-2xl max-h-[90vh] overflow-y-auto"
+                        onClick={e => e.stopPropagation()}>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle size={20} className="text-emerald-600" />
+                                <h2 className="text-lg font-extrabold text-ink">Terima Penawaran</h2>
+                            </div>
+                            <button onClick={() => !prosesPenawaran && setTerimaModal(null)}
+                                className="p-1.5 text-muted hover:bg-paper rounded-lg"><X size={18} /></button>
+                        </div>
+
+                        <p className="mb-4 text-sm text-muted">
+                            Menerima penawaran <span className="font-bold text-ink">"{terimaModal.nama_event}"</span> berarti
+                            acara Anda disepakati dan tagihan uang muka langsung terbit. Mohon baca ketentuan berikut lebih dulu.
+                        </p>
+
+                        <div className="p-4 mb-4 border border-line rounded-xl bg-paper">
+                            <p className="mb-2 text-xs font-bold tracking-wide uppercase text-muted">Pembayaran</p>
+                            <ul className="mb-4 space-y-1.5 text-sm text-muted">
+                                <li>• Uang muka <span className="font-bold text-ink">50%</span> dibayarkan setelah penawaran ini diterima.</li>
+                                <li>• Pelunasan <span className="font-bold text-ink">paling lambat 3 hari sebelum acara</span> berlangsung.</li>
+                                <li>• Setiap tagihan dibayar penuh dalam satu kali transfer, <span className="font-bold text-ink">tanpa cicilan</span>.</li>
+                            </ul>
+
+                            <p className="mb-2 text-xs font-bold tracking-wide uppercase text-muted">Penggantian Tanggal</p>
+                            <ul className="mb-4 space-y-1.5 text-sm text-muted">
+                                <li>• Permintaan pemindahan tanggal diajukan dari portal ini dan menunggu persetujuan.</li>
+                                <li>• Bila disetujui, <span className="font-bold text-ink">uang muka Anda tetap berlaku</span> dan ikut berpindah.</li>
+                            </ul>
+
+                            <p className="mb-2 text-xs font-bold tracking-wide uppercase text-danger">Pembatalan</p>
+                            <ul className="space-y-1.5 text-sm text-muted">
+                                <li>• Pembatalan berlaku seketika dan <span className="font-bold text-danger">uang muka yang telah dibayarkan hangus</span>.</li>
+                                <li>• Bila hanya tanggalnya yang berubah, gunakan penggantian tanggal agar uang muka tidak hangus.</li>
+                            </ul>
+                        </div>
+
+                        <label className="flex items-start gap-3 p-3 transition-colors border cursor-pointer border-line rounded-xl hover:border-gold-2">
+                            <input type="checkbox" checked={setujuKetentuan}
+                                onChange={e => setSetujuKetentuan(e.target.checked)}
+                                className="mt-0.5 w-4 h-4 rounded border-line text-emerald-600 focus:ring-emerald-600 shrink-0" />
+                            <span className="text-sm text-ink">
+                                Saya telah membaca dan menyetujui ketentuan pembayaran, penggantian tanggal,
+                                dan pembatalan di atas.
+                            </span>
+                        </label>
+
+                        <div className="flex justify-end gap-2 mt-5">
+                            <button onClick={() => setTerimaModal(null)} disabled={prosesPenawaran}
+                                className="px-4 py-2 text-sm font-bold transition-colors border text-muted bg-paper border-line rounded-xl hover:bg-gold-soft disabled:opacity-60">
+                                Batal
+                            </button>
+                            <button onClick={terimaPenawaran} disabled={prosesPenawaran || !setujuKetentuan}
+                                className="px-4 py-2 text-sm font-bold text-white transition-colors bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed">
+                                {prosesPenawaran ? 'Memproses…' : 'Setuju & terima penawaran'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {tolakModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm"
                     onClick={() => !prosesPenawaran && setTolakModal(null)}>
