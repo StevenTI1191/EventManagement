@@ -1412,9 +1412,14 @@ export default function ClientDashboard({
                                                                 <XCircle size={12} /> Batalkan Acara
                                                             </button>
                                                         </div>
+                                                        {/* Acara berstatus Penyelesaian sudah lewat tanggalnya,
+                                                            jadi tombol ganti tanggal tidak ada di sana. Keterangannya
+                                                            ikut menyesuaikan supaya tidak menyebut pilihan yang
+                                                            tidak tersedia. */}
                                                         <p className="mt-1.5 text-[10px] leading-relaxed text-muted">
-                                                            Ganti tanggal menjaga uang muka Anda; membatalkan membuatnya
-                                                            <b className="text-danger"> hangus</b>.
+                                                            {['Deal', 'Upcoming'].includes(event.status_event)
+                                                                ? <>Ganti tanggal menjaga uang muka Anda; membatalkan membuatnya <b className="text-danger">hangus</b>.</>
+                                                                : <>Membatalkan acara membuat uang muka Anda <b className="text-danger">hangus</b> dan berlaku seketika.</>}
                                                         </p>
                                                     </>
                                                 )}
