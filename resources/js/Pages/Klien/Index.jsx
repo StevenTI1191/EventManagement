@@ -107,7 +107,7 @@ export default function EMClientIndex({ Layout, routes = {}, canEdit = true,  cl
                         </Link>
                     )}
                 </div>
-                <table className="w-full">
+                <div className="overflow-x-auto"><table className="w-full">
                     <thead>
                         <tr className="bg-[#FF2D55]">
                             <th className="w-12 px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">No</th>
@@ -167,7 +167,7 @@ export default function EMClientIndex({ Layout, routes = {}, canEdit = true,  cl
                             </tr>
                         )}
                     </tbody>
-                </table>
+                </table></div>
                 <Pagination meta={clients} />
             </div>
 

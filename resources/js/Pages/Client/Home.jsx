@@ -167,7 +167,10 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                         )}
                     </div>
 
-                    <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-ink md:hidden">
+                    {/* Sasaran sentuh dilebarkan: ikon 24px saja terlalu kecil untuk jempol. */}
+                    <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        aria-label={mobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
+                        className="flex items-center justify-center -mr-2 w-11 h-11 text-ink md:hidden">
                         {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
                 </div>

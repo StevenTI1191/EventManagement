@@ -227,7 +227,7 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                         <div className="px-6 py-4 border-b border-gray-100">
                             <h2 className="text-base font-extrabold text-gray-800">Klien yang Ditangani ({clients.length})</h2>
                         </div>
-                        <table className="w-full">
+                        <div className="overflow-x-auto"><table className="w-full">
                             <thead>
                                 <tr className="bg-gray-50">
                                     <th className="w-12 px-6 py-3 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">No</th>
@@ -258,7 +258,7 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                                     </tr>
                                 )}
                             </tbody>
-                        </table>
+                        </table></div>
                     </div>
                 </>
             )}
@@ -354,7 +354,7 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                 <div className="px-6 py-4 border-b border-gray-100">
                     <h2 className="text-base font-extrabold text-gray-800">List Event</h2>
                 </div>
-                <table className="w-full">
+                <div className="overflow-x-auto"><table className="w-full">
                     <thead>
                         <tr className="bg-[#FF2D55]">
                             <th className="w-10 px-6 py-3 text-xs font-bold text-left text-white uppercase">No</th>
@@ -395,7 +395,7 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                                     <tr>
                                         <td colSpan={7} className="px-8 py-3 bg-gray-50">
                                             {event.tugas && event.tugas.length > 0 ? (
-                                                <table className="w-full">
+                                                <div className="overflow-x-auto"><table className="w-full">
                                                     <thead>
                                                         <tr className="text-xs text-gray-400 uppercase">
                                                             <th className="w-8 py-2 text-left">No</th>
@@ -424,7 +424,7 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                                                             </tr>
                                                         ))}
                                                     </tbody>
-                                                </table>
+                                                </table></div>
                                             ) : (
                                                 <p className="py-2 text-sm text-center text-gray-400">Belum ada tugas untuk event ini.</p>
                                             )}
@@ -440,7 +440,7 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                             </tr>
                         )}
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </ManajemenLayout>
     );

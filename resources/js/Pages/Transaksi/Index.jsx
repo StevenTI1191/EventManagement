@@ -543,7 +543,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
 
             {/* TABEL */}
             <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
-                <table className="w-full">
+                <div className="overflow-x-auto"><table className="w-full">
                     <thead>
                         <tr className="bg-[#FF2D55]">
                             <th className="w-12 px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">No</th>
@@ -644,7 +644,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                         )}
                                                     </div>
                                                     {event.pembayarans.length > 0 ? (
-                                                        <table className="w-full mb-4">
+                                                        <div className="overflow-x-auto"><table className="w-full mb-4">
                                                             <thead>
                                                                 <tr className="text-left border-b border-gray-200">
                                                                     <th className="pb-2 text-xs font-bold text-gray-400">Tanggal</th>
@@ -684,7 +684,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                                     </tr>
                                                                 ))}
                                                             </tbody>
-                                                        </table>
+                                                        </table></div>
                                                     ) : (
                                                         <p className="mb-4 text-sm text-gray-400">Belum ada pembayaran.</p>
                                                     )}
@@ -718,7 +718,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                         )}
                                                     </div>
                                                     {event.pengeluarans.length > 0 ? (
-                                                        <table className="w-full mb-4">
+                                                        <div className="overflow-x-auto"><table className="w-full mb-4">
                                                             <thead>
                                                                 <tr className="text-left border-b border-gray-200">
                                                                     <th className="pb-2 text-xs font-bold text-gray-400">Tipe</th>
@@ -760,7 +760,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                                     </tr>
                                                                 ))}
                                                             </tbody>
-                                                        </table>
+                                                        </table></div>
                                                     ) : (
                                                         <p className="mb-4 text-sm text-gray-400">Belum ada item pengeluaran/pemasukan.</p>
                                                     )}
@@ -798,7 +798,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                             </tr>
                         )}
                     </tbody>
-                </table>
+                </table></div>
             </div>
             <Pagination meta={events} />
 

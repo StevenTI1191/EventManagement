@@ -248,7 +248,7 @@ export default function ClientShow({ auth, client, events, pics, kategoris, filt
                     <h2 className="text-base font-extrabold text-[#FF2D55]">{client.nama_client}</h2>
                 </div>
 
-                <table className="w-full">
+                <div className="overflow-x-auto"><table className="w-full">
                     <thead>
                         <tr className="bg-[#FF2D55]">
                             <th className="w-12 px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">No</th>
@@ -291,7 +291,7 @@ export default function ClientShow({ auth, client, events, pics, kategoris, filt
                             </tr>
                         )}
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </ManajemenLayout>
     );
