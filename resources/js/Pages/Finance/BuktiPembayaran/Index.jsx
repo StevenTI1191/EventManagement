@@ -182,6 +182,15 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
                                     </td>
                                     <td className="px-4 py-4 text-sm font-bold text-green-600">
                                         {fmt(b.nominal)}
+                                        {/* Tagihan seharusnya dibayar penuh sekali transfer. Yang kurang
+                                            tetap diterima, tetapi ditandai agar Finance memutuskannya
+                                            sadar — bukan diloloskan diam-diam. */}
+                                        {b.invoice && Number(b.nominal) > 0 && Number(b.nominal) < Number(b.invoice.nominal) && (
+                                            <span className="block mt-1 px-1.5 py-0.5 text-[10px] font-bold text-orange-700 bg-orange-50 rounded"
+                                                title="Nominal yang diisi klien lebih kecil daripada tagihannya. Tagihan seharusnya dibayar penuh dalam satu kali transfer.">
+                                                ⚠ kurang {fmt(Number(b.invoice.nominal) - Number(b.nominal))} dari tagihan
+                                            </span>
+                                        )}
                                         {/* Hasil baca otomatis — bantu Finance, keputusan tetap manual */}
                                         {b.ocr_status === 'Selisih' && (
                                             <span className="block mt-1 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded"

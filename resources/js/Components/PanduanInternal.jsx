@@ -60,8 +60,9 @@ const PEMBAYARAN = [
         + 'setelah uang muka lunas.',
     'Pelunasan paling lambat 3 hari sebelum hari pelaksanaan. Tanggal jatuh temponya dihitung sendiri oleh sistem '
         + 'dari tanggal acara.',
-    'Tidak ada cicilan. Setiap tagihan dibayar penuh dalam satu kali transfer — pembayaran sebagian ditolak sistem '
-        + 'saat klien mengunggah buktinya.',
+    'Tidak ada cicilan. Setiap tagihan dibayar penuh dalam satu kali transfer. Bukti yang nominalnya kurang tetap '
+        + 'diterima tetapi ditandai pada halaman verifikasi, dan Finance yang memutuskan — sebab yang tertulis pada '
+        + 'formulir belum tentu sama dengan yang benar-benar ditransfer.',
     'Bukti pembayaran selalu diverifikasi Finance. Pembacaan nominal otomatis hanya membantu menyaring, tidak pernah '
         + 'meloloskan pembayaran sendiri.',
     'Bukti pembayaran menempel pada invoice tertentu, jadi pastikan klien memilih tagihan yang benar saat mengunggah.',

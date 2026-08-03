@@ -569,20 +569,22 @@ class AppointmentController extends Controller
             'keterangan'  => 'nullable|string|max:500',
         ]);
 
-        // ── Aturan pembayaran: DP dan pelunasan, TIDAK boleh dicicil ──────
-        // Tiap tagihan diselesaikan sekali bayar penuh. Sebelumnya nominal
-        // hanya divalidasi "angka dan tidak negatif", sehingga klien bisa
-        // menyetor separuh-separuh dan buku kas terisi cicilan yang tak pernah
-        // disepakati. Diperiksa di sini, bukan sekadar dituliskan sebagai
-        // keterangan, supaya aturannya benar-benar berlaku.
+        // ── Aturan pembayaran: DP dan pelunasan dibayar penuh sekali transfer ──
+        // Unggahan yang nominalnya kurang TIDAK ditolak, sebab yang tertulis pada
+        // formulir belum tentu sama dengan yang benar-benar ditransfer — klien
+        // bisa saja salah ketik, atau membayar dari dua rekening. Menolaknya di
+        // sini berarti menghukum kekeliruan pengetikan. Kekurangannya cukup
+        // ditandai supaya terbaca klien maupun Tim Finance, dan Finance yang
+        // memutuskan saat verifikasi.
         $idInvoice = $request->id_invoice ?: $this->invoiceTertagih($request->id_event);
+        $kurangBayar = null;
 
         if ($idInvoice && filled($request->nominal)) {
             $invoice = \App\Models\Invoice::find($idInvoice);
 
             if ($invoice) {
                 // Yang sudah tertutup bukti lain — termasuk yang masih menunggu
-                // verifikasi, agar dua unggahan separuh tidak lolos bersamaan.
+                // verifikasi, agar dua unggahan separuh tidak terbaca lunas.
                 $sudah = (float) BuktiPembayaran::where('id_invoice', $invoice->id_invoice)
                     ->whereIn('status', ['Menunggu', 'Diverifikasi'])
                     ->sum('nominal');
@@ -590,11 +592,11 @@ class AppointmentController extends Controller
                 $kurang = (float) $invoice->nominal - $sudah;
 
                 if ($kurang > 0 && (float) $request->nominal + 0.01 < $kurang) {
-                    return back()->withErrors([
-                        'nominal' => 'Pembayaran tidak dapat dicicil. Tagihan '
-                            . $invoice->tipe . ' harus dibayar penuh sebesar Rp '
-                            . number_format($kurang, 0, ',', '.') . ' dalam satu kali transfer.',
-                    ])->withInput();
+                    $kurangBayar = [
+                        'tipe'    => $invoice->tipe,
+                        'seharusnya' => $kurang,
+                        'selisih' => $kurang - (float) $request->nominal,
+                    ];
                 }
             }
         }
@@ -672,6 +674,17 @@ class AppointmentController extends Controller
                      . ' berbeda dari yang Anda isi. Tim Finance akan memeriksanya.',
             default => 'Bukti pembayaran berhasil diupload. Menunggu verifikasi Finance.',
         };
+
+        // Kekurangan terhadap tagihan disampaikan terus terang, supaya klien
+        // tahu tagihannya belum tertutup dan tidak menunggu status lunas yang
+        // tak kunjung datang.
+        if ($kurangBayar) {
+            $pesan .= ' Perlu diketahui, tagihan ' . $kurangBayar['tipe'] . ' seharusnya dibayar penuh '
+                . 'sebesar Rp ' . number_format($kurangBayar['seharusnya'], 0, ',', '.')
+                . ' dalam satu kali transfer, sedangkan nominal yang Anda isi masih kurang Rp '
+                . number_format($kurangBayar['selisih'], 0, ',', '.')
+                . '. Bukti Anda tetap kami terima dan Tim Finance akan memeriksanya.';
+        }
 
         return back()->with('success', $pesan);
     }
