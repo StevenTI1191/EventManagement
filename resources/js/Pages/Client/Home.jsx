@@ -120,7 +120,7 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                         </span>
                     </a>
 
-                    <div className="items-center hidden gap-6 md:flex">
+                    <div className="items-center hidden gap-6 lg:flex">
                         {navLinks.map(link => (
                             <a key={link.label} href={link.href}
                                 className={`text-sm font-medium transition-colors ${link.label === 'All Events' ? 'text-gold-dim font-bold' : 'text-muted hover:text-gold-dim'}`}>
@@ -129,7 +129,7 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                         ))}
                     </div>
 
-                    <div className="items-center hidden gap-3 md:flex">
+                    <div className="items-center hidden gap-3 lg:flex">
                         {isLoggedIn ? (
                             <div className="relative">
                                 <button onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -170,13 +170,13 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                     {/* Sasaran sentuh dilebarkan: ikon 24px saja terlalu kecil untuk jempol. */}
                     <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label={mobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
-                        className="flex items-center justify-center -mr-2 w-11 h-11 text-ink md:hidden">
+                        className="flex items-center justify-center -mr-2 w-11 h-11 text-ink lg:hidden">
                         {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
                 </div>
 
                 {mobileMenuOpen && (
-                    <div className="px-6 py-4 space-y-3 bg-surface border-t md:hidden border-line">
+                    <div className="px-6 py-4 space-y-3 bg-surface border-t lg:hidden border-line">
                         {navLinks.map(link => (
                             <a key={link.label} href={link.href} onClick={() => setMobileMenuOpen(false)}
                                 className="block text-sm font-medium text-muted hover:text-gold-dim">{link.label}</a>
@@ -879,7 +879,12 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
                             <h4 className="mb-4 text-sm font-bold text-ink uppercase tracking-widest">Kontak</h4>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-2 text-sm text-muted"><Phone size={14} className="mt-0.5 text-gold shrink-0" /> +62 853-6523-4898</li>
-                                <li className="flex items-start gap-2 text-sm text-muted"><Mail size={14} className="mt-0.5 text-gold shrink-0" /> contactus@laksamanamuda.com</li>
+                                {/* Alamat surel tidak punya titik penggal alami, jadi di kolom
+                                    sempit ia melebarkan halaman bila tidak dipaksa memenggal. */}
+                                <li className="flex items-start gap-2 text-sm text-muted">
+                                    <Mail size={14} className="mt-0.5 text-gold shrink-0" />
+                                    <span className="break-all">contactus@laksamanamuda.com</span>
+                                </li>
                                 <li className="flex items-start gap-2 text-sm text-muted"><MapPin size={14} className="mt-0.5 text-gold shrink-0" /> Pekanbaru, Riau, Indonesia</li>
                             </ul>
                         </div>
