@@ -2429,6 +2429,7 @@ export default function ClientDashboard({
                                     onChange={v => setData('nominal', v)}
                                     placeholder="Contoh: 5.000.000"
                                     className="w-full px-4 py-3 text-sm text-ink placeholder-muted-2 bg-surface border border-line rounded-xl focus:border-gold" />
+                                {errors.nominal && <p className="mt-1 text-xs text-danger">{errors.nominal}</p>}
                             </div>
                             <div>
                                 <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Keterangan</label>
@@ -2436,7 +2437,14 @@ export default function ClientDashboard({
                                     onChange={e => setData('keterangan', e.target.value)}
                                     placeholder="Contoh: DP 50%, transfer BCA"
                                     className="w-full px-4 py-3 text-sm text-ink placeholder-muted-2 bg-surface border border-line resize-none rounded-xl focus:border-gold" />
+                                {errors.keterangan && <p className="mt-1 text-xs text-danger">{errors.keterangan}</p>}
                             </div>
+
+                            {/* Jaring pengaman: galat yang tidak punya kolomnya sendiri
+                                pernah membuat form diam saja saat unggahan ditolak. */}
+                            {Object.entries(errors).filter(([k]) => !['nominal', 'keterangan', 'file_bukti', 'id_invoice'].includes(k)).map(([k, v]) => (
+                                <p key={k} className="px-3 py-2 text-xs font-bold border rounded-lg text-danger bg-danger-bg border-red-500/20">{v}</p>
+                            ))}
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={tutupUpload}
                                     className="flex-1 py-2.5 border border-line text-muted font-bold rounded-xl hover:bg-paper">
