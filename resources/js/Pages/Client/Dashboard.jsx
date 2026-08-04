@@ -9,11 +9,44 @@ import {
     User, Timer, Download, Music, Utensils, Info, Wallet, MessageCircle
 } from 'lucide-react';
 
+/**
+ * Penampil galat bersama.
+ *
+ * Dipasang di halaman DAN di dalam setiap modal aksi: ketika server menolak,
+ * modalnya tetap terbuka menahan isian klien, sehingga pesan yang muncul di
+ * belakang modal tidak akan pernah terbaca.
+ */
+function Galat({ pesan = [], className = '' }) {
+    if (!pesan.length) return null;
+
+    return (
+        <div className={`p-3 border rounded-xl bg-danger-bg border-danger/30 ${className}`}>
+            {pesan.map((m, i) => (
+                <p key={i} className="text-xs font-semibold leading-relaxed text-danger">
+                    {i === 0 ? '⚠️ ' : ''}{m}
+                </p>
+            ))}
+        </div>
+    );
+}
+
+/** Kolom milik formulir unggah bukti — galatnya sudah tampil inline di sana. */
+const FIELD_UNGGAH = ['id_event', 'id_invoice', 'file_bukti', 'nominal', 'keterangan'];
+
 export default function ClientDashboard({
     appointments, events, penawaran = [], totalAppointments, totalEvents, slots = [],
     rekening = {}, negosiasi = [],
 }) {
-    const { auth, flash } = usePage().props;
+    const { auth, flash, errors: galatHalaman = {} } = usePage().props;
+
+    // Semua penolakan server yang belum punya tempat tampil sendiri: pesan
+    // flash.error dan galat validasi di luar formulir unggah bukti.
+    const galat = [
+        ...(flash?.error ? [flash.error] : []),
+        ...Object.entries(galatHalaman)
+            .filter(([kolom]) => !FIELD_UNGGAH.includes(kolom))
+            .map(([, pesan]) => pesan),
+    ];
 
     // ── NOTIFIKASI ──────────────────────────────────────────
     const [notifs, setNotifs]             = useState([]);
@@ -608,6 +641,14 @@ export default function ClientDashboard({
                         </div>
                     )}
 
+                    {/* Penolakan dari server. Sebelumnya halaman ini hanya
+                        menampilkan flash.success, sehingga setiap penjagaan yang
+                        menjawab dengan error — penawaran yang sedang dibahas
+                        ulang, acara yang sudah berlangsung, usulan jadwal yang
+                        bentrok — berakhir tanpa pesan apa pun: modal tertutup
+                        dan tombolnya seolah mati. */}
+                    <Galat pesan={galat} className="mb-6" />
+
                     {/* Banner: lengkapi profil. Nama perusahaan hanya wajib utk klien tipe Perusahaan. */}
                     {(() => {
                         const perluPerusahaan = user?.tipe_client === 'Perusahaan';
@@ -926,6 +967,12 @@ export default function ClientDashboard({
                                                     {neg.catatan_tim && (
                                                         <p className="mt-1 text-[11px] italic text-muted">"{neg.catatan_tim}"</p>
                                                     )}
+
+                                                    {/* Penolakan server ditampilkan di sini juga: panel ini
+                                                        berada jauh di bawah spanduk halaman, dan klien yang
+                                                        menekan tombolnya tidak akan menggulir ke atas untuk
+                                                        mencari alasannya. */}
+                                                    <Galat pesan={galat} className="mt-3" />
 
                                                     <button
                                                         onClick={() => {
@@ -1997,6 +2044,7 @@ export default function ClientDashboard({
                             Untuk penawaran <span className="font-bold text-ink">"{penyesuaianModal.nama_event}"</span>.
                             Sampaikan bagian yang ingin disesuaikan atau ditambahkan. Penawaran tidak ditolak — tim kami akan menindaklanjuti.
                         </p>
+                        <Galat pesan={galat} className="mb-4" />
                         <label className="block mb-1.5 text-xs font-bold tracking-wide text-muted uppercase">
                             Yang ingin disesuaikan <span className="text-danger normal-case font-normal">* wajib</span>
                         </label>
@@ -2044,6 +2092,8 @@ export default function ClientDashboard({
                             Menerima penawaran <span className="font-bold text-ink">"{terimaModal.nama_event}"</span> berarti
                             acara Anda disepakati dan tagihan uang muka langsung terbit. Mohon baca ketentuan berikut lebih dulu.
                         </p>
+
+                        <Galat pesan={galat} className="mb-4" />
 
                         <div className="p-4 mb-4 border border-line rounded-xl bg-paper">
                             <p className="mb-2 text-xs font-bold tracking-wide uppercase text-muted">Pembayaran</p>
@@ -2107,6 +2157,7 @@ export default function ClientDashboard({
                             Menolak penawaran <span className="font-bold text-ink">"{tolakModal.nama_event}"</span>?
                             Tim kami akan diberi tahu untuk menindaklanjuti.
                         </p>
+                        <Galat pesan={galat} className="mb-4" />
                         <label className="block mb-1.5 text-xs font-bold tracking-wide text-muted uppercase">
                             Alasan <span className="font-medium normal-case text-muted-2">(opsional)</span>
                         </label>
@@ -2145,6 +2196,8 @@ export default function ClientDashboard({
                             <p className="text-xs text-danger font-bold">⚠️ Perhatian</p>
                             <p className="text-xs text-danger mt-1">Appointment yang dibatalkan tidak dapat dikembalikan. Tim kami akan menerima notifikasi pembatalan ini.</p>
                         </div>
+
+                        <Galat pesan={galat} className="mb-4" />
 
                         <div className="mb-4">
                             <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">
@@ -2199,6 +2252,8 @@ export default function ClientDashboard({
                         <p className="p-3 mb-4 text-xs text-muted bg-gold-soft/60 border border-gold-2 rounded-xl">
                             Ajukan tanggal & jam yang lebih pas untukmu. Jadwal yang berlaku sekarang tetap sama sampai tim kami meninjau dan mengonfirmasi usulanmu.
                         </p>
+
+                        <Galat pesan={galat} className="mb-4" />
 
                         <form onSubmit={submitUsul} className="space-y-4">
                             {usulErrors.message && (
@@ -2282,6 +2337,8 @@ export default function ClientDashboard({
                             </p>
                         </div>
 
+                        <Galat pesan={galat} className="mb-4" />
+
                         <form onSubmit={submitPembatalan}>
                             <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">
                                 Alasan pembatalan <span className="text-danger normal-case font-normal">* wajib</span>
@@ -2334,6 +2391,8 @@ export default function ClientDashboard({
                             karena menyangkut ketersediaan venue. Jam acara tidak berubah — bila jamnya juga perlu
                             digeser, sampaikan pada kolom alasan.
                         </div>
+
+                        <Galat pesan={galat} className="mb-4" />
 
                         <form onSubmit={submitGantiTanggal}>
                             <label className="block mb-2 text-xs font-bold tracking-wider uppercase text-muted">
