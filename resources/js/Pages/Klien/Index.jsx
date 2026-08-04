@@ -4,7 +4,7 @@
  * - dibedakan lewat canEdit, bukan lewat halaman terpisah.
  */
 import Pagination from '@/Components/Pagination';
-import { Head, router, Link } from '@inertiajs/react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { Search, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useDebounced } from '@/hooks/useDebounced';
@@ -18,6 +18,11 @@ export default function EMClientIndex({ Layout, routes = {}, canEdit = true,  cl
     const [searchTerm, setSearchTerm]     = useState(filters?.search || '');
     const [deleteClient, setDeleteClient] = useState(null);
     const [deleting, setDeleting]         = useState(false);
+
+    // Penghapusan klien ditolak bila ia masih memiliki event. Penolakannya
+    // datang sebagai flash, dan tanpa penampil ini modalnya hanya tertutup:
+    // kliennya tetap di daftar tanpa satu pun keterangan mengapa.
+    const { flash } = usePage().props;
 
     const debouncedSearch = useDebounced((value) => {
         router.get(route(routes.index), { search: value, sumber }, {
@@ -55,6 +60,18 @@ export default function EMClientIndex({ Layout, routes = {}, canEdit = true,  cl
                 <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Client</h1>
                 <p className="mt-1 text-gray-400">{tabAktif.ket}</p>
             </div>
+
+            {flash?.error && (
+                <div className="flex items-start gap-3 p-4 mb-5 border border-red-200 bg-red-50 rounded-2xl">
+                    <span className="text-lg leading-none">⚠️</span>
+                    <p className="mt-0.5 text-sm font-medium text-red-600">{flash.error}</p>
+                </div>
+            )}
+            {flash?.success && (
+                <div className="p-4 mb-5 text-sm font-medium text-green-700 border border-green-200 bg-green-50 rounded-2xl">
+                    {flash.success}
+                </div>
+            )}
 
             {/* Tab pemisah asal client */}
             <div className="flex flex-wrap gap-2 mb-5">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Head, router, Link } from '@inertiajs/react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
 import {
     GitBranch, Eye, Building2, CalendarDays, MapPin, User, GripVertical,
     FileDown, MessageCircle, XCircle, X, LayoutGrid, Table2, Lightbulb, Lock, ChevronDown,
@@ -40,6 +40,12 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
     const [dragId, setDragId] = useState(null);
     const [hover, setHover] = useState(null);
     const [error, setError] = useState('');
+
+    // Penolakan yang datang sebagai flash, bukan sebagai galat validasi.
+    // Unduh dokumen penawaran memakai tautan biasa, sehingga penolakannya
+    // ("lengkapi dulu …") kembali sebagai redirect — onError tidak pernah
+    // berjalan untuk itu, dan tanpa penampil di bawah tombolnya tampak diam.
+    const { flash } = usePage().props;
     const [tampilan, setTampilan] = useState('papan');
     const [batalKartu, setBatalKartu] = useState(null);
     const [alasan, setAlasan] = useState('');
@@ -185,10 +191,16 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
                 </p>
             </div>
 
-            {error && (
+            {(error || flash?.error) && (
                 <div className="flex items-start gap-3 p-4 mb-4 border border-red-200 bg-red-50 rounded-2xl">
                     <span className="text-lg leading-none">⚠️</span>
-                    <p className="mt-0.5 text-sm font-medium text-red-600">{error}</p>
+                    <p className="mt-0.5 text-sm font-medium text-red-600">{error || flash.error}</p>
+                </div>
+            )}
+
+            {flash?.success && (
+                <div className="p-4 mb-4 text-sm font-medium text-green-700 border border-green-200 bg-green-50 rounded-2xl">
+                    {flash.success}
                 </div>
             )}
 

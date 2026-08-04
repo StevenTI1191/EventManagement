@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import {
     ChevronLeft, CalendarDays, Clock, MapPin, User, Users, Wallet, Target,
@@ -197,6 +197,7 @@ export default function EventDetail({
 
     const badge = STATUS_WARNA[event.status_event] || STATUS_WARNA.Planning;
     const lunas = (tagihan.terbayar || 0) >= (tagihan.deal || 0) && (tagihan.deal || 0) > 0;
+    const { flash } = usePage().props;
 
     return (
         <Layout>
@@ -207,6 +208,22 @@ export default function EventDetail({
                 className="inline-flex items-center gap-1 mb-4 text-sm text-gray-400 hover:text-gray-600">
                 <ChevronLeft size={16} /> {dariPipeline ? 'Kembali ke Pipeline' : 'Kembali ke Events'}
             </Link>
+
+            {/* Penolakan yang datang sebagai flash — mis. unggah dokumentasi
+                untuk acara yang belum masuk tahap Penyelesaian. Galat validasi
+                sudah punya tempatnya sendiri di dalam formulir, tetapi flash
+                tidak, sehingga tombolnya dulu tampak diam saja. */}
+            {flash?.error && (
+                <div className="flex items-start gap-3 p-4 mb-5 border border-red-200 bg-red-50 rounded-2xl">
+                    <span className="text-lg leading-none">⚠️</span>
+                    <p className="mt-0.5 text-sm font-medium text-red-600">{flash.error}</p>
+                </div>
+            )}
+            {flash?.success && (
+                <div className="p-4 mb-5 text-sm font-medium text-green-700 border border-green-200 bg-green-50 rounded-2xl">
+                    {flash.success}
+                </div>
+            )}
 
             {/* HEADER */}
             <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
