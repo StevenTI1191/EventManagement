@@ -52,6 +52,17 @@ class Event extends Model
         'deal_harga_event',
     ];
 
+    /**
+     * Jejak internal tidak pernah ikut saat model ini diubah menjadi JSON.
+     *
+     * Memisahkannya dari note_event saja tidak cukup: halaman klien mengirim
+     * model Event apa adanya sebagai props Inertia, sehingga alasan penolakan
+     * Manajemen tetap terbaca di sumber halaman meski tidak ditampilkan.
+     * Disembunyikan sebagai bawaan — halaman internal yang memang perlu
+     * menampilkannya membukanya sendiri lewat makeVisible('jejak_event').
+     */
+    protected $hidden = ['jejak_event'];
+
     protected $casts = [
         'is_public'     => 'boolean',
         'dari_planning' => 'boolean',

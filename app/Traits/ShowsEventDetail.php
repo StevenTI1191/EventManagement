@@ -32,6 +32,11 @@ trait ShowsEventDetail
             'dokumentasi',
         ])->findOrFail($id_event);
 
+        // Halaman ini hanya dibuka pegawai, dan panel Riwayat di dalamnya
+        // memang bertugas menampilkan jejak internal. Inilah satu-satunya
+        // tempat yang membukanya — lihat $hidden pada model Event.
+        $event->makeVisible('jejak_event');
+
         $total = $event->tugas->count();
         $done  = $event->tugas->where('status_tugas', 'Done')->count();
 
