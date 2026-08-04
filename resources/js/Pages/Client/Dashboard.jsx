@@ -1116,13 +1116,10 @@ export default function ClientDashboard({
                                             <div className="flex items-center gap-3 mb-3 flex-wrap">
                                                 <h3 className="text-base font-black text-ink sm:text-lg">
                                                     {apt.jenis_event}
-                                                    {/* Pertemuan hasil negosiasi penawaran, bukan
-                                                        janji temu yang klien pesan sendiri. */}
-                                                    {apt.dari_negosiasi && (
-                                                        <span className="ml-2 px-2 py-0.5 align-middle text-[10px] font-black rounded-full bg-info-bg text-info">
-                                                            PEMBAHASAN PENAWARAN
-                                                        </span>
-                                                    )}
+                                                    {/* Pembahasan penawaran tidak pernah masuk daftar
+                                                        ini — disaring di controller — jadi tidak ada
+                                                        penanda yang perlu dibedakan. Panelnya ada di
+                                                        tab Penawaran. */}
                                                 </h3>
                                                 <span className={`flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full border ${getStatusColor(apt.status)}`}>
                                                     {getStatusIcon(apt.status)}

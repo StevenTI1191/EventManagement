@@ -22,21 +22,31 @@ class DashboardController extends Controller
         $eventDone   = Event::where('status_event', 'Done')->count();
         $recentEvents = Event::terkonfirmasi()->latest()->take(5)->get();
 
-        // Appointment stats
-        $aptTotal        = Appointment::count();
-        $aptPending      = Appointment::where('status', 'Pending')->count();
-        $aptDikonfirmasi = Appointment::where('status', 'Dikonfirmasi')->count();
-        $aptReschedule   = Appointment::where('status', 'Reschedule')->count();
-        $aptSelesai      = Appointment::where('status', 'Selesai')->count();
-        $aptDibatalkan   = Appointment::where('status', 'Dibatalkan')->count();
+        // Appointment stats.
+        //
+        // Pembahasan penawaran dikecualikan di mana-mana, sama seperti halaman
+        // Appointment: ia dikelola dari menu Negosiasi Klien dan tidak dapat
+        // dikonfirmasi dari sini. Tanpa pengecualian ini angka di dashboard
+        // tidak akan pernah cocok dengan daftar yang dibuka pengguna, dan
+        // "menunggu konfirmasi" menampilkan pertemuan yang tak bisa ditindak.
+        $bukanNegosiasi = fn ($q) => $q->whereDoesntHave('negosiasi');
+
+        $aptTotal        = Appointment::tap($bukanNegosiasi)->count();
+        $aptPending      = Appointment::tap($bukanNegosiasi)->where('status', 'Pending')->count();
+        $aptDikonfirmasi = Appointment::tap($bukanNegosiasi)->where('status', 'Dikonfirmasi')->count();
+        $aptReschedule   = Appointment::tap($bukanNegosiasi)->where('status', 'Reschedule')->count();
+        $aptSelesai      = Appointment::tap($bukanNegosiasi)->where('status', 'Selesai')->count();
+        $aptDibatalkan   = Appointment::tap($bukanNegosiasi)->where('status', 'Dibatalkan')->count();
 
         // Appointment bulan ini
-        $aptBulanIni = Appointment::whereMonth('tgl_request', now()->month)
+        $aptBulanIni = Appointment::tap($bukanNegosiasi)
+            ->whereMonth('tgl_request', now()->month)
             ->whereYear('tgl_request', now()->year)
             ->count();
 
         // Appointment yang masih menunggu konfirmasi
         $pendingAppointments = Appointment::with('client')
+            ->tap($bukanNegosiasi)
             ->where('status', 'Pending')
             ->latest()
             ->take(10)

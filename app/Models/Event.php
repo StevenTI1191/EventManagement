@@ -236,9 +236,20 @@ class Event extends Model
     }
 
     /** Penawaran yang sedang menunggu keputusan Manajemen. */
+    /**
+     * Penawaran yang benar-benar menunggu keputusan Manajemen.
+     *
+     * Acara batal dikecualikan DI SINI, bukan hanya di halaman antreannya:
+     * lencana pada menu memakai scope ini juga, dan ketika keduanya berbeda
+     * aturan, lencana menunjukkan angka untuk daftar yang isinya kosong.
+     * Prospek yang ditandai tidak jadi memang sudah dikosongkan
+     * penawaran_status-nya, tetapi acara Deal yang revisinya sedang menunggu
+     * lalu dibatalkan klien tidak melewati jalur itu.
+     */
     public function scopePenawaranMenunggu($q)
     {
-        return $q->where('penawaran_status', self::PENAWARAN_DIAJUKAN);
+        return $q->where('penawaran_status', self::PENAWARAN_DIAJUKAN)
+            ->where('status_event', '!=', self::STATUS_BATAL);
     }
 
     public function penawaranDiajukanOleh(): BelongsTo
