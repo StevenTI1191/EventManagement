@@ -816,10 +816,26 @@ class AppointmentController extends Controller
                     'catatan_tolak' => 'Acara dibatalkan klien sebelum permintaan ini ditinjau.',
                 ]);
 
+            // Pembahasan penawaran yang masih berjalan ikut ditutup, dan slot
+            // pertemuannya dilepas. Tanpa ini ia mengendap di antrean Event
+            // Marketing sementara jam pertemuannya tetap terkunci untuk acara
+            // yang sudah tidak ada.
+            \App\Models\EventNegosiasi::tutupUntukEvent(
+                $event->id_event, 'Acara dibatalkan klien, pembahasan dihentikan.');
+
             $jejak = 'Dibatalkan klien: ' . trim($data['alasan'])
                 . ($hangus > 0 ? ' Uang muka Rp ' . number_format($hangus, 0, ',', '.') . ' hangus.' : '');
 
-            $event->update(['status_event' => Event::STATUS_BATAL]);
+            $event->update([
+                'status_event' => Event::STATUS_BATAL,
+                // Revisi penawaran yang sedang menunggu keputusan Manajemen ikut
+                // ditutup — acara Deal boleh mengajukan revisi, jadi keadaan ini
+                // benar-benar terjadi. Tanpa pengosongan, pengajuannya mengendap
+                // di lencana Manajemen untuk acara yang sudah tidak ada.
+                'penawaran_status'  => $event->penawaran_status === Event::PENAWARAN_DIAJUKAN
+                    ? null : $event->penawaran_status,
+                'penawaran_catatan' => null,
+            ]);
             $event->catatJejak($jejak);
         });
 
@@ -1037,6 +1053,13 @@ class AppointmentController extends Controller
         Appointment::where('id_event', $event->id_event)
             ->whereIn('status', ['Dikonfirmasi', 'Reschedule'])
             ->update(['status' => 'Selesai']);
+
+        // Pembahasan yang masih menggantung sudah tidak ada gunanya: yang
+        // dibahas justru sudah disetujui. Termasuk tawaran pertemuan yang belum
+        // dijawab klien — slotnya dilepas supaya tidak mengunci jam yang tak
+        // akan dipakai.
+        \App\Models\EventNegosiasi::tutupUntukEvent(
+            $event->id_event, 'Klien menerima penawaran, pembahasan selesai dengan sendirinya.');
 
         // Deal → invoice DP terbit otomatis (sama seperti jalur pipeline).
         \App\Models\Invoice::terbitkanDpOtomatis($event->refresh());

@@ -361,6 +361,15 @@ trait ManagesPipeline
             'penawaran_catatan' => null,
         ]);
 
+        // Pembahasan penawaran yang masih berjalan ikut ditutup beserta slot
+        // pertemuannya — antrean turunan yang sama seperti invoice di atas.
+        $ditutup = \App\Models\EventNegosiasi::tutupUntukEvent(
+            $event->id_event, 'Prospek ditandai tidak jadi, pembahasan dihentikan.');
+
+        if ($ditutup) {
+            $jejak .= ' ' . $ditutup . ' pembahasan penawaran ikut ditutup.';
+        }
+
         $event->catatJejak($jejak);
 
         return back()->with('success', "Prospek \"{$event->nama_event}\" ditandai tidak jadi.");

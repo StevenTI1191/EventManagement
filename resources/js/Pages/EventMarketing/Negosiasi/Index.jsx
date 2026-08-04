@@ -361,9 +361,29 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
                                     </p>
                                     {/* Pembahasan sudah tuntas — inilah saatnya penawaran
                                         keduanya diajukan, tanpa berpindah ke papan pipeline. */}
-                                    {n.boleh_revisi && (
+                                    {(n.boleh_revisi || n.menahan) && (
                                         <div className="pt-3 mt-3 border-t border-gray-100">
-                                            <TombolRevisi n={n} />
+                                            {/* Selama pembahasan ini belum ditutup, klien TIDAK
+                                                bisa menerima penawaran yang terpampang. Dua jalan
+                                                keluarnya dinyatakan berdampingan: ajukan revisi
+                                                (harga berubah), atau tutup (harga tetap). Tanpa
+                                                salah satunya penawaran terkunci selamanya. */}
+                                            {n.menahan && (
+                                                <p className="p-2.5 mb-3 text-[11px] font-semibold leading-relaxed text-amber-800 border border-amber-200 rounded-xl bg-amber-50">
+                                                    ⚠️ Klien belum dapat menerima penawaran selama pembahasan ini
+                                                    terbuka. Ajukan penawaran revisi bila harganya berubah, atau
+                                                    tutup pembahasan bila penawaran semula tetap berlaku.
+                                                </p>
+                                            )}
+                                            <div className="flex flex-wrap gap-2">
+                                                <TombolRevisi n={n} />
+                                                {n.menahan && (
+                                                    <button onClick={() => buka(n, 'tutup')}
+                                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50">
+                                                        <XCircle size={14} /> Tutup pembahasan
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

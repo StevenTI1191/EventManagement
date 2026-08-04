@@ -52,12 +52,67 @@ class EventNegosiasi extends Model
      */
     public function scopeMenungguTim($q)
     {
-        return $q->whereIn('status', self::PERLU_TIM);
+        return $q->whereIn('status', self::PERLU_TIM)->acaraMasihAda();
+    }
+
+    /**
+     * Sisihkan pembahasan milik acara yang sudah batal.
+     *
+     * Penutupannya kini dikerjakan saat acaranya dibatalkan
+     * (tutupUntukEvent()), tetapi baris yang terlanjur menggantung sebelum
+     * aturan itu berlaku tidak boleh terus terhitung pada lencana maupun
+     * antrean — tidak ada lagi yang bisa ditindaklanjuti darinya.
+     */
+    public function scopeAcaraMasihAda($q)
+    {
+        return $q->whereHas('event', fn ($e) => $e->where('status_event', '!=', Event::STATUS_BATAL));
     }
 
     public function scopeBerjalan($q)
     {
         return $q->whereIn('status', self::BERJALAN);
+    }
+
+    /**
+     * Tutup semua negosiasi yang masih berjalan pada satu acara, sekaligus
+     * melepas slot pertemuan yang sudah terpesan untuknya.
+     *
+     * Dipanggil setiap kali acaranya berpindah ke keadaan yang membuat
+     * pembahasan itu tidak berlaku lagi — dibatalkan, ditandai tidak jadi, atau
+     * penawarannya justru diterima klien. Tanpa ini barisnya mengendap selamanya
+     * di antrean Event Marketing beserta lencananya, dan yang lebih merugikan:
+     * appointment pembahasannya tetap memegang slot_key sehingga jam itu tidak
+     * bisa dipakai pertemuan lain padahal tidak akan pernah terjadi.
+     *
+     * @return int banyaknya negosiasi yang ditutup
+     */
+    public static function tutupUntukEvent($idEvent, string $alasan): int
+    {
+        $berjalan = static::with('appointment')
+            ->where('id_event', $idEvent)
+            ->berjalan()
+            ->get();
+
+        foreach ($berjalan as $negosiasi) {
+            // Pertemuan yang belum terjadi dilepas. Yang sudah Selesai atau
+            // Dibatalkan dibiarkan apa adanya — riwayatnya tetap terbaca.
+            if ($negosiasi->appointment
+                && in_array($negosiasi->appointment->status, Appointment::STATUS_AKTIF, true)) {
+                $negosiasi->appointment->update([
+                    'status'         => 'Dibatalkan',
+                    'usulan_tgl'     => null,
+                    'usulan_jam'     => null,
+                    'usulan_catatan' => null,
+                ]);
+            }
+
+            $negosiasi->update([
+                'status'  => self::DITUTUP,
+                'balasan' => $alasan,
+            ]);
+        }
+
+        return $berjalan->count();
     }
 
     public function event(): BelongsTo

@@ -35,7 +35,9 @@ class NegosiasiController extends Controller
         $this->checkEventMarketing();
 
         $relasi = [
-            'event:id_event,nama_event,status_event,penawaran_status,tgl_mulai_event,area_event,jumlah_pax,deal_harga_event,id_client,id_pegawai',
+            // penawaran_ditinjau_pada ikut diambil karena dari situlah diketahui
+            // apakah baris ini masih menahan penawaran klien — lihat baris().
+            'event:id_event,nama_event,status_event,penawaran_status,penawaran_ditinjau_pada,tgl_mulai_event,area_event,jumlah_pax,deal_harga_event,id_client,id_pegawai',
             'event.pic:id_pegawai,nama_pegawai',
             'client:id,nama_client,perusahaan_client,email_client',
             // Kolom usulan ikut diperlukan, jadi appointment dimuat utuh.
@@ -47,18 +49,21 @@ class NegosiasiController extends Controller
         // menungguTim() — cakupannya kini juga meliputi UsulanKlien, dan itu
         // sudah punya antreannya sendiri di bawah. Memakainya di sini membuat
         // satu negosiasi tampil dua kali pada halaman yang sama.
+        // Ketiga antrean menyaring acara batal, sama seperti lencana di menu —
+        // aturan yang berbeda antara keduanya membuat lencana menunjuk daftar
+        // yang isinya tidak ada.
         $menunggu = EventNegosiasi::with($relasi)
-            ->where('status', EventNegosiasi::DIAJUKAN)
+            ->where('status', EventNegosiasi::DIAJUKAN)->acaraMasihAda()
             ->orderBy('created_at')->get()->map(fn ($n) => $this->baris($n));
 
         // Klien menawar jadwal lain — giliran tim memutuskan.
         $usulan = EventNegosiasi::with($relasi)
-            ->where('status', EventNegosiasi::USULAN_KLIEN)
+            ->where('status', EventNegosiasi::USULAN_KLIEN)->acaraMasihAda()
             ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
 
         // Sudah dijadwalkan, tinggal menunggu klien menerimanya.
         $menungguKlien = EventNegosiasi::with($relasi)
-            ->where('status', EventNegosiasi::DIJADWALKAN)
+            ->where('status', EventNegosiasi::DIJADWALKAN)->acaraMasihAda()
             ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
 
         $sudahTampil = $menunggu->pluck('id')
@@ -105,15 +110,23 @@ class NegosiasiController extends Controller
     {
         $this->checkEventMarketing();
 
+        // Kolom jam memakai Event::ATURAN_JAM — aturan yang sama dipakai di
+        // seluruh sistem sejak isian jam ngawur pernah lolos sampai ke pengurai
+        // tanggal. Wajib dalam bentuk array karena regexnya mengandung "|".
+        // Tanggalnya tidak boleh di masa lalu: menawarkan pertemuan pada hari
+        // yang sudah lewat hanya membuat klien menekan "Terima" untuk jadwal
+        // yang mustahil dihadiri.
         $data = $request->validate([
             'balasan'      => ['required', 'string', 'min:5', 'max:1000'],
             'jadwalkan'    => ['nullable', 'boolean'],
-            'tgl_meeting'  => ['nullable', 'required_if:jadwalkan,true,1', 'date'],
-            'jam_meeting'  => ['nullable', 'required_if:jadwalkan,true,1', 'string', 'max:8'],
+            'tgl_meeting'  => ['nullable', 'required_if:jadwalkan,true,1', 'date', 'after_or_equal:today'],
+            'jam_meeting'  => ['nullable', 'required_if:jadwalkan,true,1', 'string', 'max:8', Event::ATURAN_JAM],
         ], [
-            'balasan.required'     => 'Tuliskan tanggapan untuk klien.',
-            'tgl_meeting.required_if' => 'Pilih tanggal pertemuannya.',
-            'jam_meeting.required_if' => 'Pilih jam pertemuannya.',
+            'balasan.required'          => 'Tuliskan tanggapan untuk klien.',
+            'tgl_meeting.required_if'   => 'Pilih tanggal pertemuannya.',
+            'tgl_meeting.after_or_equal' => 'Tanggal pertemuan tidak boleh di masa lalu.',
+            'jam_meeting.required_if'   => 'Pilih jam pertemuannya.',
+            'jam_meeting.regex'         => 'Jam pertemuan harus berformat HH:MM.',
         ]);
 
         $negosiasi = EventNegosiasi::with('event')->findOrFail($id);
@@ -243,12 +256,14 @@ class NegosiasiController extends Controller
 
         $data = $request->validate([
             'alasan'      => ['required', 'string', 'min:5', 'max:500'],
-            'tgl_meeting' => ['required', 'date'],
-            'jam_meeting' => ['required', 'string', 'max:8'],
+            'tgl_meeting' => ['required', 'date', 'after_or_equal:today'],
+            'jam_meeting' => ['required', 'string', 'max:8', Event::ATURAN_JAM],
         ], [
-            'alasan.required'      => 'Sertakan alasan agar klien memahami penolakannya.',
-            'tgl_meeting.required' => 'Tawarkan tanggal penggantinya.',
-            'jam_meeting.required' => 'Tawarkan jam penggantinya.',
+            'alasan.required'            => 'Sertakan alasan agar klien memahami penolakannya.',
+            'tgl_meeting.required'       => 'Tawarkan tanggal penggantinya.',
+            'tgl_meeting.after_or_equal' => 'Tanggal pengganti tidak boleh di masa lalu.',
+            'jam_meeting.required'       => 'Tawarkan jam penggantinya.',
+            'jam_meeting.regex'          => 'Jam pertemuan harus berformat HH:MM.',
         ]);
 
         $negosiasi = EventNegosiasi::with(['appointment', 'event'])->findOrFail($id);
@@ -330,7 +345,16 @@ class NegosiasiController extends Controller
         }
     }
 
-    /** Tutup permintaan yang tidak perlu dilanjutkan. */
+    /**
+     * Tutup permintaan yang tidak perlu dilanjutkan.
+     *
+     * Berlaku juga untuk pembahasan yang sudah Selesai, dan itu disengaja:
+     * selama sebuah negosiasi belum ditutup, penawaran yang terpampang tetap
+     * tertahan bagi klien (lihat Event::menungguRevisi()). Pembahasan yang
+     * berakhir tanpa perubahan harga karena itu harus bisa ditutup — kalau
+     * tidak, penawarannya terkunci selamanya sebab satu-satunya pelepas kunci
+     * yang lain adalah persetujuan penawaran revisi yang tak akan pernah ada.
+     */
     public function tutup(Request $request, $id)
     {
         $this->checkEventMarketing();
@@ -341,9 +365,22 @@ class NegosiasiController extends Controller
 
         $negosiasi = EventNegosiasi::with('event')->findOrFail($id);
 
-        if (! in_array($negosiasi->status, EventNegosiasi::BERJALAN, true)) {
+        if ($negosiasi->status === EventNegosiasi::DITUTUP) {
             throw ValidationException::withMessages([
-                'alasan' => 'Permintaan ini sudah tidak berjalan.',
+                'alasan' => 'Permintaan ini sudah ditutup sebelumnya.',
+            ]);
+        }
+
+        // Tawaran pertemuan yang belum terjadi dilepas bersama penutupannya —
+        // slotnya tidak boleh tetap terkunci untuk pembahasan yang dihentikan.
+        // Pertemuan yang sudah berlangsung (Selesai) dibiarkan sebagai riwayat.
+        $apt = $negosiasi->appointment;
+        if ($apt && in_array($apt->status, Appointment::STATUS_AKTIF, true)) {
+            $apt->update([
+                'status'         => 'Dibatalkan',
+                'usulan_tgl'     => null,
+                'usulan_jam'     => null,
+                'usulan_catatan' => null,
             ]);
         }
 
@@ -356,7 +393,9 @@ class NegosiasiController extends Controller
 
         $this->jejak($negosiasi->event, 'Negosiasi ditutup: ' . trim($data['alasan']));
 
-        return back()->with('success', 'Permintaan negosiasi ditutup.');
+        return back()->with('success', $negosiasi->event?->menungguRevisi()
+            ? 'Permintaan negosiasi ditutup.'
+            : 'Permintaan negosiasi ditutup. Penawaran yang berlaku kini dapat diterima klien kembali.');
     }
 
     /** Catat jejaknya pada riwayat acara supaya urutannya tetap satu tempat. */
@@ -450,6 +489,16 @@ class NegosiasiController extends Controller
             'minta_meeting' => $n->minta_meeting,
             'status'        => $n->status,
             'balasan'       => $n->balasan,
+
+            // Selama baris ini belum ditutup DAN lebih baru daripada
+            // persetujuan penawaran terakhir, klien tidak dapat menerima
+            // penawaran yang terpampang. Ditandai supaya tim melihat pembahasan
+            // mana yang masih menahan keputusan klien — termasuk yang sudah
+            // Selesai, yang tanpa penanda ini tampak beres padahal mengunci.
+            'menahan' => $n->status !== EventNegosiasi::DITUTUP
+                && $n->event
+                && ($n->event->penawaran_ditinjau_pada === null
+                    || $n->created_at?->greaterThan($n->event->penawaran_ditinjau_pada)),
 
             'diajukan_pada'  => $n->created_at?->translatedFormat('d M Y H:i'),
             'menunggu_sejak' => in_array($n->status, EventNegosiasi::PERLU_TIM, true)
