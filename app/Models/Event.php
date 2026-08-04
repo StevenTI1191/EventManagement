@@ -468,6 +468,26 @@ class Event extends Model
     }
 
     /**
+     * Acaranya sudah dimulai — hari-H sudah tiba atau sudah lewat.
+     *
+     * Penjagaan yang bersandar pada status_event saja TIDAK cukup: perpindahan
+     * Upcoming → Penyelesaian dikerjakan penjadwal auto-Done pukul 02:00 dengan
+     * syarat tanggal akhir < (hari ini − 1 hari), sehingga acara yang berakhir
+     * kemarin masih berstatus Upcoming sampai 02:00 lusa. Selama jendela itu,
+     * penjagaan berbasis status meloloskan pembatalan atas acara yang jasanya
+     * sudah dikerjakan — dan pembatalan menghapus tagihan yang belum dibayar.
+     */
+    public function sudahBerlangsung(): bool
+    {
+        if (blank($this->tgl_mulai_event)) {
+            return false;
+        }
+
+        return \Illuminate\Support\Carbon::parse($this->tgl_mulai_event)
+            ->startOfDay()->lessThanOrEqualTo(now()->startOfDay());
+    }
+
+    /**
      * Catat satu peristiwa pada jejak acara.
      *
      * Jejak sengaja terpisah dari note_event: catatan itu ikut tercetak pada

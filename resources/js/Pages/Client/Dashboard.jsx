@@ -425,6 +425,16 @@ export default function ClientDashboard({
         return Math.ceil((eventDate - today) / 86400000);
     };
 
+    // Hari-H sudah tiba atau lewat. Dipakai untuk menyembunyikan tombol ganti
+    // tanggal & pembatalan — keduanya juga ditolak server, ini hanya supaya
+    // klien tidak ditawari pilihan yang pasti gagal. Status event tidak bisa
+    // dipakai sendirian: perpindahan ke Penyelesaian baru dikerjakan penjadwal.
+    const sudahBerlangsung = (event) => {
+        const sisa = getDaysUntil(event?.tgl_mulai_event);
+
+        return sisa !== null && sisa <= 0;
+    };
+
     return (
         <>
             <Head title="Dashboard - Laksamana Muda" />
@@ -1398,7 +1408,7 @@ export default function ClientDashboard({
                                                             Uang muka Anda tetap berlaku selama menunggu keputusan.
                                                         </p>
                                                     </div>
-                                                ) : ['Deal', 'Upcoming'].includes(event.status_event) && (
+                                                ) : ['Deal', 'Upcoming'].includes(event.status_event) && !sudahBerlangsung(event) && (
                                                     <>
                                                         <div className="flex gap-1.5 mt-1.5">
                                                             <button onClick={() => { setGantiTgl(''); setGantiTglSelesai(''); setGantiAlasan(''); setGantiModal(event); }}

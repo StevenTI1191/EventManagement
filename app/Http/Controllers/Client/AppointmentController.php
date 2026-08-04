@@ -774,6 +774,17 @@ class AppointmentController extends Controller
             ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING])
             ->findOrFail($id_event);
 
+        // Status saja tidak cukup — lihat sudahBerlangsung(). Acara yang hari-H
+        // nya sudah tiba tetap berstatus Upcoming sampai penjadwal auto-Done
+        // berjalan, dan tanpa penjagaan tanggal ini jendela tersebut cukup untuk
+        // membatalkan acara yang sudah terlaksana beserta tagihan sisanya.
+        if ($event->sudahBerlangsung()) {
+            throw ValidationException::withMessages([
+                'konfirmasi' => 'Acara ini sudah berlangsung, jadi tidak dapat dibatalkan lagi. '
+                    . 'Silakan hubungi tim kami bila ada yang perlu dibicarakan.',
+            ]);
+        }
+
         // Uang yang sudah masuk tidak dikembalikan dan TIDAK dihapus dari buku
         // kas — ia menjadi pendapatan atas pembatalan. Nilainya disalin ke
         // catatan pembatalan supaya tetap terbaca di riwayat.
@@ -852,6 +863,14 @@ class AppointmentController extends Controller
         $event = Event::where('id_client', $client->id)
             ->whereIn('status_event', [Event::STATUS_DEAL, Event::STATUS_UPCOMING])
             ->findOrFail($id_event);
+
+        // Sama seperti pembatalan: acara yang sudah berlangsung tidak bisa
+        // dipindahkan lagi, dan statusnya belum tentu ikut berpindah hari itu.
+        if ($event->sudahBerlangsung()) {
+            throw ValidationException::withMessages([
+                'tgl_baru' => 'Acara ini sudah berlangsung, jadwalnya tidak dapat dipindahkan lagi.',
+            ]);
+        }
 
         if (\App\Models\EventReschedule::where('id_event', $event->id_event)->menunggu()->exists()) {
             return back()->with('error', 'Sudah ada permintaan ganti tanggal yang sedang ditinjau untuk acara ini.');
