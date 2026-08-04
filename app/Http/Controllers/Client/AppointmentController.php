@@ -548,7 +548,12 @@ class AppointmentController extends Controller
     {
         $client = Auth::guard('client')->user();
 
-        // Rate limiting — maks 10 upload per jam per client (mencegah disk flooding)
+        // Rate limiting — maks 10 upload per jam per client (mencegah disk flooding).
+        // Yang DIHITUNG hanyalah unggahan yang benar-benar tersimpan; pemotongan
+        // kuotanya karena itu berada di bawah, setelah semua penolakan lewat.
+        // Sebelumnya kuota dipotong di sini, sehingga sepuluh berkas yang justru
+        // ditolak sistem sendiri (gambar tak terbaca sebagai bukti transfer)
+        // mengunci klien selama satu jam tanpa satu pun bukti tersimpan.
         $rateLimitKey = 'bukti-upload:' . $client->id;
         if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
@@ -556,7 +561,6 @@ class AppointmentController extends Controller
                 'file_bukti' => "Terlalu banyak upload. Coba lagi dalam {$seconds} detik.",
             ]);
         }
-        RateLimiter::hit($rateLimitKey, 3600);
 
         $request->validate([
             // Pastikan event milik client yang login — cegah IDOR
@@ -565,8 +569,16 @@ class AppointmentController extends Controller
             // tidak bisa dikaitkan ke tagihan event lain.
             'id_invoice'  => ['nullable', Rule::exists('invoices', 'id_invoice')->where('id_event', $request->id_event)],
             'file_bukti'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'nominal'     => 'nullable|numeric|min:0|max:9999999999999',
+            // WAJIB, dan harus lebih dari nol. Dulu boleh kosong, padahal
+            // verifikasi Finance menyalin nilai ini ke transaksis.nominal yang
+            // NOT NULL — buktinya masuk, lalu tidak akan pernah bisa
+            // diverifikasi karena tombolnya selalu berakhir galat 500. Nominal
+            // juga dasar pencocokan OCR dan penilaian kurang bayar di bawah.
+            'nominal'     => 'required|numeric|min:1|max:9999999999999',
             'keterangan'  => 'nullable|string|max:500',
+        ], [
+            'nominal.required' => 'Isi nominal yang Anda transfer.',
+            'nominal.min'      => 'Nominal pembayaran harus lebih dari nol.',
         ]);
 
         // ── Aturan pembayaran: DP dan pelunasan dibayar penuh sekali transfer ──
@@ -634,6 +646,9 @@ class AppointmentController extends Controller
             $cocok === false   => 'Selisih',
             default            => 'Tidak Terbaca',
         };
+
+        // Berkasnya benar-benar disimpan → barulah kuota unggah dipotong.
+        RateLimiter::hit($rateLimitKey, 3600);
 
         BuktiPembayaran::create([
             'id_event'    => $request->id_event,

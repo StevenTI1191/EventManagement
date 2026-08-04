@@ -112,6 +112,20 @@ class BuktiPembayaranController extends Controller
         $statusLama = $bukti->status;
         $statusBaru = $request->status;
 
+        // Bukti tanpa nominal TIDAK boleh diverifikasi. Pembuatan transaksinya
+        // dijaga `nominal > 0`, sehingga verifikasi atas bukti bernominal kosong
+        // dulu berhasil tanpa satu rupiah pun masuk buku kas: tagihannya tetap
+        // "Belum Dibayar" dan penjadwal terus menagih klien yang pembayarannya
+        // baru saja disetujui. Kolomnya kini wajib diisi saat unggah; penjagaan
+        // ini menutup baris lama yang terlanjur kosong.
+        if ($statusBaru === 'Diverifikasi' && ! ($bukti->nominal > 0)) {
+            return back()->withErrors([
+                'status' => 'Bukti ini tidak mencantumkan nominal, sehingga tidak dapat dibukukan. '
+                    . 'Minta klien mengunggah ulang beserta nominalnya, atau catat pembayarannya '
+                    . 'sebagai transaksi manual.',
+            ]);
+        }
+
         // Semua operasi DB dibungkus transaction agar atomic
         DB::transaction(function () use ($bukti, $statusLama, $statusBaru, $request) {
             // Jika diverifikasi → buat Transaksi otomatis

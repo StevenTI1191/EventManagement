@@ -2493,7 +2493,9 @@ export default function ClientDashboard({
                                 {errors.file_bukti && <p className="mt-1 text-xs text-danger">{errors.file_bukti}</p>}
                             </div>
                             <div>
-                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">Nominal Pembayaran</label>
+                                <label className="block mb-2 text-xs font-bold tracking-wider text-muted uppercase">
+                                    Nominal Pembayaran <span className="normal-case text-danger">* wajib</span>
+                                </label>
                                 <RupiahInput value={data.nominal}
                                     onChange={v => setData('nominal', v)}
                                     placeholder="Contoh: 5.000.000"
