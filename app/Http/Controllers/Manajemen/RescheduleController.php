@@ -77,6 +77,30 @@ class RescheduleController extends Controller
                 "Acara \"{$event->nama_event}\" berstatus {$event->status_event}, jadwalnya tidak dapat dipindahkan lagi.");
         }
 
+        // Status saja tidak cukup — sama seperti pada pembatalan klien.
+        // Perpindahan Upcoming ke Penyelesaian dikerjakan penjadwal pukul 02:00
+        // dengan jeda sehari, jadi acara yang sudah berlangsung masih berstatus
+        // Upcoming selama sekitar dua hari. Menyetujui pemindahan pada jendela
+        // itu menghidupkan kembali acara yang jasanya sudah dikerjakan, lengkap
+        // dengan jatuh tempo tagihan yang ikut bergeser jauh ke depan.
+        if ($event->sudahBerlangsung()) {
+            return back()->with('error',
+                "Acara \"{$event->nama_event}\" sudah berlangsung pada "
+                . Carbon::parse($event->tgl_mulai_event)->translatedFormat('d F Y')
+                . ', jadwalnya tidak dapat dipindahkan lagi. Tolak pengajuan ini.');
+        }
+
+        // Tanggal yang diminta bisa saja sudah telanjur lewat bila pengajuannya
+        // lama mengendap di antrean. Menyetujuinya memindahkan acara ke masa
+        // lampau: acaranya langsung dianggap sudah lewat oleh penjadwal, dan
+        // jatuh tempo tagihannya jatuh pada hari ini juga.
+        if ($r->tgl_baru->startOfDay()->lt(now()->startOfDay())) {
+            return back()->with('error',
+                'Tanggal yang diminta (' . $r->tgl_baru->translatedFormat('d F Y')
+                . ') sudah lewat karena pengajuan ini lama tidak ditinjau. '
+                . 'Tolak pengajuannya dan minta klien mengajukan tanggal baru.');
+        }
+
         // Tanggal baru harus benar-benar kosong. Diperiksa DI SINI, bukan hanya
         // saat klien mengajukan — slot bisa terisi acara lain di sela-selanya.
         $bentrok = Event::checkBentrok(
