@@ -105,7 +105,7 @@ export default function ResetPassword({ token, email }) {
                                         type={showPass ? 'text' : 'password'}
                                         value={data.password}
                                         onChange={e => setData('password', e.target.value)}
-                                        placeholder="Minimal 6 karakter"
+                                        placeholder="Minimal 8 karakter"
                                         autoFocus
                                         className={inputBase}
                                     />

@@ -249,7 +249,7 @@ export default function ClientProfile({ auth, has_password }) {
                                             <input type={showPass ? 'text' : 'password'}
                                                 value={data.password}
                                                 onChange={e => setData('password', e.target.value)}
-                                                placeholder="Minimal 6 karakter"
+                                                placeholder="Minimal 8 karakter"
                                                 className={inputClass + ' pl-9 pr-10'} />
                                             <button type="button" onClick={() => setShowPass(!showPass)}
                                                 className="absolute right-3 top-3 text-muted hover:text-muted transition-colors">

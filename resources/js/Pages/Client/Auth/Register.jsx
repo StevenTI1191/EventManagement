@@ -155,7 +155,7 @@ export default function Register() {
                                 <div className="relative">
                                     <input type={showPass ? 'text' : 'password'} value={data.password}
                                         onChange={e => setData('password', e.target.value)}
-                                        placeholder="Minimal 6 karakter"
+                                        placeholder="Minimal 8 karakter"
                                         className={inputClass + ' pr-11'} />
                                     <button type="button" onClick={() => setShowPass(!showPass)}
                                         className="absolute right-3 top-3 text-muted hover:text-muted transition-colors">
