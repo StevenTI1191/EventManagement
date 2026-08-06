@@ -397,14 +397,24 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
                 </div>
             </div>
 
-            {/* Catatan Meeting internal (poin/hasil pembahasan) */}
+            {/* Catatan hasil pertemuan. Ditampilkan pula kepada klien pada
+                dashboardnya sebagai bagian keterbukaan hasil pembahasan, jadi
+                labelnya harus menyatakan itu. Sebelumnya kolom ini ditandai
+                "Internal, tidak tampil ke client" padahal isinya memang dibaca
+                klien, sehingga tim menuliskan hal yang tidak semestinya dibaca
+                klien ke dalamnya. */}
             {['Dikonfirmasi', 'Reschedule', 'Selesai'].includes(appointment.status) && (
                 <div className="max-w-3xl p-6 mx-auto mt-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
                     <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-extrabold text-gray-900">Catatan Meeting</h3>
-                        <span className="px-2 py-0.5 text-[10px] font-bold text-gray-500 bg-gray-100 rounded-full">Internal</span>
+                        <span className="px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-100 rounded-full">Dibaca klien</span>
                     </div>
-                    <p className="mb-3 text-xs text-gray-400">Poin/hasil pembahasan saat meeting. Hanya untuk tim, tidak tampil ke client.</p>
+                    <p className="mb-3 text-xs text-gray-500">
+                        Poin hasil pembahasan saat meeting. <b className="text-amber-700">Isi kolom ini
+                        ditampilkan kepada klien</b> pada dashboardnya sebagai Hasil Pertemuan, dan ikut
+                        terbawa menjadi catatan acara bila event dibuat dari appointment ini. Jangan
+                        menuliskan hal yang tidak boleh dibaca klien, misalnya batas anggarannya.
+                    </p>
                     <form onSubmit={simpanCatatanMeeting}>
                         <textarea
                             value={catatanForm.data.catatan_meeting}
