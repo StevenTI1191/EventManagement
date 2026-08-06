@@ -35,12 +35,18 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
     };
 
     // Tolak usulan jadwal dari klien (jadwal semula tetap berlaku).
+    //
+    // Penegasannya memakai dialog sistem, bukan confirm() bawaan peramban.
+    // Popup peramban tampil di luar rancangan halaman dan pada sebagian peramban
+    // dapat dibungkam pengguna, sehingga penolakan yang dikabarkan ke klien bisa
+    // terkirim tanpa penegasan sama sekali.
     const [tolakUsulanLoading, setTolakUsulanLoading] = useState(false);
+    const [tolakUsulanModal, setTolakUsulanModal] = useState(false);
     const tolakUsulan = () => {
         router.patch(route(routes.tolakUsulan, appointment.id), {}, {
             preserveScroll: true,
-            onBefore: () => confirm('Tolak usulan jadwal dari klien? Jadwal meeting yang berlaku tetap sama, dan klien akan diberi tahu.'),
             onStart: () => setTolakUsulanLoading(true),
+            onSuccess: () => setTolakUsulanModal(false),
             onFinish: () => setTolakUsulanLoading(false),
         });
     };
@@ -279,7 +285,7 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
                                     Terima &amp; jadwalkan usulan ini
                                 </button>
                                 <button
-                                    onClick={tolakUsulan}
+                                    onClick={() => setTolakUsulanModal(true)}
                                     disabled={tolakUsulanLoading}
                                     className="px-4 py-2 text-sm font-bold transition-colors bg-white border text-amber-700 border-amber-300 rounded-xl hover:bg-amber-100 disabled:opacity-60"
                                 >
@@ -447,6 +453,35 @@ export default function AppointmentShow({ Layout, routes = {},  appointment }) {
             </div>
 
             {/* Modal konfirmasi ketat hapus appointment */}
+            {tolakUsulanModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                    onClick={() => !tolakUsulanLoading && setTolakUsulanModal(false)}>
+                    <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-lg font-extrabold text-gray-900">Tolak Usulan Jadwal Klien</h3>
+                        <p className="mt-2 text-sm text-gray-600">
+                            Jadwal meeting yang berlaku sekarang <b>tetap sama</b>, dan klien akan diberi tahu
+                            bahwa usulannya tidak dapat dipenuhi.
+                        </p>
+                        {appointment.usulan_tgl && (
+                            <p className="p-3 mt-3 text-xs rounded-xl bg-orange-50 text-orange-800">
+                                Usulan klien: <b>{appointment.usulan_tgl}</b>
+                                {appointment.usulan_jam ? <> pukul <b>{String(appointment.usulan_jam).slice(0, 5)}</b></> : null}
+                            </p>
+                        )}
+                        <div className="flex gap-3 mt-5">
+                            <button onClick={() => setTolakUsulanModal(false)} disabled={tolakUsulanLoading}
+                                className="flex-1 py-2.5 text-sm font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-60">
+                                Batal
+                            </button>
+                            <button onClick={tolakUsulan} disabled={tolakUsulanLoading}
+                                className="flex-1 py-2.5 text-sm font-black text-white bg-orange-600 rounded-xl hover:bg-orange-700 disabled:opacity-60">
+                                {tolakUsulanLoading ? 'Memproses…' : 'Ya, tolak usulan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {hapusModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
                     onClick={() => !hapusLoading && setHapusModal(false)}>

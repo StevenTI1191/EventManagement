@@ -48,11 +48,20 @@ export default function FinanceInvoiceIndex({ events = [] }) {
         });
     };
 
-    const tandaiLunas = (idInvoice) => {
-        if (!confirm('Tandai invoice ini sebagai LUNAS? Untuk DP, status event otomatis menjadi Upcoming.')) return;
-        setProses(`lunas-${idInvoice}`);
-        router.patch(route('finance.invoice.lunas', idInvoice), {}, {
+    // Penegasan memakai dialog sistem, bukan confirm() bawaan peramban.
+    // Popup peramban tampil di luar rancangan halaman, tidak dapat memuat
+    // rincian invoice yang sedang ditandai, dan pada sebagian peramban dapat
+    // dibungkam pengguna sehingga tindakan sepenting ini lolos tanpa penegasan.
+    const [konfirmasiLunas, setKonfirmasiLunas] = useState(null);
+
+    const tandaiLunas = () => {
+        const inv = konfirmasiLunas;
+        if (! inv) return;
+
+        setProses(`lunas-${inv.id_invoice}`);
+        router.patch(route('finance.invoice.lunas', inv.id_invoice), {}, {
             preserveScroll: true,
+            onSuccess: () => setKonfirmasiLunas(null),
             onFinish: () => setProses(null),
         });
     };
@@ -197,7 +206,7 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                                                                     className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                                                                 <Pencil size={12} /> Edit
                                                             </button>
-                                                            <button onClick={() => tandaiLunas(t.inv.id_invoice)}
+                                                            <button onClick={() => setKonfirmasiLunas(t.inv)}
                                                                     disabled={proses === `lunas-${t.inv.id_invoice}`}
                                                                     className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold text-white bg-[#FF2D55] rounded-lg hover:bg-[#e02249] disabled:opacity-60">
                                                                 <CheckCircle2 size={12} /> Tandai Lunas
@@ -225,6 +234,53 @@ export default function FinanceInvoiceIndex({ events = [] }) {
             </div>
 
             {/* Modal edit invoice */}
+            {konfirmasiLunas && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                     onClick={() => proses || setKonfirmasiLunas(null)}>
+                    <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 size={18} className="text-emerald-600" />
+                                <h3 className="text-lg font-extrabold text-gray-900">
+                                    Tandai Invoice {konfirmasiLunas.tipe} Lunas
+                                </h3>
+                            </div>
+                            <button onClick={() => setKonfirmasiLunas(null)} className="text-gray-400 hover:text-gray-600">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <p className="mb-4 text-xs text-gray-400">No. {konfirmasiLunas.nomor_invoice}</p>
+
+                        <div className="p-4 mb-4 border border-gray-100 rounded-xl bg-gray-50">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-500">Nominal</span>
+                                <span className="text-sm font-extrabold text-gray-900">{rupiah(konfirmasiLunas.nominal)}</span>
+                            </div>
+                        </div>
+
+                        <p className="mb-5 text-sm text-gray-600">
+                            Sisa tagihan yang belum tertutup bukti akan dicatat ke buku kas atas nama Anda.
+                            {konfirmasiLunas.tipe === 'DP' && (
+                                <> Karena ini uang muka, status acaranya otomatis berpindah ke <b>Upcoming</b> dan
+                                tagihan pelunasannya terbit.</>
+                            )}
+                        </p>
+
+                        <div className="flex gap-3">
+                            <button onClick={() => setKonfirmasiLunas(null)} disabled={proses}
+                                    className="flex-1 py-2.5 text-sm font-bold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-60">
+                                Batal
+                            </button>
+                            <button onClick={tandaiLunas} disabled={proses}
+                                    className="flex-1 py-2.5 text-sm font-black text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-60">
+                                {proses ? 'Memproses…' : 'Ya, tandai lunas'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {editInv && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
                      onClick={() => proses || setEditInv(null)}>
