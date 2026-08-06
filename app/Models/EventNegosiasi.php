@@ -30,8 +30,16 @@ class EventNegosiasi extends Model
     public const DIAJUKAN     = 'Diajukan';
     public const DIJAWAB      = 'Dijawab';
     public const DIJADWALKAN  = 'Dijadwalkan';
-    /** Klien menawar jadwal lain — giliran tim memutuskan. */
+    /** Klien menawar jadwal lain, giliran tim memutuskan. */
     public const USULAN_KLIEN = 'UsulanKlien';
+    /**
+     * Jadwal sudah disepakati kedua pihak, pertemuannya belum berlangsung.
+     *
+     * Dulu kesepakatan jadwal langsung menutup negosiasi sebagai Selesai,
+     * padahal yang disepakati baru waktunya. Pembahasan yang sesungguhnya
+     * belum terjadi, sehingga penawaran revisi pun belum layak diajukan.
+     */
+    public const MENUNGGU_MEETING = 'MenungguMeeting';
     public const SELESAI      = 'Selesai';
     public const DITUTUP      = 'Ditutup';
 
@@ -44,7 +52,27 @@ class EventNegosiasi extends Model
     /** Belum tuntas — dipakai untuk lencana maupun penjagaan pengajuan ganda. */
     public const BERJALAN = [
         self::DIAJUKAN, self::DIJAWAB, self::DIJADWALKAN, self::USULAN_KLIEN,
+        self::MENUNGGU_MEETING,
     ];
+
+    /**
+     * Pertemuannya sudah lewat sehingga hasilnya tinggal dicatat.
+     *
+     * Jadwal yang dipakai adalah jadwal appointment yang BERLAKU, bukan tanggal
+     * usulan pertama, sebab pertemuannya bisa saja sudah dipindahkan.
+     */
+    public function meetingSudahLewat(): bool
+    {
+        if ($this->status !== self::MENUNGGU_MEETING) {
+            return false;
+        }
+
+        $jadwal = $this->appointment?->jadwalBerlaku();
+
+        return $jadwal
+            && \Illuminate\Support\Carbon::parse($jadwal['tgl'] . ' ' . $jadwal['jam'])
+                ->lessThanOrEqualTo(now());
+    }
 
     /**
      * Antrean kerja tim: permintaan baru yang belum ditanggapi DAN jadwal yang

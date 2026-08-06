@@ -66,9 +66,16 @@ class NegosiasiController extends Controller
             ->where('status', EventNegosiasi::DIJADWALKAN)->acaraMasihAda()
             ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
 
+        // Jadwal sudah disepakati kedua pihak. Yang ditunggu pertemuannya
+        // sendiri, lalu pencatatan hasilnya yang menutup pembahasan.
+        $menungguMeeting = EventNegosiasi::with($relasi)
+            ->where('status', EventNegosiasi::MENUNGGU_MEETING)->acaraMasihAda()
+            ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
+
         $sudahTampil = $menunggu->pluck('id')
             ->merge($usulan->pluck('id'))
-            ->merge($menungguKlien->pluck('id'))->all();
+            ->merge($menungguKlien->pluck('id'))
+            ->merge($menungguMeeting->pluck('id'))->all();
 
         $riwayat = EventNegosiasi::with($relasi)
             ->whereNotIn('id', $sudahTampil)
@@ -76,10 +83,11 @@ class NegosiasiController extends Controller
             ->get()->map(fn ($n) => $this->baris($n));
 
         return Inertia::render('EventMarketing/Negosiasi/Index', [
-            'menunggu'      => $menunggu->values(),
-            'usulan'        => $usulan->values(),
-            'menungguKlien' => $menungguKlien->values(),
-            'riwayat'       => $riwayat->values(),
+            'menunggu'        => $menunggu->values(),
+            'usulan'          => $usulan->values(),
+            'menungguKlien'   => $menungguKlien->values(),
+            'menungguMeeting' => $menungguMeeting->values(),
+            'riwayat'         => $riwayat->values(),
         ]);
     }
 
@@ -231,7 +239,9 @@ class NegosiasiController extends Controller
                 'id_pegawai'     => Auth::guard('pegawai')->id(),
             ]);
 
-            $negosiasi->update(['status' => EventNegosiasi::SELESAI]);
+            // Sama seperti ketika klien yang menerima jadwal: yang disepakati
+            // baru waktunya. Selesai ditetapkan setelah hasil pertemuan dicatat.
+            $negosiasi->update(['status' => EventNegosiasi::MENUNGGU_MEETING]);
 
             $this->jejak($negosiasi->event,
                 'Usulan jadwal klien diterima, pembahasan '
@@ -343,6 +353,64 @@ class NegosiasiController extends Controller
                 \Log::warning('Email jadwal negosiasi gagal: ' . $e->getMessage());
             }
         }
+    }
+
+    /**
+     * Catat hasil pertemuan, dan barulah negosiasinya dinyatakan selesai.
+     *
+     * Inilah penutup alur pembahasan: jadwal disepakati, pertemuan berlangsung,
+     * hasilnya dicatat. Sebelum langkah ini negosiasi tetap berstatus
+     * MenungguMeeting, sehingga penawaran revisi belum dapat diajukan dan
+     * penawaran yang terpampang tetap tertahan bagi klien.
+     */
+    public function catatHasilMeeting(Request $request, $id)
+    {
+        $this->checkEventMarketing();
+
+        $data = $request->validate([
+            'hasil' => ['required', 'string', 'min:5', 'max:5000'],
+        ], ['hasil.required' => 'Tuliskan hasil pembahasannya.']);
+
+        $negosiasi = EventNegosiasi::with(['appointment', 'event'])->findOrFail($id);
+
+        if ($negosiasi->status !== EventNegosiasi::MENUNGGU_MEETING) {
+            throw ValidationException::withMessages([
+                'hasil' => 'Hasil pertemuan hanya dapat dicatat setelah jadwalnya disepakati kedua pihak.',
+            ]);
+        }
+
+        // Pertemuannya belum terjadi, jadi belum ada hasil yang bisa dicatat.
+        if (! $negosiasi->meetingSudahLewat()) {
+            throw ValidationException::withMessages([
+                'hasil' => 'Pertemuannya belum berlangsung. Hasil baru dapat dicatat setelah waktunya lewat.',
+            ]);
+        }
+
+        DB::transaction(function () use ($negosiasi, $data) {
+            // Hasilnya menempel pada appointment-nya supaya terbaca pula dari
+            // riwayat pertemuan, bukan hanya dari halaman negosiasi.
+            $negosiasi->appointment?->update([
+                'catatan_meeting' => trim($data['hasil']),
+                'status'          => 'Selesai',
+            ]);
+
+            $negosiasi->update([
+                'status'         => EventNegosiasi::SELESAI,
+                'ditangani_oleh' => Auth::guard('pegawai')->id(),
+                'ditangani_pada' => now(),
+            ]);
+
+            $this->jejak($negosiasi->event,
+                'Pembahasan penawaran selesai. Hasil: ' . trim($data['hasil']));
+        });
+
+        $this->kabariJadwal($negosiasi, '✅ Hasil Pembahasan Dicatat',
+            'Pembahasan penawaran acara "' . $negosiasi->event?->nama_event
+            . '" telah selesai. Hasil pembahasan: ' . trim($data['hasil'])
+            . "\n\nTim kami akan menindaklanjutinya.");
+
+        return back()->with('success',
+            'Hasil pertemuan tercatat. Pembahasan selesai, penawaran revisi kini dapat diajukan.');
     }
 
     /**
@@ -478,12 +546,21 @@ class NegosiasiController extends Controller
             'pic'        => $n->event?->pic?->nama_pegawai,
 
             // Penawaran kedua sesudah pembahasan. Tim mengajukannya dari sini
-            // supaya tidak perlu kembali ke papan pipeline hanya untuk itu —
-            // syaratnya sama persis dengan yang dijaga ajukanUlangPenawaran().
-            'boleh_revisi' => $n->event
+            // supaya tidak perlu kembali ke papan pipeline hanya untuk itu,
+            // dengan syarat yang sama persis seperti ajukanUlangPenawaran().
+            //
+            // Syarat tambahan: pembahasannya memang sudah SELESAI. Penawaran
+            // revisi yang diajukan sebelum pertemuannya berlangsung tidak punya
+            // dasar, sebab yang hendak direvisi justru hasil pembahasan itu.
+            'boleh_revisi' => $n->status === EventNegosiasi::SELESAI
+                && $n->event
                 && $n->event->penawaran_status === Event::PENAWARAN_DISETUJUI
                 && in_array($n->event->status_event,
                     [Event::STATUS_NEGOTIATION, Event::STATUS_DEAL], true),
+
+            // Pertemuannya sudah lewat, hasilnya tinggal dicatat.
+            'boleh_catat_hasil' => $n->meetingSudahLewat(),
+            'hasil_meeting'     => $apt?->catatan_meeting,
 
             'pesan'         => $n->pesan,
             'minta_meeting' => $n->minta_meeting,

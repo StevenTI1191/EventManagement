@@ -13,6 +13,7 @@ const badgeStatus = (s) => ({
     Dijawab:     'bg-blue-100 text-blue-700',
     Dijadwalkan: 'bg-violet-100 text-violet-700',
     UsulanKlien: 'bg-orange-100 text-orange-700',
+    MenungguMeeting: 'bg-teal-100 text-teal-700',
     Selesai:     'bg-emerald-100 text-emerald-700',
     Ditutup:     'bg-gray-200 text-gray-600',
 }[s] || 'bg-gray-100 text-gray-600');
@@ -89,7 +90,7 @@ const PilihJadwal = ({ tgl, setTgl, jam, setJam }) => {
     );
 };
 
-export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKlien = [], riwayat = [] }) {
+export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKlien = [], menungguMeeting = [], riwayat = [] }) {
     const { flash, errors = {} } = usePage().props;
 
     const [aksi, setAksi] = useState(null);   // { n, tipe }
@@ -98,10 +99,11 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
     const [tgl, setTgl] = useState('');
     const [jam, setJam] = useState('');
     const [alasan, setAlasan] = useState('');
+    const [hasil, setHasil] = useState('');
     const [proses, setProses] = useState(false);
 
     const buka = (n, tipe, ikutJadwal = false) => {
-        setBalasan(''); setAlasan(''); setTgl(''); setJam('');
+        setBalasan(''); setAlasan(''); setTgl(''); setJam(''); setHasil('');
         setJadwalkan(ikutJadwal);
         setAksi({ n, tipe });
     };
@@ -130,6 +132,12 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
             return router.patch(route('em.negosiasi.tolak-usulan', n.id), {
                 alasan, tgl_meeting: tgl, jam_meeting: jam,
             }, selesai);
+        }
+
+        if (tipe === 'hasil') {
+            if (hasil.trim().length < 5) return;
+            setProses(true);
+            return router.patch(route('em.negosiasi.hasil-meeting', n.id), { hasil }, selesai);
         }
 
         if (tipe === 'tutup') {
@@ -326,7 +334,52 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
                     </>
                 )}
 
-                {/* ── 4. Riwayat ───────────────────────────────────────────── */}
+                {/* ── 4. Menunggu pertemuan ────────────────────────────────── */}
+                {menungguMeeting.length > 0 && (
+                    <>
+                        <h2 className="mt-10 mb-1 text-sm font-black tracking-wider text-teal-700 uppercase">
+                            Menunggu Pertemuan ({menungguMeeting.length})
+                        </h2>
+                        <p className="mb-3 text-xs text-gray-500">
+                            Jadwalnya sudah disepakati kedua pihak. Setelah pertemuannya berlangsung,
+                            catat hasilnya di sini untuk menutup pembahasan. Selama belum dicatat,
+                            penawaran revisi belum dapat diajukan.
+                        </p>
+                        <div className="space-y-3">
+                            {menungguMeeting.map((n) => (
+                                <div key={n.id} className="p-4 bg-white border border-teal-200 shadow-sm rounded-2xl">
+                                    <Kepala n={n} />
+                                    <p className="mt-2 text-xs text-gray-600 whitespace-pre-line">
+                                        <span className="font-bold text-gray-500">Klien: </span>{n.pesan}
+                                    </p>
+                                    {n.balasan && (
+                                        <p className="mt-1 text-xs text-gray-600 whitespace-pre-line">
+                                            <span className="font-bold text-gray-500">Tim: </span>{n.balasan}
+                                        </p>
+                                    )}
+                                    <p className="flex items-center gap-1.5 mt-2 text-xs font-bold text-teal-700">
+                                        <CalendarCheck2 size={13} />
+                                        Pertemuan {n.meeting ? `${n.meeting.tanggal} pukul ${n.meeting.jam}` : 'belum terjadwal'}
+                                    </p>
+                                    <div className="pt-3 mt-3 border-t border-gray-100">
+                                        {n.boleh_catat_hasil ? (
+                                            <button onClick={() => buka(n, 'hasil')} disabled={proses}
+                                                className="flex items-center gap-1.5 px-3 py-2 text-xs font-black text-white bg-teal-600 rounded-xl hover:bg-teal-700 disabled:opacity-50">
+                                                <CheckCircle2 size={14} /> Catat hasil pertemuan
+                                            </button>
+                                        ) : (
+                                            <p className="text-[11px] text-gray-400">
+                                                Hasil dapat dicatat setelah waktu pertemuannya lewat.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {/* ── 5. Riwayat ───────────────────────────────────────────── */}
                 {riwayat.length > 0 && (
                     <>
                         <h2 className="mt-10 mb-3 text-sm font-black tracking-wider text-gray-500 uppercase">Riwayat Negosiasi</h2>
@@ -401,7 +454,8 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
                         onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-start justify-between mb-3">
                             <h3 className="text-lg font-extrabold text-gray-900">
-                                {aksi.tipe === 'balas' ? 'Tanggapi permintaan klien'
+                                {aksi.tipe === 'hasil' ? 'Catat hasil pertemuan'
+                                    : aksi.tipe === 'balas' ? 'Tanggapi permintaan klien'
                                     : aksi.tipe === 'tolak-usulan' ? 'Tolak usulan & tawarkan waktu lain'
                                     : aksi.tipe === 'revisi' ? 'Ajukan penawaran revisi'
                                     : 'Tutup permintaan'}
@@ -445,6 +499,26 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
                             </>
                         )}
 
+                        {aksi.tipe === 'hasil' && (
+                            <>
+                                <p className="mb-2 text-sm text-gray-600">
+                                    Catat poin yang disepakati saat pertemuan. Pembahasan ditandai selesai
+                                    setelah ini, dan penawaran revisi baru dapat diajukan.
+                                </p>
+                                {aksi.n.meeting && (
+                                    <p className="p-3 mb-3 text-xs rounded-xl bg-teal-50 text-teal-800">
+                                        Pertemuan {aksi.n.meeting.tanggal} pukul {aksi.n.meeting.jam}
+                                    </p>
+                                )}
+                                <textarea rows={4} value={hasil} onChange={(e) => setHasil(e.target.value)} autoFocus
+                                    placeholder="Mis. harga tetap, paket dekorasi dikurangi satu titik, pelunasan tetap H-3…"
+                                    className="w-full px-4 py-2.5 text-sm border border-gray-200 resize-none rounded-xl focus:border-[#FF2D55] focus:outline-none" />
+                                {hasil.trim().length > 0 && hasil.trim().length < 5 && (
+                                    <p className="mt-1 text-xs font-semibold text-red-600">Hasil minimal 5 karakter.</p>
+                                )}
+                            </>
+                        )}
+
                         {aksi.tipe === 'tutup' && (
                             <>
                                 <p className="mb-2 text-sm text-gray-600">
@@ -479,10 +553,12 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
                             </button>
                             <button onClick={kirim} disabled={proses}
                                 className={`flex-1 py-2.5 text-sm font-black text-white rounded-xl hover:brightness-110 disabled:opacity-50 ${
-                                    aksi.tipe === 'revisi' ? 'bg-violet-600' : 'bg-[#FF2D55]'}`}>
+                                    aksi.tipe === 'revisi' ? 'bg-violet-600'
+                                    : aksi.tipe === 'hasil' ? 'bg-teal-600' : 'bg-[#FF2D55]'}`}>
                                 {proses ? 'Mengirim…'
                                     : aksi.tipe === 'tutup' ? 'Ya, tutup'
                                     : aksi.tipe === 'revisi' ? 'Ajukan revisi'
+                                    : aksi.tipe === 'hasil' ? 'Simpan & selesaikan'
                                     : 'Kirim'}
                             </button>
                         </div>

@@ -414,6 +414,8 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             ->whereNumber('id')->name('em.negosiasi.balas');
         Route::patch('/event-marketing/negosiasi/{id}/tutup', [\App\Http\Controllers\EventMarketing\NegosiasiController::class, 'tutup'])
             ->whereNumber('id')->name('em.negosiasi.tutup');
+        Route::patch('/event-marketing/negosiasi/{id}/hasil-meeting', [\App\Http\Controllers\EventMarketing\NegosiasiController::class, 'catatHasilMeeting'])
+            ->whereNumber('id')->name('em.negosiasi.hasil-meeting');
         // Tawar-menawar jadwal: tim menerima usulan klien, atau menolaknya
         // sambil menawarkan waktu pengganti.
         Route::patch('/event-marketing/negosiasi/{id}/terima-usulan', [\App\Http\Controllers\EventMarketing\NegosiasiController::class, 'terimaUsulan'])

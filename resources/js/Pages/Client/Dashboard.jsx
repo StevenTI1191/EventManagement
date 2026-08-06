@@ -35,7 +35,7 @@ const FIELD_UNGGAH = ['id_event', 'id_invoice', 'file_bukti', 'nominal', 'ketera
 
 export default function ClientDashboard({
     appointments, events, penawaran = [], totalAppointments, totalEvents, slots = [],
-    rekening = {}, negosiasi = [],
+    rekening = {}, negosiasi = [], negosiasiRiwayat = [],
 }) {
     const { auth, flash, errors: galatHalaman = {} } = usePage().props;
 
@@ -833,7 +833,8 @@ export default function ClientDashboard({
                     })()}
 
                     {/* TAB: PENAWARAN (event tahap Negotiation — menunggu keputusan klien, belum di-DP) */}
-                    {activeTab === 'penawaran' && (penawaran.length > 0 ? (
+                    {activeTab === 'penawaran' && (<>
+                    {penawaran.length > 0 ? (
                         <div className="mb-6 space-y-3">
                             <div className="flex items-center gap-2">
                                 <h2 className="text-lg font-black text-ink">Penawaran untuk Anda</h2>
@@ -841,8 +842,10 @@ export default function ClientDashboard({
                             </div>
                             <p className="-mt-1 text-sm text-muted">Tim kami mengirimkan penawaran acara berikut. Tinjau detail &amp; harga, lalu terima atau tolak.</p>
                             {penawaran.map(p => {
-                                // Permintaan penyesuaian yang sedang berjalan untuk acara ini.
-                                const neg = negosiasi.find(n => n.id_event === p.id_event);
+                                // Permintaan penyesuaian yang sedang berjalan untuk acara
+                                // ini. Bisa lebih dari satu, sebab klien boleh mengajukan
+                                // permintaan baru tanpa menunggu yang sebelumnya tuntas.
+                                const negList = negosiasi.filter(n => n.id_event === p.id_event);
                                 return (
                                 <div key={p.id_event} className="p-5 border-2 shadow-lm bg-surface border-gold-2 rounded-2xl">
                                     <div className="flex items-start justify-between gap-3 mb-3">
@@ -916,17 +919,20 @@ export default function ClientDashboard({
                                     {/* Negosiasi lanjutan yang sedang berjalan untuk acara ini.
                                         Ditampilkan agar klien tahu permintaannya sudah ditanggapi
                                         atau belum, dan dapat menerima jadwal pembahasan. */}
-                                    {neg && (
-                                        <div className="p-4 mt-4 border border-line rounded-xl bg-paper">
+                                    {negList.map((neg) => (
+                                        <div key={neg.id} className="p-4 mt-4 border border-line rounded-xl bg-paper">
                                             <div className="flex items-center justify-between gap-2 mb-2">
                                                 <p className="text-[11px] font-black tracking-wider uppercase text-muted">
                                                     Permintaan penyesuaian Anda
                                                 </p>
                                                 <span className={`px-2 py-0.5 text-[10px] font-black rounded-full ${
-                                                    neg.status === 'Diajukan'    ? 'bg-warn-bg text-warn'
-                                                  : neg.status === 'Dijadwalkan' ? 'bg-info-bg text-info'
-                                                  :                                'bg-ok-bg text-ok'}`}>
-                                                    {neg.status === 'Diajukan' ? 'Menunggu tanggapan tim' : neg.status}
+                                                    neg.status === 'Diajukan'        ? 'bg-warn-bg text-warn'
+                                                  : neg.status === 'Dijadwalkan'     ? 'bg-info-bg text-info'
+                                                  : neg.status === 'MenungguMeeting' ? 'bg-info-bg text-info'
+                                                  :                                    'bg-ok-bg text-ok'}`}>
+                                                    {neg.status === 'Diajukan' ? 'Menunggu tanggapan tim'
+                                                     : neg.status === 'MenungguMeeting' ? 'Menunggu pertemuan'
+                                                     : neg.status}
                                                 </span>
                                             </div>
 
@@ -1033,7 +1039,7 @@ export default function ClientDashboard({
                                                 </div>
                                             )}
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
                                 );
                             })}
@@ -1044,7 +1050,59 @@ export default function ClientDashboard({
                             <p className="text-lg font-bold text-muted">Belum ada penawaran</p>
                             <p className="mt-1 text-sm text-muted-2">Penawaran acara dari tim kami akan muncul di sini untuk Anda tinjau, terima, atau tolak.</p>
                         </div>
-                    ))}
+                    )}
+
+                    {/* Riwayat pembahasan yang sudah tuntas maupun ditutup. Satu
+                        penawaran dapat melewati beberapa putaran pembahasan, jadi
+                        klien perlu dapat menelusuri kembali apa yang pernah ia
+                        minta beserta jawaban dan hasil pertemuannya. */}
+                    {negosiasiRiwayat.length > 0 && (
+                        <div className="mt-8">
+                            <h3 className="mb-3 text-sm font-black tracking-wider uppercase text-muted">
+                                Riwayat Permintaan Penyesuaian
+                            </h3>
+                            <div className="space-y-3">
+                                {negosiasiRiwayat.map((n) => (
+                                    <div key={n.id} className="p-4 border border-line rounded-xl bg-paper">
+                                        <div className="flex items-center justify-between gap-2 mb-2">
+                                            <p className="text-[11px] text-muted">Diajukan {n.diajukan_pada}</p>
+                                            <span className={`px-2 py-0.5 text-[10px] font-black rounded-full ${
+                                                n.status === 'Selesai' ? 'bg-ok-bg text-ok' : 'bg-paper text-muted border border-line'}`}>
+                                                {n.status === 'Selesai' ? 'Selesai dibahas' : 'Ditutup'}
+                                            </span>
+                                        </div>
+
+                                        <p className="text-sm text-ink whitespace-pre-line">{n.pesan}</p>
+
+                                        {n.balasan && (
+                                            <div className="pt-3 mt-3 border-t border-line">
+                                                <p className="text-[11px] font-black tracking-wider uppercase text-muted mb-1">Tanggapan tim</p>
+                                                <p className="text-sm text-ink whitespace-pre-line">{n.balasan}</p>
+                                            </div>
+                                        )}
+
+                                        {n.meeting && (
+                                            <p className="mt-2 text-[11px] text-muted">
+                                                Pertemuan {n.meeting.tanggal} pukul {n.meeting.jam}
+                                            </p>
+                                        )}
+
+                                        {n.hasil_meeting && (
+                                            <div className="p-3 mt-3 border rounded-xl border-ok/30 bg-ok-bg">
+                                                <p className="text-[11px] font-black tracking-wider uppercase text-ok mb-1">Hasil pembahasan</p>
+                                                <p className="text-sm text-ink whitespace-pre-line">{n.hasil_meeting}</p>
+                                            </div>
+                                        )}
+
+                                        {n.selesai_pada && (
+                                            <p className="mt-2 text-[11px] text-muted-2">Selesai {n.selesai_pada}</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </>)}
 
                     {/* TAB: APPOINTMENTS */}
                     {activeTab === 'appointments' && (

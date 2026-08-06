@@ -140,38 +140,24 @@ class AppointmentController extends Controller
                 ->berjalan()
                 ->latest()
                 ->get()
-                ->map(function ($n) {
-                    // Jadwal yang DITAMPILKAN harus jadwal yang berlaku, bukan
-                    // tanggal usulan pertama. Setelah dijadwalkan ulang, membaca
-                    // tgl_request saja membuat panel ini terus menunjukkan
-                    // tanggal lama padahal pertemuannya sudah pindah.
-                    $berlaku = $n->appointment?->jadwalBerlaku();
-
-                    return [
-                        'id'            => $n->id,
-                        'id_event'      => $n->id_event,
-                        'pesan'         => $n->pesan,
-                        'status'        => $n->status,
-                        'balasan'       => $n->balasan,
-                        'diajukan_pada' => $n->created_at?->translatedFormat('d M Y H:i'),
-                        'meeting'       => $berlaku ? [
-                            'tanggal' => \Illuminate\Support\Carbon::parse($berlaku['tgl'])->translatedFormat('l, d F Y'),
-                            'jam'     => $berlaku['jam'],
-                            'status'  => $n->appointment->status,
-                        ] : null,
-                        // Catatan tim ketika usulan sebelumnya belum dapat dipenuhi.
-                        'catatan_tim'   => $n->appointment?->catatan_em,
-                        'hasil_meeting' => $n->appointment?->catatan_meeting,
-                        // Usulan klien yang belum ditinjau tim — supaya klien
-                        // tahu permintaannya sedang berjalan dan tidak
-                        // mengusulkan berulang kali.
-                        'usulan' => filled($n->appointment?->usulan_tgl) ? [
-                            'tanggal' => \Illuminate\Support\Carbon::parse($n->appointment->usulan_tgl)->translatedFormat('l, d F Y'),
-                            'jam'     => substr((string) $n->appointment->usulan_jam, 0, 5),
-                        ] : null,
-                    ];
-                })
+                ->map(fn ($n) => $this->barisNegosiasi($n))
                 ->values(),
+
+            // Pembahasan yang sudah tuntas maupun ditutup. Klien perlu dapat
+            // menelusuri kembali apa yang pernah ia minta beserta jawabannya,
+            // sebab satu penawaran bisa melewati beberapa putaran pembahasan.
+            'negosiasiRiwayat'  => \App\Models\EventNegosiasi::with('appointment')
+                ->where('client_id', $client->id)
+                ->whereIn('status', [
+                    \App\Models\EventNegosiasi::SELESAI,
+                    \App\Models\EventNegosiasi::DITUTUP,
+                ])
+                ->latest()
+                ->take(20)
+                ->get()
+                ->map(fn ($n) => $this->barisNegosiasi($n))
+                ->values(),
+
             'appointments'      => $appointments,
             'events'            => $events,
             'penawaran'         => $penawaran,
@@ -1001,6 +987,46 @@ class AppointmentController extends Controller
     }
 
     /** Ambil event penawaran milik client sendiri (Negotiation/Deal), atau 404. */
+    /**
+     * Bentuk satu baris negosiasi untuk sisi klien.
+     *
+     * Dipakai panel yang sedang berjalan maupun riwayatnya, supaya keduanya
+     * menampilkan hal yang sama persis dan tidak perlu disamakan dua kali.
+     */
+    private function barisNegosiasi(\App\Models\EventNegosiasi $n): array
+    {
+        // Jadwal yang DITAMPILKAN harus jadwal yang berlaku, bukan tanggal
+        // usulan pertama. Setelah dijadwalkan ulang, membaca tgl_request saja
+        // membuat panel ini terus menunjukkan tanggal lama padahal
+        // pertemuannya sudah pindah.
+        $berlaku = $n->appointment?->jadwalBerlaku();
+
+        return [
+            'id'            => $n->id,
+            'id_event'      => $n->id_event,
+            'pesan'         => $n->pesan,
+            'status'        => $n->status,
+            'balasan'       => $n->balasan,
+            'diajukan_pada' => $n->created_at?->translatedFormat('d M Y H:i'),
+            'selesai_pada'  => $n->status === \App\Models\EventNegosiasi::SELESAI
+                ? $n->ditangani_pada?->translatedFormat('d M Y H:i') : null,
+            'meeting'       => $berlaku ? [
+                'tanggal' => \Illuminate\Support\Carbon::parse($berlaku['tgl'])->translatedFormat('l, d F Y'),
+                'jam'     => $berlaku['jam'],
+                'status'  => $n->appointment->status,
+            ] : null,
+            // Catatan tim ketika usulan sebelumnya belum dapat dipenuhi.
+            'catatan_tim'   => $n->appointment?->catatan_em,
+            'hasil_meeting' => $n->appointment?->catatan_meeting,
+            // Usulan klien yang belum ditinjau tim, supaya klien tahu
+            // permintaannya sedang berjalan dan tidak mengusulkan berulang kali.
+            'usulan' => filled($n->appointment?->usulan_tgl) ? [
+                'tanggal' => \Illuminate\Support\Carbon::parse($n->appointment->usulan_tgl)->translatedFormat('l, d F Y'),
+                'jam'     => substr((string) $n->appointment->usulan_jam, 0, 5),
+            ] : null,
+        ];
+    }
+
     private function penawaranMilikClient($id_event, array $status)
     {
         $client = Auth::guard('client')->user();
@@ -1132,13 +1158,11 @@ class AppointmentController extends Controller
         $event = $this->penawaranMilikClient($id_event, [Event::STATUS_NEGOTIATION]);
         $mintaMeeting = $request->boolean('minta_meeting');
 
-        // Satu permintaan aktif per acara. Tanpa penjagaan ini klien bisa
-        // menumpuk permintaan yang sama dan antrean tim jadi penuh duplikat.
-        if (\App\Models\EventNegosiasi::where('id_event', $event->id_event)->berjalan()->exists()) {
-            return back()->with('error',
-                'Permintaan penyesuaian Anda sebelumnya masih ditangani tim. Mohon tunggu tanggapannya.');
-        }
-
+        // Permintaan boleh lebih dari satu sekaligus. Klien yang teringat hal
+        // lain sebelum permintaan pertamanya tuntas tidak perlu menunggu, dan
+        // masing-masing tercatat sebagai baris tersendiri sehingga keduanya
+        // terlihat tim maupun klien beserta riwayatnya. Sebelumnya permintaan
+        // kedua ditolak, sehingga hal yang ingin disampaikan justru hilang.
         $jejak = '💬 Klien minta penyesuaian penawaran (' . now()->translatedFormat('d M Y H:i') . '): ' . trim($data['pesan'])
             . ($mintaMeeting ? ' [minta dijadwalkan meeting ulang]' : '');
 
@@ -1223,7 +1247,10 @@ class AppointmentController extends Controller
                 'jam_konfirmasi' => $apt->jam_request,
             ]);
 
-            $negosiasi->update(['status' => \App\Models\EventNegosiasi::SELESAI]);
+            // Yang disepakati baru waktunya, pembahasannya belum terjadi.
+            // Negosiasi baru dinyatakan selesai setelah tim mencatat hasil
+            // pertemuannya, dan barulah penawaran revisi boleh diajukan.
+            $negosiasi->update(['status' => \App\Models\EventNegosiasi::MENUNGGU_MEETING]);
 
             $jejak = 'Klien menerima jadwal pembahasan penawaran.';
             $negosiasi->event?->catatJejak($jejak);

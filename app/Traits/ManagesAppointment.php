@@ -150,7 +150,7 @@ trait ManagesAppointment
         if (! $reschedule) {
             \App\Models\EventNegosiasi::where('id_appointment', $appointment->id)
                 ->where('status', \App\Models\EventNegosiasi::DIJADWALKAN)
-                ->update(['status' => \App\Models\EventNegosiasi::SELESAI]);
+                ->update(['status' => \App\Models\EventNegosiasi::MENUNGGU_MEETING]);
         }
 
         $appointment->load('client');
