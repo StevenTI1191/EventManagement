@@ -586,15 +586,6 @@ export default function EventDetail({
                                 : 'Status tidak diubah dari sini — perpindahan tahap lewat papan Pipeline.'}
                         </p>
                     </div>
-                    {statusManual.length > 0 && (
-                        <div className="min-w-[190px]">
-                            <label className="block mb-1 text-xs font-bold tracking-wider text-gray-400 uppercase">Status Event</label>
-                            <select className={inputCls} value={data.status_event}
-                                onChange={(e) => setData('status_event', e.target.value)}>
-                                {statusManual.map((s) => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                        </div>
-                    )}
                 </div>
 
                 {Object.keys(errors).length > 0 && (
@@ -610,6 +601,21 @@ export default function EventDetail({
                         <input type="text" className={inputCls} value={data.nama_event}
                             onChange={(e) => setData('nama_event', e.target.value)} />
                     </Field>
+
+                    {/* Status Event berada di dalam formulir, sejajar dengan isian
+                        lain, mengikuti tata letak yang sudah dipakai formulir
+                        Tambah dan Ubah Event. Sebelumnya ia berdiri sendiri di
+                        pojok kanan atas sehingga dua formulir yang mengubah hal
+                        yang sama terlihat berbeda. */}
+                    {statusManual.length > 0 && (
+                        <Field label="Status Event" error={errors.status_event}
+                            hint="Acara sudah berjalan, statusnya dapat ditutup langsung dari sini.">
+                            <select className={inputCls} value={data.status_event}
+                                onChange={(e) => setData('status_event', e.target.value)}>
+                                {statusManual.map((s) => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </Field>
+                    )}
 
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <Field label="Kategori" error={errors.kategori_event}>
@@ -760,22 +766,30 @@ export default function EventDetail({
                     </Field>
 
                     {/* Jejak sistem: hanya untuk tim, dan tidak dapat disunting supaya
-                        riwayatnya tetap dapat dipercaya. Tidak pernah masuk PDF klien. */}
-                    {event.jejak_event && (
-                        <div>
-                            <p className="mb-2 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                                Riwayat Sistem
-                            </p>
-                            <div className="p-4 space-y-1.5 overflow-y-auto border border-gray-200 rounded-2xl bg-gray-50 max-h-56">
-                                {event.jejak_event.split('\n').filter(Boolean).reverse().map((baris, i) => (
+                        riwayatnya tetap dapat dipercaya. Tidak pernah masuk PDF klien.
+                        Panelnya selalu tampil, termasuk ketika masih kosong. Dulu ia
+                        disembunyikan saat kosong, sehingga acara yang belum punya
+                        peristiwa apa pun tampak seolah tidak memiliki riwayat sama
+                        sekali dan berbeda sendiri dari acara lain. */}
+                    <div>
+                        <p className="mb-2 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                            Riwayat Sistem
+                        </p>
+                        <div className="p-4 space-y-1.5 overflow-y-auto border border-gray-200 rounded-2xl bg-gray-50 max-h-56">
+                            {event.jejak_event
+                                ? event.jejak_event.split('\n').filter(Boolean).reverse().map((baris, i) => (
                                     <p key={i} className="font-mono text-xs leading-relaxed text-gray-600">{baris}</p>
-                                ))}
-                            </div>
-                            <p className="mt-1.5 text-xs text-gray-400">
-                                Dicatat otomatis, terbaru di atas. Hanya terlihat oleh tim.
-                            </p>
+                                ))
+                                : (
+                                    <p className="text-xs text-gray-400">
+                                        Belum ada peristiwa yang tercatat untuk acara ini.
+                                    </p>
+                                )}
                         </div>
-                    )}
+                        <p className="mt-1.5 text-xs text-gray-400">
+                            Dicatat otomatis, terbaru di atas. Hanya terlihat oleh tim.
+                        </p>
+                    </div>
 
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <Field label="Poster" hint="Kosongkan bila tidak ingin mengganti poster." error={errors.poster_event}>
