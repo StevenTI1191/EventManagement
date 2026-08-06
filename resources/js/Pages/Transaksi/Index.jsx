@@ -211,7 +211,11 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                             </div>
                             <div>
                                 <label className="block mb-1 text-xs font-bold text-gray-600">Keterangan</label>
-                                <input type="text" placeholder="DP / Cicilan 1 / Pelunasan"
+                                {/* Contohnya tidak lagi menyebut cicilan: aturan pembayaran
+                                    menyatakan tiap tagihan dibayar penuh dalam satu kali
+                                    transfer, dan aturan itu dipampang pada halaman depan
+                                    klien maupun dialog persetujuan ketentuan. */}
+                                <input type="text" placeholder="DP / Pelunasan"
                                     className="w-full p-3 text-sm border border-gray-200 rounded-xl bg-gray-50"
                                     value={formBayar.data.keterangan} onChange={e => formBayar.setData('keterangan', e.target.value)} />
                             </div>
