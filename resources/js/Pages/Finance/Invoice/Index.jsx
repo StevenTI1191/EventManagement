@@ -14,10 +14,25 @@ const hariKeAcara = (d) => {
 };
 
 // Label status yang lebih bermakna untuk Finance.
-const labelStatus = (s) => (s === 'Upcoming' ? 'Menunggu Pelunasan' : s);
-const kelasStatus = (s) => {
+//
+// Status Upcoming saja tidak cukup untuk menyimpulkan masih ada yang ditagih:
+// acara tetap berstatus Upcoming sejak uang muka lunas sampai hari-H tiba,
+// termasuk setelah pelunasannya juga masuk. Tanpa memperhitungkan keadaan
+// tagihannya, acara yang sudah lunas seluruhnya tetap berlabel "Menunggu
+// Pelunasan" padahal tidak ada lagi yang perlu ditagih.
+const labelStatus = (s, adaBelumLunas) => {
+    if (s !== 'Upcoming') return s;
+
+    return adaBelumLunas ? 'Menunggu Pelunasan' : 'Lunas, Menunggu Hari-H';
+};
+
+const kelasStatus = (s, adaBelumLunas) => {
     if (s === 'Deal') return 'bg-emerald-100 text-emerald-700';
-    if (s === 'Upcoming') return 'bg-orange-100 text-orange-700';
+    if (s === 'Upcoming') {
+        return adaBelumLunas
+            ? 'bg-orange-100 text-orange-700'
+            : 'bg-emerald-100 text-emerald-700';
+    }
     return 'bg-blue-100 text-blue-700';
 };
 
@@ -112,8 +127,8 @@ export default function FinanceInvoiceIndex({ events = [] }) {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <h2 className="font-extrabold text-gray-900">{ev.nama_event}</h2>
-                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${kelasStatus(ev.status_event)}`}>
-                                            {labelStatus(ev.status_event)}
+                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${kelasStatus(ev.status_event, adaBelumLunas)}`}>
+                                            {labelStatus(ev.status_event, adaBelumLunas)}
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap gap-4 mt-1.5 text-xs text-gray-500">

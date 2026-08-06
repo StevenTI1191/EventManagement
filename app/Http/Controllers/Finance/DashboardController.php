@@ -89,7 +89,11 @@ class DashboardController extends Controller
                     'client'      => $e->client?->nama_client ?? '-',
                     'deal'        => $e->deal_harga_event,
                     'dibayar'     => $dibayar,
-                    'sisa'        => $e->deal_harga_event - $dibayar,
+                    // Dibatasi nol, sama seperti perhitungan kartu Piutang di
+                    // atas. Tanpa pembatas ini acara yang pembayarannya melampaui
+                    // nilai deal menampilkan piutang bernilai minus, dan dua
+                    // angka pada satu layar yang sama jadi saling bertentangan.
+                    'sisa'        => max((float) $e->deal_harga_event - $dibayar, 0),
                     'status'      => Event::labelPembayaran((float) $e->deal_harga_event, (float) $dibayar),
                 ];
             });
