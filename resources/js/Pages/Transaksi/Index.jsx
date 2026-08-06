@@ -44,6 +44,8 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
     });
 
     const tipeAktif = filterData.tipe || 'Eksternal';
+    /** Acara milik perusahaan sendiri: tidak ada tagihan, jadi istilahnya berbeda. */
+    const internal  = tipeAktif === 'Internal';
 
     // Ganti tab internal/eksternal — reset filter lain agar tidak membingungkan.
     const gantiTipe = (tipe) => {
@@ -474,13 +476,15 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
 
                     {/* Status */}
                     <div className="flex flex-col gap-1">
-                        <label className="text-xs font-bold text-gray-500">Status Pembayaran</label>
+                        <label className="text-xs font-bold text-gray-500">
+                            {internal ? 'Capaian Target' : 'Status Pembayaran'}
+                        </label>
                         <select value={filterData.status}
                             onChange={e => applyFilter({ ...filterData, status: e.target.value })}
                             className="pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:border-[#FF2D55] focus:outline-none min-w-[130px]">
                             <option value="">Semua Status</option>
-                            <option value="Lunas">✅ Lunas</option>
-                            <option value="Belum Lunas">⏳ Belum Lunas</option>
+                            <option value="Lunas">{internal ? '✅ Target tercapai' : '✅ Lunas'}</option>
+                            <option value="Belum Lunas">{internal ? '⏳ Belum tercapai' : '⏳ Belum Lunas'}</option>
                         </select>
                     </div>
 
@@ -490,8 +494,8 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                         <div className="flex gap-1">
                             {[
                                 { key: 'tanggal', label: 'Tanggal' },
-                                { key: 'deal',    label: 'Deal' },
-                                { key: 'nominal', label: 'Terbayar' },
+                                { key: 'deal',    label: internal ? 'Target Omset' : 'Deal' },
+                                { key: 'nominal', label: internal ? 'Pendapatan' : 'Terbayar' },
                             ].map(s => (
                                 <button key={s.key} onClick={() => toggleSort(s.key)}
                                     className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all ${
@@ -550,11 +554,26 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Event</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Client</th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Pax</th>
-                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Deal</th>
-                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Terbayar</th>
-                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Belum Terbayar</th>
-                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Laba Bersih</th>
-                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Status</th>
+                            {/* Acara internal tidak menagih siapa pun, jadi istilah
+                                penagihan tidak berlaku baginya. Nilai deal berperan
+                                sebagai target omset, dan uang yang masuk adalah
+                                pendapatan, bukan pelunasan tagihan. Karena tidak ada
+                                yang ditagih, kolom kekurangan bayar pun ditiadakan. */}
+                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">
+                                {internal ? 'Target Omset' : 'Deal'}
+                            </th>
+                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">
+                                {internal ? 'Pendapatan' : 'Terbayar'}
+                            </th>
+                            {! internal && (
+                                <>
+                                    <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Belum Terbayar</th>
+                                    <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Laba Bersih</th>
+                                </>
+                            )}
+                            <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">
+                                {internal ? 'Capaian' : 'Status'}
+                            </th>
                             <th className="px-6 py-3 text-xs font-bold tracking-wider text-left text-white uppercase">Aksi</th>
                         </tr>
                     </thead>
@@ -596,18 +615,49 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                             );
                                         })()}
                                     </td>
-                                    <td className="px-6 py-4 text-sm font-semibold text-red-500">{formatRupiah(event.sisa)}</td>
+                                    {! internal && (
+                                        <>
+                                            <td className="px-6 py-4 text-sm font-semibold text-red-500">{formatRupiah(event.sisa)}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`text-sm font-extrabold ${event.laba_bersih >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                                    {formatRupiah(event.laba_bersih)}
+                                                </span>
+                                            </td>
+                                        </>
+                                    )}
                                     <td className="px-6 py-4">
-                                        <span className={`text-sm font-extrabold ${event.laba_bersih >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                            {formatRupiah(event.laba_bersih)}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 inline-block whitespace-nowrap text-[10px] font-black uppercase rounded-full ${
-                                            event.status === 'Lunas' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-[#FF2D55]'
-                                        }`}>
-                                            {event.status}
-                                        </span>
+                                        {/* Acara internal tidak menagih siapa pun, jadi lunas
+                                            atau belum lunas tidak berlaku baginya. Yang
+                                            bermakna adalah pendapatannya sudah menyentuh
+                                            target omset atau belum. */}
+                                        {internal ? (() => {
+                                            const target = Number(event.deal) || 0;
+                                            const dapat  = Number(event.total_dibayar) || 0;
+
+                                            if (target <= 0) {
+                                                return (
+                                                    <span className="px-3 py-1 inline-block whitespace-nowrap text-[10px] font-black uppercase rounded-full bg-gray-100 text-gray-500">
+                                                        Tanpa target
+                                                    </span>
+                                                );
+                                            }
+
+                                            const tercapai = dapat >= target;
+
+                                            return (
+                                                <span className={`px-3 py-1 inline-block whitespace-nowrap text-[10px] font-black uppercase rounded-full ${
+                                                    tercapai ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
+                                                }`}>
+                                                    {tercapai ? 'Target tercapai' : 'Belum tercapai'}
+                                                </span>
+                                            );
+                                        })() : (
+                                            <span className={`px-3 py-1 inline-block whitespace-nowrap text-[10px] font-black uppercase rounded-full ${
+                                                event.status === 'Lunas' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-[#FF2D55]'
+                                            }`}>
+                                                {event.status}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">
                                         <button onClick={() => toggleExpand(event.id_event)}
@@ -619,7 +669,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
 
                                 {expandedEvent === event.id_event && (
                                     <tr>
-                                        <td colSpan={10} className="px-6 py-5 bg-gray-50/80">
+                                        <td colSpan={internal ? 8 : 10} className="px-6 py-5 bg-gray-50/80">
                                             <div className="flex gap-2 p-1 mb-5 bg-gray-200 rounded-2xl w-fit">
                                                 <button onClick={() => setExpandedTab('pembayaran')}
                                                     className={`px-5 py-1.5 rounded-xl text-xs font-bold transition-all ${expandedTab === 'pembayaran' ? 'bg-white text-[#FF2D55] shadow-sm' : 'text-gray-500'}`}>
@@ -688,19 +738,21 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                     ) : (
                                                         <p className="mb-4 text-sm text-gray-400">Belum ada pembayaran.</p>
                                                     )}
-                                                    <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200">
+                                                    <div className={`grid gap-3 pt-3 border-t border-gray-200 ${internal ? 'grid-cols-2' : 'grid-cols-3'}`}>
                                                         <div className="p-3 bg-white border border-gray-100 rounded-xl">
-                                                            <p className="text-xs text-gray-400">Total Deal</p>
+                                                            <p className="text-xs text-gray-400">{internal ? 'Target Omset' : 'Total Deal'}</p>
                                                             <p className="text-sm font-extrabold text-gray-800">{formatRupiah(event.deal)}</p>
                                                         </div>
                                                         <div className="p-3 bg-green-50 rounded-xl">
-                                                            <p className="text-xs text-green-500">Total Terbayar</p>
+                                                            <p className="text-xs text-green-500">{internal ? 'Pendapatan' : 'Total Terbayar'}</p>
                                                             <p className="text-sm font-extrabold text-green-600">{formatRupiah(event.total_dibayar)}</p>
                                                         </div>
-                                                        <div className="p-3 bg-red-50 rounded-xl">
-                                                            <p className="text-xs text-red-400">Belum Terbayar</p>
-                                                            <p className="text-sm font-extrabold text-red-500">{formatRupiah(event.sisa)}</p>
-                                                        </div>
+                                                        {! internal && (
+                                                            <div className="p-3 bg-red-50 rounded-xl">
+                                                                <p className="text-xs text-red-400">Belum Terbayar</p>
+                                                                <p className="text-sm font-extrabold text-red-500">{formatRupiah(event.sisa)}</p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -764,25 +816,27 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                     ) : (
                                                         <p className="mb-4 text-sm text-gray-400">Belum ada item pengeluaran/pemasukan.</p>
                                                     )}
-                                                    <div className="grid grid-cols-4 gap-3 pt-3 border-t border-gray-200">
+                                                    <div className={`grid gap-3 pt-3 border-t border-gray-200 ${internal ? 'grid-cols-3' : 'grid-cols-4'}`}>
                                                         <div className="p-3 bg-white border border-gray-100 rounded-xl">
-                                                            <p className="text-xs text-gray-400">Total Deal</p>
+                                                            <p className="text-xs text-gray-400">{internal ? 'Target Omset' : 'Total Deal'}</p>
                                                             <p className="text-sm font-extrabold text-gray-800">{formatRupiah(event.deal)}</p>
                                                         </div>
                                                         <div className="p-3 bg-green-50 rounded-xl">
-                                                            <p className="text-xs text-green-500">Total Terbayar</p>
+                                                            <p className="text-xs text-green-500">{internal ? 'Pendapatan' : 'Total Terbayar'}</p>
                                                             <p className="text-sm font-extrabold text-green-600">{formatRupiah(event.total_dibayar)}</p>
                                                         </div>
                                                         <div className="p-3 bg-red-50 rounded-xl">
                                                             <p className="text-xs text-red-400">Total Pengeluaran</p>
                                                             <p className="text-sm font-extrabold text-red-500">{formatRupiah(event.total_pengeluaran)}</p>
                                                         </div>
-                                                        <div className={`p-3 rounded-xl ${event.laba_bersih >= 0 ? 'bg-blue-50' : 'bg-orange-50'}`}>
-                                                            <p className={`text-xs ${event.laba_bersih >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>Laba Bersih</p>
-                                                            <p className={`text-sm font-extrabold ${event.laba_bersih >= 0 ? 'text-blue-600' : 'text-orange-500'}`}>
-                                                                {formatRupiah(event.laba_bersih)}
-                                                            </p>
-                                                        </div>
+                                                        {! internal && (
+                                                            <div className={`p-3 rounded-xl ${event.laba_bersih >= 0 ? 'bg-blue-50' : 'bg-orange-50'}`}>
+                                                                <p className={`text-xs ${event.laba_bersih >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>Laba Bersih</p>
+                                                                <p className={`text-sm font-extrabold ${event.laba_bersih >= 0 ? 'text-blue-600' : 'text-orange-500'}`}>
+                                                                    {formatRupiah(event.laba_bersih)}
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -792,7 +846,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                             </Fragment>
                         )) : (
                             <tr>
-                                <td colSpan={10} className="px-6 py-16 text-center text-gray-400">
+                                <td colSpan={internal ? 8 : 10} className="px-6 py-16 text-center text-gray-400">
                                     <p className="font-bold">Belum ada data event.</p>
                                 </td>
                             </tr>
