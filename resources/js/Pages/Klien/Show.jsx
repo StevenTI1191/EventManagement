@@ -4,7 +4,7 @@
  */
 import { Head, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
-import { ChevronLeft, Search, Download, X, MessageCircle, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Search, X, MessageCircle, Plus, Trash2 } from 'lucide-react';
 import { POSTER_PLACEHOLDER } from '@/constants/kategori';
 import StatusEventBadge from '@/Components/StatusEventBadge';
 
@@ -61,26 +61,6 @@ export default function EMClientShow({ Layout, routes = {}, canEdit = true,  cli
     const formatRupiah = (angka) => {
         if (!angka) return '-';
         return Number(angka).toLocaleString('id-ID');
-    };
-
-    const KontrakButton = ({ file }) => {
-        if (file) {
-            return (
-                <a
-                    href={`/kontrak/${file}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center w-8 h-8 transition-colors bg-orange-400 rounded-lg hover:bg-orange-500"
-                >
-                    <Download size={14} className="text-white" />
-                </a>
-            );
-        }
-        return (
-            <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg">
-                <Download size={14} className="text-gray-300" />
-            </div>
-        );
     };
 
     return (
@@ -346,8 +326,12 @@ export default function EMClientShow({ Layout, routes = {}, canEdit = true,  cli
                                 <td className="px-6 py-4 text-sm text-gray-800">{event.jumlah_pax ?? '-'}</td>
                                 <td className="px-6 py-4 text-sm font-semibold text-gray-800">{formatRupiah(event.deal_harga_event)}</td>
                                 <td className="px-6 py-4">
+                                    {/* Unduh kontrak dihapus dari kolom ini. Dokumen
+                                        yang mengikat kini berupa penawaran, invoice,
+                                        dan kwitansi yang terbit sendiri dari alur
+                                        pembayaran, bukan berkas kontrak yang
+                                        diunggah manual. */}
                                     <div className="flex items-center gap-2">
-                                        <KontrakButton file={event.kontrak_file} />
                                         <button
                                             onClick={() => setSelectedEvent(event)}
                                             className="flex items-center justify-center w-8 h-8 border-2 border-[#FF2D55] rounded-lg hover:bg-pink-50 transition-colors"
