@@ -63,6 +63,11 @@ const CustomPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, n
     );
 };
 
+/** "2026-09-14" jadi "14 Sep 2026". Tanggal mentah tidak layak tampil ke pengguna. */
+const tanggalRingkas = (t) => (t
+    ? new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '-');
+
 export default function Dashboard({ auth, stats, recentEvents, salesChart, kategoriChart, clientTrend, topPic, omsetPic = [] }) {
 
     return (
@@ -276,7 +281,7 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-gray-800 truncate">{event.nama_event}</p>
                                     <p className="text-xs text-gray-400">
-                                        {event.client?.nama_client || '-'} · {event.tgl_mulai_event || '-'}
+                                        {event.client?.nama_client || '-'} · {tanggalRingkas(event.tgl_mulai_event)}
                                     </p>
                                 </div>
                                 <span className={`px-2.5 py-1 text-[10px] font-black uppercase rounded-full flex-shrink-0 ${

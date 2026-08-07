@@ -30,6 +30,16 @@ function Galat({ pesan = [], className = '' }) {
     );
 }
 
+/** "2026-07-19T11:00" jadi "19 Jul 2026, 11:00". */
+const tglJam = (v) => {
+    if (! v) return '-';
+    const [t, j = ''] = String(v).split('T');
+    const d = new Date(t);
+    if (Number.isNaN(d.getTime())) return String(v);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        + (j ? `, ${j.slice(0, 5)}` : '');
+};
+
 /** Kolom milik formulir unggah bukti — galatnya sudah tampil inline di sana. */
 const FIELD_UNGGAH = ['id_event', 'id_invoice', 'file_bukti', 'nominal', 'keterangan'];
 
@@ -1571,13 +1581,13 @@ export default function ClientDashboard({
                                                             {event.technical_meeting && (
                                                                 <div className="flex items-start gap-2 p-3 bg-paper rounded-xl">
                                                                     <Calendar size={14} className="text-gold mt-0.5 shrink-0" />
-                                                                    <div className="min-w-0"><p className="text-[10px] font-black text-gold-dim">Technical Meeting</p><p className="text-xs text-muted">{event.technical_meeting}</p></div>
+                                                                    <div className="min-w-0"><p className="text-[10px] font-black text-gold-dim">Technical Meeting</p><p className="text-xs text-muted">{tglJam(event.technical_meeting)}</p></div>
                                                                 </div>
                                                             )}
                                                             {event.gladi_resik && (
                                                                 <div className="flex items-start gap-2 p-3 bg-paper rounded-xl">
                                                                     <Calendar size={14} className="text-gold mt-0.5 shrink-0" />
-                                                                    <div className="min-w-0"><p className="text-[10px] font-black text-gold-dim">Gladi Resik</p><p className="text-xs text-muted">{event.gladi_resik}</p></div>
+                                                                    <div className="min-w-0"><p className="text-[10px] font-black text-gold-dim">Gladi Resik</p><p className="text-xs text-muted">{tglJam(event.gladi_resik)}</p></div>
                                                                 </div>
                                                             )}
                                                         </div>

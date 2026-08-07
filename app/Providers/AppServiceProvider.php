@@ -21,5 +21,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        // Keterangan selisih waktu ditulis dalam Bahasa Indonesia. Tanpa ini
+        // diffForHumans() menghasilkan "15 minutes" di tengah halaman yang
+        // seluruhnya berbahasa Indonesia, misalnya pada antrean Persetujuan
+        // Penawaran dan Negosiasi Klien.
+        \Carbon\Carbon::setLocale('id');
     }
 }

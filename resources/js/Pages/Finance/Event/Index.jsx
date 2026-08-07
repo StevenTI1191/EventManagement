@@ -7,6 +7,21 @@ import { Search, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 
+/**
+ * "2026-07-19T11:00" jadi "19 Jul 2026, 11:00".
+ *
+ * Nilai mentah dari basis data tidak layak tampil ke pengguna, apalagi pada
+ * dialog yang bersebelahan dengan tanggal yang sudah rapi.
+ */
+const tglJam = (v) => {
+    if (! v) return '-';
+    const [t, j = ''] = String(v).split('T');
+    const d = new Date(t);
+    if (Number.isNaN(d.getTime())) return String(v);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        + (j ? `, ${j.slice(0, 5)}` : '');
+};
+
 const rentangTgl = (a, b) => {
     if (!a) return '-';
     const f = (t) => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -101,8 +116,8 @@ export default function FinanceEventIndex({ auth, events, filters, clients, pega
                                     { label: 'Harga per Pax', value: formatRupiah(selectedEvent.harga_per_pax) },
                                     { label: 'Area Event', value: selectedEvent.area_event || '-' },
                                     { label: 'Deal Harga', value: formatRupiah(selectedEvent.deal_harga_event) },
-                                    { label: 'Technical Meeting', value: selectedEvent.technical_meeting || '-' },
-                                    { label: 'Gladi Resik', value: selectedEvent.gladi_resik || '-' },
+                                    { label: 'Technical Meeting', value: tglJam(selectedEvent.technical_meeting) },
+                                    { label: 'Gladi Resik', value: tglJam(selectedEvent.gladi_resik) },
                                 ].map((item, i) => (
                                     <div key={i} className="p-4 bg-gray-50 rounded-2xl">
                                         <p className="mb-1 text-xs font-bold text-gray-400">{item.label}</p>
