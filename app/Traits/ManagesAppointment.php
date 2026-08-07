@@ -148,8 +148,15 @@ trait ManagesAppointment
         // benar-benar disepakati, dari jalur mana pun kesepakatan itu datang —
         // bukan hanya ketika klien menekan "Terima Jadwal Ini".
         if (! $reschedule) {
+            // UsulanKlien ikut: klien menawar hari lain, lalu tim menyetujuinya
+            // dari halaman Appointment alih-alih lewat terimaUsulan(). Tanpa
+            // status itu, negosiasinya tertinggal di antrean "usulan klien"
+            // selamanya padahal jadwalnya sudah disepakati.
             \App\Models\EventNegosiasi::where('id_appointment', $appointment->id)
-                ->where('status', \App\Models\EventNegosiasi::DIJADWALKAN)
+                ->whereIn('status', [
+                    \App\Models\EventNegosiasi::DIJADWALKAN,
+                    \App\Models\EventNegosiasi::USULAN_KLIEN,
+                ])
                 ->update(['status' => \App\Models\EventNegosiasi::MENUNGGU_MEETING]);
         }
 

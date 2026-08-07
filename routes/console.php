@@ -42,21 +42,37 @@ Schedule::call(function () {
 /*
 |--------------------------------------------------------------------------
 | Auto-batal Appointment — jalan setiap hari jam 01:00
-| Appointment yang sudah dikonfirmasi/di-reschedule tetapi jadwal meeting-nya
-| sudah lewat lebih dari 2 hari dan belum ditandai "Selesai" oleh Event
-| Marketing, dianggap tidak terjadi dan otomatis dibatalkan.
+| Pertemuan yang jadwalnya sudah lewat lebih dari 2 hari dan belum ditandai
+| Selesai dianggap tidak terjadi, lalu dibatalkan supaya slotnya terlepas.
+|
+| Dulu penyapu ini hanya menyasar status Dikonfirmasi & Reschedule dan
+| mensyaratkan tgl_konfirmasi terisi. Akibatnya permintaan klien yang TIDAK
+| PERNAH dikonfirmasi tim tidak pernah kedaluwarsa: statusnya tetap Pending,
+| dan karena Pending termasuk STATUS_AKTIF ia terus memegang slot_key sehingga
+| jam itu tidak dapat dipakai siapa pun selamanya, sekaligus mengendap di
+| daftar kerja Event Marketing. Kini ketiga status aktif ikut disapu, dan
+| acuannya jadwal yang BERLAKU — bukan kolom konfirmasi saja.
 |--------------------------------------------------------------------------
 */
 Schedule::call(function () {
-    $batas = now()->subDays(2)->toDateString();
+    // COALESCE pada jamnya: appointment tanpa jam baru dianggap lewat pada
+    // akhir hari, bukan langsung pada pukul 00:00.
+    $sqlWaktu = 'TIMESTAMP(' . \App\Models\Appointment::SQL_TGL_BERLAKU
+        . ", COALESCE(" . \App\Models\Appointment::SQL_JAM_BERLAKU . ", '23:59:59'))";
 
-    $terlewat = \App\Models\Appointment::whereIn('status', ['Dikonfirmasi', 'Reschedule'])
-        ->whereNotNull('tgl_konfirmasi')
-        ->whereDate('tgl_konfirmasi', '<', $batas)
+    $terlewat = \App\Models\Appointment::whereIn('status', \App\Models\Appointment::STATUS_AKTIF)
+        ->whereRaw("{$sqlWaktu} < ?", [now()->subDays(2)->format('Y-m-d H:i:s')])
+        // Pertemuan pembahasan penawaran dikemudikan alur negosiasinya sendiri:
+        // membatalkannya diam-diam akan memutus alur itu di tengah jalan, dan
+        // pembahasan yang hasilnya belum dicatat justru sedang ditunggu
+        // (lihat penjadwal negosiasi-catat-hasil di bawah).
+        ->whereDoesntHave('negosiasi', fn ($n) => $n->berjalan())
         ->get();
 
     foreach ($terlewat as $appointment) {
-        $catatan = 'Dibatalkan otomatis: lewat 2 hari dari jadwal meeting dan belum ditandai selesai.';
+        $catatan = $appointment->status === 'Pending'
+            ? 'Dibatalkan otomatis: lewat 2 hari dari tanggal yang diminta dan belum dikonfirmasi.'
+            : 'Dibatalkan otomatis: lewat 2 hari dari jadwal meeting dan belum ditandai selesai.';
 
         $appointment->update([
             'status'     => 'Dibatalkan',
@@ -65,7 +81,7 @@ Schedule::call(function () {
                 : $catatan,
         ]);
 
-        \Log::info("Appointment #{$appointment->id} dibatalkan otomatis (lewat 2 hari dari jadwal meeting).");
+        \Log::info("Appointment #{$appointment->id} dibatalkan otomatis (status {$appointment->getOriginal('status')}, jadwalnya sudah lewat 2 hari).");
     }
 })->dailyAt('01:00')->name('appointment-auto-batal')->withoutOverlapping();
 
@@ -579,3 +595,74 @@ Schedule::call(function () {
         }
     }
 })->dailyAt('07:45')->name('agenda-reminder')->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Reminder Hasil Pembahasan Penawaran — jalan setiap hari jam 08:45
+| Pembahasan yang jadwalnya sudah lewat tetapi hasilnya belum dicatat Event
+| Marketing. Selama menggantung, negosiasinya MENAHAN penawaran yang terpampang
+| di portal klien (lihat Event::menungguRevisi()), jadi klien tidak dapat
+| menerima maupun menolaknya — pekerjaan satu menit yang bila terlupakan
+| menghentikan alur di sisi klien tanpa satu pun pemberitahuan.
+| Dikirim saat pertama lewat, lalu diulang tiap 3 hari selama masih menggantung.
+|--------------------------------------------------------------------------
+*/
+Schedule::call(function () {
+    $tertunda = \App\Models\EventNegosiasi::with(['event.pic', 'client', 'appointment'])
+        ->menungguPencatatan()
+        ->get();
+
+    foreach ($tertunda as $negosiasi) {
+        $jadwal = $negosiasi->appointment?->jadwalBerlaku();
+        if (! $jadwal) {
+            continue;
+        }
+
+        $waktu = \Illuminate\Support\Carbon::parse($jadwal['tgl'] . ' ' . $jadwal['jam']);
+        $hari  = (int) $waktu->copy()->startOfDay()->diffInDays(now()->startOfDay());
+
+        // Hari pertama, lalu tiap 3 hari — cukup untuk mengingatkan tanpa
+        // berubah menjadi surel harian yang justru diabaikan.
+        if ($hari !== 0 && $hari % 3 !== 0) {
+            continue;
+        }
+
+        $event = $negosiasi->event;
+        $email = $event?->pic?->email_pegawai;
+        if (! $email) {
+            \Log::warning("Hasil pembahasan tertunda tanpa email PIC: negosiasi #{$negosiasi->id}.");
+            continue;
+        }
+
+        $klien = $negosiasi->client?->perusahaan_client ?: $negosiasi->client?->nama_client;
+
+        try {
+            Mail::to($email)->send(new \App\Mail\PesanSistem(
+                judul:    'Hasil Pembahasan Belum Dicatat',
+                subjudul: $event->nama_event,
+                ikon:     '📝',
+                nada:     $hari >= 3 ? 'merah' : 'jingga',
+                paragraf: [
+                    "Pembahasan penawaran acara \"{$event->nama_event}\" dijadwalkan pada "
+                    . $waktu->translatedFormat('l, d F Y') . ' pukul ' . $jadwal['jam']
+                    . ', tetapi hasilnya belum dicatat.',
+                    'Selama hasilnya belum dicatat, penawaran yang terpampang di portal klien '
+                    . 'tetap tertahan — klien tidak dapat menerima maupun menolaknya, dan '
+                    . 'penawaran revisi belum dapat diajukan.',
+                ],
+                sorotan:  $hari === 0 ? 'Pertemuannya sudah berlalu' : 'Sudah ' . $hari . ' hari berlalu',
+                detail:   array_filter([
+                    'Acara'    => $event->nama_event,
+                    'Klien'    => $klien,
+                    'Jadwal'   => $waktu->translatedFormat('d F Y H:i'),
+                ]),
+                penutup:  'Catat hasilnya dari menu Negosiasi Klien. Bila pembahasannya batal '
+                    . 'atau tidak dilanjutkan, tutup saja pembahasannya agar penawaran klien terlepas.',
+                subjek:   'Hasil pembahasan belum dicatat — ' . $event->nama_event,
+            ));
+            \Log::info("Reminder hasil pembahasan: negosiasi #{$negosiasi->id} ({$hari} hari).");
+        } catch (\Exception $e) {
+            \Log::warning('Email hasil pembahasan gagal: ' . $e->getMessage());
+        }
+    }
+})->dailyAt('08:45')->name('negosiasi-catat-hasil')->withoutOverlapping();

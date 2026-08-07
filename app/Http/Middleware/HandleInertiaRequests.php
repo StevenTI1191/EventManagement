@@ -56,9 +56,14 @@ class HandleInertiaRequests extends Middleware
         // ditanggapi, ditambah jadwal pembahasan yang ditawar balik klien —
         // keduanya sama-sama menggantung sampai tim memutuskan.
         if ($posisi === 'eventmarketing') {
-            // menungguTim() sudah mencakup keduanya: permintaan baru dan
-            // jadwal yang ditawar balik klien.
-            $badges['negosiasiMenunggu'] = \App\Models\EventNegosiasi::menungguTim()->count();
+            // menungguTim() mencakup permintaan baru dan jadwal yang ditawar
+            // balik klien. Ditambah pembahasan yang pertemuannya sudah lewat
+            // tetapi hasilnya belum dicatat: itu pun pekerjaan yang menunggu
+            // tim, dan selama menggantung ia MENAHAN penawaran klien. Tanpa
+            // ikut terhitung, satu-satunya cara mengetahuinya adalah membuka
+            // halaman Negosiasi Klien atas kemauan sendiri.
+            $badges['negosiasiMenunggu'] = \App\Models\EventNegosiasi::menungguTim()->count()
+                + \App\Models\EventNegosiasi::menungguPencatatan()->count();
         }
 
         return $badges;

@@ -102,6 +102,28 @@ class EventNegosiasi extends Model
     }
 
     /**
+     * Pertemuannya sudah lewat, hasilnya belum dicatat.
+     *
+     * Versi SQL dari meetingSudahLewat(), supaya dapat dihitung sebagai lencana
+     * maupun disapu penjadwal tanpa memuat seluruh barisnya lebih dulu. Selama
+     * baris ini menggantung, penawaran yang terpampang tetap tertahan bagi
+     * klien — jadi ia benar-benar pekerjaan yang menunggu tim, bukan sekadar
+     * riwayat.
+     *
+     * Jadwal yang dipakai adalah jadwal appointment yang BERLAKU, sama seperti
+     * seluruh pembacaan jadwal lain di sistem.
+     */
+    public function scopeMenungguPencatatan($q)
+    {
+        return $q->where('status', self::MENUNGGU_MEETING)
+            ->whereHas('appointment', fn ($a) => $a->whereRaw(
+                'TIMESTAMP(' . Appointment::SQL_TGL_BERLAKU . ', ' . Appointment::SQL_JAM_BERLAKU . ') <= ?',
+                [now()->format('Y-m-d H:i:s')]
+            ))
+            ->acaraMasihAda();
+    }
+
+    /**
      * Acara ini masih punya pembahasan yang belum tuntas.
      *
      * Dipakai sebagai penjagaan penawaran revisi: yang hendak direvisi justru
