@@ -102,6 +102,19 @@ class EventNegosiasi extends Model
     }
 
     /**
+     * Acara ini masih punya pembahasan yang belum tuntas.
+     *
+     * Dipakai sebagai penjagaan penawaran revisi: yang hendak direvisi justru
+     * hasil pembahasannya, jadi mengajukannya lebih dulu tidak punya dasar.
+     * Selalu ada jalan keluar — pembahasan dapat ditutup lewat tutup() dari
+     * keadaan mana pun, sehingga penjagaan ini tidak bisa mengunci penawaran.
+     */
+    public static function masihBerjalanUntuk($idEvent): bool
+    {
+        return static::where('id_event', $idEvent)->berjalan()->exists();
+    }
+
+    /**
      * Tutup semua negosiasi yang masih berjalan pada satu acara, sekaligus
      * melepas slot pertemuan yang sudah terpesan untuknya.
      *

@@ -45,6 +45,14 @@ class NegosiasiController extends Controller
             'penangan:id_pegawai,nama_pegawai',
         ];
 
+        // Acara yang masih punya pembahasan berjalan — dihitung sekali di sini,
+        // bukan per baris. Dipakai tombol "ajukan revisi" agar syaratnya SAMA
+        // dengan penjagaan server di ajukanUlangPenawaran(): satu acara bisa
+        // punya beberapa pembahasan sekaligus, sehingga baris yang sudah
+        // Selesai pun belum tentu boleh direvisi bila ada permintaan lain yang
+        // masih menggantung.
+        $adaBerjalan = EventNegosiasi::berjalan()->distinct()->pluck('id_event')->flip();
+
         // HANYA permintaan yang belum ditanggapi. Sengaja tidak memakai
         // menungguTim() — cakupannya kini juga meliputi UsulanKlien, dan itu
         // sudah punya antreannya sendiri di bawah. Memakainya di sini membuat
@@ -54,23 +62,23 @@ class NegosiasiController extends Controller
         // yang isinya tidak ada.
         $menunggu = EventNegosiasi::with($relasi)
             ->where('status', EventNegosiasi::DIAJUKAN)->acaraMasihAda()
-            ->orderBy('created_at')->get()->map(fn ($n) => $this->baris($n));
+            ->orderBy('created_at')->get()->map(fn ($n) => $this->baris($n, $adaBerjalan));
 
         // Klien menawar jadwal lain — giliran tim memutuskan.
         $usulan = EventNegosiasi::with($relasi)
             ->where('status', EventNegosiasi::USULAN_KLIEN)->acaraMasihAda()
-            ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
+            ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n, $adaBerjalan));
 
         // Sudah dijadwalkan, tinggal menunggu klien menerimanya.
         $menungguKlien = EventNegosiasi::with($relasi)
             ->where('status', EventNegosiasi::DIJADWALKAN)->acaraMasihAda()
-            ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
+            ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n, $adaBerjalan));
 
         // Jadwal sudah disepakati kedua pihak. Yang ditunggu pertemuannya
         // sendiri, lalu pencatatan hasilnya yang menutup pembahasan.
         $menungguMeeting = EventNegosiasi::with($relasi)
             ->where('status', EventNegosiasi::MENUNGGU_MEETING)->acaraMasihAda()
-            ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n));
+            ->orderBy('updated_at')->get()->map(fn ($n) => $this->baris($n, $adaBerjalan));
 
         $sudahTampil = $menunggu->pluck('id')
             ->merge($usulan->pluck('id'))
@@ -80,7 +88,7 @@ class NegosiasiController extends Controller
         $riwayat = EventNegosiasi::with($relasi)
             ->whereNotIn('id', $sudahTampil)
             ->orderByDesc('updated_at')->take(self::RIWAYAT)
-            ->get()->map(fn ($n) => $this->baris($n));
+            ->get()->map(fn ($n) => $this->baris($n, $adaBerjalan));
 
         return Inertia::render('EventMarketing/Negosiasi/Index', [
             'menunggu'        => $menunggu->values(),
@@ -528,8 +536,13 @@ class NegosiasiController extends Controller
         }
     }
 
-    /** Bentuk satu baris untuk halaman, termasuk hal yang hanya diketahui model. */
-    private function baris(EventNegosiasi $n): array
+    /**
+     * Bentuk satu baris untuk halaman, termasuk hal yang hanya diketahui model.
+     *
+     * @param \Illuminate\Support\Collection $adaBerjalan id_event yang masih
+     *        punya pembahasan berjalan, sebagai kunci.
+     */
+    private function baris(EventNegosiasi $n, \Illuminate\Support\Collection $adaBerjalan): array
     {
         $apt = $n->appointment;
 
@@ -549,10 +562,17 @@ class NegosiasiController extends Controller
             // supaya tidak perlu kembali ke papan pipeline hanya untuk itu,
             // dengan syarat yang sama persis seperti ajukanUlangPenawaran().
             //
-            // Syarat tambahan: pembahasannya memang sudah SELESAI. Penawaran
+            // Syarat tambahan: pembahasannya memang sudah SELESAI, dan tidak ada
+            // pembahasan LAIN pada acara yang sama yang masih menggantung —
+            // klien boleh mengajukan beberapa permintaan sekaligus. Penawaran
             // revisi yang diajukan sebelum pertemuannya berlangsung tidak punya
             // dasar, sebab yang hendak direvisi justru hasil pembahasan itu.
+            //
+            // Kedua syarat ini kini juga ditegakkan di server
+            // (ManagesPersetujuanPenawaran::ajukanUlangPenawaran) — yang di sini
+            // hanya menyembunyikan tombolnya.
             'boleh_revisi' => $n->status === EventNegosiasi::SELESAI
+                && ! $adaBerjalan->has($n->id_event)
                 && $n->event
                 && $n->event->penawaran_status === Event::PENAWARAN_DISETUJUI
                 && in_array($n->event->status_event,

@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Models\Event;
+use App\Models\EventNegosiasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -128,6 +129,25 @@ trait ManagesPersetujuanPenawaran
         if ($event->penawaran_status === Event::PENAWARAN_DIAJUKAN) {
             throw ValidationException::withMessages([
                 'penawaran' => 'Penawaran ini sudah diajukan dan sedang menunggu keputusan Manajemen.',
+            ]);
+        }
+
+        // Pembahasan yang masih berjalan menahan penawaran revisi. Yang hendak
+        // direvisi justru hasil pembahasan itu, sehingga mengajukannya lebih
+        // dulu membuat Manajemen menyetujui angka yang belum dibicarakan —
+        // dan persetujuan itu MELEPAS kunci "sedang dibahas" pada portal klien
+        // (Event::menungguRevisi() membandingkan waktu persetujuan terakhir
+        // dengan waktu negosiasi), jadi klien bisa menerima penawaran padahal
+        // pertemuannya belum terjadi.
+        //
+        // Syarat ini sebelumnya hanya dipasang pada tombol di halaman Negosiasi
+        // (boleh_revisi), sehingga jalur papan Pipeline melewatinya begitu saja.
+        // Penjagaannya sekarang di server, tempat kedua jalur bertemu.
+        if (EventNegosiasi::masihBerjalanUntuk($event->id_event)) {
+            throw ValidationException::withMessages([
+                'penawaran' => 'Masih ada pembahasan penawaran yang berjalan untuk acara ini. '
+                    . 'Tuntaskan dulu dari menu Negosiasi Klien — balas permintaannya, catat hasil '
+                    . 'pertemuannya, atau tutup pembahasannya — sebelum mengajukan penawaran revisi.',
             ]);
         }
 
