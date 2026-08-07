@@ -4,6 +4,7 @@
  */
 import { Head, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
+import KonfirmasiHapus from '@/Components/KonfirmasiHapus';
 import { ChevronLeft, Search, X, MessageCircle, Plus, Trash2 } from 'lucide-react';
 import { POSTER_PLACEHOLDER } from '@/constants/kategori';
 import StatusEventBadge from '@/Components/StatusEventBadge';
@@ -29,8 +30,19 @@ export default function EMClientShow({ Layout, routes = {}, canEdit = true,  cli
         });
     };
 
-    const hapusFollowUp = (followUpId) => {
-        router.delete(route(routes.followUpDestroy, [client.id, followUpId]), { preserveScroll: true });
+    // Catatan follow-up adalah rekaman percakapan dengan klien yang tidak dapat
+    // disusun ulang, jadi penghapusannya ditegaskan lebih dulu — sebelumnya
+    // ikon tong sampahnya langsung menghapus begitu ditekan.
+    const [hapusFuTarget, setHapusFuTarget] = useState(null);
+    const [hapusFuProses, setHapusFuProses] = useState(false);
+
+    const hapusFollowUp = () => {
+        if (! hapusFuTarget) return;
+        setHapusFuProses(true);
+        router.delete(route(routes.followUpDestroy, [client.id, hapusFuTarget.id]), {
+            preserveScroll: true,
+            onFinish: () => { setHapusFuProses(false); setHapusFuTarget(null); },
+        });
     };
 
     const [form, setForm] = useState({
@@ -252,7 +264,7 @@ export default function EMClientShow({ Layout, routes = {}, canEdit = true,  cli
                                     )}
                                 </div>
                                 {canEdit && routes.followUpDestroy && (
-                                    <button onClick={() => hapusFollowUp(f.id)} className="p-1 text-gray-300 hover:text-red-500 shrink-0" title="Hapus">
+                                    <button onClick={() => setHapusFuTarget(f)} className="p-1 text-gray-300 hover:text-red-500 shrink-0" title="Hapus">
                                         <Trash2 size={14} />
                                     </button>
                                 )}
@@ -358,6 +370,16 @@ export default function EMClientShow({ Layout, routes = {}, canEdit = true,  cli
                     </tbody>
                 </table></div>
             </div>
+
+            <KonfirmasiHapus
+                buka={!! hapusFuTarget}
+                judul="Hapus Catatan Follow-up?"
+                nama={hapusFuTarget?.catatan}
+                catatan="Riwayat percakapan dengan klien ini tidak dapat disusun ulang."
+                proses={hapusFuProses}
+                onBatal={() => setHapusFuTarget(null)}
+                onHapus={hapusFollowUp}
+            />
         </Layout>
     );
 }

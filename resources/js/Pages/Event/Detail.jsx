@@ -10,6 +10,7 @@ import SearchableSelect from '@/Components/SearchableSelect';
 import TimePicker from '@/Components/TimePicker';
 import DateTimePicker from '@/Components/DateTimePicker';
 import Countdown from '@/Components/Countdown';
+import KonfirmasiHapus from '@/Components/KonfirmasiHapus';
 
 import { KATEGORI_VALUES as EVENT_CATEGORIES, asalEvent } from '@/constants/kategori';
 
@@ -135,9 +136,19 @@ export default function EventDetail({
             onFinish: () => setUploadingDok(false),
         });
     };
-    const hapusDok = (id) => {
-        if (!routes.dokumentasiDestroy) return;
-        router.delete(route(routes.dokumentasiDestroy, id), { preserveScroll: true });
+    // Penghapusan foto ikut menghapus berkas fisiknya di server, jadi tidak
+    // boleh menembak langsung dari ikon tong sampah — satu salah tekan sudah
+    // cukup untuk menghilangkan dokumentasi acara yang tidak dapat diambil lagi.
+    const [hapusDokTarget, setHapusDokTarget] = useState(null);
+    const [hapusDokProses, setHapusDokProses] = useState(false);
+
+    const hapusDok = () => {
+        if (!routes.dokumentasiDestroy || !hapusDokTarget) return;
+        setHapusDokProses(true);
+        router.delete(route(routes.dokumentasiDestroy, hapusDokTarget.id), {
+            preserveScroll: true,
+            onFinish: () => { setHapusDokProses(false); setHapusDokTarget(null); },
+        });
     };
 
     const { data, setData, post, processing, errors } = useForm({
@@ -393,7 +404,7 @@ export default function EventDetail({
                                     <div key={d.id} className="relative overflow-hidden border border-gray-200 rounded-lg group aspect-square bg-gray-50">
                                         <img src={`/${d.file_path}`} alt="Dokumentasi" loading="lazy" className="object-cover w-full h-full" />
                                         {routes.dokumentasiDestroy && (
-                                            <button type="button" onClick={() => hapusDok(d.id)} title="Hapus foto"
+                                            <button type="button" onClick={() => setHapusDokTarget(d)} title="Hapus foto"
                                                 className="absolute flex items-center justify-center w-6 h-6 text-white transition-opacity rounded-full opacity-0 top-1 right-1 bg-red-500/90 group-hover:opacity-100 hover:bg-red-600">
                                                 <Trash2 size={12} />
                                             </button>
@@ -834,6 +845,15 @@ export default function EventDetail({
                 </div>
             </form>
             )}
+
+            <KonfirmasiHapus
+                buka={!! hapusDokTarget}
+                judul="Hapus Foto Dokumentasi?"
+                catatan="Foto ini juga dihapus dari penyimpanan server dan tidak dapat dikembalikan."
+                proses={hapusDokProses}
+                onBatal={() => setHapusDokTarget(null)}
+                onHapus={hapusDok}
+            />
         </Layout>
     );
 }
