@@ -89,11 +89,27 @@
             <th class="r">Harga Satuan</th>
             <th class="r">Subtotal</th>
         </tr>
+        {{--
+            Harga satuan DITURUNKAN dari nilai kesepakatan dibagi jumlah pax,
+            bukan dibaca dari kolom harga_per_pax.
+
+            Keduanya seharusnya sejalan, tetapi kolomnya dapat tersimpan
+            berlainan pada data lama. Bila baris rinciannya memakai harga_per_pax
+            sementara totalnya memakai deal_harga_event, dokumen yang dibaca klien
+            memuat perkalian yang tidak sampai ke totalnya sendiri. Dengan
+            diturunkan, subtotal selalu sama dengan total penawaran berapa pun
+            isi kedua kolom itu.
+        --}}
+        @php
+            $pax   = (int) ($event->jumlah_pax ?? 0);
+            $total = (float) ($event->deal_harga_event ?? 0);
+            $satuan = $pax > 0 ? $total / $pax : null;
+        @endphp
         <tr>
-            <td>Paket acara per pax</td>
-            <td class="r">{{ number_format($event->jumlah_pax ?? 0, 0, ',', '.') }} pax</td>
-            <td class="r">Rp {{ number_format($event->harga_per_pax ?? 0, 0, ',', '.') }}</td>
-            <td class="r">Rp {{ number_format(($event->jumlah_pax ?? 0) * ($event->harga_per_pax ?? 0), 0, ',', '.') }}</td>
+            <td>{{ $pax > 0 ? 'Paket acara per pax' : 'Paket acara' }}</td>
+            <td class="r">{{ $pax > 0 ? number_format($pax, 0, ',', '.') . ' pax' : '1 paket' }}</td>
+            <td class="r">Rp {{ number_format($satuan ?? $total, 0, ',', '.') }}</td>
+            <td class="r">Rp {{ number_format($total, 0, ',', '.') }}</td>
         </tr>
         <tr class="total">
             <td colspan="3">TOTAL PENAWARAN</td>

@@ -195,6 +195,17 @@ export default function EventDetail({
         });
     };
 
+    // Deal Total = Jumlah Pax x Harga per Pax, sama seperti formulir Tambah dan
+    // Ubah Event. Formulir ini dulu membiarkan ketiganya berdiri sendiri,
+    // sehingga pax atau harga satuan yang diubah dari sini tidak memperbarui
+    // nilai deal. Akibatnya terbawa sampai ke dokumen penawaran yang dibaca
+    // klien: baris rinciannya memakai pax dikali harga satuan, sedangkan
+    // totalnya memakai nilai deal, dan keduanya bisa tidak sama.
+    const hitungDeal = (pax, hpp) => {
+        const t = (parseInt(pax, 10) || 0) * (parseFloat(hpp) || 0);
+        return t ? String(t) : '';
+    };
+
     const badge = STATUS_WARNA[event.status_event] || STATUS_WARNA.Planning;
     const lunas = (tagihan.terbayar || 0) >= (tagihan.deal || 0) && (tagihan.deal || 0) > 0;
     const { flash } = usePage().props;
@@ -711,14 +722,17 @@ export default function EventDetail({
                     <div className={`grid grid-cols-1 gap-5 ${event.tipe_event === 'Eksternal' ? 'sm:grid-cols-3' : 'sm:grid-cols-1'}`}>
                         <Field label="Jumlah Pax" error={errors.jumlah_pax}>
                             <input type="number" min="0" className={inputCls} value={data.jumlah_pax}
-                                onChange={(e) => setData('jumlah_pax', e.target.value)} />
+                                onChange={(e) => {
+                                    const v = e.target.value;
+                                    setData({ ...data, jumlah_pax: v, deal_harga_event: hitungDeal(v, data.harga_per_pax) });
+                                }} />
                         </Field>
                         {/* Nilai kesepakatan hanya ada pada acara pesanan klien */}
                         {event.tipe_event === 'Eksternal' && (
                             <>
                                 <Field label="Harga per Pax" error={errors.harga_per_pax}>
                                     <RupiahInput className={inputCls} value={data.harga_per_pax}
-                                        onChange={(v) => setData('harga_per_pax', v)} />
+                                        onChange={(v) => setData({ ...data, harga_per_pax: v, deal_harga_event: hitungDeal(data.jumlah_pax, v) })} />
                                 </Field>
                                 <Field label="Deal Harga" error={errors.deal_harga_event}>
                                     <RupiahInput className={inputCls} value={data.deal_harga_event}
