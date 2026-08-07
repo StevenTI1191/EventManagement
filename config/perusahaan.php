@@ -13,6 +13,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Lambang perusahaan
+    |--------------------------------------------------------------------------
+    | Letaknya relatif terhadap public/. Dipakai kepala surel dan seluruh
+    | dokumen PDF lewat App\Support\Logo, yang menyisipkannya ke dalam surel
+    | (cid:) dan menanamkannya sebagai data URI pada PDF — keduanya agar tidak
+    | bergantung pada jaringan maupun APP_URL yang benar. Bila berkasnya tidak
+    | ada, tampilannya jatuh ke nama perusahaan dalam bentuk teks.
+    */
+    'logo' => env('PERUSAHAAN_LOGO', 'images/LaksamanaLogo.png'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Rekening tujuan pembayaran
     |--------------------------------------------------------------------------
     | Dicantumkan pada dokumen invoice dan panel pembayaran di portal klien,

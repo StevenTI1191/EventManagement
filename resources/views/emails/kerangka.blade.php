@@ -36,6 +36,13 @@
 
     $paragraf = $paragraf ?? [];
     $detail   = $detail ?? [];
+
+    // Lambang disisipkan ke dalam surel bila memungkinkan (cid:), sehingga
+    // tidak ada gambar yang perlu diambil dari luar — itulah yang dulu membuat
+    // lambangnya kadang tampil rusak. $message hanya ada saat surel benar-benar
+    // dikirim; pada pratinjau/pengujian penyedia ini jatuh ke URL sendiri.
+    $logo = \App\Support\Logo::untukEmail($message ?? null);
+    $sisi = \App\Support\Logo::SISI;
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -79,6 +86,36 @@
                 <table role="presentation" class="lm-bungkus" width="600" cellpadding="0" cellspacing="0" border="0"
                        style="width:600px; max-width:600px; background:#ffffff; border-radius:16px; overflow:hidden;
                               font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+                    {{-- ── Lambang ────────────────────────────────────────
+                         Ditaruh pada pita PUTIH tersendiri, bukan di atas
+                         kepala berwarna: nada kepalanya berubah-ubah menurut
+                         jenis pemberitahuan, sedangkan lambangnya berwarna
+                         tetap. Latar putih menjamin kontrasnya aman pada
+                         kelima nada.
+
+                         Lebar & tinggi WAJIB ditulis. Berkas sumbernya
+                         4500x4500 piksel, dan tanpa ukuran sebagian klien
+                         surel merentangkannya selebar layar. --}}
+                    <tr>
+                        <td align="center" style="background:#ffffff; padding:22px 36px 0;">
+                            @if($logo)
+                                <img src="{{ $logo }}" width="{{ $sisi }}" height="{{ $sisi }}"
+                                     alt="{{ \App\Support\Logo::namaPerusahaan() }}"
+                                     style="display:block; width:{{ $sisi }}px; height:{{ $sisi }}px;
+                                            max-width:{{ $sisi }}px; border:0; outline:none;
+                                            text-decoration:none; margin:0 auto;">
+                            @else
+                                {{-- Berkas lambang tidak ada. Nama perusahaan dalam bentuk
+                                     teks jauh lebih baik daripada ikon gambar rusak. --}}
+                                <div style="font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+                                            font-size:13px; font-weight:bold; letter-spacing:.5px;
+                                            color:#14153A;">
+                                    {{ \App\Support\Logo::namaPerusahaan() }}
+                                </div>
+                            @endif
+                        </td>
+                    </tr>
 
                     {{-- ── Kepala ─────────────────────────────────────────── --}}
                     <tr>

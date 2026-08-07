@@ -55,10 +55,26 @@
         <table style="width:100%; border-collapse:collapse;">
             <tr>
                 <td style="vertical-align:top;">
-                    <div class="brand">
-                        PT LAKSAMANA MUDA BERSATU
-                        <small>Event Organizer &amp; Venue — Pekanbaru, Riau</small>
-                    </div>
+                    {{-- Lambang ditanam sebagai data URI (lihat Support/Logo).
+                         DomPDF tidak mengambil berkas dari jaringan, jadi gambar
+                         ber-URL biasa berakhir sebagai kotak kosong. Bila lambangnya
+                         tidak tersedia, yang tampil hanyalah nama perusahaan.
+                         Tata letaknya memakai tabel karena inline-block tidak
+                         diterjemahkan DomPDF secara andal. --}}
+                    <table style="border-collapse:collapse;"><tr>
+                        @if($logoPdf = \App\Support\Logo::dataUri())
+                            <td style="vertical-align:middle; padding-right:9px; width:42px;">
+                                <img src="{{ $logoPdf }}" width="42" height="42"
+                                     alt="" style="width:42px; height:42px;">
+                            </td>
+                        @endif
+                        <td style="vertical-align:middle;">
+                            <div class="brand">
+                                PT LAKSAMANA MUDA BERSATU
+                                <small>Event Organizer &amp; Venue — Pekanbaru, Riau</small>
+                            </div>
+                        </td>
+                    </tr></table>
                 </td>
                 <td style="vertical-align:top; text-align:right;">
                     <div class="title">DETAIL EVENT</div>
