@@ -190,7 +190,12 @@ export default function EMClientShow({ Layout, routes = {}, canEdit = true,  cli
                     )}
                 </div>
 
-                {canEdit && (
+                {/* Mencatat follow-up adalah wewenang Event Marketing, terpisah dari
+                    wewenang mengubah data klien. Peran yang boleh menyunting klien
+                    tetapi tidak diberi rute follow-up (mis. Manajemen) hanya membaca
+                    riwayatnya — tanpa penjagaan ini tombolnya muncul lalu gagal
+                    karena nama rutenya memang tidak dikirim. */}
+                {canEdit && routes.followUpStore && (
                 <form onSubmit={tambahFollowUp} className="space-y-2">
                     <input type="text" value={catatanFollowUp} onChange={(e) => setCatatanFollowUp(e.target.value)} maxLength={2000}
                         placeholder="Catat hasil follow-up… (mis. sudah di-WA, minta revisi penawaran, tunggu keputusan direksi)"
@@ -246,7 +251,7 @@ export default function EMClientShow({ Layout, routes = {}, canEdit = true,  cli
                                         </p>
                                     )}
                                 </div>
-                                {canEdit && (
+                                {canEdit && routes.followUpDestroy && (
                                     <button onClick={() => hapusFollowUp(f.id)} className="p-1 text-gray-300 hover:text-red-500 shrink-0" title="Hapus">
                                         <Trash2 size={14} />
                                     </button>

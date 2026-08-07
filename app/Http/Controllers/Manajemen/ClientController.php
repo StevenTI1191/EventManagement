@@ -8,93 +8,49 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 use App\Traits\ChecksPegawaiRole;
+use App\Traits\ShowsClient;
 
 class ClientController extends Controller
 {
     use ChecksPegawaiRole;
+    // Halaman daftar & detail klien memakai komponen bersama Klien/Index dan
+    // Klien/Show, sama seperti Event Marketing dan Finance. Sebelumnya
+    // Manajemen menyalin sendiri controller maupun halamannya, dan salinan itu
+    // tertinggal: kolom Kontrak beserta tombol unduhnya masih ada di sini
+    // padahal sudah dilepas dari komponen bersama, dan pemisahan sumber klien
+    // ditulis ulang dengan cara yang berbeda.
+    use ShowsClient;
+
+    /**
+     * Nama rute yang dipakai komponen bersama.
+     *
+     * Rute follow-up sengaja TIDAK disertakan: mencatat tindak lanjut klien
+     * adalah wewenang Event Marketing. Manajemen tetap membaca riwayatnya,
+     * hanya tidak menambah maupun menghapusnya.
+     */
+    private function rute(): array
+    {
+        return [
+            'index'   => 'manajemen.client.index',
+            'show'    => 'manajemen.client.show',
+            'create'  => 'manajemen.client.create',
+            'edit'    => 'manajemen.client.edit',
+            'destroy' => 'manajemen.client.destroy',
+        ];
+    }
+
     public function index(Request $request)
     {
         $this->checkManajemen();
 
-        // Dipisah 2 tab: klien yang mendaftar sendiri (Mandiri) vs yang di-input & di-approach tim (Internal).
-        $sumber = $request->sumber === Client::SUMBER_INTERNAL
-            ? Client::SUMBER_INTERNAL
-            : Client::SUMBER_MANDIRI;
-
-        $query = Client::withCount('events')->where('sumber', $sumber);
-
-        if ($request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where('nama_client', 'like', '%' . $request->search . '%')
-                ->orWhere('perusahaan_client', 'like', '%' . $request->search . '%')
-                ->orWhere('email_client', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        $clients = $query->latest()->paginate(15)->withQueryString();
-
-        return Inertia::render('Manajemen/Client/ClientIndex', [
-            'clients' => $clients,
-            'filters' => $request->only('search', 'sumber'),
-            'sumber'  => $sumber,
-            'jumlah'  => [
-                'Mandiri'  => Client::mandiri()->count(),
-                'Internal' => Client::internal()->count(),
-            ],
-        ]);
+        return $this->daftarClient($request, 'Manajemen/Client/ClientIndex', $this->rute(), canEdit: true);
     }
 
     public function show($id)
     {
         $this->checkManajemen();
 
-        $client = Client::findOrFail($id);
-
-        // Validasi input filter sebelum dipakai di query (mencegah Carbon::parse exception & DB error)
-        request()->validate([
-            'tgl_awal'  => 'nullable|date',
-            'tgl_akhir' => 'nullable|date|after_or_equal:tgl_awal',
-            'search'    => 'nullable|string|max:255',
-            'pic'       => 'nullable|integer|min:1',
-            'kategori'  => 'nullable|string|max:255',
-        ]);
-
-        $query = \App\Models\Event::with(['pic', 'client'])
-            ->where('id_client', $id);
-
-        // Filter tanggal
-        if (request('tgl_awal') && request('tgl_akhir')) {
-            $query->whereBetween('tgl_mulai_event', [request('tgl_awal'), request('tgl_akhir')]);
-        }
-
-        // Filter kategori
-        if (request('kategori')) {
-            $query->where('kategori_event', request('kategori'));
-        }
-
-        // Filter PIC
-        if (request('pic')) {
-            $query->where('id_pegawai', request('pic'));
-        }
-
-        // Search
-        if (request('search')) {
-            $query->where('nama_event', 'like', '%' . request('search') . '%');
-        }
-
-        $events = $query->latest('tgl_mulai_event')->take(200)->get();
-
-        $pics = \App\Models\Pegawai::select('id_pegawai', 'nama_pegawai', 'posisi_pegawai')->orderBy('nama_pegawai')->get();
-        // Scope ke client ini — jangan expose kategori event milik client lain
-        $kategoris = \App\Models\Event::where('id_client', $id)->distinct()->pluck('kategori_event')->filter()->values();
-
-        return Inertia::render('Manajemen/Client/Show', [
-            'client' => $client,
-            'events' => $events,
-            'pics' => $pics,
-            'kategoris' => $kategoris,
-            'filters' => request()->only(['tgl_awal', 'tgl_akhir', 'kategori', 'pic', 'search']),
-        ]);
+        return $this->detailClient($id, 'Manajemen/Client/Show', $this->rute(), canEdit: true);
     }
 
     public function create()

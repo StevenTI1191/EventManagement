@@ -1,5 +1,5 @@
 /**
- * Daftar klien, dipakai Event Marketing & Finance.
+ * Daftar klien, dipakai Event Marketing, Finance, dan Manajemen.
  * Finance melihat isi yang sama, hanya tanpa tombol tambah/ubah/hapus
  * - dibedakan lewat canEdit, bukan lewat halaman terpisah.
  */
