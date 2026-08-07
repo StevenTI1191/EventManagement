@@ -44,6 +44,9 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
     const submitVerify = (e) => {
         e.preventDefault();
         formVerify.patch(route('finance.bukti.verifikasi', verifyModal.id), {
+            preserveScroll: true,
+            // Hanya ditutup ketika benar-benar berhasil. Menutupnya pada setiap
+            // selesai membuat penolakan server hilang bersama modalnya.
             onSuccess: () => setVerifyModal(null),
         });
     };
@@ -77,6 +80,16 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
             {flash?.success && (
                 <div className="p-4 mb-6 text-sm font-bold text-green-700 bg-green-50 border border-green-200 rounded-xl">
                     ✅ {flash.success}
+                </div>
+            )}
+
+            {/* Penolakan server. Verifikasi bukti yang tidak mencantumkan nominal
+                ditolak lewat withErrors, dan tanpa penampil ini penolakannya
+                berakhir senyap: modalnya tertutup dan tombolnya tampak mati,
+                padahal bukti itu memang tidak dapat dibukukan. */}
+            {(flash?.error || formVerify.errors.status) && (
+                <div className="p-4 mb-6 text-sm font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl">
+                    ⚠️ {flash?.error || formVerify.errors.status}
                 </div>
             )}
 
@@ -374,6 +387,15 @@ export default function FinanceBuktiIndex({ buktiList, stats, filters }) {
                                 <span className="font-semibold text-gray-700">{verifyModal.keterangan || '-'}</span>
                             </div>
                         </div>
+
+                        {/* Penolakan server dibaca di sini juga — modal tetap
+                            terbuka saat ditolak, jadi galatnya harus terlihat
+                            tepat di tempat pengguna menekan tombolnya. */}
+                        {formVerify.errors.status && (
+                            <div className="p-3 mb-4 text-xs font-bold text-red-700 border border-red-200 bg-red-50 rounded-xl">
+                                {formVerify.errors.status}
+                            </div>
+                        )}
 
                         <form onSubmit={submitVerify} className="space-y-4">
                             {/* Ubah status jika perlu */}
