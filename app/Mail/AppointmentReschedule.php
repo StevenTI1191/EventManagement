@@ -17,7 +17,7 @@ class AppointmentReschedule extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: '🔄 Jadwal Appointment Anda Diubah — Laksamana Muda Bersama');
+        return new Envelope(subject: '🔄 Jadwal Appointment Anda Diubah — PT Laksamana Muda Bersatu');
     }
 
     public function content(): Content

@@ -17,7 +17,7 @@ class AppointmentDikonfirmasi extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: '✅ Appointment Anda Dikonfirmasi — Laksamana Muda Bersama');
+        return new Envelope(subject: '✅ Appointment Anda Dikonfirmasi — PT Laksamana Muda Bersatu');
     }
 
     public function content(): Content

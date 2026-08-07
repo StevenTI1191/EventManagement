@@ -17,7 +17,7 @@ class AppointmentDibatalkan extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: '❌ Appointment Anda Dibatalkan — Laksamana Muda Bersama');
+        return new Envelope(subject: '❌ Appointment Anda Dibatalkan — PT Laksamana Muda Bersatu');
     }
 
     public function content(): Content
