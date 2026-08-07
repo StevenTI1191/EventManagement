@@ -282,7 +282,13 @@ export default function LaporanIndex() {
                                                         <td className="px-4 py-3 text-sm font-bold text-red-500 td-red">{ev.pengeluaran}</td>
                                                         <td className={`px-4 py-3 text-sm font-extrabold ${ev.laba_raw >= 0 ? 'text-blue-600 td-blue' : 'text-orange-500 td-red'}`}>{ev.laba}</td>
                                                         <td className="px-4 py-3">
-                                                            <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-full ${ev.status === 'Lunas' ? 'bg-green-50 text-green-600 badge-lunas' : 'bg-red-50 text-[#FF2D55] badge-belum'}`}>
+                                                            {/* Acara batal diberi warna tersendiri: uangnya memang masuk,
+                                                                tetapi tidak ada lagi yang tertagih — memakai warna "belum
+                                                                lunas" membuatnya terbaca sebagai piutang yang masih hidup. */}
+                                                            <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-full ${
+                                                                ev.batal ? 'bg-gray-100 text-gray-500 badge-batal'
+                                                                    : ev.status === 'Lunas' ? 'bg-green-50 text-green-600 badge-lunas'
+                                                                    : 'bg-red-50 text-[#FF2D55] badge-belum'}`}>
                                                                 {ev.status}
                                                             </span>
                                                         </td>

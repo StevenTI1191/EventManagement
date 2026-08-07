@@ -20,9 +20,19 @@ class DashboardController extends Controller
         $this->checkFinance();
 
         // ── KPI UTAMA ──────────────────────────────────────────────
-        $totalPenjualan   = Transaksi::sum('nominal');
-        $totalPengeluaran = TransaksiItem::where('tipe', 'Pengeluaran')->sum('total');
-        $totalPemasukan   = TransaksiItem::where('tipe', 'Pemasukan')->sum('total');
+        // Populasinya disamakan dengan halaman Laporan lewat scope untukLaporan(),
+        // supaya "Laba Bersih" pada dua layar ini menjawab pertanyaan yang sama.
+        // Sebelumnya kartu di sini menjumlahkan SELURUH transaksi tanpa melihat
+        // acaranya, sedangkan Laporan hanya menghitung acara yang terikat
+        // komitmen — sehingga uang muka yang hangus dari acara batal muncul di
+        // satu layar dan hilang di layar lainnya.
+        $padaLaporan = fn ($q) => $q->untukLaporan();
+
+        $totalPenjualan   = Transaksi::whereHas('event', $padaLaporan)->sum('nominal');
+        $totalPengeluaran = TransaksiItem::whereHas('event', $padaLaporan)
+            ->where('tipe', 'Pengeluaran')->sum('total');
+        $totalPemasukan   = TransaksiItem::whereHas('event', $padaLaporan)
+            ->where('tipe', 'Pemasukan')->sum('total');
         // Laba bersih = pembayaran klien + pemasukan tambahan (sponsor, dll) - pengeluaran
         $labaBersih       = $totalPenjualan + $totalPemasukan - $totalPengeluaran;
 
@@ -44,13 +54,18 @@ class DashboardController extends Controller
         // ── CHART: Pemasukan vs Pengeluaran per bulan tahun ini ───
         $bulanLabels = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
 
-        $pemasukanPerBulan = Transaksi::selectRaw('MONTH(tgl_bayar) as bulan, SUM(nominal) as total')
+        // Grafiknya memakai populasi yang sama dengan kartu KPI di atas, supaya
+        // jumlah batangnya sepanjang tahun tidak berselisih dengan angka besar
+        // yang tertera di kepala halaman yang sama.
+        $pemasukanPerBulan = Transaksi::whereHas('event', $padaLaporan)
+            ->selectRaw('MONTH(tgl_bayar) as bulan, SUM(nominal) as total')
             ->whereYear('tgl_bayar', now()->year)
             ->groupBy('bulan')
             ->orderBy('bulan')
             ->pluck('total', 'bulan');
 
-        $pengeluaranPerBulan = TransaksiItem::selectRaw('MONTH(created_at) as bulan, SUM(total) as total')
+        $pengeluaranPerBulan = TransaksiItem::whereHas('event', $padaLaporan)
+            ->selectRaw('MONTH(created_at) as bulan, SUM(total) as total')
             ->where('tipe', 'Pengeluaran')
             ->whereYear('created_at', now()->year)
             ->groupBy('bulan')

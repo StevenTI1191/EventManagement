@@ -217,6 +217,15 @@ class Event extends Model
     /** Status yang boleh diubah manual lewat form Event. */
     public const STATUS_MANUAL = [self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE];
 
+    /**
+     * Acara yang sudah terikat kesepakatan — punya nilai deal dan kewajiban
+     * bayar. Prospek yang belum disepakati dan acara batal tidak termasuk,
+     * sebab keduanya tidak menanggung piutang.
+     */
+    public const STATUS_BERKOMITMEN = [
+        self::STATUS_DEAL, self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE,
+    ];
+
     public const TIPE_INTERNAL  = 'Internal';
     public const TIPE_EKSTERNAL = 'Eksternal';
 
@@ -325,7 +334,32 @@ class Event extends Model
     public function scopeSedangBerjalan($q) { return $q->whereIn('status_event', [self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN]); }
 
     /** Event yang sudah masuk ranah Finance — mulai dari Deal (proses DP 50%). */
-    public function scopeUntukFinance($q) { return $q->whereIn('status_event', [self::STATUS_DEAL, self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE]); }
+    public function scopeUntukFinance($q) { return $q->whereIn('status_event', self::STATUS_BERKOMITMEN); }
+
+    /**
+     * Acara yang punya angka pada laporan keuangan.
+     *
+     * Lebih luas daripada untukFinance(), yang menyaring acara berdasarkan
+     * KEWAJIBAN bayarnya. Laporan keuangan mempertanyakan hal lain: uang mana
+     * saja yang benar-benar bergerak. Acara yang dibatalkan tetap membawa uang
+     * yang sudah masuk — uang muka tidak dikembalikan dan sengaja dibiarkan di
+     * buku kas sebagai pendapatan — sehingga menyaringnya keluar membuat
+     * laporan kehilangan pemasukan yang justru tercantum pada rincian
+     * pembayarannya sendiri. Hal yang sama berlaku bagi pengeluaran yang
+     * terlanjur dikeluarkan untuk prospek yang akhirnya tidak jadi.
+     *
+     * Aturannya satu: acara yang sudah berkomitmen, DITAMBAH acara mana pun
+     * yang benar-benar memiliki catatan uang. Dengan begitu tidak ada rupiah
+     * yang tampil pada tabel rincian tetapi luput dari ringkasannya.
+     */
+    public function scopeUntukLaporan($q)
+    {
+        return $q->where(function ($w) {
+            $w->whereIn('status_event', self::STATUS_BERKOMITMEN)
+              ->orWhereHas('transaksis')
+              ->orWhereHas('transaksiItems');
+        });
+    }
 
     /**
      * Event yang butuh dikerjakan divisi (papan Task Divisi): event internal yang

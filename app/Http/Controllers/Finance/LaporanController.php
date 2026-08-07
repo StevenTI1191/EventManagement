@@ -93,8 +93,6 @@ class LaporanController extends Controller
             'nominal_raw' => (float) $t->nominal,
         ])->toArray();
 
-        $totalPemasukan = collect($transaksis)->sum('nominal_raw');
-
         // Item pengeluaran & pemasukan
         $items = TransaksiItem::with('event')
             ->whereHas('event', fn($q) => $q->whereBetween('tgl_mulai_event', [$start->toDateString(), $end->toDateString()]))
@@ -111,15 +109,12 @@ class LaporanController extends Controller
                 'total_raw'   => (float) $i->total,
             ])->toArray();
 
-        $totalPengeluaran   = collect($items)->where('tipe', 'Pengeluaran')->sum('total_raw');
-        $totalPemasukanItem = collect($items)->where('tipe', 'Pemasukan')->sum('total_raw');
-        // Total pemasukan = pembayaran klien + pemasukan tambahan (sponsor, dll)
-        $totalPemasukan     = $totalPemasukan + $totalPemasukanItem;
-        $labaBersih         = $totalPemasukan - $totalPengeluaran;
-
-        // Rekap per event — hanya event terikat komitmen (Deal/Upcoming/Done).
-        // Prospek pipeline & event batal tidak masuk laporan keuangan.
-        $events = Event::untukFinance()->with(['client', 'transaksis', 'transaksiItems'])
+        // Rekap per event. Cakupannya untukLaporan(), bukan untukFinance():
+        // acara yang dibatalkan tetap membawa uang muka yang hangus, dan uang
+        // itu memang sengaja tetap tercatat sebagai pendapatan. Menyaringnya
+        // keluar membuat pembayarannya tampil pada tabel Rincian Pembayaran
+        // di halaman yang sama tetapi tidak pernah terhitung pada ringkasannya.
+        $events = Event::untukLaporan()->with(['client', 'transaksis', 'transaksiItems'])
             ->whereBetween('tgl_mulai_event', [$start->toDateString(), $end->toDateString()])
             ->orderBy('tgl_mulai_event')
             ->get();
@@ -130,7 +125,14 @@ class LaporanController extends Controller
             $pemasukan   = $ev->transaksiItems->where('tipe', 'Pemasukan')->sum('total');
             $deal        = $ev->deal_harga_event;
             $laba        = $terbayar + $pemasukan - $pengeluaran;
-            $status      = Event::labelPembayaran((float) $deal, (float) $terbayar);
+            $batal       = $ev->status_event === Event::STATUS_BATAL;
+
+            // Acara batal tidak punya piutang, jadi "Belum Lunas" menyesatkan:
+            // tidak ada lagi yang akan ditagih. Yang perlu terbaca justru bahwa
+            // uang yang sudah masuk tidak dikembalikan.
+            $status = $batal
+                ? ($terbayar > 0 ? 'Batal — uang muka hangus' : 'Batal')
+                : Event::labelPembayaran((float) $deal, (float) $terbayar);
 
             return [
                 'nama_event'      => $ev->nama_event,
@@ -144,12 +146,27 @@ class LaporanController extends Controller
                 'laba'            => $fmt($laba),
                 'laba_raw'        => (float) $laba,
                 'status'          => $status,
+                'batal'           => $batal,
             ];
         })->toArray();
 
-        $totalDeal    = $events->sum('deal_harga_event');
-        $totalDibayar = $events->sum(fn($e) => $e->transaksis->sum('nominal'));
-        $totalPiutang = max($totalDeal - $totalDibayar, 0);
+        // Deal & piutang hanya dari acara yang benar-benar terikat kesepakatan.
+        // Acara batal ikut pada pemasukan (uangnya nyata) tetapi tidak pada
+        // kedua angka ini — tak ada lagi yang bisa ditagih darinya.
+        $berkomitmen = $events->filter(
+            fn ($e) => in_array($e->status_event, Event::STATUS_BERKOMITMEN, true)
+        );
+
+        $totalDeal = $berkomitmen->sum('deal_harga_event');
+
+        // Dijumlahkan PER ACARA dengan batas nol, bukan sebagai selisih dua
+        // total. Sebagai selisih, acara yang lebih bayar menutupi kekurangan
+        // acara lain sehingga piutangnya tampak lebih kecil daripada yang
+        // sebenarnya masih tertagih — dashboard Finance sudah memakai cara
+        // per-acara ini, jadi keduanya kini menjawab hal yang sama.
+        $totalPiutang = $berkomitmen->sum(
+            fn ($e) => max((float) $e->deal_harga_event - (float) $e->transaksis->sum('nominal'), 0)
+        );
 
         // Ringkasan diambil dari rekap per-event, bukan dari transaksi yang
         // difilter tanggal bayar. Sebelumnya keduanya beda populasi: pembayaran
