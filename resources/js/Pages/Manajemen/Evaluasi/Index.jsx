@@ -56,8 +56,10 @@ export default function EvaluasiIndex({ auth, pegawais, events, filters }) {
                                     <p className="text-[10px] text-gray-400">Total Event</p>
                                 </div>
                                 <div className="p-2 rounded-xl bg-gray-50">
-                                    <p className="text-lg font-black text-gray-800">{pegawai.rekomendasi_rehire}</p>
-                                    <p className="text-[10px] text-gray-400">Rehire</p>
+                                    <p className="text-lg font-black text-gray-800">
+                                        {pegawai.rekomendasi_rehire === 'Yes' ? 'Ya' : 'Tidak'}
+                                    </p>
+                                    <p className="text-[10px] text-gray-400">Dipekerjakan Lagi</p>
                                 </div>
                             </div>
                             <Link

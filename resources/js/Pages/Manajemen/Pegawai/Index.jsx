@@ -77,9 +77,9 @@ export default function PegawaiIndex({ auth, internal, eksternal }) {
                     </div>
                     {pegawai.jenis_pegawai === 'Eksternal' && (
                         <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <span>Re-hire</span>
+                            <span>Dipekerjakan lagi</span>
                             <span className={'font-bold ' + (pegawai.rekomendasi_rehire === 'Yes' ? 'text-green-600' : 'text-red-500')}>
-                                : {pegawai.rekomendasi_rehire === 'Yes' ? 'Recommended' : 'Not Recommended'}
+                                : {pegawai.rekomendasi_rehire === 'Yes' ? 'Direkomendasikan' : 'Tidak direkomendasikan'}
                             </span>
                         </div>
                     )}
@@ -252,7 +252,7 @@ export default function PegawaiIndex({ auth, internal, eksternal }) {
                                         <Calendar size={14} className="text-[#FF2D55]" />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Rekomendasi Re-hire</p>
+                                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Rekomendasi Dipekerjakan Lagi</p>
                                         <p className={'text-sm font-bold ' + (viewModal.rekomendasi_rehire === 'Yes' ? 'text-green-600' : 'text-red-500')}>
                                             {viewModal.rekomendasi_rehire === 'Yes' ? '✅ Recommended' : '❌ Not Recommended'}
                                         </p>

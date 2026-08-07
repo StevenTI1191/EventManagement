@@ -89,8 +89,8 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                             : 'bg-red-100 text-red-600'
                     )}
                 >
-                    <option value="Yes">Rehire: Yes</option>
-                    <option value="No">Rehire: No</option>
+                    <option value="Yes">Dipekerjakan lagi: Direkomendasikan</option>
+                    <option value="No">Dipekerjakan lagi: Tidak direkomendasikan</option>
                 </select>
             </div>
 

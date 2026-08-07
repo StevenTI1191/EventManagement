@@ -19,7 +19,7 @@ export default function EventDetail({ auth, event, tugas }) {
             <Head title={'Evaluasi Event - ' + event.nama_event} />
 
             <div className="mb-8">
-                <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Pegawai</h1>
+                <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Evaluasi Per Event</h1>
                 <div className="flex items-center gap-2 mt-2">
                     <Link
                         href={route('manajemen.evaluasi.index')}
