@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\Event;
 use App\Models\EventDokumentasi;
+use App\Support\UnggahGambar;
 use Illuminate\Http\Request;
 
 /**
@@ -32,8 +33,14 @@ trait ManagesDokumentasi
 
         $request->validate([
             'foto'   => 'required|array|max:12',
-            'foto.*' => 'file|image|max:8192', // maks 8 MB per foto
-        ]);
+            // Aturannya satu untuk seluruh sistem — lihat UnggahGambar. Dulu
+            // memakai `image` tanpa pesan galat, sehingga penolakannya berbunyi
+            // lain daripada halaman unggahan gambar yang lain.
+            // Sengaja tidak wajib per elemen: kehadiran berkasnya sudah dijaga
+            // oleh aturan `required|array` di atas, sedangkan slot kosong pada
+            // masukan berkas memang dilewati saat penyimpanan.
+            'foto.*' => UnggahGambar::aturan(maksKb: 8192),
+        ], UnggahGambar::pesan('foto.*', 'foto dokumentasi', 8192));
 
         $dir = public_path('posters');
         if (! is_dir($dir)) {

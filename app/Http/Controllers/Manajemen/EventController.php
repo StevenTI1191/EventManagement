@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Manajemen;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Support\UnggahGambar;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Traits\ChecksPegawaiRole;
@@ -146,7 +147,7 @@ class EventController extends Controller
             'gladi_resik'       => 'nullable|string|max:255',
             'status_event'      => 'nullable|in:' . implode(',', Event::SEMUA_STATUS),
             'is_public'         => 'nullable|boolean',
-            'poster_event'      => 'nullable|file|image|max:10240',
+            'poster_event'      => UnggahGambar::aturan(maksKb: 10240),
         ]);
 
         // --- CEK BENTROK ---
@@ -256,7 +257,7 @@ class EventController extends Controller
             'gladi_resik'       => 'nullable|string|max:255',
             'status_event'      => 'nullable|in:' . implode(',', Event::SEMUA_STATUS),
             'is_public'         => 'nullable|boolean',
-            'poster_event'      => 'nullable|file|image|max:10240',
+            'poster_event'      => UnggahGambar::aturan(maksKb: 10240),
         ]);
 
         // --- CEK BENTROK (exclude event yang sedang diedit) ---

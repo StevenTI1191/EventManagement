@@ -4,6 +4,7 @@ namespace App\Http\Controllers\EventMarketing;
 
 use App\Http\Controllers\Controller;
 use App\Models\VenueFasilitas;
+use App\Support\UnggahGambar;
 use App\Traits\ChecksPegawaiRole;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -19,11 +20,8 @@ class VenueFasilitasController extends Controller
 {
     use ChecksPegawaiRole;
 
-    /** Batas foto: cukup besar untuk tampilan galeri, tidak membebani halaman. */
-    private const MAKS_KB = 8192;
-
-    /** Format yang dapat ditampilkan langsung oleh peramban sebagai galeri. */
-    private const FORMAT = ['jpg', 'jpeg', 'png', 'webp'];
+    // Batas & format fotonya mengikuti App\Support\UnggahGambar — aturan yang
+    // dulu hanya ada di sini kini dipakai seluruh titik unggah gambar.
 
     public function index()
     {
@@ -109,24 +107,8 @@ class VenueFasilitasController extends Controller
             'keterangan'  => ['nullable', 'string', 'max:500'],
             'urutan'      => ['nullable', 'integer', 'min:0', 'max:999'],
             'aktif'       => ['nullable', 'boolean'],
-            // Sengaja memakai `mimes`, bukan `image`. Aturan `image` ikut
-            // meloloskan SVG, dan SVG yang disajikan dari domain sendiri dapat
-            // menjalankan skrip di peramban pengunjung. `mimes` pun menebak
-            // format dari ISI berkas, bukan dari nama kiriman pengguna.
-            'foto'        => [
-                $wajibFoto ? 'required' : 'nullable',
-                'file',
-                'mimes:' . implode(',', self::FORMAT),
-                'max:' . self::MAKS_KB,
-            ],
-        ], [
-            'foto.required' => 'Unggah foto fasilitasnya.',
-            'foto.mimes'    => 'Format foto harus JPG, PNG, atau WEBP. Foto dari iPhone berformat HEIC perlu diubah dulu ke JPG.',
-            'foto.max'      => 'Ukuran foto maksimal 8 MB.',
-            // Muncul ketika PHP sendiri menolak unggahannya, biasanya karena
-            // upload_max_filesize di server lebih kecil daripada batas di atas.
-            'foto.uploaded' => 'Foto gagal diunggah. Ukurannya kemungkinan melebihi batas yang diizinkan server.',
-        ]);
+            'foto'        => UnggahGambar::aturan(wajib: $wajibFoto),
+        ], UnggahGambar::pesan('foto', 'foto fasilitas'));
     }
 
     /**

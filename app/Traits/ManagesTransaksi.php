@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\Event;
 use App\Models\Transaksi;
+use App\Support\UnggahGambar;
 use App\Models\TransaksiItem;
 use App\Support\PelunasanInvoice;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ trait ManagesTransaksi
             'nominal'    => 'required|numeric|min:1|max:9999999999999',
             'tgl_bayar'  => 'required|date',
             'keterangan' => 'nullable|string|max:255',
-            'bukti_file' => 'nullable|file|image|max:2048',
+            'bukti_file' => UnggahGambar::aturan(maksKb: 2048),
         ]);
 
         $data = $request->only(['id_event', 'nominal', 'tgl_bayar', 'keterangan']);
@@ -72,7 +73,7 @@ trait ManagesTransaksi
             'nominal'    => 'required|numeric|min:1|max:9999999999999',
             'tgl_bayar'  => 'required|date',
             'keterangan' => 'nullable|string|max:255',
-            'bukti_file' => 'nullable|file|image|max:2048',
+            'bukti_file' => UnggahGambar::aturan(maksKb: 2048),
         ]);
 
         $transaksi = Transaksi::findOrFail($id);

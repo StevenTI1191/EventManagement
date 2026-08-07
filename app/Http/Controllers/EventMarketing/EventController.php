@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\EventDibuat;
 use App\Models\Client;
 use App\Models\Event;
+use App\Support\UnggahGambar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -174,7 +175,7 @@ class EventController extends Controller
             'gladi_resik'       => 'nullable|string|max:255',
             'status_event'      => 'nullable|in:' . implode(',', Event::SEMUA_STATUS),
             'is_public'         => 'nullable|boolean',
-            'poster_event'      => 'nullable|file|image|max:10240',
+            'poster_event'      => UnggahGambar::aturan(maksKb: 10240),
         ]);
 
         $bentrok = Event::checkBentrok(
@@ -305,7 +306,7 @@ class EventController extends Controller
             'gladi_resik'       => 'nullable|string|max:255',
             'status_event'      => 'nullable|in:' . implode(',', Event::SEMUA_STATUS),
             'is_public'         => 'nullable|boolean',
-            'poster_event'      => 'nullable|file|image|max:10240',
+            'poster_event'      => UnggahGambar::aturan(maksKb: 10240),
         ]);
 
         // Cek bentrok hanya bila jadwalnya sudah utuh. Event pipeline yang

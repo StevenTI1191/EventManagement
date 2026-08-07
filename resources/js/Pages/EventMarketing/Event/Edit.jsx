@@ -54,9 +54,12 @@ export default function Edit({ auth, event, clients, pegawais }) {
         return t ? String(t) : '';
     };
 
-    // Aturan file (samakan dgn validasi backend: poster max 2MB image, kontrak max 5MB pdf/doc)
+    // Samakan dengan App\Support\UnggahGambar di sisi server:
+    // JPG/PNG/WEBP, maksimal 10 MB. Daftar ini dulu memuat GIF sementara
+    // servernya memakai aturan lain, sehingga berkas yang lolos di sini
+    // masih bisa ditolak setelah terkirim.
     const FILE_RULES = {
-        poster_event: { maxMB: 10, exts: ['jpg', 'jpeg', 'png', 'gif', 'webp'], accept: 'gambar (JPG/PNG)' },
+        poster_event: { maxMB: 10, exts: ['jpg', 'jpeg', 'png', 'webp'], accept: 'JPG, PNG, atau WEBP' },
     };
 
     const handleFile = (field, file, inputEl) => {
@@ -307,7 +310,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
                                         <span className="text-xs text-gray-500">Poster saat ini</span>
                                     </div>
                                 )}
-                                <input type="file" accept="image/*"
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
                                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                                     onChange={e => handleFile('poster_event', e.target.files?.[0], e.target)} />
                                 {errors.poster_event && <span className="block mt-1 text-xs text-red-500">⚠ {errors.poster_event}</span>}

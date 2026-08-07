@@ -409,7 +409,7 @@ export default function EventDetail({
 
                         {routes.dokumentasiStore && (
                             <form onSubmit={uploadDok}>
-                                <input type="file" accept="image/*" multiple
+                                <input type="file" accept="image/jpeg,image/png,image/webp" multiple
                                     onChange={(e) => { tambahFotoDok(e.target.files); e.target.value = ''; }}
                                     className="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-pink-50 file:text-[#FF2D55] hover:file:bg-pink-100" />
 
@@ -807,7 +807,7 @@ export default function EventDetail({
 
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <Field label="Poster" hint="Kosongkan bila tidak ingin mengganti poster." error={errors.poster_event}>
-                            <input type="file" accept="image/*" className={inputCls}
+                            <input type="file" accept="image/jpeg,image/png,image/webp" className={inputCls}
                                 onChange={(e) => setData('poster_event', e.target.files[0] || null)} />
                         </Field>
                         <label className="flex items-start gap-3 p-4 mt-6 transition-colors border cursor-pointer border-gray-200 rounded-2xl hover:border-gray-300 has-[:checked]:border-[#FF2D55] has-[:checked]:bg-[#FF2D55]/5">

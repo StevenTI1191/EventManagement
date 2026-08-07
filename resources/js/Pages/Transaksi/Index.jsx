@@ -221,7 +221,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                             </div>
                             <div>
                                 <label className="block mb-1 text-xs font-bold text-gray-600">Bukti Transfer (Opsional)</label>
-                                <input type="file" accept="image/*"
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
                                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                                     onChange={e => { if (e.target.files?.[0]) formBayar.setData('bukti_file', e.target.files[0]); }} />
                             </div>
@@ -331,7 +331,7 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                             </div>
                             <div>
                                 <label className="block mb-1 text-xs font-bold text-gray-600">Ganti Bukti (Opsional)</label>
-                                <input type="file" accept="image/*"
+                                <input type="file" accept="image/jpeg,image/png,image/webp"
                                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                                     onChange={e => { if (e.target.files?.[0]) formEditBayar.setData('bukti_file', e.target.files[0]); }} />
                             </div>
