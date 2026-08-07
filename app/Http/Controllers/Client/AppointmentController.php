@@ -745,10 +745,18 @@ class AppointmentController extends Controller
     }
 
     /**
-     * Klien mengajukan pembatalan + refund acara yang sudah berjalan (Deal ke
-     * atas). Pengajuan HANYA membuat permintaan berstatus Diajukan — acara belum
-     * batal. Alur lanjut berurutan: Event Marketing menyetujui, Finance
-     * menetapkan nominal refund, lalu Manajemen menyetujui terakhir.
+     * Klien membatalkan acaranya sendiri (Deal atau Upcoming).
+     *
+     * Pembatalan berlaku SEKETIKA — tidak ada rantai persetujuan dan tidak ada
+     * refund. Uang muka yang sudah dibayarkan hangus dan tetap tercatat pada
+     * buku kas sebagai pendapatan; nilainya disalin ke catatan pembatalan agar
+     * terbaca di riwayat. Karena akibatnya tak dapat ditarik kembali, klien
+     * wajib menyatakan lebih dulu bahwa ia memahaminya, dan pernyataan itu
+     * diperiksa di sisi server.
+     *
+     * Jalan keluar bagi klien yang hanya berhalangan pada tanggalnya adalah
+     * penggantian tanggal (ajukanReschedule) — di situ uang mukanya tetap
+     * berlaku, dan hanya itulah yang menunggu persetujuan Manajemen.
      */
     public function ajukanPembatalan(Request $request, $id_event)
     {

@@ -2374,7 +2374,8 @@ export default function ClientDashboard({
                 </div>
             )}
 
-            {/* Modal Ajukan Pembatalan & Refund */}
+            {/* Modal Pembatalan Acara — berlaku seketika, uang muka hangus.
+                Tidak ada refund maupun rantai persetujuan. */}
             {pembatalanModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">
                     <div className="w-full max-w-md p-6 bg-surface border border-line shadow-xl rounded-2xl">

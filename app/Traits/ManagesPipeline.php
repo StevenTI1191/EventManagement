@@ -315,9 +315,13 @@ trait ManagesPipeline
 
     /**
      * Tandai prospek "tidak jadi" (batal) langsung dari papan. Berlaku untuk
-     * Lead, Negotiation, dan Deal — selama BELUM ada pembayaran masuk. Deal yang
-     * sudah menerima uang harus lewat alur Pembatalan & Refund (klien → Manajemen
-     * → Finance), bukan sekadar "tidak jadi" di papan ini.
+     * Lead, Negotiation, dan Deal — selama BELUM ada pembayaran masuk.
+     *
+     * Acara yang sudah menerima uang tidak boleh dibatalkan sepihak dari sini:
+     * keputusannya ada pada klien. Ia membatalkan sendiri dari portalnya dengan
+     * akibat uang mukanya hangus, atau mengajukan penggantian tanggal agar uang
+     * mukanya tetap berlaku. Alur persetujuan berjenjang beserta refund sudah
+     * tidak ada lagi.
      *
      * Event tidak dihapus permanen: statusnya jadi Batal agar riwayat tetap ada.
      * Invoice yang belum dibayar (mis. DP yang terbit otomatis saat Deal)
@@ -338,7 +342,9 @@ trait ManagesPipeline
             $adaBayar = \App\Models\Transaksi::where('id_event', $event->id_event)->where('nominal', '>', 0)->exists();
             if ($adaBayar) {
                 throw ValidationException::withMessages([
-                    'alasan' => 'Acara ini sudah menerima pembayaran. Gunakan alur Pembatalan & Refund, bukan "Tidak jadi".',
+                    'alasan' => 'Acara ini sudah menerima pembayaran, jadi tidak dapat ditandai "Tidak jadi". '
+                        . 'Pembatalannya hanya dapat dilakukan klien sendiri dari portalnya — uang mukanya hangus — '
+                        . 'atau klien mengajukan penggantian tanggal agar uang mukanya tetap berlaku.',
                 ]);
             }
         }
