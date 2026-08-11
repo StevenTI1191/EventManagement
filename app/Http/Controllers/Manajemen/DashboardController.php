@@ -22,8 +22,15 @@ class DashboardController extends Controller
         $eventActive    = Event::whereIn('status_event', [Event::STATUS_UPCOMING, Event::STATUS_PENYELESAIAN])->count();
         $eventDone      = Event::where('status_event', 'Done')->count();
         $totalClient    = Client::count();
-        $totalTransaksi = \App\Models\Transaksi::count();
-        $totalPenjualan = \App\Models\Transaksi::sum('nominal');
+
+        // Angka uang memakai cakupan yang sama dengan dashboard Finance dan
+        // halaman Laporan, yaitu scope untukLaporan(). Sebelumnya seluruh
+        // transaksi dijumlahkan tanpa melihat acaranya, sehingga kartu "Total
+        // Penjualan" di sini dan kartu bernama sama di Finance menunjukkan dua
+        // angka berbeda untuk pertanyaan yang sama.
+        $padaLaporan    = fn ($q) => $q->untukLaporan();
+        $totalTransaksi = \App\Models\Transaksi::whereHas('event', $padaLaporan)->count();
+        $totalPenjualan = \App\Models\Transaksi::whereHas('event', $padaLaporan)->sum('nominal');
 
         // "Event Terbaru" hanya menampilkan acara yang AKAN datang (Upcoming),
         // diurutkan dari tanggal terdekat.
@@ -34,7 +41,11 @@ class DashboardController extends Controller
 
         // ── Chart 1: Penjualan per bulan (tahun ini) ─────────────────────
         $bulanLabels = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
-        $salesRaw = \App\Models\Transaksi::selectRaw('MONTH(tgl_bayar) as bulan, SUM(nominal) as total')
+        // Cakupannya sama dengan kartu Total Penjualan di atas, supaya jumlah
+        // batangnya sepanjang tahun tidak berselisih dengan angka besar di
+        // kepala halaman yang sama.
+        $salesRaw = \App\Models\Transaksi::whereHas('event', $padaLaporan)
+            ->selectRaw('MONTH(tgl_bayar) as bulan, SUM(nominal) as total')
             ->whereYear('tgl_bayar', now()->year)
             ->groupBy('bulan')->pluck('total', 'bulan');
         $salesChart = collect(range(1, 12))->map(fn($b) => [
@@ -43,7 +54,13 @@ class DashboardController extends Controller
         ]);
 
         // ── Chart 2: Distribusi event per kategori ────────────────────────
-        $kategoriChart = Event::selectRaw("COALESCE(kategori_event, 'Lainnya') as kategori, COUNT(*) as total")
+        // Populasinya disamakan dengan kartu "Total Event" di atas, yaitu acara
+        // yang benar-benar terselenggara. Sebelumnya SELURUH acara dihitung —
+        // termasuk prospek yang belum disepakati dan acara yang dibatalkan —
+        // sehingga jumlah seluruh potongan diagramnya tidak pernah sama dengan
+        // angka Total Event yang tertera tepat di atasnya.
+        $kategoriChart = Event::terkonfirmasi()
+            ->selectRaw("COALESCE(kategori_event, 'Lainnya') as kategori, COUNT(*) as total")
             ->groupBy('kategori')
             ->orderByDesc('total')
             ->get()
@@ -61,8 +78,10 @@ class DashboardController extends Controller
         // ── Chart 4: Top 5 PIC berdasarkan jumlah event ───────────────────
         // Hanya pengguna internal sistem (EM/Manajemen/Finance) — staf eksternal
         // bukan penanggung jawab acara, jadi tidak ikut leaderboard.
-        $topPic = Pegawai::withCount('events')
-            ->where('jenis_pegawai', 'Internal')
+        // Hitungannya memakai populasi yang sama pula: acara yang dibatalkan
+        // maupun prospek yang belum disepakati bukan capaian seorang PIC.
+        $topPic = Pegawai::withCount(['events' => fn ($q) => $q->terkonfirmasi()])
+            ->where('jenis_pegawai', Pegawai::JENIS_INTERNAL)
             ->orderByDesc('events_count')
             ->take(5)
             ->get()
