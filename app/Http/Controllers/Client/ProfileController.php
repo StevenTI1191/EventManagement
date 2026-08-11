@@ -60,7 +60,51 @@ class ProfileController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
+        // Alamat lama disimpan SEBELUM perubahan — sesudahnya sudah tertimpa.
+        $emailLama    = $client->email_client;
+        $emailBerubah = $data['email_client'] !== $emailLama;
+        $sandiBerubah = $request->filled('password');
+
         $client->update($data);
+
+        // Penanda "ingat saya" ikut diganti setiap kali kata sandinya berubah,
+        // sama seperti pada alur lupa kata sandi. Tanpa ini kuki yang sudah
+        // terlanjur berpindah tangan tetap berlaku, padahal mengganti kata
+        // sandi dari halaman profil justru tindakan pertama orang yang menduga
+        // akunnya dipakai orang lain.
+        //
+        // WAJIB lewat setRememberToken(), bukan ikut $data: kolomnya tidak ada
+        // pada daftar $fillable sehingga pengisian massal dibuang diam-diam.
+        if ($sandiBerubah) {
+            $client->setRememberToken(\Illuminate\Support\Str::random(60));
+            $client->save();
+        }
+
+        // Alamat email adalah identitas masuk SEKALIGUS tujuan tautan atur ulang
+        // kata sandi. Menggantinya berarti memindahkan kedua-duanya, jadi alamat
+        // LAMA harus diberi tahu — kalau perubahannya bukan dari pemiliknya,
+        // pemberitahuan inilah satu-satunya kesempatan ia mengetahuinya.
+        if ($emailBerubah && filled($emailLama)) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($emailLama)->send(new \App\Mail\PesanSistem(
+                    judul:    'Alamat Email Akun Diubah',
+                    ikon:     '⚠️',
+                    nada:     'jingga',
+                    sapaan:   'Halo, ' . ($client->nama_client ?? 'Klien') . '!',
+                    paragraf: [
+                        'Alamat email pada akun Anda baru saja diubah dari ' . $emailLama
+                        . ' menjadi ' . $client->email_client . '.',
+                        'Mulai sekarang, alamat baru itulah yang dipakai untuk masuk dan menerima '
+                        . 'tautan pengaturan ulang kata sandi.',
+                    ],
+                    penutup:  'Bila perubahan ini bukan Anda yang melakukannya, segera hubungi tim '
+                        . 'kami agar akun Anda dapat dipulihkan.',
+                    subjek:   'Alamat email akun diubah',
+                ));
+            } catch (\Exception $e) {
+                \Log::warning('Email pemberitahuan pergantian alamat gagal: ' . $e->getMessage());
+            }
+        }
 
         return back()->with('success', 'Profil berhasil diperbarui.');
     }
