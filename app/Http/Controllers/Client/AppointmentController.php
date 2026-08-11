@@ -555,8 +555,17 @@ class AppointmentController extends Controller
         }
 
         $request->validate([
-            // Pastikan event milik client yang login — cegah IDOR
-            'id_event'    => ['required', Rule::exists('events', 'id_event')->where('id_client', $client->id)],
+            // Pastikan event milik client yang login — cegah IDOR.
+            //
+            // Tahapnya ikut dijaga, bukan kepemilikannya saja. Portal klien
+            // hanya menampilkan acara yang sudah terikat kesepakatan, sehingga
+            // tanpa penjagaan ini seseorang masih dapat melampirkan bukti pada
+            // acaranya sendiri yang sudah DIBATALKAN atau yang masih sebatas
+            // prospek — uangnya lalu masuk buku kas atas acara yang tidak
+            // pernah ada kewajiban membayarnya.
+            'id_event'    => ['required', Rule::exists('events', 'id_event')
+                ->where('id_client', $client->id)
+                ->whereIn('status_event', \App\Models\Event::STATUS_BERKOMITMEN)],
             // Invoice yang dibayar harus milik event yang sama, supaya bukti
             // tidak bisa dikaitkan ke tagihan event lain.
             'id_invoice'  => ['nullable', Rule::exists('invoices', 'id_invoice')->where('id_event', $request->id_event)],
