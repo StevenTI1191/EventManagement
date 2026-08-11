@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Event;
 use App\Support\UnggahGambar;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
@@ -173,7 +174,10 @@ class EventController extends Controller
             'area_event'        => 'required|string|max:255',
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
-            'status_event'      => 'nullable|in:' . implode(',', Event::SEMUA_STATUS),
+            // Acara baru selalu lahir sebagai acara berjalan — lihat
+            // Event::statusFormYangBoleh(). Formulir tambahnya memang tidak
+            // punya pemilih status; nilainya dipatok Upcoming.
+            'status_event'      => ['nullable', Rule::in(Event::statusFormYangBoleh())],
             'is_public'         => 'nullable|boolean',
             'poster_event'      => UnggahGambar::aturan(maksKb: 10240),
         ]);
@@ -304,7 +308,11 @@ class EventController extends Controller
             'area_event'        => $jadwal . '|string|max:255',
             'technical_meeting' => 'nullable|string|max:255',
             'gladi_resik'       => 'nullable|string|max:255',
-            'status_event'      => 'nullable|in:' . implode(',', Event::SEMUA_STATUS),
+            // Hanya status yang benar-benar boleh ditetapkan dari formulir.
+            // Pembatalan dan perpindahan tahap pipeline punya jalurnya sendiri
+            // yang ikut membersihkan antrean turunannya — lihat
+            // Event::statusFormYangBoleh().
+            'status_event'      => ['nullable', Rule::in(Event::statusFormYangBoleh($event))],
             'is_public'         => 'nullable|boolean',
             'poster_event'      => UnggahGambar::aturan(maksKb: 10240),
         ]);

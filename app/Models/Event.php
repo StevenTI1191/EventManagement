@@ -218,6 +218,46 @@ class Event extends Model
     public const STATUS_MANUAL = [self::STATUS_UPCOMING, self::STATUS_PENYELESAIAN, self::STATUS_DONE];
 
     /**
+     * Status yang benar-benar boleh DITETAPKAN dari formulir acara.
+     *
+     * Formulirnya sendiri sudah lama menerapkan aturan ini pada tampilan —
+     * pemilih statusnya hanya muncul untuk acara yang sudah berjalan, dan
+     * isinya hanya STATUS_MANUAL. Yang tidak ada adalah penegakannya di server:
+     * validasinya menerima SELURUH status, termasuk Batal dan ketiga tahap
+     * pipeline.
+     *
+     * Itu berbahaya karena perpindahan status di sini menulis kolomnya begitu
+     * saja, tanpa satu pun pembersihan yang dikerjakan jalur resminya:
+     *
+     *  - Batal lewat jalurnya sendiri menghapus tagihan yang belum dibayar,
+     *    menutup permintaan ganti tanggal, menutup pembahasan penawaran beserta
+     *    MELEPAS slot pertemuannya, dan mencatat nilai uang yang hangus.
+     *    Menetapkannya dari formulir melewati semuanya — slot pertemuan itu
+     *    tetap terkunci untuk acara yang sudah tidak ada.
+     *  - Tahap pipeline lewat papan menolak penarikan mundur acara yang sudah
+     *    Deal maupun yang penawarannya sudah diterima klien. Formulir ini dapat
+     *    memundurkannya diam-diam.
+     *
+     * Acara yang belum berjalan karena itu hanya boleh mengirimkan kembali
+     * status yang sudah dimilikinya — formulir detailnya memang selalu
+     * menyertakan kolom ini, jadi menolaknya mentah-mentah akan membuat acara
+     * tahap Lead tidak dapat disunting sama sekali.
+     *
+     * @param self|null $event null untuk acara baru
+     * @return array<int,string>
+     */
+    public static function statusFormYangBoleh(?self $event = null): array
+    {
+        if ($event === null) {
+            return self::STATUS_MANUAL;
+        }
+
+        return in_array($event->status_event, self::STATUS_MANUAL, true)
+            ? self::STATUS_MANUAL
+            : [$event->status_event];
+    }
+
+    /**
      * Acara yang sudah terikat kesepakatan — punya nilai deal dan kewajiban
      * bayar. Prospek yang belum disepakati dan acara batal tidak termasuk,
      * sebab keduanya tidak menanggung piutang.
