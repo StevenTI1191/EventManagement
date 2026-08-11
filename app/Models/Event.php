@@ -599,8 +599,17 @@ class Event extends Model
         $batasAkhir = $selesai->copy()->addMinutes(self::BUFFER_JADWAL_MENIT);
 
         // Rentang acara lain juga memakai loading in/out-nya (fallback jam acara).
-        $mulaiSql = "CAST(CONCAT(tgl_mulai_event, ' ', COALESCE(loading_in, jam_mulai)) AS DATETIME)";
-        $akhirSql = "CAST(CONCAT(COALESCE(tgl_selesai_event, tgl_mulai_event), ' ', COALESCE(loading_out, jam_selesai)) AS DATETIME)";
+        //
+        // NULLIF(...,'') menyamakan perlakuan dengan sisi PHP di atas, yang
+        // memakai ?: sehingga string kosong pun jatuh ke jam acara. Tanpa itu
+        // COALESCE mempertahankan string kosong, CONCAT menghasilkan tanggal
+        // tanpa jam, CAST-nya menjadi NULL, dan seluruh perbandingan berubah
+        // palsu — acara tersebut berhenti memblokir slot yang benar-benar
+        // ditempatinya. Kolomnya memang selalu NULL berkat
+        // ConvertEmptyStringsToNull, tetapi penjagaan ini menutup baris lama
+        // maupun penulisan yang tidak lewat formulir.
+        $mulaiSql = "CAST(CONCAT(tgl_mulai_event, ' ', COALESCE(NULLIF(loading_in, ''), jam_mulai)) AS DATETIME)";
+        $akhirSql = "CAST(CONCAT(COALESCE(tgl_selesai_event, tgl_mulai_event), ' ', COALESCE(NULLIF(loading_out, ''), jam_selesai)) AS DATETIME)";
 
         // Acara lintas tengah malam yang disimpan tanpa tanggal selesai (mis.
         // resepsi 20:00–02:00, atau bongkar sampai loading_out 01:00) punya jam
