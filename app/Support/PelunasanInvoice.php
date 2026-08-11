@@ -58,13 +58,43 @@ class PelunasanInvoice
             ->groupBy('id_invoice')
             ->map(fn ($g) => (float) $g->sum('nominal'));
 
-        // Seluruh uang yang tercatat resmi, dikurangi yang sudah punya tujuan.
         $totalMasuk = (float) Transaksi::where('id_event', $idEvent)->sum('nominal');
-        $bebas      = max(0, $totalMasuk - $melekat->sum());
+
+        // Uang bertanda dihitung untuk tagihannya, TETAPI tidak melebihi nilai
+        // tagihan itu.
+        //
+        // Sebelumnya seluruh nominal bertanda dikurangkan dari uang bebas,
+        // termasuk bagian yang melampaui tagihannya. Kelebihan itu lalu lenyap
+        // dari pembagian: tidak menutup tagihan itu (sudah lunas) dan tidak
+        // pula tersedia bagi tagihan lain. Keadaan yang menimbulkannya sangat
+        // wajar — klien membayar seluruh nilai kesepakatan dalam satu transfer
+        // lalu menandainya pada tagihan uang muka. Akibatnya tagihan pelunasan
+        // tetap berbunyi "Belum Dibayar" padahal uangnya sudah diterima penuh,
+        // Tim Finance mengejar uang yang sudah ada di rekening, dan penjadwal
+        // terus mengirimi klien pengingat jatuh tempo untuk tagihan yang sudah
+        // mereka lunasi.
+        //
+        // Dengan membatasi tiap tagihan pada nilainya sendiri lebih dulu,
+        // kelebihannya otomatis kembali menjadi uang bebas — dan jumlah yang
+        // dibagikan tidak pernah melampaui uang yang benar-benar masuk.
+        $dibayarPer = [];
+        $terpakai   = 0.0;
 
         foreach ($invoices as $invoice) {
+            $ditandai = (float) ($melekat[$invoice->id_invoice] ?? 0);
+            $dipakai  = min($ditandai, (float) $invoice->nominal);
+
+            $dibayarPer[$invoice->id_invoice] = $dipakai;
+            $terpakai += $dipakai;
+        }
+
+        $bebas = max(0, $totalMasuk - $terpakai);
+
+        // Sisanya dialirkan ke tagihan terlama lebih dulu, sebagaimana lazimnya
+        // pelunasan — urutannya sudah ditetapkan orderBy('id_invoice') di atas.
+        foreach ($invoices as $invoice) {
             $nominal = (float) $invoice->nominal;
-            $dibayar = (float) ($melekat[$invoice->id_invoice] ?? 0);
+            $dibayar = $dibayarPer[$invoice->id_invoice];
 
             if ($dibayar < $nominal && $bebas > 0) {
                 $ambil    = min($bebas, $nominal - $dibayar);
