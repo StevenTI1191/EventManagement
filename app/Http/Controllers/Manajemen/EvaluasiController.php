@@ -230,7 +230,12 @@ class EvaluasiController extends Controller
             'sebaran' => $sebaran,
             'clients' => $clients,
             'eventsDiassign' => $eventsDiassign,
-            'isEM'    => in_array($pegawai->posisi_pegawai, ['EventMarketing', 'Event Marketing']),
+            // Closing rate hanya bermakna bagi Tim Event Marketing internal.
+            // Memakai acuan yang sama dengan seluruh pemeriksaan peran lain:
+            // posisi pegawai eksternal adalah teks bebas, sehingga membandingkan
+            // posisinya saja membuat tenaga lepas berjabatan "Event Marketing"
+            // ikut dinilai memakai ukuran yang tidak berlaku baginya.
+            'isEM'    => $pegawai->berperan('EventMarketing'),
         ]);
     }
 
