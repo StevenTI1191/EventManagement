@@ -37,7 +37,25 @@ class RescheduleController extends Controller
                 'penyetuju:id_pegawai,nama_pegawai',
             ])
             ->latest()
-            ->get();
+            ->get()
+            // Penanda dihitung SERVER dengan aturan yang sama seperti antrean &
+            // lencananya. Halaman ini sebelumnya menghitung sendiri di sisi
+            // tampilan dengan melihat status pengajuannya saja, sehingga sesudah
+            // antreannya dipersempit, angka pada halaman dan angka pada lencana
+            // menunjukkan dua jumlah berbeda — dan tombol Setujui tetap muncul
+            // untuk pengajuan yang persetujuannya pasti ditolak.
+            //
+            // Sengaja memakai badan blok, BUKAN arrow function. Collection::each()
+            // berhenti begitu callback-nya mengembalikan false, sedangkan
+            // `fn ($r) => $r->x = ...` mengembalikan nilai yang ditugaskan — jadi
+            // baris pertama yang tidak dapat diproses akan menghentikan
+            // penelusuran, dan seluruh baris sesudahnya tidak pernah diberi
+            // penanda sama sekali.
+            ->each(function ($r) {
+                $r->dapat_diproses = $r->status === EventReschedule::STATUS_DIAJUKAN
+                    && in_array($r->event?->status_event,
+                        EventReschedule::ACARA_DAPAT_DIPINDAH, true);
+            });
 
         $pembatalan = EventPembatalan::with([
                 'event:id_event,nama_event,tgl_mulai_event',

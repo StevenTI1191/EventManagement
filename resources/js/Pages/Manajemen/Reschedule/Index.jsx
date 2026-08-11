@@ -32,7 +32,9 @@ export default function RescheduleIndex({ pengajuan = [], pembatalan = [] }) {
         });
     };
 
-    const menunggu = pengajuan.filter((p) => p.status === 'Diajukan').length;
+    // Dihitung dari penanda yang dikirim server, bukan dari status pengajuannya
+    // saja — supaya angka di sini sama persis dengan lencana pada menu.
+    const menunggu = pengajuan.filter((p) => p.dapat_diproses).length;
 
     return (
         <ManajemenLayout>
@@ -128,11 +130,23 @@ export default function RescheduleIndex({ pengajuan = [], pembatalan = [] }) {
                                 )}
 
                                 {p.status === 'Diajukan' && (
-                                    <div className="flex gap-2 mt-4">
+                                    <div className="flex flex-wrap items-center gap-2 mt-4">
+                                        {/* Menyetujui pemindahan hanya mungkin selama acaranya
+                                            memang masih dapat dipindahkan. Untuk yang tidak,
+                                            tombolnya diganti keterangan — sebelumnya tombol itu
+                                            tetap muncul lalu selalu berakhir ditolak server.
+                                            Tombol Tolak tetap ada supaya pengajuannya dapat
+                                            dibereskan, bukan menggantung selamanya. */}
+                                        {p.dapat_diproses ? (
                                         <button onClick={() => setAksi({ p, tipe: 'setujui' })}
                                             className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-green-700 border border-green-200 bg-green-50 rounded-xl hover:bg-green-100">
                                             <CheckCircle2 size={15} /> Setujui & pindahkan jadwal
                                         </button>
+                                        ) : (
+                                        <span className="px-3 py-2 text-xs font-bold text-gray-500 border border-gray-200 bg-gray-50 rounded-xl">
+                                            Acara berstatus {p.event?.status_event ?? '—'}, jadwalnya tidak dapat dipindahkan lagi
+                                        </span>
+                                        )}
                                         <button onClick={() => { setCatatan(''); setAksi({ p, tipe: 'tolak' }); }}
                                             className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-red-600 border border-red-200 bg-red-50 rounded-xl hover:bg-red-100">
                                             <XCircle size={15} /> Tolak
