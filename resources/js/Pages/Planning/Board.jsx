@@ -49,7 +49,7 @@ function ProgressBar({ value }) {
 export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, routes }) {
     // Kalau papan dibuka dari To-Do-List, query ?back= membawa URL asal supaya
     // tombol "Kembali" mengarah balik ke sana, bukan ke Events/Planning.
-    const { url: pageUrl } = usePage();
+    const { url: pageUrl, props: { flash = {} } } = usePage();
     const qs = new URLSearchParams(pageUrl.split('?')[1] || '');
     const backUrl = qs.get('back');
     const backLabel = qs.get('backLabel');
@@ -118,6 +118,23 @@ export default function PlanningBoard({ Layout, event, tugas, pegawai, mode, rou
     return (
         <Layout>
             <Head title={`${isPlanning ? 'Planning' : 'To-Do'} — ${event.nama_event}`} />
+
+            {/* Penolakan server. Finalisasi rencana internal ditolak bila
+                jadwalnya bentrok dengan acara lain di area yang sama, dan
+                penolakan itu datang sebagai flash — tanpa penampil ini
+                tombol Finalisasi hanya menutup dialognya lalu diam, seolah
+                tidak terjadi apa-apa. */}
+            {flash?.error && (
+                <div className="p-4 mb-6 border border-red-200 bg-red-50 rounded-xl">
+                    <p className="text-sm font-bold text-red-700">Tidak dapat dilanjutkan</p>
+                    <p className="mt-0.5 text-sm font-medium text-red-600">{flash.error}</p>
+                </div>
+            )}
+            {flash?.success && (
+                <div className="p-4 mb-6 text-sm font-bold text-green-700 border border-green-200 bg-green-50 rounded-xl">
+                    {flash.success}
+                </div>
+            )}
 
             {/* HEADER */}
             <div className="mb-6">
