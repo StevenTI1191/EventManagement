@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Manajemen;
 use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -52,9 +53,23 @@ class PegawaiController extends Controller
     {
         $this->checkManajemen();
 
-        $posisiRule = $request->jenis_pegawai === 'Internal'
-            ? 'required|in:Manajemen,EventMarketing,Finance'
-            : 'required|string|max:255';
+        // Posisi pegawai internal terbatas pada tiga peran backstage. Posisi
+        // pegawai eksternal dibiarkan bebas sebab jabatan tenaga lepas memang
+        // bermacam-macam — TETAPI tidak boleh menyamai nama peran backstage,
+        // walau berbeda huruf besar-kecil maupun spasi. Tanpa larangan itu,
+        // seorang tenaga lepas berjabatan "finance" menjadi tidak dapat
+        // dibedakan dari Tim Finance pada layar mana pun, dan setiap
+        // pemeriksaan yang lupa menimbang jenis pegawainya akan meloloskannya.
+        $posisiRule = $request->jenis_pegawai === Pegawai::JENIS_INTERNAL
+            ? ['required', Rule::in(Pegawai::PERAN_INTERNAL)]
+            : ['required', 'string', 'max:255', function ($attr, $value, $fail) {
+                foreach (Pegawai::PERAN_INTERNAL as $peran) {
+                    if (Pegawai::normalPeran($value) === Pegawai::normalPeran($peran)) {
+                        $fail("Posisi \"{$peran}\" hanya untuk pegawai internal. "
+                            . 'Gunakan sebutan lain untuk tenaga eksternal.');
+                    }
+                }
+            }];
 
         $request->validate([
             'nama_pegawai'     => 'required|string|max:255',
@@ -87,9 +102,23 @@ class PegawaiController extends Controller
 
         $pegawai = Pegawai::findOrFail($id);
 
-        $posisiRule = $request->jenis_pegawai === 'Internal'
-            ? 'required|in:Manajemen,EventMarketing,Finance'
-            : 'required|string|max:255';
+        // Posisi pegawai internal terbatas pada tiga peran backstage. Posisi
+        // pegawai eksternal dibiarkan bebas sebab jabatan tenaga lepas memang
+        // bermacam-macam — TETAPI tidak boleh menyamai nama peran backstage,
+        // walau berbeda huruf besar-kecil maupun spasi. Tanpa larangan itu,
+        // seorang tenaga lepas berjabatan "finance" menjadi tidak dapat
+        // dibedakan dari Tim Finance pada layar mana pun, dan setiap
+        // pemeriksaan yang lupa menimbang jenis pegawainya akan meloloskannya.
+        $posisiRule = $request->jenis_pegawai === Pegawai::JENIS_INTERNAL
+            ? ['required', Rule::in(Pegawai::PERAN_INTERNAL)]
+            : ['required', 'string', 'max:255', function ($attr, $value, $fail) {
+                foreach (Pegawai::PERAN_INTERNAL as $peran) {
+                    if (Pegawai::normalPeran($value) === Pegawai::normalPeran($peran)) {
+                        $fail("Posisi \"{$peran}\" hanya untuk pegawai internal. "
+                            . 'Gunakan sebutan lain untuk tenaga eksternal.');
+                    }
+                }
+            }];
 
         $request->validate([
             'nama_pegawai'   => 'required|string|max:255',

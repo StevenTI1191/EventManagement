@@ -163,7 +163,7 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         Route::delete('/manajemen/todo/{id_tugas}', [TugasController::class, 'destroy'])
             ->name('manajemen.todo.destroy');
         Route::get('/manajemen/event/{id_event}/todo-json', function ($id_event) {
-            if (\Illuminate\Support\Facades\Auth::guard('pegawai')->user()->posisi_pegawai !== 'Manajemen') {
+            if (! \Illuminate\Support\Facades\Auth::guard('pegawai')->user()?->berperan('Manajemen')) {
                 abort(403);
             }
             \App\Models\Event::findOrFail($id_event); // pastikan event valid
@@ -530,7 +530,7 @@ Route::domain(config('app.backstage_domain'))->group(function () {
         // agar notifikasi konfirmasi yang dikirim ke client (client_id IS NOT NULL)
         // tidak ikut muncul di panel Finance.
         Route::get('/finance/notifikasi', function () {
-            if (auth('pegawai')->user()->posisi_pegawai !== 'Finance') abort(403);
+            if (! auth('pegawai')->user()?->berperan('Finance')) abort(403);
             $notifikasi = \App\Models\Notifikasi::where('tipe', 'bukti_pembayaran')
                 ->whereNull('client_id')
                 ->latest()->take(30)->get();
@@ -540,14 +540,14 @@ Route::domain(config('app.backstage_domain'))->group(function () {
             return response()->json(['notifikasi' => $notifikasi, 'unread' => $unread]);
         })->name('finance.notifikasi.index');
         Route::post('/finance/notifikasi/read-all', function () {
-            if (auth('pegawai')->user()->posisi_pegawai !== 'Finance') abort(403);
+            if (! auth('pegawai')->user()?->berperan('Finance')) abort(403);
             \App\Models\Notifikasi::where('tipe', 'bukti_pembayaran')
                 ->whereNull('client_id')
                 ->where('is_read', false)->update(['is_read' => true]);
             return response()->json(['success' => true]);
         })->name('finance.notifikasi.read');
         Route::delete('/finance/notifikasi/{id}', function ($id) {
-            if (auth('pegawai')->user()->posisi_pegawai !== 'Finance') abort(403);
+            if (! auth('pegawai')->user()?->berperan('Finance')) abort(403);
             \App\Models\Notifikasi::where('id', $id)
                 ->where('tipe', 'bukti_pembayaran')
                 ->whereNull('client_id')

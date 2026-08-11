@@ -26,24 +26,28 @@ trait ChecksPegawaiRole
      * Pastikan pegawai yang login termasuk salah satu role yang diizinkan.
      * Pencocokan toleran spasi & kapital (mis. "event marketing" == "EventMarketing").
      * Kalau tidak cocok: JANGAN buntu di 403 — alihkan ke dashboard role-nya sendiri.
+     *
+     * Kecocokan posisi saja TIDAK cukup, jenisnya harus Internal pula — lihat
+     * Pegawai::berperan(). Posisi pegawai eksternal adalah teks bebas, sehingga
+     * tenaga lepas yang jabatannya kebetulan ditulis sama dengan salah satu
+     * peran backstage akan memperoleh seluruh modul peran itu.
      */
     protected function ensurePegawaiRole(array $allowed): void
     {
-        $posisi = Auth::guard('pegawai')->user()?->posisi_pegawai;
+        $pegawai = Auth::guard('pegawai')->user();
 
-        $norm = static fn ($s) => strtolower(str_replace(' ', '', trim((string) $s)));
-        $current = $norm($posisi);
-
-        foreach ($allowed as $role) {
-            if ($norm($role) === $current) {
-                return; // cocok → lanjut
-            }
+        if ($pegawai && $pegawai->berperan(...$allowed)) {
+            return; // cocok → lanjut
         }
 
-        // Role tidak cocok → arahkan ke dashboard miliknya, bukan layar 403 buntu.
-        throw new HttpResponseException(
-            redirect()->to($this->dashboardUrlFor($current))
-        );
+        // Pegawai eksternal tidak punya dashboard backstage mana pun. Mengarahkannya
+        // menurut posisi justru memutar: tujuannya memeriksa peran yang sama lalu
+        // memantulkannya kembali ke sini tanpa henti.
+        $tujuan = $pegawai && $pegawai->berperan(...\App\Models\Pegawai::PERAN_INTERNAL)
+            ? $this->dashboardUrlFor(\App\Models\Pegawai::normalPeran($pegawai->posisi_pegawai))
+            : url('/');
+
+        throw new HttpResponseException(redirect()->to($tujuan));
     }
 
     /**
