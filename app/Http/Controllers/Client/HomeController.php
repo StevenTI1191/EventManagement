@@ -38,12 +38,18 @@ class HomeController extends Controller
                 'deskripsi_event', 'entairtainment_event', 'food_beverage_event',
             ]);
 
-        // Stats real dari DB
+        // Angka yang dipajang ke pengunjung dihitung dari acara yang benar-benar
+        // terselenggara — Upcoming, Penyelesaian, dan Done. Sebelumnya seluruh
+        // baris acara dihitung, sehingga prospek yang tidak pernah disepakati
+        // dan acara yang dibatalkan ikut menggelembungkan angkanya. Pada data
+        // yang ada sekarang selisihnya lebih dari dua kali lipat, dan ini
+        // halaman yang dibaca calon klien.
         $stats = [
-            'totalEventDone' => Event::where('status_event', 'Done')->count(),
+            'totalEventDone' => Event::where('status_event', Event::STATUS_DONE)->count(),
             'totalClient'    => Client::count(),
-            'totalEvent'     => Event::count(),
-            'totalKategori'  => Event::distinct()->whereNotNull('kategori_event')->count('kategori_event'),
+            'totalEvent'     => Event::terkonfirmasi()->count(),
+            'totalKategori'  => Event::terkonfirmasi()
+                ->whereNotNull('kategori_event')->distinct()->count('kategori_event'),
         ];
 
         // Fasilitas venue (panggung, videotron, sound & lighting, area indoor,
@@ -97,7 +103,15 @@ class HomeController extends Controller
                              'entairtainment_event', 'food_beverage_event'])
             ->withQueryString();
 
-        $kategoris = Event::whereNotNull('kategori_event')
+        // Pilihan kategori diambil HANYA dari acara yang memang tampil di sini.
+        // Sebelumnya ditarik dari seluruh acara, sehingga daftar saringnya ikut
+        // memuat kategori yang hanya dimiliki acara internal, prospek yang
+        // belum disepakati, atau acara yang tidak dipublikasikan — memberi tahu
+        // pengunjung tentang pekerjaan yang tidak pernah dimaksudkan untuk
+        // dilihat, sekaligus menghasilkan saringan yang selalu kosong.
+        $kategoris = Event::whereIn('status_event', [Event::STATUS_UPCOMING, Event::STATUS_DONE])
+            ->where('is_public', true)
+            ->whereNotNull('kategori_event')
             ->distinct()->pluck('kategori_event');
 
         return Inertia::render('Client/Events', [
