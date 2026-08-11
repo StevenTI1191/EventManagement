@@ -176,12 +176,48 @@ trait ManagesAppointment
         return back()->with('success', 'Appointment berhasil dikonfirmasi.');
     }
 
+    /**
+     * Tolak aksi yang akan memutus alur pembahasan penawaran.
+     *
+     * Pertemuan pembahasan memang tidak tampil pada daftar Appointment, tetapi
+     * seluruh aksi di sini dijangkau lewat id sehingga penyaringan pada daftar
+     * saja tidak menjaga apa pun. Siklus hidupnya dimiliki halaman Negosiasi
+     * Klien: hasilnya dicatat di sana, dan pencatatan itulah yang melepaskan
+     * penawaran yang sedang tertahan bagi klien.
+     *
+     * Yang paling merugikan adalah penghapusan. Kolom penghubungnya berperilaku
+     * SET NULL, sehingga pembahasannya kehilangan jadwal — meetingSudahLewat()
+     * selamanya bernilai salah, hasilnya tidak akan pernah dapat dicatat, dan
+     * barisnya lenyap dari lencana maupun pengingat sementara penawaran klien
+     * tetap tertahan.
+     *
+     * Konfirmasi dan pencatatan hasil TIDAK dijaga di sini: keduanya memang
+     * bagian dari alur pembahasan itu sendiri.
+     */
+    private function tolakBilaPembahasan(Appointment $appointment, string $aksi): void
+    {
+        $negosiasi = $appointment->negosiasi;
+
+        if ($negosiasi && in_array($negosiasi->status, \App\Models\EventNegosiasi::BERJALAN, true)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'appointment' => "Pertemuan ini adalah pembahasan penawaran, jadi tidak dapat {$aksi} "
+                    . 'dari halaman Appointment. Tuntaskan atau tutup pembahasannya dari menu '
+                    . 'Negosiasi Klien — di sanalah hasilnya dicatat dan penawaran klien dilepaskan.',
+            ]);
+        }
+    }
+
     protected function selesaikanAppointment($id)
     {
-        Appointment::where('id', $id)
+        $appointment = Appointment::where('id', $id)
             ->whereIn('status', self::SUDAH_DIJADWALKAN)
-            ->firstOrFail()
-            ->update(['status' => 'Selesai']);
+            ->firstOrFail();
+
+        // Pembahasan penawaran dinyatakan selesai lewat pencatatan hasilnya,
+        // bukan dengan menandai pertemuannya selesai dari sini.
+        $this->tolakBilaPembahasan($appointment, 'ditandai selesai');
+
+        $appointment->update(['status' => 'Selesai']);
 
         return back()->with('success', 'Appointment ditandai selesai.');
     }
@@ -300,7 +336,11 @@ trait ManagesAppointment
             'konfirmasi.in'       => 'Konfirmasi tidak cocok. Ketik HAPUS (huruf besar) persis.',
         ]);
 
-        Appointment::findOrFail($id)->delete();
+        $appointment = Appointment::findOrFail($id);
+
+        $this->tolakBilaPembahasan($appointment, 'dihapus');
+
+        $appointment->delete();
     }
 
     protected function batalkanAppointment(Request $request, $id)
@@ -310,6 +350,11 @@ trait ManagesAppointment
         $appointment = Appointment::where('id', $id)
             ->whereIn('status', ['Pending', ...self::SUDAH_DIJADWALKAN])
             ->firstOrFail();
+
+        // Membatalkan pertemuannya dari sini meninggalkan pembahasannya tetap
+        // berjalan tanpa jadwal yang bisa dihadiri. Penutupannya dilakukan dari
+        // halaman Negosiasi Klien, yang sekaligus melepas slotnya.
+        $this->tolakBilaPembahasan($appointment, 'dibatalkan');
 
         $appointment->update([
             'status'     => 'Dibatalkan',
