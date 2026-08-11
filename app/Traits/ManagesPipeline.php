@@ -357,6 +357,22 @@ trait ManagesPipeline
             ->where('status', \App\Models\Invoice::STATUS_BELUM)
             ->delete();
 
+        // Permintaan ganti tanggal yang masih menunggu ikut ditutup. Prospek
+        // yang sudah Deal boleh mengajukannya, dan penandaan "tidak jadi" di
+        // sini berlaku sampai tahap Deal — jadi keadaan ini benar-benar dapat
+        // terjadi. Tanpa penutupan, pengajuannya menggantung selamanya sebagai
+        // "menunggu persetujuan" di dashboard klien, dan Manajemen hanya dapat
+        // membereskannya dengan menolaknya satu per satu.
+        //
+        // Penutupan yang sama sudah dilakukan pada pembatalan oleh klien;
+        // jalur ini yang terlewat.
+        \App\Models\EventReschedule::where('id_event', $event->id_event)
+            ->where('status', \App\Models\EventReschedule::STATUS_DIAJUKAN)
+            ->update([
+                'status'        => \App\Models\EventReschedule::STATUS_DITOLAK,
+                'catatan_tolak' => 'Prospek ditandai tidak jadi sebelum permintaan ini ditinjau.',
+            ]);
+
         $event->update([
             'status_event' => Event::STATUS_BATAL,
             // Penawaran yang masih menunggu keputusan ikut ditutup. Tanpa ini,

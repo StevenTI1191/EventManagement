@@ -50,8 +50,30 @@ class EventReschedule extends Model
     }
 
     /** Pengajuan yang masih menunggu keputusan — memblokir pengajuan baru. */
+    /**
+     * Status acara yang jadwalnya masih mungkin dipindahkan.
+     *
+     * Disamakan persis dengan yang diterima RescheduleController::setujui().
+     */
+    public const ACARA_DAPAT_DIPINDAH = [Event::STATUS_DEAL, Event::STATUS_UPCOMING];
+
+    /**
+     * Pengajuan yang benar-benar menunggu keputusan Manajemen.
+     *
+     * Acara yang jadwalnya sudah tidak mungkin dipindahkan dikecualikan DI SINI,
+     * bukan hanya di halaman antreannya — lencana pada menu memakai scope ini
+     * juga, dan ketika keduanya berbeda aturan, lencananya menunjukkan angka
+     * untuk pekerjaan yang tidak dapat diselesaikan. Menyetujuinya hanya akan
+     * ditolak dengan keterangan bahwa acaranya sudah batal atau sudah lewat,
+     * sehingga Manajemen terpaksa menolak satu per satu hanya untuk
+     * mengosongkan lencananya.
+     *
+     * Aturan yang sama sudah lebih dulu dipakai Event::scopePenawaranMenunggu();
+     * antrean ini yang terlewat.
+     */
     public function scopeMenunggu($q)
     {
-        return $q->where('status', self::STATUS_DIAJUKAN);
+        return $q->where('status', self::STATUS_DIAJUKAN)
+            ->whereHas('event', fn ($e) => $e->whereIn('status_event', self::ACARA_DAPAT_DIPINDAH));
     }
 }
