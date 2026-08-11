@@ -26,6 +26,28 @@ class GoogleAuthController extends Controller
                 ->withErrors(['email' => 'Login Google gagal. Silakan coba lagi.']);
         }
 
+        // Alamat email HARUS sudah diverifikasi Google sebelum dipakai.
+        //
+        // Alasannya ada pada langkah penautan di bawah: akun Google yang belum
+        // dikenal dicari padanannya lewat EMAIL, lalu ditautkan ke akun klien
+        // yang sudah ada. Penautan itulah yang membuat verifikasi menjadi
+        // syarat — tanpa memeriksanya, siapa pun yang dapat membuat akun Google
+        // beralamat email milik orang lain (hal yang mungkin pada domain
+        // Workspace, sebab pengelolanya menetapkan sendiri alamat penggunanya)
+        // akan langsung masuk ke akun klien tersebut beserta seluruh acara,
+        // tagihan, dan dokumennya — tanpa pernah menyentuh kata sandinya.
+        $terverifikasi = (bool) ($googleUser->user['email_verified']
+            ?? $googleUser->user['verified_email']
+            ?? false);
+
+        if (blank($googleUser->email) || ! $terverifikasi) {
+            return redirect()->route('client.login')->withErrors([
+                'email' => 'Alamat email pada akun Google Anda belum terverifikasi, sehingga belum '
+                    . 'dapat dipakai untuk masuk. Verifikasi dulu di akun Google Anda, atau masuk '
+                    . 'memakai email dan kata sandi.',
+            ]);
+        }
+
         // Find by google_id
         $client = Client::where('google_id', $googleUser->id)->first();
 

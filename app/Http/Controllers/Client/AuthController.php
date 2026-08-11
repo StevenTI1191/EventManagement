@@ -83,7 +83,6 @@ class AuthController extends Controller
                 'email_client' => "Terlalu banyak percobaan pendaftaran. Coba lagi dalam {$seconds} detik.",
             ]);
         }
-        RateLimiter::hit($keyIp, 3600);
 
         $request->validate([
             'nama_client'       => 'required|string|min:3|max:255',
@@ -98,6 +97,13 @@ class AuthController extends Controller
             'perusahaan_client.required_if' => 'Nama perusahaan wajib diisi untuk klien perusahaan.',
             'email_client.unique'           => 'Email ini sudah terdaftar. Silakan login atau gunakan email lain.',
         ]);
+
+        // Penghitungnya dinaikkan SETELAH seluruh penolakan, bukan sebelumnya.
+        // Yang dibatasi adalah pembuatan akun, dan isian yang ditolak validasi
+        // tidak membuat akun apa pun. Menaikkannya lebih dulu membuat calon
+        // klien yang sepuluh kali salah mengisi — kata sandi tidak cocok, nomor
+        // HP salah format — terkunci sejam tanpa satu pun akun terbentuk.
+        RateLimiter::hit($keyIp, 3600);
 
         $client = Client::create([
             'nama_client'       => $request->nama_client,

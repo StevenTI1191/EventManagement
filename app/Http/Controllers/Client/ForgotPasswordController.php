@@ -16,6 +16,18 @@ use Inertia\Inertia;
 
 class ForgotPasswordController extends Controller
 {
+    /**
+     * Satu jawaban untuk SETIAP alamat yang dikirimkan — terdaftar maupun
+     * tidak, berkata-sandi maupun memakai Google.
+     *
+     * Jawaban yang berbeda-beda sudah cukup memberi tahu penebak alamat mana
+     * yang terdaftar di sistem ini beserta cara masuknya, dan itu membatalkan
+     * seluruh usaha menyamarkannya. Pemilik alamat yang sah tetap memperoleh
+     * keterangan yang tepat lewat kotak masuknya, yang hanya dapat ia baca.
+     */
+    private const PESAN_NETRAL = 'Jika email terdaftar, link reset akan dikirim dalam beberapa menit. '
+        . 'Cek inbox atau folder spam Anda.';
+
     public function showForgot()
     {
         return Inertia::render('Client/Auth/ForgotPassword');
@@ -40,14 +52,42 @@ class ForgotPasswordController extends Controller
 
         // Jangan ungkapkan apakah email ada atau tidak — security best practice
         if (!$client) {
-            return back()->with('success', 'Jika email terdaftar, link reset akan dikirim dalam beberapa menit.');
+            return back()->with('success', self::PESAN_NETRAL);
         }
 
-        // Akun Google-only tidak punya password
+        // Akun Google-only tidak punya kata sandi untuk diatur ulang.
+        //
+        // Jawabannya sengaja DISAMAKAN dengan jawaban untuk email yang tidak
+        // terdaftar. Beberapa baris di atas alamat yang tidak dikenal dijawab
+        // dengan kalimat netral justru agar keberadaannya tidak terungkap;
+        // membalas "akun ini terdaftar via Google" di sini membatalkan usaha
+        // itu, sebab jawaban yang berbeda sudah cukup memberi tahu penebak
+        // bahwa alamat tersebut TERDAFTAR sekaligus cara masuknya.
+        //
+        // Pemiliknya yang sah tetap terbantu: penjelasannya dikirim ke kotak
+        // masuk alamat itu, yang hanya dapat dibaca pemiliknya.
         if (is_null($client->password) && $client->google_id) {
-            return back()->withErrors([
-                'email' => 'Akun ini terdaftar via Google. Gunakan tombol "Masuk dengan Google".',
-            ]);
+            try {
+                Mail::to($client->email_client)->send(new \App\Mail\PesanSistem(
+                    judul:    'Akun Anda Memakai Masuk dengan Google',
+                    ikon:     '🔑',
+                    nada:     'biru',
+                    sapaan:   'Halo, ' . ($client->nama_client ?? 'Klien') . '!',
+                    paragraf: [
+                        'Kami menerima permintaan pengaturan ulang kata sandi untuk akun Anda.',
+                        'Akun Anda terdaftar melalui Google, sehingga tidak memiliki kata sandi '
+                        . 'yang dapat diatur ulang. Silakan masuk memakai tombol "Masuk dengan '
+                        . 'Google" pada halaman masuk.',
+                    ],
+                    penutup:  'Bila permintaan ini bukan dari Anda, abaikan saja pesan ini — '
+                        . 'tidak ada perubahan apa pun pada akun Anda.',
+                    subjek:   'Akun Anda memakai masuk dengan Google',
+                ));
+            } catch (\Exception $e) {
+                \Log::warning('Email pemberitahuan akun Google gagal dikirim: ' . $e->getMessage());
+            }
+
+            return back()->with('success', self::PESAN_NETRAL);
         }
 
         $token    = Str::random(64);
@@ -73,7 +113,7 @@ class ForgotPasswordController extends Controller
             // Token tetap tersimpan — user bisa coba lagi
         }
 
-        return back()->with('success', 'Link reset password telah dikirim. Cek inbox atau folder spam Anda.');
+        return back()->with('success', self::PESAN_NETRAL);
     }
 
     public function showReset(Request $request)
@@ -106,7 +146,20 @@ class ForgotPasswordController extends Controller
         }
 
         $client = Client::where('email_client', $request->email)->firstOrFail();
+
         $client->update(['password' => Hash::make($request->password)]);
+
+        // Penanda "ingat saya" ikut diganti. Halaman masuk menawarkan pilihan
+        // itu, sehingga tanpa penggantian ini kuki yang sudah terlanjur
+        // berpindah tangan TETAP berlaku sesudah kata sandinya diganti —
+        // padahal justru dugaan akun disalahgunakan itulah yang biasanya
+        // membuat orang mengatur ulang kata sandinya.
+        //
+        // Ditulis lewat setRememberToken(), BUKAN update(): kolomnya sengaja
+        // tidak masuk daftar $fillable, sehingga pengisian massal akan dibuang
+        // diam-diam dan penggantiannya tidak pernah terjadi.
+        $client->setRememberToken(Str::random(60));
+        $client->save();
 
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
