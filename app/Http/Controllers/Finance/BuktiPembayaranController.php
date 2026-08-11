@@ -109,7 +109,6 @@ class BuktiPembayaranController extends Controller
         ]);
 
         $bukti      = BuktiPembayaran::findOrFail($id);
-        $statusLama = $bukti->status;
         $statusBaru = $request->status;
 
         // Bukti tanpa nominal TIDAK boleh diverifikasi. Pembuatan transaksinya
@@ -126,8 +125,29 @@ class BuktiPembayaranController extends Controller
             ]);
         }
 
-        // Semua operasi DB dibungkus transaction agar atomic
-        DB::transaction(function () use ($bukti, $statusLama, $statusBaru, $request) {
+        // Semua operasi DB dibungkus transaction agar atomic.
+        //
+        // Barisnya DIKUNCI lebih dulu, dan status sebelumnya dibaca ULANG di
+        // dalam kunci itu. Sebelumnya status dibaca di luar transaksi lalu
+        // dipakai sebagai penjagaan di dalamnya, sehingga dua permintaan yang
+        // tiba nyaris bersamaan — tombol tertekan dua kali, atau dua petugas
+        // Finance sekaligus — sama-sama membaca "Menunggu", sama-sama masuk
+        // cabang verifikasi, dan sama-sama MENCATAT TRANSAKSI. Uang yang sama
+        // masuk buku kas dua kali.
+        //
+        // Penghapusan transaksi lama tidak menolong pada keadaan itu: keduanya
+        // membaca transaksi_id yang masih kosong, jadi tidak ada yang dihapus,
+        // dan penulisan transaksi_id yang belakangan menimpa yang lebih dulu —
+        // menyisakan satu transaksi yatim yang tidak akan pernah ikut terhapus
+        // saat verifikasinya dibatalkan. Acara lalu terbaca lunas lebih awal
+        // dan laporan keuangannya melebihi uang yang benar-benar diterima.
+        //
+        // Penjagaan yang sama sudah lebih dulu dipasang pada penandaan invoice
+        // lunas; jalur ini terlewat.
+        $statusLama = DB::transaction(function () use ($id, $statusBaru, $request, &$bukti) {
+            $bukti      = BuktiPembayaran::lockForUpdate()->findOrFail($id);
+            $statusLama = $bukti->status;
+
             // Jika diverifikasi → buat Transaksi otomatis
             if ($statusBaru === 'Diverifikasi' && $statusLama !== 'Diverifikasi') {
                 if ($bukti->nominal > 0) {
@@ -190,6 +210,11 @@ class BuktiPembayaranController extends Controller
             // Satu aturan pelunasan untuk semua jalur uang masuk — lihat
             // App\Support\PelunasanInvoice.
             \App\Support\PelunasanInvoice::sinkron($bukti->id_event);
+
+            // Dikembalikan agar pemberitahuan di bawah memakai status sebelumnya
+            // yang SEBENARNYA. Permintaan yang kalah cepat karena itu tidak ikut
+            // mengirim surel "pembayaran diverifikasi" untuk kedua kalinya.
+            return $statusLama;
         });
 
         // Refresh object setelah transaction agar properti in-memory up-to-date
