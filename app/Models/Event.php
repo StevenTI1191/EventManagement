@@ -673,6 +673,18 @@ class Event extends Model
     {
         return $this->hasOne(EventReschedule::class, 'id_event', 'id_event')
             ->where('status', EventReschedule::STATUS_DIAJUKAN)
+            // Acara yang jadwalnya sudah tidak mungkin dipindahkan disaring pula
+            // di sini, bukan hanya pada scopeMenunggu() yang dipakai antrean tim.
+            //
+            // Aturan yang berbeda antara keduanya menghasilkan keadaan berat
+            // sebelah yang justru merugikan klien: pengajuan pada acara yang
+            // sudah lewat lenyap dari antrean Manajemen — jadi tidak ada lagi
+            // yang akan menindaklanjutinya — sementara dashboard klien tetap
+            // berbunyi "sedang ditinjau" selamanya. Selama pesan itu tampil,
+            // tombol Ganti Tanggal dan Batalkan pun disembunyikan, sehingga
+            // kliennya terkunci tanpa jalan keluar.
+            ->whereHas('event', fn ($e) => $e->whereIn(
+                'status_event', EventReschedule::ACARA_DAPAT_DIPINDAH))
             ->latestOfMany();
     }
 }

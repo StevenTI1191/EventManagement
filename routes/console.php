@@ -111,6 +111,24 @@ Schedule::call(function () {
         $lunas       = $event->pembayaranLunas();
         $tglAkhir    = $event->tgl_selesai_event ?? $event->tgl_mulai_event;
 
+        // Acaranya sudah lewat, jadi permintaan ganti tanggal yang masih
+        // menggantung tidak mungkin lagi dipenuhi — persetujuannya pun akan
+        // menolaknya. Ditutup di sini supaya tidak tertinggal sebagai keadaan
+        // yang tak seorang pun dapat membereskan: antrean tim sudah tidak
+        // memuatnya, sementara dashboard klien akan terus berbunyi "sedang
+        // ditinjau" dan menyembunyikan tombol ganti tanggal maupun pembatalan.
+        $tertunda = \App\Models\EventReschedule::where('id_event', $event->id_event)
+            ->where('status', \App\Models\EventReschedule::STATUS_DIAJUKAN)
+            ->update([
+                'status'        => \App\Models\EventReschedule::STATUS_DITOLAK,
+                'catatan_tolak' => 'Acara sudah berlangsung sebelum permintaan ini ditinjau.',
+            ]);
+
+        if ($tertunda) {
+            $event->catatJejak('Permintaan ganti tanggal ditutup otomatis — acara sudah berlangsung.');
+            \Log::info("Reschedule tertunda ditutup: {$event->nama_event} ({$tertunda} pengajuan).");
+        }
+
         // Benar-benar kelar → baru ditutup. Jejaknya masuk kolom jejak_event
         // supaya terlihat di panel Riwayat halaman detail acara — BUKAN ke
         // note_event, yang ikut tercetak pada PDF penawaran & PDF detail acara
