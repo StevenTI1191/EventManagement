@@ -1599,7 +1599,12 @@ export default function ClientDashboard({
                                                     const tugas   = event.tugas;
                                                     const total   = tugas.length;
                                                     const selesai = tugas.filter(t => t.status_tugas === 'Done').length;
-                                                    const persenSiap = total ? Math.round((selesai / total) * 100) : 0;
+                                                    // Angkanya datang dari server (Tugas::persenSiap) supaya
+                                                    // sama persis dengan yang dilihat tim. Dulu dihitung di sini
+                                                    // sebagai selesai/total, sedangkan papan tim memakai
+                                                    // rata-rata progress — empat tugas yang semuanya berjalan
+                                                    // di 50% terbaca 50% bagi tim dan 0% bagi klien.
+                                                    const persenSiap = event.progres_persen ?? 0;
 
                                                     // Daftar tugasnya ikut disimpan per kategori, bukan
                                                     // hanya hitungannya, supaya rinciannya bisa dibuka.

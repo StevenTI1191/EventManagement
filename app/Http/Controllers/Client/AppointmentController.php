@@ -72,6 +72,12 @@ class AppointmentController extends Controller
         // Nomor mentahnya TIDAK ikut dikirim ke browser: klien hanya mendapat
         // tautan siap tekan, bukan nomor yang bisa dipanen.
         $events->each(function (Event $event) use ($client) {
+            // Persentase kesiapan dihitung di server memakai rumus bersama,
+            // bukan disusun ulang di halaman. Dua tempat yang menghitung
+            // sendiri-sendiri sudah pernah menghasilkan dua angka berbeda
+            // untuk acara yang sama.
+            $event->progres_persen = \App\Models\Tugas::persenSiap($event->tugas);
+
             $event->wa_pic = \App\Support\Wa::link(
                 $event->pic?->no_hp_pegawai,
                 $this->pesanTanyaProgres($event, $client),

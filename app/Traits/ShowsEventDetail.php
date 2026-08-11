@@ -63,7 +63,9 @@ trait ShowsEventDetail
             'progres'     => [
                 'total'  => $total,
                 'done'   => $done,
-                'persen' => $total ? (int) round($done / $total * 100) : 0,
+                // Rumusnya di Tugas::persenSiap agar seluruh layar menjawab
+                // angka yang sama untuk acara yang sama.
+                'persen' => \App\Models\Tugas::persenSiap($event->tugas),
             ],
             'tagihan' => [
                 'deal'     => (float) $event->deal_harga_event,
