@@ -80,7 +80,13 @@ export default function TaskDivisiBoard({ Layout, events = [], routes = {} }) {
             ) : (
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                     {terfilter.map((e) => {
-                        const pct = e.total > 0 ? Math.min(100, Math.round((e.done / e.total) * 100)) : 0;
+                        // Kesiapan memakai angka yang dihitung server (rata-rata
+                        // progress, Tugas::persenSiap), bukan pecahan tugas selesai.
+                        // Papan ini satu-satunya yang masih menghitung sendiri:
+                        // empat tugas yang masing-masing 50% terbaca 50% di halaman
+                        // detail acara dan di portal klien, tetapi 0% di sini.
+                        // Pecahan done/total tetap ditulis di sebelahnya.
+                        const pct = Math.min(100, Math.max(0, Number(e.progress) || 0));
                         const internal = e.tipe_event === 'Internal';
                         return (
                             <Link

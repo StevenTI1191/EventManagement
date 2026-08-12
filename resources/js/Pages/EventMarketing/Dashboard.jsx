@@ -178,7 +178,7 @@ export default function Dashboard({ auth, stats, aptStats, recentEvents, pending
                         </div>
                         <div>
                             <p className="text-2xl font-black text-gray-900">{stats.eventActive}</p>
-                            <p className="text-xs font-semibold text-gray-400">Event Active</p>
+                            <p className="text-xs font-semibold text-gray-400">Event Berjalan</p>
                         </div>
                     </div>
                 </div>
@@ -189,7 +189,7 @@ export default function Dashboard({ auth, stats, aptStats, recentEvents, pending
                         </div>
                         <div>
                             <p className="text-2xl font-black text-gray-900">{stats.eventDone}</p>
-                            <p className="text-xs font-semibold text-gray-400">Event Done</p>
+                            <p className="text-xs font-semibold text-gray-400">Event Selesai</p>
                         </div>
                     </div>
                 </div>

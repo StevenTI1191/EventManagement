@@ -379,9 +379,15 @@ export default function EventDetail({
                                         {rp(tagihan.terbayar)} / {rp(tagihan.deal)}
                                     </span>
                                 </div>
+                                {/* Penjaga pembagi nol ditulis tegas. Bentuk `deal || 1` yang
+                                    dipakai sebelumnya membagi dengan satu rupiah khayalan,
+                                    sehingga acara tanpa nilai kesepakatan yang sudah menerima
+                                    uang menampilkan bilah penuh 100%. */}
                                 <div className="w-full h-2 overflow-hidden bg-gray-100 rounded-full">
                                     <div className={`h-full transition-all ${lunas ? 'bg-green-500' : 'bg-[#FF2D55]'}`}
-                                        style={{ width: `${Math.min(100, ((tagihan.terbayar || 0) / (tagihan.deal || 1)) * 100)}%` }} />
+                                        style={{ width: `${Number(tagihan.deal) > 0
+                                            ? Math.min(100, ((Number(tagihan.terbayar) || 0) / Number(tagihan.deal)) * 100)
+                                            : 0}%` }} />
                                 </div>
                             </div>
                         )}
