@@ -8,13 +8,20 @@ COPY package*.json ./
 RUN npm ci --ignore-scripts
 
 COPY . .
-# Nilai publik Reverb di-inject saat build (browser butuh ini; .env tidak terbaca
-# karena dikecualikan .dockerignore). Aman: VITE_REVERB_APP_KEY memang key publik.
+# Nilai publik Reverb & nama aplikasi di-inject saat build (browser butuh ini;
+# .env tidak terbaca karena dikecualikan .dockerignore). Aman: VITE_REVERB_APP_KEY
+# memang key publik.
+#
+# VITE_APP_NAME menentukan akhiran SETIAP judul halaman lewat app.jsx
+# (`${title} - ${appName}`) dengan cadangan harfiah 'Laravel'. Tanpa di-inject di
+# sini, seluruh tab peramban di produksi berbunyi "... - Laravel".
+ARG VITE_APP_NAME="Laksamana Muda"
 ARG VITE_REVERB_APP_KEY=
 ARG VITE_REVERB_HOST=
 ARG VITE_REVERB_PORT=443
 ARG VITE_REVERB_SCHEME=https
-ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
+ENV VITE_APP_NAME=$VITE_APP_NAME \
+    VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
     VITE_REVERB_HOST=$VITE_REVERB_HOST \
     VITE_REVERB_PORT=$VITE_REVERB_PORT \
     VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
@@ -115,12 +122,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-# Nilai publik Reverb di-inject saat build (lihat catatan di stage assets)
+# Nilai publik Reverb & nama aplikasi di-inject saat build (lihat catatan di stage assets)
+ARG VITE_APP_NAME="Laksamana Muda"
 ARG VITE_REVERB_APP_KEY=
 ARG VITE_REVERB_HOST=
 ARG VITE_REVERB_PORT=443
 ARG VITE_REVERB_SCHEME=https
-ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
+ENV VITE_APP_NAME=$VITE_APP_NAME \
+    VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
     VITE_REVERB_HOST=$VITE_REVERB_HOST \
     VITE_REVERB_PORT=$VITE_REVERB_PORT \
     VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
