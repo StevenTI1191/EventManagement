@@ -47,6 +47,10 @@ class AppointmentController extends Controller
         // melihat & mengunduh invoice DP-nya lalu mengunggah bukti pembayaran.
         $events = Event::where('id_client', $client->id)
             ->untukFinance()
+            // Uang yang sudah masuk ditarik dari buku kas, sumber yang sama
+            // dipakai Finance, Laporan, PDF, dan email. Lihat catatan pada
+            // pemasangan atributnya di bawah.
+            ->withSum('transaksis as terbayar', 'nominal')
             ->with([
                 'pic',
                 'invoices' => fn($q) => $q->orderBy('tgl_terbit'),
@@ -77,6 +81,27 @@ class AppointmentController extends Controller
             // sendiri-sendiri sudah pernah menghasilkan dua angka berbeda
             // untuk acara yang sama.
             $event->progres_persen = \App\Models\Tugas::persenSiap($event->tugas);
+
+            // Posisi pembayaran juga dihitung di server, dengan alasan yang sama.
+            //
+            // Halaman ini dulu menaksirnya sendiri sebagai nilai TERBESAR antara
+            // jumlah invoice berstatus Lunas dan jumlah bukti yang diverifikasi.
+            // Keduanya bukan buku kas, dan mengambil yang terbesar dari dua
+            // himpunan yang saling beririsan bisa meleset ke bawah: uang muka
+            // yang ditandai lunas oleh Finance tanpa bukti, lalu disusul sebuah
+            // bukti cicilan yang diverifikasi, membuat klien membaca hanya
+            // angka yang lebih besar di antara keduanya, bukan jumlah keduanya.
+            // Klien lalu ditagih uang yang sudah ia bayarkan.
+            //
+            // Sisanya dibatasi nol dan kelunasannya memakai Event::lunasKah,
+            // aturan yang sama dengan seluruh layar internal. Tanpa batas itu,
+            // kelebihan bayar terbaca sebagai "Belum terbayar" bernilai minus.
+            $terbayar = (float) ($event->terbayar ?? 0);
+            $deal     = (float) ($event->deal_harga_event ?? 0);
+
+            $event->terbayar      = $terbayar;
+            $event->sisa_tagihan  = max($deal - $terbayar, 0);
+            $event->lunas_tagihan = \App\Models\Event::lunasKah($deal, $terbayar);
 
             $event->wa_pic = \App\Support\Wa::link(
                 $event->pic?->no_hp_pegawai,

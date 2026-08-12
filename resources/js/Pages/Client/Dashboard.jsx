@@ -304,15 +304,20 @@ export default function ClientDashboard({
     // tanpa unggah bukti) dan total bukti terverifikasi (menangkap pembayaran
     // sebagian yang belum melunasi satu invoice pun). Dengan begitu, begitu
     // invoice ditandai lunas, sisa pembayaran otomatis ikut nol.
-    const terbayarEvent = (event) => {
-        const lunasInvoice = (event.invoices || [])
-            .filter(i => i.status === 'Lunas')
-            .reduce((s, i) => s + (Number(i.nominal) || 0), 0);
-        const buktiVerif = (event.bukti_pembayaran || [])
-            .filter(b => b.status === 'Diverifikasi')
-            .reduce((s, b) => s + (Number(b.nominal) || 0), 0);
-        return Math.max(lunasInvoice, buktiVerif);
-    };
+    /**
+     * Posisi pembayaran datang dari server, sumber yang sama dipakai Finance,
+     * halaman Laporan, PDF, dan email.
+     *
+     * Halaman ini dulu menaksirnya sendiri sebagai nilai TERBESAR antara jumlah
+     * invoice berstatus Lunas dan jumlah bukti yang diverifikasi. Keduanya bukan
+     * buku kas, dan mengambil yang terbesar dari dua himpunan yang beririsan
+     * bisa meleset ke bawah, sehingga klien ditagih uang yang sudah ia bayarkan.
+     */
+    const terbayarEvent = (event) => Number(event.terbayar) || 0;
+    /** Sisa sudah dibatasi nol di server; kelebihan bayar tidak jadi angka minus. */
+    const sisaEvent  = (event) => Number(event.sisa_tagihan) || 0;
+    /** Aturan lunas yang sama dengan Event::lunasKah di server. */
+    const lunasEvent = (event) => Boolean(event.lunas_tagihan);
 
     const handleCancel = (apt) => {
         setCancelModal(apt);
@@ -1368,8 +1373,8 @@ export default function ClientDashboard({
                                         const dibayar = terbayarEvent(event);
                                         const dealHarga = Number(event.deal_harga_event) || 0;
                                         const pct   = dealHarga > 0 ? Math.min(100, Math.round((dibayar / dealHarga) * 100)) : 0;
-                                        const lunas = dealHarga > 0 && dibayar >= dealHarga;
-                                        const sisa  = dealHarga - dibayar;
+                                        const lunas = lunasEvent(event);
+                                        const sisa  = sisaEvent(event);
                                         const acaraOpen = panelOpen(event.id_event, 'acara');
                                         const buktiOpen = panelOpen(event.id_event, 'bukti');
                                         const jmlBukti  = event.bukti_pembayaran?.length ?? 0;
@@ -1896,7 +1901,13 @@ export default function ClientDashboard({
                         const payEvents = (events || []).filter(e => Number(e.deal_harga_event) > 0);
                         const totalTagihan  = payEvents.reduce((s, e) => s + Number(e.deal_harga_event || 0), 0);
                         const totalTerbayar = payEvents.reduce((s, e) => s + sumBayar(e), 0);
-                        const totalSisa     = Math.max(0, totalTagihan - totalTerbayar);
+                        // Dijumlahkan PER ACARA dengan batas nol, bukan sebagai
+                        // selisih dua total: sebagai selisih, acara yang lebih
+                        // bayar menutupi kekurangan acara lain sehingga tagihan
+                        // yang masih harus dibayar tampak lebih kecil daripada
+                        // yang sebenarnya. Halaman Laporan Finance sudah lama
+                        // memakai cara per-acara ini.
+                        const totalSisa     = payEvents.reduce((s, e) => s + sisaEvent(e), 0);
 
                         if (payEvents.length === 0) {
                             return (
@@ -1964,8 +1975,8 @@ export default function ClientDashboard({
                                     const dibayar    = sumBayar(event);
                                     const dealHarga  = Number(event.deal_harga_event) || 0;
                                     const pct        = dealHarga > 0 ? Math.min(100, Math.round((dibayar / dealHarga) * 100)) : 0;
-                                    const lunas      = dibayar >= dealHarga;
-                                    const sisa       = dealHarga - dibayar;
+                                    const lunas      = lunasEvent(event);
+                                    const sisa       = sisaEvent(event);
                                     const isExpanded = panelOpen(event.id_event, 'bukti');
                                     const buktiList  = event.bukti_pembayaran || [];
 
