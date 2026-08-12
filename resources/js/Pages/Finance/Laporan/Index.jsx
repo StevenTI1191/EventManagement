@@ -60,8 +60,9 @@ export default function LaporanIndex() {
         { label: 'Total Pemasukan',   value: preview.summary.total_pemasukan,   color: 'text-green-600', bg: 'bg-green-50',   border: 'border-green-100',  icon: <ArrowDownLeft size={20}/> },
         { label: 'Total Pengeluaran', value: preview.summary.total_pengeluaran, color: 'text-red-500',   bg: 'bg-red-50',     border: 'border-red-100',    icon: <TrendingDown size={20}/> },
         { label: 'Laba Bersih',       value: preview.summary.laba_bersih,       color: preview.summary.laba_bersih_raw >= 0 ? 'text-blue-600' : 'text-orange-500', bg: preview.summary.laba_bersih_raw >= 0 ? 'bg-blue-50' : 'bg-orange-50', border: preview.summary.laba_bersih_raw >= 0 ? 'border-blue-100' : 'border-orange-100', icon: <TrendingUp size={20}/> },
+        { label: 'Nilai Deal',        value: preview.summary.total_deal,        color: 'text-gray-700',  bg: 'bg-gray-100',   border: 'border-gray-200',   icon: <FileSpreadsheet size={20}/> },
         { label: 'Piutang',           value: preview.summary.total_piutang,     color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-100', icon: <AlertCircle size={20}/> },
-        { label: 'Total Transaksi',   value: preview.summary.total_transaksi + ' transaksi', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', icon: <Wallet size={20}/> },
+        { label: 'Total Pembayaran',  value: preview.summary.total_transaksi + ' pembayaran', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', icon: <Wallet size={20}/> },
     ] : [];
 
     return (
@@ -226,7 +227,7 @@ export default function LaporanIndex() {
 
                             {/* Summary Cards */}
                             {/* Screen version */}
-                            <div className="grid grid-cols-2 gap-4 mb-8 md:grid-cols-5 print:hidden">
+                            <div className="grid grid-cols-2 gap-4 mb-8 md:grid-cols-3 xl:grid-cols-6 print:hidden">
                                 {summaryCards.map(card => (
                                     <div key={card.label} className={`p-5 bg-white border ${card.border} rounded-2xl shadow-sm`}>
                                         <div className="flex items-center gap-2 mb-2">
@@ -243,8 +244,9 @@ export default function LaporanIndex() {
                                     {label:'Total Pemasukan',   value: preview.summary.total_pemasukan,   cls:'pc-green'},
                                     {label:'Total Pengeluaran', value: preview.summary.total_pengeluaran, cls:'pc-red'},
                                     {label:'Laba Bersih',       value: preview.summary.laba_bersih,       cls: preview.summary.laba_bersih_raw >= 0 ? 'pc-blue' : 'pc-red'},
+                                    {label:'Nilai Deal',        value: preview.summary.total_deal,        cls:''},
                                     {label:'Piutang',           value: preview.summary.total_piutang,     cls:'pc-yellow'},
-                                    {label:'Total Transaksi',   value: preview.summary.total_transaksi+' transaksi', cls:'pc-purple'},
+                                    {label:'Total Pembayaran',  value: preview.summary.total_transaksi+' pembayaran', cls:'pc-purple'},
                                 ].map(c => (
                                     <div key={c.label} className="print-card">
                                         <div className="pc-label">{c.label}</div>
@@ -257,10 +259,16 @@ export default function LaporanIndex() {
                             <div className={`mb-6 bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden print:shadow-none print:border-0 print:rounded-none print-section`}>
                                 <button onClick={() => setShowRekap(!showRekap)}
                                     className="flex items-center justify-between w-full px-6 py-4 border-b border-gray-100 hover:bg-gray-50 print:hidden">
-                                    <h3 className="text-sm font-extrabold text-gray-900">Rekap Per Event ({preview.rekap_event.length})</h3>
+                                    {/* Inilah tabel yang membentuk kelima kartu ringkasan di atas,
+                                        jadi basisnya perlu tertulis: acara yang JATUH pada periode ini,
+                                        beserta seluruh uangnya kapan pun dibayarkan. */}
+                                    <div className="text-left">
+                                        <h3 className="text-sm font-extrabold text-gray-900">Rekap Per Event ({preview.rekap_event.length})</h3>
+                                        <p className="text-[11px] font-normal text-gray-400">Acara yang berlangsung pada periode ini, beserta seluruh uangnya. Angka inilah yang membentuk ringkasan di atas.</p>
+                                    </div>
                                     {showRekap ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                                 </button>
-                                <h2 className="hidden print:block">Rekap Per Event</h2>
+                                <h2 className="hidden print:block">Rekap Per Event <span style={{fontSize:'9px',fontWeight:'normal',color:'#6b7280'}}>(menurut tanggal acara)</span></h2>
                                 {(showRekap) && (
                                     <div className="overflow-x-auto">
                                         <table className="w-full">
@@ -304,10 +312,18 @@ export default function LaporanIndex() {
                             <div className="mb-6 bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden print:shadow-none print:border-0 print:rounded-none print-section">
                                 <button onClick={() => setShowTrx(!showTrx)}
                                     className="flex items-center justify-between w-full px-6 py-4 border-b border-gray-100 hover:bg-gray-50 print:hidden">
-                                    <h3 className="text-sm font-extrabold text-gray-900">Rincian Pembayaran ({preview.transaksis.length})</h3>
+                                    {/* Basisnya ditulis terang-terangan: tabel ini disaring menurut
+                                        TANGGAL BAYAR, sedangkan kartu ringkasan di atas menurut tanggal
+                                        acara. Keduanya memang menjawab pertanyaan berbeda, tetapi tanpa
+                                        keterangan ini jumlah barisnya terbaca seolah menyangkal kartu
+                                        "Total Pembayaran". */}
+                                    <div className="text-left">
+                                        <h3 className="text-sm font-extrabold text-gray-900">Rincian Pembayaran ({preview.transaksis.length})</h3>
+                                        <p className="text-[11px] font-normal text-gray-400">Pembayaran yang diterima pada periode ini (menurut tanggal bayar)</p>
+                                    </div>
                                     {showTrx ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                                 </button>
-                                <h2 className="hidden print:block">Rincian Pembayaran</h2>
+                                <h2 className="hidden print:block">Rincian Pembayaran <span style={{fontSize:'9px',fontWeight:'normal',color:'#6b7280'}}>(menurut tanggal bayar)</span></h2>
                                 {showTrx && (
                                     <div className="overflow-x-auto">
                                         <table className="w-full">

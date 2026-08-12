@@ -179,6 +179,20 @@ class LaporanController extends Controller
         $totalPengeluaran = collect($rekap_event)->sum('pengeluaran_raw');
         $labaBersih       = collect($rekap_event)->sum('laba_raw');
 
+        // Banyaknya pembayaran yang MEMBENTUK Total Pemasukan di sebelahnya,
+        // bukan banyaknya baris pada tabel Rincian Pembayaran.
+        //
+        // Perbedaan basis tanggal antara ringkasan (tanggal acara) dan tabel
+        // pembayaran (tanggal bayar) memang disengaja, tetapi angka ini ikut
+        // tertinggal pada basis yang lama ketika ringkasannya dipindahkan.
+        // Akibatnya kelima kartu pada satu baris yang sama tidak lagi menjawab
+        // periode yang sama, dan hasilnya saling menyangkal: pada Agustus 2026
+        // tertulis "Total Pemasukan Rp 20.000.000" bersebelahan dengan "0
+        // transaksi", sedangkan pada April 2026 tertulis "Rp 0" bersebelahan
+        // dengan "1 transaksi". Jumlah baris tabelnya tetap terbaca pada judul
+        // tabel itu sendiri.
+        $totalPembayaran = $events->sum(fn ($e) => $e->transaksis->count());
+
         $summary = [
             'total_pemasukan'     => $fmt($totalPemasukan),
             'total_pemasukan_raw' => $totalPemasukan,
@@ -188,7 +202,9 @@ class LaporanController extends Controller
             'laba_bersih_raw'     => $labaBersih,
             'total_piutang'       => $fmt($totalPiutang),
             'total_piutang_raw'   => $totalPiutang,
-            'total_transaksi'     => count($transaksis),
+            'total_deal'          => $fmt($totalDeal),
+            'total_deal_raw'      => (float) $totalDeal,
+            'total_transaksi'     => $totalPembayaran,
         ];
 
         return compact('transaksis', 'items', 'rekap_event', 'summary', 'periode_label');
@@ -209,8 +225,9 @@ class LaporanController extends Controller
             ['Keterangan' => 'Total Pemasukan',   'Nilai' => $data['summary']['total_pemasukan']],
             ['Keterangan' => 'Total Pengeluaran', 'Nilai' => $data['summary']['total_pengeluaran']],
             ['Keterangan' => 'Laba Bersih',       'Nilai' => $data['summary']['laba_bersih']],
+            ['Keterangan' => 'Nilai Deal',        'Nilai' => $data['summary']['total_deal']],
             ['Keterangan' => 'Piutang',           'Nilai' => $data['summary']['total_piutang']],
-            ['Keterangan' => 'Total Transaksi',   'Nilai' => $data['summary']['total_transaksi'] . ' transaksi'],
+            ['Keterangan' => 'Total Pembayaran',  'Nilai' => $data['summary']['total_transaksi'] . ' pembayaran'],
         ]);
 
         // Sheet 2 — Pembayaran
