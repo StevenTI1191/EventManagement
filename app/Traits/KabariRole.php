@@ -29,8 +29,12 @@ trait KabariRole
         ?string $nada = null,
         ?array $tombol = null,
     ): void {
-        $norm   = strtolower(str_replace(' ', '', $posisi));
-        $emails = Pegawai::whereRaw("LOWER(REPLACE(posisi_pegawai,' ','')) = ?", [$norm])
+        // Lewat scope pemegangPeran(), bukan perbandingan posisi telanjang: pesan
+        // lintas peran ini memuat urusan internal (nilai penawaran, pembatalan,
+        // bukti bayar) dan posisi tenaga lepas adalah teks bebas, sehingga
+        // seorang freelancer berjabatan "Finance" ikut menerimanya walau
+        // halamannya sendiri sudah tertutup baginya.
+        $emails = Pegawai::pemegangPeran($posisi)
             ->pluck('email_pegawai')->filter()->unique()->values()->all();
 
         if (! $emails) {

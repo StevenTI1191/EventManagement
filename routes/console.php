@@ -483,7 +483,7 @@ Schedule::call(function () {
                      . ($f->client?->no_telp_client ? "No. WhatsApp: {$f->client->no_telp_client}\n\n" : '')
                      . 'Mohon ada yang menindaklanjuti.';
 
-            foreach (\App\Models\Pegawai::whereRaw("LOWER(REPLACE(posisi_pegawai, ' ', '')) = 'eventmarketing'")
+            foreach (\App\Models\Pegawai::pemegangPeran('EventMarketing')
                         ->whereNotNull('email_pegawai')->pluck('email_pegawai') as $tujuan) {
                 try {
                     Mail::to($tujuan)->send(new \App\Mail\PesanSistem(

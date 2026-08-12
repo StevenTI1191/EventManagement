@@ -101,7 +101,13 @@ class DashboardController extends Controller
         // layar:
         //   Nilai deal — kesepakatan acara yang sudah terikat komitmen.
         //   Uang masuk — pembayaran yang benar-benar tercatat di buku kas.
-        $emIds = Pegawai::whereRaw("LOWER(REPLACE(posisi_pegawai, ' ', '')) = 'eventmarketing'")
+        // Populasinya disamakan dengan leaderboard Top PIC tepat di sebelahnya,
+        // yaitu pegawai INTERNAL saja. Sebelumnya baris ini hanya mencocokkan
+        // posisi_pegawai, padahal posisi tenaga lepas adalah teks bebas —
+        // seorang freelancer yang jabatannya kebetulan ditulis "Event
+        // Marketing" ikut terpampang di sini tetapi tidak di Top PIC, dua
+        // daftar orang dengan aturan berbeda pada satu layar yang sama.
+        $emIds = Pegawai::pemegangPeran('EventMarketing')
             ->pluck('nama_pegawai', 'id_pegawai');
 
         if ($emIds->isEmpty()) {

@@ -74,6 +74,33 @@ class Pegawai extends Authenticatable
         return false;
     }
 
+    /**
+     * Kembaran berperan() untuk sisi kueri.
+     *
+     * Sejumlah layar perlu MENGUMPULKAN pemegang sebuah peran, bukan memeriksa
+     * satu orang, dan semuanya menulis sendiri perbandingan posisinya lewat
+     * whereRaw. Bentuk itu melewatkan syarat jenis_pegawai=Internal, sehingga
+     * aturan yang sudah ditegakkan berperan() runtuh begitu pertanyaannya
+     * dibalik menjadi "siapa saja". Pakai scope ini, jangan menulis ulang
+     * perbandingannya.
+     *
+     * Namanya sengaja BUKAN "berperan": Laravel meneruskan pemanggilan statis
+     * lewat instance, sehingga scope bernama sama dengan method yang sudah ada
+     * tidak pernah terpanggil, ia justru menabrak method instansnya dan
+     * melempar "cannot be called statically".
+     *
+     * @param string ...$peran salah satu dari PERAN_INTERNAL
+     */
+    public function scopePemegangPeran($q, string ...$peran)
+    {
+        $norm = array_map(fn ($p) => self::normalPeran($p), $peran);
+        $isi  = implode(',', array_fill(0, count($norm), '?'));
+
+        return $q
+            ->whereRaw("LOWER(REPLACE(TRIM(jenis_pegawai), ' ', '')) = ?", [self::normalPeran(self::JENIS_INTERNAL)])
+            ->whereRaw("LOWER(REPLACE(TRIM(posisi_pegawai), ' ', '')) IN ($isi)", $norm);
+    }
+
     // Beritahu Laravel kalau password-nya ada di kolom 'password_pegawai'
     public function getAuthPassword()
     {
