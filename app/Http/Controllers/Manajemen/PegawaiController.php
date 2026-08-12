@@ -24,7 +24,11 @@ class PegawaiController extends Controller
         $internal = Pegawai::withCount('events')
             ->where('jenis_pegawai', 'Internal')
             ->where('id_pegawai', '!=', $currentUser->id_pegawai)
-            ->where('posisi_pegawai', '!=', 'Manajemen')
+            // Lewat scope, bukan perbandingan teks persis: baris lama yang
+            // posisinya tertulis dengan spasi atau kapital berbeda tetap
+            // terkecualikan. Aturan barisnya sudah dipatok Rule::in untuk
+            // pegawai internal, jadi ini pengaman bagi data sebelum aturan itu.
+            ->whereNot(fn ($q) => $q->pemegangPeran('Manajemen'))
             ->latest()
             ->paginate(10, ['*'], 'page_internal')
             ->withQueryString();

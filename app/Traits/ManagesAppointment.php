@@ -228,7 +228,14 @@ trait ManagesAppointment
      */
     protected function catatanMeetingAppointment(Request $request, $id)
     {
-        $data = $request->validate(['catatan_meeting' => 'nullable|string|max:5000']);
+        // `present` menuntut kolomnya IKUT TERKIRIM, boleh kosong tetapi harus
+        // ada. Tanpa itu Laravel MEMBUANG kunci yang tidak dikirim sama sekali,
+        // sehingga pembacaan di bawah memicu "Undefined array key" lalu menulis
+        // null — catatan hasil pertemuan yang sudah tersimpan, dan yang sudah
+        // dibaca klien pada riwayatnya, TERHAPUS diam-diam oleh permintaan yang
+        // sekadar lupa menyertakan kolomnya. Menolaknya lebih baik daripada
+        // menghapus tanpa diminta.
+        $data = $request->validate(['catatan_meeting' => 'present|nullable|string|max:5000']);
 
         $appointment = Appointment::whereIn('status', [...self::SUDAH_DIJADWALKAN, 'Selesai'])
             ->findOrFail($id);
