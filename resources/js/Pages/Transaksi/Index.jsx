@@ -47,6 +47,20 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
     /** Acara milik perusahaan sendiri: tidak ada tagihan, jadi istilahnya berbeda. */
     const internal  = tipeAktif === 'Internal';
 
+    /**
+     * Nilai yang dikejar sebuah baris, dan uang yang sudah terkumpul untuk
+     * mengejarnya. Keduanya berbeda kolom antar tab, dan sebelumnya tab internal
+     * ikut membaca kolom milik tab klien.
+     *
+     * Acara internal tidak pernah punya deal_harga_event — formulir acara
+     * sengaja tidak menawarkan isian Deal Harga kepadanya — sehingga kolom
+     * "Target Omset" selalu terbaca Rp 0 dan capaiannya selalu "Tanpa target".
+     * Uangnya pun sebagian besar masuk sebagai item Pemasukan (sponsor, tiket),
+     * bukan sebagai pembayaran tagihan.
+     */
+    const nilai = (e) => Number(internal ? e.target_omset : e.deal) || 0;
+    const masuk = (e) => Number(internal ? e.pendapatan : e.total_dibayar) || 0;
+
     // Ganti tab internal/eksternal — reset filter lain agar tidak membingungkan.
     const gantiTipe = (tipe) => {
         const fresh = { tipe, bulan: '', tahun: '', status: '', sort: 'tanggal', dir: 'desc', search: '' };
@@ -598,14 +612,16 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                         <p className="text-sm font-semibold text-gray-800">{event.jumlah_pax ? `${event.jumlah_pax} pax` : '-'}</p>
                                         {event.harga_per_pax ? <p className="text-xs text-gray-400">@ {formatRupiah(event.harga_per_pax)}</p> : null}
                                     </td>
-                                    <td className="px-6 py-4 text-sm font-semibold text-gray-800">{formatRupiah(event.deal)}</td>
+                                    <td className="px-6 py-4 text-sm font-semibold text-gray-800">{formatRupiah(nilai(event))}</td>
                                     <td className="px-6 py-4">
                                         {(() => {
-                                            const pct = event.deal > 0 ? Math.min(100, Math.round((event.total_dibayar / event.deal) * 100)) : 0;
+                                            const acuan = nilai(event);
+                                            const dapat = masuk(event);
+                                            const pct = acuan > 0 ? Math.min(100, Math.round((dapat / acuan) * 100)) : 0;
                                             return (
                                                 <div className="min-w-[120px]">
                                                     <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-sm font-semibold text-green-600">{formatRupiah(event.total_dibayar)}</span>
+                                                        <span className="text-sm font-semibold text-green-600">{formatRupiah(dapat)}</span>
                                                         <span className="text-[10px] font-black text-gray-400">{pct}%</span>
                                                     </div>
                                                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -635,8 +651,8 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                             bermakna adalah pendapatannya sudah menyentuh
                                             target omset atau belum. */}
                                         {internal ? (() => {
-                                            const target = Number(event.deal) || 0;
-                                            const dapat  = Number(event.total_dibayar) || 0;
+                                            const target = nilai(event);
+                                            const dapat  = masuk(event);
 
                                             if (target <= 0) {
                                                 return (
@@ -745,11 +761,16 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                     <div className={`grid gap-3 pt-3 border-t border-gray-200 ${internal ? 'grid-cols-2' : 'grid-cols-3'}`}>
                                                         <div className="p-3 bg-white border border-gray-100 rounded-xl">
                                                             <p className="text-xs text-gray-400">{internal ? 'Target Omset' : 'Total Deal'}</p>
-                                                            <p className="text-sm font-extrabold text-gray-800">{formatRupiah(event.deal)}</p>
+                                                            <p className="text-sm font-extrabold text-gray-800">{formatRupiah(nilai(event))}</p>
                                                         </div>
                                                         <div className="p-3 bg-green-50 rounded-xl">
                                                             <p className="text-xs text-green-500">{internal ? 'Pendapatan' : 'Total Terbayar'}</p>
-                                                            <p className="text-sm font-extrabold text-green-600">{formatRupiah(event.total_dibayar)}</p>
+                                                            <p className="text-sm font-extrabold text-green-600">{formatRupiah(masuk(event))}</p>
+                                                            {internal && (
+                                                                <p className="text-[10px] leading-tight text-green-500/80">
+                                                                    pembayaran {formatRupiah(event.total_dibayar)} + pemasukan {formatRupiah(event.total_pemasukan)}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                         {! internal && (
                                                             <div className="p-3 bg-red-50 rounded-xl">
@@ -823,11 +844,16 @@ export default function TransaksiIndex({ Layout, prefix, auth, events, filters =
                                                     <div className={`grid gap-3 pt-3 border-t border-gray-200 ${internal ? 'grid-cols-3' : 'grid-cols-4'}`}>
                                                         <div className="p-3 bg-white border border-gray-100 rounded-xl">
                                                             <p className="text-xs text-gray-400">{internal ? 'Target Omset' : 'Total Deal'}</p>
-                                                            <p className="text-sm font-extrabold text-gray-800">{formatRupiah(event.deal)}</p>
+                                                            <p className="text-sm font-extrabold text-gray-800">{formatRupiah(nilai(event))}</p>
                                                         </div>
                                                         <div className="p-3 bg-green-50 rounded-xl">
                                                             <p className="text-xs text-green-500">{internal ? 'Pendapatan' : 'Total Terbayar'}</p>
-                                                            <p className="text-sm font-extrabold text-green-600">{formatRupiah(event.total_dibayar)}</p>
+                                                            <p className="text-sm font-extrabold text-green-600">{formatRupiah(masuk(event))}</p>
+                                                            {internal && (
+                                                                <p className="text-[10px] leading-tight text-green-500/80">
+                                                                    pembayaran {formatRupiah(event.total_dibayar)} + pemasukan {formatRupiah(event.total_pemasukan)}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                         <div className="p-3 bg-red-50 rounded-xl">
                                                             <p className="text-xs text-red-400">Total Pengeluaran</p>

@@ -177,9 +177,13 @@ export default function EventRiwayat({
                                             <Pencapaian persen={capai(e.target_pax, e.jumlah_pax)} ringkas />
                                         </td>
                                         <td className="px-5 py-4">
-                                            <p className="text-sm font-bold text-gray-800">{rp(e.deal_harga_event)}</p>
+                                            {/* Realisasi datang dari server (Event::SQL_REALISASI_OMSET):
+                                                acara pesanan klien memakai nilai kesepakatan, acara
+                                                internal memakai uang yang benar-benar masuk sebab
+                                                kolom deal-nya mustahil terisi. */}
+                                            <p className="text-sm font-bold text-gray-800">{rp(e.realisasi_omset)}</p>
                                             <p className="text-[11px] text-gray-400">target {e.target_omset ? rp(e.target_omset) : '—'}</p>
-                                            <Pencapaian persen={capai(e.target_omset, e.deal_harga_event)} ringkas />
+                                            <Pencapaian persen={capai(e.target_omset, e.realisasi_omset)} ringkas />
                                         </td>
                                         <td className="px-5 py-4">
                                             <p className={`text-sm font-bold ${

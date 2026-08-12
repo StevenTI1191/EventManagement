@@ -60,7 +60,14 @@ trait ShowsRiwayatEvent
             return $q;
         };
 
+        // Realisasi omset dikirim per baris MAUPUN sebagai ringkasan, memakai
+        // aturan yang sama. Sebelumnya keduanya membaca deal_harga_event
+        // langsung, padahal acara internal tidak pernah punya nilai kesepakatan
+        // sehingga capaiannya selalu terbaca 0% betapa pun besar uang yang
+        // masuk. Lihat Event::SQL_REALISASI_OMSET.
         $events = $saring(Event::query())
+            ->select('events.*')
+            ->selectRaw(Event::SQL_REALISASI_OMSET . ' AS realisasi_omset')
             ->with(['client:id,nama_client,perusahaan_client', 'pic:id_pegawai,nama_pegawai'])
             ->withSum('transaksis as terbayar', 'nominal')
             ->orderByDesc('tgl_mulai_event')
@@ -70,7 +77,7 @@ trait ShowsRiwayatEvent
         $ringkas = $saring(Event::query())
             ->selectRaw('COUNT(*) as jumlah')
             ->selectRaw('COALESCE(SUM(target_omset), 0) as target_omset')
-            ->selectRaw('COALESCE(SUM(deal_harga_event), 0) as realisasi_omset')
+            ->selectRaw('COALESCE(SUM(' . Event::SQL_REALISASI_OMSET . '), 0) as realisasi_omset')
             ->selectRaw('COALESCE(SUM(target_pax), 0) as target_pax')
             ->selectRaw('COALESCE(SUM(jumlah_pax), 0) as realisasi_pax')
             ->first();

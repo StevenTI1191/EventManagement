@@ -84,6 +84,51 @@ class Event extends Model
         return (bool) $this->dari_planning;
     }
 
+    /**
+     * Uang yang benar-benar masuk dari sebuah acara.
+     *
+     * Dua salurannya dijumlahkan: pembayaran yang tercatat pada buku kas dan
+     * pemasukan tambahan seperti sponsor atau penjualan tiket. Acara pesanan
+     * klien praktis hanya memakai saluran pertama, tetapi acara internal justru
+     * sebaliknya — tidak ada yang ditagih, jadi pemasukannya hampir seluruhnya
+     * berupa item.
+     */
+    public const SQL_UANG_MASUK = "((SELECT COALESCE(SUM(t_um.nominal), 0) FROM transaksis t_um WHERE t_um.id_event = events.id_event)"
+        . " + (SELECT COALESCE(SUM(i_um.total), 0) FROM transaksi_items i_um WHERE i_um.id_event = events.id_event AND i_um.tipe = 'Pemasukan'))";
+
+    /**
+     * Omset yang BENAR-BENAR TERWUJUD dari sebuah acara, untuk disandingkan
+     * dengan target_omset yang dipasang saat perencanaan.
+     *
+     * Acara pesanan klien mewujudkannya sebagai nilai kesepakatan, sehingga
+     * deal_harga_event adalah ukuran yang tepat baginya.
+     *
+     * Acara internal TIDAK PERNAH punya nilai kesepakatan. Formulir acara
+     * memang sengaja tidak menawarkan isian Deal Harga kepadanya ("Nilai
+     * kesepakatan hanya ada pada acara pesanan klien"), jadi kolomnya selamanya
+     * nol. Menyandingkan target dengan kolom yang mustahil terisi membuat
+     * capaiannya selalu terbaca 0% betapa pun suksesnya acara itu. Yang terwujud
+     * baginya adalah uang yang benar-benar masuk.
+     */
+    public const SQL_REALISASI_OMSET = "(CASE WHEN events.tipe_event = '" . self::TIPE_INTERNAL . "'"
+        . " THEN " . self::SQL_UANG_MASUK
+        . " ELSE COALESCE(events.deal_harga_event, 0) END)";
+
+    /** Kembaran PHP dari SQL_UANG_MASUK. */
+    public function uangMasuk(): float
+    {
+        return (float) $this->transaksis()->sum('nominal')
+             + (float) $this->transaksiItems()->where('tipe', 'Pemasukan')->sum('total');
+    }
+
+    /** Kembaran PHP dari SQL_REALISASI_OMSET. */
+    public function realisasiOmset(): float
+    {
+        return $this->tipe_event === self::TIPE_INTERNAL
+            ? $this->uangMasuk()
+            : (float) ($this->deal_harga_event ?? 0);
+    }
+
     protected static function booted(): void
     {
         // Event klien yang baru masuk Upcoming (DP lunas / bukti terverifikasi)
