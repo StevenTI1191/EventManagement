@@ -63,6 +63,14 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
         return new Date(tgl).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
     };
 
+    /**
+     * Kolom jam disimpan sebagai HH:MM:SS. Tanpa dipangkas, halaman publik
+     * menampilkan "11:00:00" kepada pengunjung — detiknya tidak berarti apa pun
+     * bagi jam mulai acara. Halaman depan sudah memangkasnya, halaman ini belum,
+     * jadi acara yang sama tampil dua bentuk di dua halaman.
+     */
+    const formatJam = (jam) => (jam ? String(jam).slice(0, 5) : null);
+
     const getStatusBadge = (status) => {
         if (status === 'Done')      return { label: 'Selesai',   cls: 'bg-green-500/20 text-ok border-ok/30' };
         if (status === 'Upcoming')    return { label: 'Upcoming',  cls: 'bg-blue-500/20 text-info border-blue-500/30' };
@@ -84,7 +92,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
 
     return (
         <>
-            <Head title="Events - Laksamana Muda" />
+            <Head title="Events" />
 
             {/* ── NAVBAR ────────────────────────────────────────────── */}
             <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-surface/85 backdrop-blur-md border-line shadow-lm">
@@ -286,7 +294,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                                                         {event.jam_mulai && (
                                                             <span className="flex items-center gap-1 text-[11px] text-muted">
                                                                 <Clock size={10} className="text-gold" />
-                                                                {event.jam_mulai}
+                                                                {formatJam(event.jam_mulai)}
                                                             </span>
                                                         )}
                                                         {event.area_event && (
@@ -452,7 +460,7 @@ export default function Events({ events, kategoris, filters, isLoggedIn, auth })
                             <div className="grid grid-cols-2 gap-3 mb-4">
                                 {[
                                     { label: 'Tanggal',   value: formatTanggal(selectedEvent.tgl_mulai_event), icon: <Calendar size={13} className="text-gold" /> },
-                                    { label: 'Jam',       value: selectedEvent.jam_mulai && selectedEvent.jam_selesai ? `${selectedEvent.jam_mulai} – ${selectedEvent.jam_selesai}` : '-', icon: <Clock size={13} className="text-gold" /> },
+                                    { label: 'Jam',       value: formatJam(selectedEvent.jam_mulai) ? `${formatJam(selectedEvent.jam_mulai)}${formatJam(selectedEvent.jam_selesai) ? ` – ${formatJam(selectedEvent.jam_selesai)}` : ''} WIB` : '-', icon: <Clock size={13} className="text-gold" /> },
                                     { label: 'Lokasi',    value: selectedEvent.area_event || '-', icon: <MapPin size={13} className="text-gold" /> },
                                     { label: 'Kapasitas', value: selectedEvent.jumlah_pax ? `${selectedEvent.jumlah_pax} orang` : '-', icon: <Users size={13} className="text-gold" /> },
                                 ].map((item, i) => (
