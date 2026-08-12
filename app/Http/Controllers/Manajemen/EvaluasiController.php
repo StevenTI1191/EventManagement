@@ -19,16 +19,25 @@ class EvaluasiController extends Controller
     {
         $this->checkManajemen();
 
-        $pegawais = Pegawai::withCount('events')
-            ->where('posisi_pegawai', '!=', 'Manajemen')
-            ->get()
-            ->each(function ($pegawai) {
-                // Hitung total tugas dari semua event milik pegawai ini
-                $pegawai->total_tugas = Tugas::whereIn(
-                    'id_event',
-                    \App\Models\Event::where('id_pegawai', $pegawai->id_pegawai)->pluck('id_event')
-                )->count();
-            });
+        // Manajemen tidak menilai dirinya sendiri. Pengecualiannya lewat
+        // pemegangPeran() supaya sepadan dengan pemeriksaan peran di tempat
+        // lain: membandingkan posisi_pegawai begitu saja meloloskan tenaga lepas
+        // yang jabatannya kebetulan ditulis "Manajemen" sekaligus melewatkan
+        // pegawai internal yang posisinya ditulis dengan spasi atau kapital
+        // berbeda.
+        //
+        // Dua hitungan acara dikirim sekaligus. events_count memuat SELURUH
+        // acara yang dipegang, termasuk prospek dan yang batal, sedangkan
+        // leaderboard Top PIC di dashboard Manajemen hanya menghitung acara yang
+        // benar-benar terselenggara. Tanpa keduanya, orang yang sama tampil
+        // dengan dua angka berbeda pada dua layar dan tidak ada yang dapat
+        // mempertemukannya.
+        $pegawais = Pegawai::withCount([
+                'events',
+                'events as events_terselenggara_count' => fn ($q) => $q->terkonfirmasi(),
+            ])
+            ->whereNot(fn ($q) => $q->pemegangPeran('Manajemen'))
+            ->get();
 
         $query = Event::with(['client', 'pic'])
             ->withCount(['tugas', 'tugas as tugas_done_count' => function($q) {
@@ -127,21 +136,44 @@ class EvaluasiController extends Controller
         // hanya acara yang sudah terikat komitmen. Dua populasi berbeda itu
         // membuat persentasenya tidak bisa dibaca, dan satu acara dengan target
         // keliru ikut menggelembungkan angkanya selamanya.
+        //
+        // Realisasinya TIDAK boleh langsung membaca deal_harga_event. Acara yang
+        // punya target justru lahir dari tahap perencanaan, dan sebagian besar
+        // di antaranya acara internal yang kolom deal-nya mustahil terisi:
+        // formulir acara sengaja tidak menawarkan isian Deal Harga kepadanya.
+        // Akibatnya capaian target acara internal selalu terbaca 0% betapa pun
+        // besar uang yang berhasil dikumpulkannya. Event::SQL_REALISASI_OMSET
+        // memilihkan ukuran yang tepat menurut tipe acaranya.
         $eventBertarget = Event::where('id_pegawai', $id)
             ->where('target_omset', '>', 0)
             ->where('status_event', '!=', Event::STATUS_BATAL)
-            ->get(['id_event', 'target_omset', 'deal_harga_event']);
+            ->selectRaw('id_event, tipe_event, target_omset, deal_harga_event, '
+                . Event::SQL_REALISASI_OMSET . ' AS realisasi_omset')
+            ->get();
 
         $targetOmset     = (float) $eventBertarget->sum('target_omset');
-        $realisasiTarget = (float) $eventBertarget->sum('deal_harga_event');
+        $realisasiTarget = (float) $eventBertarget->sum('realisasi_omset');
 
         $stats = [
             'klien_dihandle'      => $klienDihandle,
             'klien_closing'       => $klienClosing,
             'closing_rate'        => $closingRate,
-            'total_appointment'   => \App\Models\Appointment::where('id_pegawai', $id)->count(),
-            'appointment_selesai' => \App\Models\Appointment::where('id_pegawai', $id)->where('status', 'Selesai')->count(),
+            // Pertemuan pembahasan penawaran dikecualikan, mengikuti aturan yang
+            // sudah dipakai halaman Appointment dan dashboard Event Marketing.
+            // Pertemuan itu adalah bagian dari alur negosiasi, bukan appointment
+            // yang ditangani pegawai ini sebagai pekerjaan tersendiri, dan
+            // menghitungnya di sini membuat "Total Appointment" pada layar
+            // evaluasi lebih besar daripada daftar yang bisa dibuka pegawainya.
+            'total_appointment'   => \App\Models\Appointment::where('id_pegawai', $id)
+                                        ->whereDoesntHave('negosiasi')->count(),
+            'appointment_selesai' => \App\Models\Appointment::where('id_pegawai', $id)
+                                        ->whereDoesntHave('negosiasi')->where('status', 'Selesai')->count(),
             'total_event_pic'     => Event::where('id_pegawai', $id)->count(),
+            // Berapa di antaranya yang benar-benar terselenggara. Angka inilah
+            // yang dipakai leaderboard Top PIC di dashboard Manajemen, jadi
+            // tanpa mengirimnya kedua layar memajang dua angka berbeda untuk
+            // pertanyaan yang terdengar sama.
+            'event_terselenggara' => Event::where('id_pegawai', $id)->terkonfirmasi()->count(),
             'nilai_deal'          => (float) $nilaiDeal,
             'uang_masuk'          => (float) $uangMasuk,
             'target_omset'        => $targetOmset,

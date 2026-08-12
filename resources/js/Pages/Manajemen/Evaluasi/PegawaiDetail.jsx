@@ -126,7 +126,11 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                         <StatCard title="Closing Rate"          value={`${stats.closing_rate}%`}  icon={<TrendingUp size={20} />}    color="#FF2D55" />
                         <StatCard title="Appointment Ditangani" value={stats.total_appointment}   icon={<Calendar size={20} />}      color="#FF2D55" />
                         <StatCard title="Appointment Selesai"   value={stats.appointment_selesai} icon={<CalendarCheck size={20} />} color="#FF2D55" />
-                        <StatCard title="Event sebagai PIC"     value={stats.total_event_pic}     icon={<Layout size={20} />}        color="#FF2D55" />
+                        {/* Angka besarnya seluruh acara yang dipegang, keterangannya
+                            berapa yang benar-benar terselenggara — aturan yang sama
+                            dengan leaderboard Top PIC di dashboard Manajemen. */}
+                        <StatCard title="Event sebagai PIC"     value={stats.total_event_pic}     icon={<Layout size={20} />}        color="#FF2D55"
+                            sub={`${stats.event_terselenggara ?? 0} terselenggara`} />
                     </div>
 
                     {/* ── KINERJA OMSET ────────────────────────────────────── */}

@@ -52,8 +52,17 @@ export default function EvaluasiIndex({ auth, pegawais, events, filters }) {
                             </div>
                             <div className="grid grid-cols-2 gap-2 mb-4 text-center">
                                 <div className="p-2 rounded-xl bg-gray-50">
+                                    {/* "Total Event" saja pernah membingungkan: angkanya
+                                        memuat seluruh acara yang dipegang, termasuk prospek
+                                        dan yang batal, sedangkan leaderboard Top PIC di
+                                        dashboard hanya menghitung yang terselenggara. Kedua
+                                        angka ditulis berdampingan supaya keduanya dapat
+                                        dipertemukan. */}
                                     <p className="text-lg font-black text-gray-800">{pegawai.events_count ?? 0}</p>
-                                    <p className="text-[10px] text-gray-400">Total Event</p>
+                                    <p className="text-[10px] text-gray-400">Event Ditangani</p>
+                                    <p className="text-[10px] text-gray-400">
+                                        {pegawai.events_terselenggara_count ?? 0} terselenggara
+                                    </p>
                                 </div>
                                 <div className="p-2 rounded-xl bg-gray-50">
                                     <p className="text-lg font-black text-gray-800">
