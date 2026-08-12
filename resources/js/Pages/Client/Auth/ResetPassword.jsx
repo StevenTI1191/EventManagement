@@ -49,7 +49,7 @@ export default function ResetPassword({ token, email }) {
 
     return (
         <>
-            <Head title="Buat Password Baru - Laksamana Muda" />
+            <Head title="Buat Password Baru" />
             <div className="flex items-center justify-center min-h-screen px-6 bg-surface">
                 <div className="w-full max-w-md">
 

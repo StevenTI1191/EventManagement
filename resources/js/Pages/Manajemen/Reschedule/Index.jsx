@@ -38,7 +38,7 @@ export default function RescheduleIndex({ pengajuan = [], pembatalan = [] }) {
 
     return (
         <ManajemenLayout>
-            <Head title="Ganti Tanggal Acara - Laksamana Muda" />
+            <Head title="Ganti Tanggal Acara" />
 
             <div className="max-w-5xl px-4 py-6 mx-auto sm:px-6">
                 <div className="flex items-center gap-3 mb-1">

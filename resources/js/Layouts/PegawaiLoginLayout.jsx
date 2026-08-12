@@ -8,8 +8,11 @@ export default function PegawaiLoginLayout({ children }) {
                 <div className="w-full max-w-sm mx-auto">
                     {/* Header Tulisan */}
                     <div className="mb-6 text-left">
-                        <h2 className="text-3xl font-bold tracking-tight text-gray-900">Welcome back</h2>
-                        <p className="mt-2 text-sm text-gray-500">Welcome back! Please enter your details.</p>
+                        {/* Seluruh aplikasi berbahasa Indonesia; layar pertama yang
+                            dilihat pegawai jangan jadi satu-satunya yang berbahasa
+                            Inggris. */}
+                        <h2 className="text-3xl font-bold tracking-tight text-gray-900">Selamat datang</h2>
+                        <p className="mt-2 text-sm text-gray-500">Masuk dengan akun pegawai Anda untuk melanjutkan.</p>
                     </div>
 
                     {/* Logo Laksamana Muda */}

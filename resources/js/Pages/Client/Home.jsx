@@ -106,7 +106,10 @@ export default function Home({ portfolio, upcoming, venue = [], venueNilai = 0, 
 
     return (
         <>
-            <Head title="Laksamana Muda - Event Organizer Professional" />
+            {/* Nama perusahaan sudah ditambahkan app.jsx sebagai akhiran setiap
+                judul, jadi menuliskannya lagi di sini membuat tabnya berbunyi
+                "Laksamana Muda ... - Laksamana Muda". */}
+            <Head title="Event Organizer Professional" />
 
             {/* ── NAVBAR ─────────────────────────────────────────── */}
             <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-surface/85 backdrop-blur-md border-line shadow-lm">

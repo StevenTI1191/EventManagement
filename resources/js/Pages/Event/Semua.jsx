@@ -46,7 +46,7 @@ export default function EventSemua({
 
     return (
         <Layout>
-            <Head title="Semua Event — Laksamana Muda" />
+            <Head title="Semua Event" />
 
             <div className="mb-5">
                 <div className="flex items-center gap-2">

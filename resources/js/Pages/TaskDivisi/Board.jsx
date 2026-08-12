@@ -31,7 +31,7 @@ export default function TaskDivisiBoard({ Layout, events = [], routes = {} }) {
 
     return (
         <Layout>
-            <Head title="To-Do-List — Laksamana Muda" />
+            <Head title="To-Do-List" />
 
             <div className="mb-6">
                 <div className="flex items-center gap-2">

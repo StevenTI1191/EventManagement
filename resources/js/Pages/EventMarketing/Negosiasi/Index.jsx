@@ -197,7 +197,7 @@ export default function NegosiasiIndex({ menunggu = [], usulan = [], menungguKli
 
     return (
         <EventMarketingLayout>
-            <Head title="Negosiasi Klien - Laksamana Muda" />
+            <Head title="Negosiasi Klien" />
 
             <div className="max-w-5xl px-4 py-6 mx-auto sm:px-6">
                 <div className="flex items-center gap-3 mb-1">

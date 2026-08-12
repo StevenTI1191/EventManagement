@@ -64,7 +64,7 @@ export default function ClientProfile({ auth, has_password }) {
 
     return (
         <>
-            <Head title="Profil Saya - Laksamana Muda" />
+            <Head title="Profil Saya" />
             <div className="min-h-screen bg-paper">
 
                 {/* Navbar */}

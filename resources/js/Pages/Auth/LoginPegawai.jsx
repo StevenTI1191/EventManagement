@@ -33,7 +33,7 @@ export default function LoginPegawai({ status }) {
                     <TextInput
                         id="email"
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder="Masukkan email Anda"
                         value={data.email}
                         className="mt-1 block w-full border-gray-300 focus:border-[#A50021] focus:ring-[#A50021] rounded-lg shadow-sm"
                         onChange={(e) => setData('email', e.target.value)}
@@ -46,7 +46,7 @@ export default function LoginPegawai({ status }) {
                     <TextInput
                         id="password"
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder="Masukkan password Anda"
                         value={data.password}
                         className="mt-1 block w-full border-gray-300 focus:border-[#A50021] focus:ring-[#A50021] rounded-lg shadow-sm"
                         onChange={(e) => setData('password', e.target.value)}
@@ -59,7 +59,7 @@ export default function LoginPegawai({ status }) {
                         className="w-full justify-center py-3 bg-[#A50021] hover:bg-[#80001a] text-white font-bold rounded-lg transition shadow-lg"
                         disabled={processing}
                     >
-                        Sign in
+                        Masuk
                     </PrimaryButton>
                 </div>
             </form>

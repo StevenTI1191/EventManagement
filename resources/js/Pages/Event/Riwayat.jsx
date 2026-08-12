@@ -64,7 +64,7 @@ export default function EventRiwayat({
 
     return (
         <Layout>
-            <Head title="Riwayat Event — Laksamana Muda" />
+            <Head title="Riwayat Event" />
 
             <div className="mb-5">
                 <div className="flex items-center gap-2">

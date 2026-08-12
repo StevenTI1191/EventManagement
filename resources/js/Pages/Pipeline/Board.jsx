@@ -144,7 +144,7 @@ export default function PipelineBoard({ Layout, kolom = {}, canEdit = false, rou
 
     return (
         <Layout>
-            <Head title="Pipeline Event — Laksamana Muda" />
+            <Head title="Pipeline Event" />
 
             <div className="mb-5">
                 <div className="flex flex-wrap items-center gap-3">

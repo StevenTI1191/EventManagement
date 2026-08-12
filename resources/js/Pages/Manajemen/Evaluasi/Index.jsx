@@ -31,7 +31,7 @@ export default function EvaluasiIndex({ auth, pegawais, events, filters }) {
 
     return (
         <ManajemenLayout>
-            <Head title="Evaluasi Kinerja - Laksamana Muda" />
+            <Head title="Evaluasi Kinerja" />
 
             <div className="mb-8">
                 <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Evaluasi Kinerja</h1>

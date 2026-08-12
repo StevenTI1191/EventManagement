@@ -43,7 +43,7 @@ export default function PlanningIndex({ Layout, events = [], routes, jenis = 'in
 
     return (
         <Layout>
-            <Head title="Planning Event — Laksamana Muda" />
+            <Head title="Planning Event" />
 
             <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
                 <div>

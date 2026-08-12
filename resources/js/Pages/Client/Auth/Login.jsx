@@ -27,7 +27,7 @@ export default function Login() {
 
     return (
         <>
-            <Head title="Login - Laksamana Muda" />
+            <Head title="Login" />
             <div className="flex items-center justify-center min-h-screen px-6 bg-paper">
                 {/* Tombol kembali ke homepage — mengambang pojok kiri atas */}
                 <Link

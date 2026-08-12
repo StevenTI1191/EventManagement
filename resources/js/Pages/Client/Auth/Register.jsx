@@ -63,7 +63,7 @@ export default function Register() {
 
     return (
         <>
-            <Head title="Daftar - Laksamana Muda" />
+            <Head title="Daftar" />
             <div className="flex items-center justify-center min-h-screen px-6 py-12 bg-surface">
                 {/* Tombol kembali ke homepage — mengambang pojok kiri atas */}
                 <Link

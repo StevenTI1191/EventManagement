@@ -66,7 +66,7 @@ export default function PlanningCreate({ Layout, categories = [], clients = [], 
 
     return (
         <Layout>
-            <Head title={`${isEdit ? 'Edit' : 'Tambah'} Event Planning — Laksamana Muda`} />
+            <Head title={`${isEdit ? 'Edit' : 'Tambah'} Event Planning`} />
 
             <div className="mb-8">
                 <div className="flex items-center gap-2">

@@ -94,7 +94,7 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'em.even
 
     return (
         <EventMarketingLayout>
-            <Head title="Form Event - Laksamana Muda" />
+            <Head title="Form Event" />
 
             <div className="p-6">
                 <div className="mb-8">

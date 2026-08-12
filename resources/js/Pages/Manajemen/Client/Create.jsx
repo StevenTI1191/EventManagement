@@ -16,7 +16,7 @@ export default function CreateClient({ auth }) {
 
     return (
         <ManajemenLayout>
-            <Head title="Form Client - Laksamana Muda" />
+            <Head title="Form Client" />
 
             <div className="p-6">
                 <div className="mb-8">

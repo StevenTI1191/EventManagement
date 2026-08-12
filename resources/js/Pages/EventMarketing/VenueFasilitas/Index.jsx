@@ -73,7 +73,7 @@ export default function VenueFasilitasIndex({ fasilitas = [] }) {
 
     return (
         <EventMarketingLayout>
-            <Head title="Fasilitas Venue - Laksamana Muda" />
+            <Head title="Fasilitas Venue" />
 
             <div className="max-w-5xl px-4 py-6 mx-auto sm:px-6">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-1">

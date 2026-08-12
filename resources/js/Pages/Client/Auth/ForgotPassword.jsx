@@ -12,7 +12,7 @@ export default function ForgotPassword() {
 
     return (
         <>
-            <Head title="Lupa Password - Laksamana Muda" />
+            <Head title="Lupa Password" />
             <div className="flex items-center justify-center min-h-screen px-6 bg-surface">
                 <div className="w-full max-w-md">
 

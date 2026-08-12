@@ -31,7 +31,7 @@ export default function PegawaiCreate({ auth }) {
 
     return (
         <ManajemenLayout>
-            <Head title="Tambah Pegawai - Laksamana Muda" />
+            <Head title="Tambah Pegawai" />
 
             <div className="mb-8">
                 <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Tambah Pegawai</h1>

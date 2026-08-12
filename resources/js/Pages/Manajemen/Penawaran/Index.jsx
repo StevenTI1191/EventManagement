@@ -43,7 +43,7 @@ export default function PenawaranIndex({ menunggu = [], riwayat = [] }) {
 
     return (
         <ManajemenLayout>
-            <Head title="Persetujuan Penawaran - Laksamana Muda" />
+            <Head title="Persetujuan Penawaran" />
 
             <div className="max-w-5xl px-4 py-6 mx-auto sm:px-6">
                 <div className="flex items-center gap-3 mb-1">

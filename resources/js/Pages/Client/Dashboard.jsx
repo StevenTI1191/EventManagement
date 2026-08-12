@@ -485,7 +485,7 @@ export default function ClientDashboard({
 
     return (
         <>
-            <Head title="Dashboard - Laksamana Muda" />
+            <Head title="Dashboard" />
             <div className="min-h-screen bg-paper">
 
                 {/* Navbar */}

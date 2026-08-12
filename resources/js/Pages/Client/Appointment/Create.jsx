@@ -65,7 +65,7 @@ export default function AppointmentCreate({ has_active_appointment, missing_phon
 
     return (
         <>
-            <Head title="Buat Appointment - Laksamana Muda" />
+            <Head title="Buat Appointment" />
             <div className="min-h-screen bg-paper">
 
                 {/* Navbar */}

@@ -97,7 +97,7 @@ export default function Create({ auth, clients, pegawais, submitRoute = 'manajem
 
     return (
         <ManajemenLayout>
-            <Head title="Form Event - Laksamana Muda" />
+            <Head title="Form Event" />
 
             <div className="p-6">
                 <div className="mb-8">

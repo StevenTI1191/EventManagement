@@ -118,7 +118,7 @@ export default function PegawaiIndex({ auth, internal, eksternal }) {
 
     return (
         <ManajemenLayout>
-            <Head title="Manajemen Pegawai - Laksamana Muda" />
+            <Head title="Manajemen Pegawai" />
 
             <div className="flex items-center justify-between mb-8">
                 <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">List Pegawai</h1>

@@ -223,7 +223,7 @@ export default function EventDetail({
 
     return (
         <Layout>
-            <Head title={`${event.nama_event} — Laksamana Muda`} />
+            <Head title={`${event.nama_event}`} />
 
             {/* Kembali ke asal — pipeline atau daftar event */}
             <Link href={route(dariPipeline ? routes.pipeline : routes.index)}

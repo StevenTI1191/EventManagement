@@ -92,7 +92,7 @@ export default function FinanceInvoiceIndex({ events = [] }) {
 
     return (
         <FinanceLayout>
-            <Head title="Invoice — Laksamana Muda" />
+            <Head title="Invoice" />
 
             <div className="mb-6">
                 <div className="flex items-center gap-2">

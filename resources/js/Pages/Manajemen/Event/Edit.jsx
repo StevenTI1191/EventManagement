@@ -91,7 +91,7 @@ export default function Edit({ auth, event, clients, pegawais }) {
 
     return (
         <ManajemenLayout>
-            <Head title="Edit Event - Laksamana Muda" />
+            <Head title="Edit Event" />
 
             <div className="p-6">
                 <div className="mb-8">

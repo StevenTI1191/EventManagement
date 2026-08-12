@@ -87,7 +87,7 @@ export default function Index({ auth, events, filters, clients, pegawais }) {
 
     return (
         <EventMarketingLayout>
-            <Head title="Event - Laksamana Muda" />
+            <Head title="Event" />
 
             {/* MODAL DETAIL */}
             {selectedEvent && (

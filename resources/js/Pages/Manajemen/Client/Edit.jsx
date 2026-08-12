@@ -16,7 +16,7 @@ export default function EditClient({ auth, client }) {
 
     return (
         <ManajemenLayout>
-            <Head title="Edit Client - Laksamana Muda" />
+            <Head title="Edit Client" />
 
             <div className="p-6">
                 <div className="mb-8">

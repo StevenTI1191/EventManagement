@@ -16,7 +16,7 @@ export default function EMEditClient({ auth, client }) {
 
     return (
         <EventMarketingLayout>
-            <Head title="Edit Client - Laksamana Muda" />
+            <Head title="Edit Client" />
 
             <div className="p-6">
                 <div className="mb-8">
