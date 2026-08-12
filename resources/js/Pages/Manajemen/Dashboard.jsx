@@ -79,14 +79,23 @@ export default function Dashboard({ auth, stats, recentEvents, salesChart, kateg
                 <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Dashboard</h1>
                 <p className="font-medium text-gray-500">
                     Selamat Datang, <span className="text-[#FF2D55] font-bold">{auth.user.nama_pegawai}</span>!
-                    <span className="ml-2 text-xs text-gray-400">{new Date().getFullYear()}</span>
+                    {/* Kartu-kartu di bawah menjumlahkan SELURUH riwayat, bukan tahun
+                        berjalan. Menempelkan angka tahun di sini membuatnya terbaca
+                        sebagai periode kartu itu. Yang benar-benar dibatasi tahun hanya
+                        kedua grafiknya, dan keduanya sudah menulis tahunnya sendiri. */}
+                    <span className="ml-2 text-xs text-gray-400">Angka kumulatif sejak awal</span>
                 </p>
             </div>
 
             {/* ── STAT CARDS ─────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-4 mb-8 md:grid-cols-3 xl:grid-cols-6">
                 <StatCard title="Event Selesai"   value={stats.eventDone}                    icon={<CheckCircle size={22} />}    color="#FF2D55" />
-                <StatCard title="Event Mendatang" value={stats.eventActive}                  icon={<Calendar size={22} />}       color="#FF2D55" />
+                {/* Dulu berjudul "Event Mendatang", padahal isinya Upcoming DITAMBAH
+                    Penyelesaian, yaitu acara yang harinya justru sudah lewat dan
+                    tinggal menunggu tugas atau pelunasannya beres. Judul yang benar
+                    penting karena ketiga kartu ini saling mengunci: Total Event =
+                    kartu ini + Event Selesai. */}
+                <StatCard title="Event Berjalan"  value={stats.eventActive}                  icon={<Calendar size={22} />}       color="#FF2D55" />
                 <StatCard title="Total Event"     value={stats.totalEvent}                   icon={<Layout size={22} />}         color="#FF2D55" />
                 <StatCard title="Total Penjualan" value={fmtShort(stats.totalPenjualan)} hint={fmt(stats.totalPenjualan)} icon={<Wallet size={22} />} color="#FF2D55" />
                 <StatCard title="Total Transaksi" value={stats.totalTransaksi}               icon={<ArrowRightLeft size={22} />} color="#FF2D55" />

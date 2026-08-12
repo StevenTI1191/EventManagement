@@ -64,10 +64,19 @@ class DashboardController extends Controller
             ->orderBy('bulan')
             ->pluck('total', 'bulan');
 
-        $pengeluaranPerBulan = TransaksiItem::whereHas('event', $padaLaporan)
-            ->selectRaw('MONTH(created_at) as bulan, SUM(total) as total')
-            ->where('tipe', 'Pengeluaran')
-            ->whereYear('created_at', now()->year)
+        // Pengeluaran dilekatkan pada TANGGAL ACARA-nya, sama seperti halaman
+        // Laporan. Sebelumnya bulannya diambil dari created_at, yaitu kapan
+        // baris biayanya diketik Finance, padahal tabel transaksi_items tidak
+        // punya kolom tanggal sama sekali sehingga stempel itu bukan tanggal
+        // usaha apa pun. Akibatnya biaya acara Mei yang baru dicatat pada Juli
+        // muncul sebagai kerugian bulan Juli di grafik ini, sedangkan Laporan
+        // menaruh rupiah yang sama di bulan Mei. Satu pengeluaran, dua bulan
+        // berbeda, tergantung layar mana yang sedang dibuka.
+        $pengeluaranPerBulan = TransaksiItem::query()
+            ->join('events', 'events.id_event', '=', 'transaksi_items.id_event')
+            ->where('transaksi_items.tipe', 'Pengeluaran')
+            ->whereYear('events.tgl_mulai_event', now()->year)
+            ->selectRaw('MONTH(events.tgl_mulai_event) as bulan, SUM(transaksi_items.total) as total')
             ->groupBy('bulan')
             ->orderBy('bulan')
             ->pluck('total', 'bulan');

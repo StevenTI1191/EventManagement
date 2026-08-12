@@ -102,7 +102,14 @@ export default function FinanceDashboard({ kpi, chartData, recentTransaksi, topE
                 <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Finance Dashboard</h1>
                 <p className="mt-1 font-medium text-gray-500">
                     Selamat Datang, <span className="text-[#FF2D55] font-bold">{auth.user.nama_pegawai}</span>!
-                    <span className="ml-2 text-xs text-gray-400">Tahun {new Date().getFullYear()}</span>
+                    {/* Dulu tertulis "Tahun 2026" padahal kelima kartu di bawahnya
+                        menjumlahkan SELURUH riwayat, bukan tahun berjalan. Tahun ini
+                        angkanya kebetulan sama sebab semua transaksi memang baru,
+                        tetapi tahun depan kepala halaman akan menyebut tahun yang
+                        keliru di atas uang tahun sebelumnya. Periode yang benar-benar
+                        dibatasi tahun hanyalah grafiknya, dan itu sudah tertulis di
+                        judul grafik itu sendiri. */}
+                    <span className="ml-2 text-xs text-gray-400">Angka kumulatif sejak awal</span>
                 </p>
             </div>
 
@@ -134,7 +141,14 @@ export default function FinanceDashboard({ kpi, chartData, recentTransaksi, topE
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h3 className="text-base font-extrabold text-gray-900">Pemasukan vs Pengeluaran</h3>
-                            <p className="text-xs text-gray-400">Per bulan — {new Date().getFullYear()}</p>
+                            {/* Basis tanggal keduanya ditulis terang-terangan: pemasukan adalah
+                                uang yang benar-benar diterima pada bulan itu, sedangkan biaya
+                                melekat pada acaranya sebab tabel item tidak punya tanggal
+                                sendiri. Tanpa keterangan ini, selisih bulan antara dua batang
+                                terbaca sebagai untung-rugi bulanan yang sesungguhnya. */}
+                            <p className="text-xs text-gray-400">
+                                Per bulan, {new Date().getFullYear()}. Pemasukan menurut tanggal bayar, pengeluaran menurut tanggal acara.
+                            </p>
                         </div>
                         <div className="flex items-center gap-4 text-xs font-semibold">
                             <span className="flex items-center gap-1.5">
