@@ -116,7 +116,7 @@ export default function PegawaiDetail({ auth, pegawai, events, stats, tren = [],
                             <div className="h-3 rounded-full bg-[#FF2D55] transition-all" style={{ width: `${stats.closing_rate}%` }} />
                         </div>
                         <p className="mt-2 text-xs text-gray-500">
-                            <b className="text-gray-800">{stats.klien_closing}</b> dari <b className="text-gray-800">{stats.klien_dihandle}</b> klien yang ditangani sudah memiliki event.
+                            <b className="text-gray-800">{stats.klien_closing}</b> dari <b className="text-gray-800">{stats.klien_dihandle}</b> klien yang ditangani berhasil mencapai kesepakatan bersamanya.
                         </p>
                     </div>
 

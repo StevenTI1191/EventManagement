@@ -89,15 +89,23 @@ class EvaluasiController extends Controller
         $clientIds = $dariAppointment->merge($dariPipeline)->unique()->values();
         $klienDihandle = $clientIds->count();
 
-        // Closing = klien yang acaranya sudah mencapai Deal ke atas (kesepakatan
-        // terjadi). Lead/Negotiation belum dianggap closing.
-        $klienClosing = $clientIds->isEmpty() ? 0 :
-            Event::whereIn('id_client', $clientIds)
-                ->whereIn('status_event', [
-                    Event::STATUS_DEAL, Event::STATUS_UPCOMING,
-                    Event::STATUS_PENYELESAIAN, Event::STATUS_DONE,
-                ])
-                ->distinct()->pluck('id_client')->count();
+        // Closing = klien yang acaranya mencapai Deal ke atas DI TANGAN PEGAWAI
+        // INI. Lead/Negotiation belum dianggap closing.
+        //
+        // Penyaringan id_pegawai itu yang menentukan. Tanpanya, pembilangnya
+        // menghitung acara SIAPA PUN atas klien tersebut — sehingga seorang
+        // Event Marketing yang hanya pernah menangani appointment lalu gagal
+        // menutupnya tetap memperoleh angka closing ketika rekannya yang
+        // berhasil menutup kesepakatan dengan klien yang sama. Angka yang
+        // dipajang sebagai "Closing Rate" pun mengukur capaian orang lain, dan
+        // penilaian kinerja yang dibangun di atasnya menjadi keliru.
+        $klienClosingIds = $clientIds->isEmpty() ? collect() :
+            Event::where('id_pegawai', $id)
+                ->whereIn('id_client', $clientIds)
+                ->whereIn('status_event', Event::STATUS_BERKOMITMEN)
+                ->distinct()->pluck('id_client');
+
+        $klienClosing = $klienClosingIds->count();
 
         $closingRate = $klienDihandle > 0 ? (int) round($klienClosing / $klienDihandle * 100) : 0;
 
@@ -177,17 +185,33 @@ class EvaluasiController extends Controller
             ->values();
 
         // Rincian klien yang ditangani + status closing-nya
+        // Banyaknya acara dihitung HANYA dari acara yang dipegang pegawai ini.
+        // Memakai seluruh acara milik klien membuat kolomnya menjelaskan
+        // kesibukan klien, bukan kontribusi pegawai yang sedang dinilai.
+        $acaraPerKlien = $clientIds->isEmpty() ? collect() :
+            Event::where('id_pegawai', $id)
+                ->whereIn('id_client', $clientIds)
+                ->selectRaw('id_client, COUNT(*) AS jumlah')
+                ->groupBy('id_client')
+                ->pluck('jumlah', 'id_client');
+
         $clients = \App\Models\Client::whereIn('id', $clientIds)
-            ->withCount('events')
-            ->orderByDesc('events_count')
             ->get()
             ->map(fn ($c) => [
                 'id'                => $c->id,
                 'nama_client'       => $c->nama_client,
                 'perusahaan_client' => $c->perusahaan_client,
-                'events_count'      => $c->events_count,
-                'closed'            => $c->events_count > 0,
-            ]);
+                'events_count'      => (int) ($acaraPerKlien[$c->id] ?? 0),
+                // Memakai daftar yang sama persis dengan angka ringkasnya.
+                // Sebelumnya penanda ini hanya melihat "klien punya acara",
+                // sehingga prospek yang masih Lead maupun kesepakatan yang
+                // ditutup rekan lain ikut berlencana "Closing" — dan jumlah
+                // baris berlencana itu tidak cocok dengan angka Klien Closing
+                // pada layar yang sama.
+                'closed'            => $klienClosingIds->contains($c->id),
+            ])
+            ->sortByDesc('events_count')
+            ->values();
 
         // ── Event tempat pegawai ini ditugaskan sebagai PIC to-do ────────────
         // Berbeda dari "Event sebagai PIC" (yang menghitung event yang ia pegang
